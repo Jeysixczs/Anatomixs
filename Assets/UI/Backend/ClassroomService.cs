@@ -228,7 +228,10 @@ namespace Anatomia3D.Backend
 
         /// <summary>One row from the classroom's `members` subcollection. `Points` /
         /// `QuizzesCompleted` / `AvgScorePercent` / `Level` are denormalized there by
-        /// RecordQuizCompletion() below - see its doc comment.</summary>
+        /// RecordQuizCompletion() below - see its doc comment. `Points` is this
+        /// classroom's own running total; `Level` is the student's true global level
+        /// (from their total points across every classroom), so it matches what they
+        /// see on their dashboard/progress screens.</summary>
         [Serializable]
         public class MemberStat
         {
@@ -438,8 +441,16 @@ namespace Anatomia3D.Backend
         /// FetchClassroomRoster() read for the Students tab, Analytics tab and
         /// Leaderboard - not the quizAttempts collection itself, since a student can
         /// only read their own attempts there.
+        ///
+        /// `pointsEarned` here is just this classroom's own running total (useful for
+        /// "points earned in this class" style stats) - it does NOT drive the
+        /// student's level. Levels are global: the student's actual level is computed
+        /// once in QuizService.SubmitQuizAttempt from their `students/{uid}.totalPoints`
+        /// (summed across every classroom they're in) against the fixed global
+        /// `gamificationSettings/config` levels, and passed in here as `globalLevel` so
+        /// this roster doc always shows the same level a student sees everywhere else.
         /// </summary>
-        public void RecordQuizCompletion(string classroomId, int pointsEarned, float scorePercent, Action<bool> onComplete = null)
+        public void RecordQuizCompletion(string classroomId, int pointsEarned, float scorePercent, int globalLevel, Action<bool> onComplete = null)
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null || string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(false); return; }
@@ -462,17 +473,9 @@ namespace Anatomia3D.Backend
                 {
                     { "quizzesCompleted", newQuizzes },
                     { "points", newPoints },
-                    { "avgScorePercent", newAvg }
+                    { "avgScorePercent", newAvg },
+                    { "level", globalLevel }
                 };
-
-                // Keep the roster's displayed level current too, if gamification settings
-                // are already loaded (avoids an extra async fetch inside the transaction).
-                if (AdminGamificationService.Instance?.CurrentSettings != null)
-                {
-                    var (level, _, _, _, _, _) = AdminGamificationService.ComputeLevelProgress(
-                        AdminGamificationService.Instance.CurrentSettings, newPoints);
-                    update["level"] = level;
-                }
 
                 transaction.Update(memberRef, update);
             }).ContinueWithOnMainThread(task =>

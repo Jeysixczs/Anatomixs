@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Anatomia3D.Backend;
 
 namespace Anatomia3D.UI
 {
@@ -50,6 +51,9 @@ namespace Anatomia3D.UI
         private Label _nextLevelTitleLabel;
         private VisualElement _progressFill;
         private Label _pointsToNextLabel;
+
+        // Level roadmap (all configured levels + points required)
+        private VisualElement _levelRoadmapList;
 
         // Stats
         private Label _quizzesValueLabel;
@@ -126,6 +130,8 @@ namespace Anatomia3D.UI
             UpdateResponsiveLayout();
 
             ShowWeeklyTab();
+
+            PopulateLevelProgress();
         }
 
         private void OnDisable()
@@ -168,6 +174,8 @@ namespace Anatomia3D.UI
             _nextLevelTitleLabel = _screenRoot.Q<Label>("next-level-title-label");
             _progressFill = _screenRoot.Q<VisualElement>("progress-fill");
             _pointsToNextLabel = _screenRoot.Q<Label>("points-to-next-label");
+
+            _levelRoadmapList = _screenRoot.Q<VisualElement>("level-roadmap-list");
 
             _quizzesValueLabel = _screenRoot.Q<Label>("quizzes-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
@@ -213,6 +221,121 @@ namespace Anatomia3D.UI
             {
                 _screenRoot.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
             }
+        }
+
+        // ---------------- Data loading ----------------
+
+        /// <summary>Pulls the signed-in student's points from PlayerSessionManager and the
+        /// level thresholds from AdminGamificationService, updates the Level Progress card
+        /// (current/next level, progress bar, points-to-next) with real numbers, and rebuilds
+        /// the Level Roadmap list below it so the student can see the points required for
+        /// every level - not just the next one.
+        ///
+        /// Note: avg score, badges-earned count, the weekly chart and the category breakdown
+        /// aren't wired up here - PlayerSessionManager.StudentProfile doesn't track those yet
+        /// (no avgScorePercent/badgesEarned fields, no per-day or per-category rollups), so
+        /// those parts of the screen are left as-is. Call SetWeeklyPoints()/SetCategoryProgress()
+        /// /SetProgressData() directly once that data is available.</summary>
+        private void PopulateLevelProgress()
+        {
+            var student = PlayerSessionManager.Instance?.CurrentStudent;
+            if (student == null)
+            {
+                Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
+                    "leaving the Level Progress card and roadmap with placeholder data.");
+                return;
+            }
+
+            if (AdminGamificationService.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
+                    "can't compute level progress or build the roadmap.");
+                return;
+            }
+
+            AdminGamificationService.Instance.FetchSettings(settings =>
+            {
+                var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
+
+                if (_currentLevelLabel != null) _currentLevelLabel.text = $"Level {progress.level}";
+                if (_currentLevelTitleLabel != null) _currentLevelTitleLabel.text = progress.title;
+                if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {progress.nextLevel}";
+                if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = progress.nextTitle;
+                if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(progress.progress01) * 100f, LengthUnit.Percent);
+                if (_pointsToNextLabel != null)
+                {
+                    _pointsToNextLabel.text = progress.pointsToNext > 0
+                        ? $"{progress.pointsToNext} points to next level"
+                        : "You're at the top level!";
+                }
+
+                if (_quizzesValueLabel != null) _quizzesValueLabel.text = student.QuizzesCompleted.ToString();
+                if (_pointsValueLabel != null) _pointsValueLabel.text = student.TotalPoints.ToString();
+
+                BuildLevelRoadmap(settings.Levels, progress.level, student.TotalPoints);
+            });
+        }
+
+        /// <summary>Rebuilds the Level Roadmap list: one row per level configured by the admin
+        /// (gamificationSettings/config), each showing the level's title, its points
+        /// requirement, and a status pill (Reached / Current / N points to unlock).</summary>
+        private void BuildLevelRoadmap(System.Collections.Generic.List<AdminGamificationService.LevelEntry> levels, int currentLevelNumber, int totalPoints)
+        {
+            if (_levelRoadmapList == null) return;
+
+            _levelRoadmapList.Clear();
+
+            if (levels == null) return;
+
+            var ordered = new System.Collections.Generic.List<AdminGamificationService.LevelEntry>(levels);
+            ordered.Sort((a, b) => a.PointsRequired.CompareTo(b.PointsRequired));
+
+            foreach (var level in ordered)
+            {
+                _levelRoadmapList.Add(BuildLevelRoadmapRow(level, currentLevelNumber, totalPoints));
+            }
+        }
+
+        private VisualElement BuildLevelRoadmapRow(AdminGamificationService.LevelEntry level, int currentLevelNumber, int totalPoints)
+        {
+            bool isCurrent = level.LevelNumber == currentLevelNumber;
+            bool isReached = !isCurrent && totalPoints >= level.PointsRequired;
+            bool isLocked = !isCurrent && !isReached;
+
+            var row = new VisualElement();
+            row.AddToClassList("level-roadmap-item");
+            if (isCurrent) row.AddToClassList("level-roadmap-item-current");
+            else if (isReached) row.AddToClassList("level-roadmap-item-completed");
+            else if (isLocked) row.AddToClassList("level-roadmap-item-locked");
+
+            var badge = new VisualElement();
+            badge.AddToClassList("level-roadmap-badge");
+            var badgeNumber = new Label(level.LevelNumber.ToString());
+            badgeNumber.AddToClassList("level-roadmap-badge-number");
+            badge.Add(badgeNumber);
+
+            var textCol = new VisualElement();
+            textCol.AddToClassList("level-roadmap-text-col");
+            var titleLabel = new Label(string.IsNullOrEmpty(level.Title) ? $"Level {level.LevelNumber}" : $"Level {level.LevelNumber} - {level.Title}");
+            titleLabel.AddToClassList("level-roadmap-title");
+            var pointsLabel = new Label($"{level.PointsRequired:N0} points required");
+            pointsLabel.AddToClassList("level-roadmap-points");
+            textCol.Add(titleLabel);
+            textCol.Add(pointsLabel);
+
+            string statusText;
+            if (isCurrent) statusText = "Current";
+            else if (isReached) statusText = "\u2713 Reached";
+            else statusText = $"{level.PointsRequired - totalPoints:N0} to unlock";
+
+            var statusLabel = new Label(statusText);
+            statusLabel.AddToClassList("level-roadmap-status");
+
+            row.Add(badge);
+            row.Add(textCol);
+            row.Add(statusLabel);
+
+            return row;
         }
 
         // ---------------- Public API ----------------

@@ -275,6 +275,37 @@
     color: white;
 }
 
+/* ---------- Global & Fixed tag (Level Progression header) ---------- */
+
+.global-tag
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    padding: 12px 22px;
+    margin: 0;
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.global-tag-label
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.levels-note
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    white-space: normal;
+    margin-bottom: 29px;
+}
+
 /* ---------- Badges / Levels lists ---------- */
 
 .empty-list-label
@@ -738,6 +769,16 @@
 .compact .add-item-label
 {
     font-size: 25px;
+}
+
+.compact .global-tag-label
+{
+    font-size: 21px;
+}
+
+.compact .levels-note
+{
+    font-size: 22px;
 }
 
 .compact .item-title-label
