@@ -1,0 +1,74 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentExplore3d/StudentExplore3d.uss?fileID=7433441132597879392&amp;guid=743ca842e0d65074d907c76c9ffa0cb1&amp;type=3#StudentExplore3d"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <!-- ===================== SCROLLABLE CONTENT ===================== -->
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <!-- ===================== HEADER ===================== -->
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label name="header-title" text="Anatomy Systems" class="header-title"/>
+                        <ui:Label name="header-subtitle" text="Explore human body in 3D" class="header-subtitle"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="card-list" class="card-list">
+                    <ui:VisualElement class="card">
+                        <ui:VisualElement class="icon-box icon-skeletal">
+                            <ui:Label text="" class="icon-emoji"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="card-info">
+                            <ui:Label text="Skeletal System" class="card-title"/>
+                            <ui:Label text="206 structures" class="card-subtitle"/>
+                            <ui:VisualElement class="progress-row">
+                                <ui:VisualElement class="progress-track">
+                                    <ui:VisualElement class="progress-fill fill-skeletal"/>
+                                </ui:VisualElement>
+                                <ui:Label text="75%" class="progress-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="card">
+                        <ui:VisualElement class="icon-box icon-muscular">
+                            <ui:Label text="" class="icon-emoji"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="card-info">
+                            <ui:Label text="Muscular System" class="card-title"/>
+                            <ui:Label text="640 structures" class="card-subtitle"/>
+                            <ui:VisualElement class="progress-row">
+                                <ui:VisualElement class="progress-track">
+                                    <ui:VisualElement class="progress-fill fill-muscular"/>
+                                </ui:VisualElement>
+                                <ui:Label text="45%" class="progress-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="card">
+                        <ui:VisualElement class="icon-box icon-cardio">
+                            <ui:Label text="" class="icon-emoji"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="card-info">
+                            <ui:Label text="Cardiovascular System" class="card-title"/>
+                            <ui:Label text="124 structures" class="card-subtitle"/>
+                            <ui:VisualElement class="progress-row">
+                                <ui:VisualElement class="progress-track">
+                                    <ui:VisualElement class="progress-fill fill-cardio"/>
+                                </ui:VisualElement>
+                                <ui:Label text="30%" class="progress-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="pro-tip-card">
+                        <ui:Label text="💡 Pro Tip" class="pro-tip-title"/>
+                        <ui:Label text="Use pinch to zoom, rotate with two fingers, and tap on structures to learn more!" class="pro-tip-text"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

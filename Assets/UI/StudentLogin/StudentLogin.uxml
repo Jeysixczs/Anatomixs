@@ -1,0 +1,48 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss?fileID=7433441132597879392&amp;guid=e188d20bee8fcba44a3b70d245d72c03&amp;type=3#StudentLogin"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:VisualElement name="screen-container" class="screen-container">
+            <ui:ScrollView name="scroll-view" class="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden">
+                <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                    <ui:VisualElement name="logo-circle" class="logo-circle">
+                        <ui:VisualElement name="logo-icon" class="logo-icon"/>
+                    </ui:VisualElement>
+                    <ui:Label name="app-title" text="Anatomia 3D" class="app-title"/>
+                    <ui:Label name="app-subtitle" text="Student Login" class="app-subtitle"/>
+                    <ui:VisualElement name="login-card" class="login-card">
+                        <ui:Label text="Email" class="field-label"/>
+                        <ui:VisualElement class="input-container">
+                            <ui:VisualElement class="input-icon icon-email"/>
+                            <ui:TextField name="email-field" placeholder-text="Enter your email" hide-placeholder-on-focus="true" class="input-field"/>
+                        </ui:VisualElement>
+                        <ui:Label name="email-error" text="Please enter a valid email" class="field-error hidden"/>
+                        <ui:Label text="Password" class="field-label field-label-spaced"/>
+                        <ui:VisualElement class="input-container">
+                            <ui:VisualElement class="input-icon icon-lock"/>
+                            <ui:TextField name="password-field" password="true" placeholder-text="Enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
+                            <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
+                        </ui:VisualElement>
+                        <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
+                        <ui:Button name="forgot-password-button" text="Forgot Password?" class="forgot-password-link"/>
+                        <ui:Button name="sign-in-button" text="Sign In" class="sign-in-button"/>
+                        <ui:VisualElement class="divider-row">
+                            <ui:VisualElement class="divider-line"/>
+                            <ui:Label text="Or continue with" class="divider-text"/>
+                            <ui:VisualElement class="divider-line"/>
+                        </ui:VisualElement>
+                        <ui:Button name="google-signin-button" class="google-button">
+                            <ui:VisualElement class="icon-google"/>
+                            <ui:Label text="Sign in with Google" class="google-button-text"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="create-account-row">
+                        <ui:Label text="Don&apos;t have an account?" class="create-account-text"/>
+                        <ui:Button name="navigate-to-create-account-button" text="Create Account" class="create-account-link"/>
+                    </ui:VisualElement>
+                    <ui:Button name="admin-login-button" text="Admin Login" class="admin-login-link"/>
+                    <ui:Label name="status-label" text="" class="status-label hidden"/>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

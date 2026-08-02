@@ -1,0 +1,106 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentQuizSelection/StudentQuizSelection.uss?fileID=7433441132597879392&amp;guid=4e85e0923b095d148b13045fcccc6e4d&amp;type=3#StudentQuizSelection"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-top-row" class="header-top-row">
+                <ui:Button name="back-button" class="back-button">
+                    <ui:VisualElement name="back-icon" class="back-icon"/>
+                </ui:Button>
+                <ui:VisualElement name="header-text" class="header-text">
+                    <ui:Label text="Quiz Selection" class="header-title"/>
+                    <ui:Label text="Test your knowledge" class="header-subtitle"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="quiz-list" class="quiz-list">
+                    <ui:VisualElement name="quiz-card-1" class="quiz-card">
+                        <ui:VisualElement class="quiz-card-header-row">
+                            <ui:Label name="quiz-title-1" text="Skeletal System Basics" class="quiz-title"/>
+                            <ui:Label name="quiz-difficulty-1" text="easy" class="difficulty-badge badge-easy"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quiz-subject-1" text="Skeletal System" class="quiz-subject"/>
+                        <ui:VisualElement class="quiz-divider"/>
+                        <ui:VisualElement class="quiz-meta-row">
+                            <ui:VisualElement class="quiz-meta-item">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-clock" style="background-image: url(&quot;project://database/Assets/UI/Icons/time-icon.png?fileID=2800000&amp;guid=e010bec633279364a9a425f3c1234729&amp;type=3#time-icon&quot;);"/>
+                                    <ui:Label text="Time" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-time-1" text="10 min" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-meta-item">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-ribbon" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-icon.png?fileID=2800000&amp;guid=0a671d2e63e2ceb49a5aaabf0deb3b30&amp;type=3#trophy-icon&quot;);"/>
+                                    <ui:Label text="Questions" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-questions-1" text="2" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-meta-item quiz-meta-item-last">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-coin" style="background-image: url(&quot;project://database/Assets/UI/Icons/target-icon.png?fileID=2800000&amp;guid=b172acd105522b34f82680ae77f120b8&amp;type=3#target-icon&quot;);"/>
+                                    <ui:Label text="Points" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-points-1" text="20" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Button name="start-quiz-button-1" text="Start Quiz" class="start-quiz-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quiz-card-2" class="quiz-card">
+                        <ui:VisualElement class="quiz-card-header-row">
+                            <ui:Label name="quiz-title-2" text="Muscular System Advanced" class="quiz-title"/>
+                            <ui:Label name="quiz-difficulty-2" text="medium" class="difficulty-badge badge-medium"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quiz-subject-2" text="Muscular System" class="quiz-subject"/>
+                        <ui:VisualElement class="quiz-divider"/>
+                        <ui:VisualElement class="quiz-meta-row">
+                            <ui:VisualElement class="quiz-meta-item">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-clock" style="background-image: url(&quot;project://database/Assets/UI/Icons/time-icon.png?fileID=2800000&amp;guid=e010bec633279364a9a425f3c1234729&amp;type=3#time-icon&quot;);"/>
+                                    <ui:Label text="Time" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-time-2" text="15 min" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-meta-item">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-ribbon" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-icon.png?fileID=2800000&amp;guid=0a671d2e63e2ceb49a5aaabf0deb3b30&amp;type=3#trophy-icon&quot;);"/>
+                                    <ui:Label text="Questions" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-questions-2" text="1" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-meta-item quiz-meta-item-last">
+                                <ui:VisualElement class="quiz-meta-label-row">
+                                    <ui:VisualElement class="quiz-meta-icon icon-coin" style="background-image: url(&quot;project://database/Assets/UI/Icons/target-icon.png?fileID=2800000&amp;guid=b172acd105522b34f82680ae77f120b8&amp;type=3#target-icon&quot;);"/>
+                                    <ui:Label text="Points" class="quiz-meta-label"/>
+                                </ui:VisualElement>
+                                <ui:Label name="quiz-points-2" text="20" class="quiz-meta-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Button name="start-quiz-button-2" text="Start Quiz" class="start-quiz-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="quiz-stats-card" class="quiz-stats-card">
+                    <ui:VisualElement class="quiz-stats-header-row">
+                        <ui:VisualElement class="quiz-stats-icon icon-chart" style="background-image: url(&quot;project://database/Assets/UI/Icons/chart-icon.png?fileID=2800000&amp;guid=a442228a8c2aba742ac8e32ca5ba4f83&amp;type=3#chart-icon&quot;); height: 52px; width: 46px;"/>
+                        <ui:Label text="Your Quiz Stats" class="quiz-stats-title"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="quiz-stats-row">
+                        <ui:VisualElement class="quiz-stat-item">
+                            <ui:Label name="quiz-stats-completed-label" text="24" class="quiz-stat-value"/>
+                            <ui:Label text="Completed" class="quiz-stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="quiz-stat-item">
+                            <ui:Label name="quiz-stats-avg-score-label" text="87%" class="quiz-stat-value"/>
+                            <ui:Label text="Avg. Score" class="quiz-stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="quiz-stat-item quiz-stat-item-last">
+                            <ui:Label name="quiz-stats-perfect-label" text="12" class="quiz-stat-value"/>
+                            <ui:Label text="Perfect Scores" class="quiz-stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

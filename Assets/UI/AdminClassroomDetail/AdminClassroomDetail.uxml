@@ -1,0 +1,145 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminClassroomDetail/AdminClassroomDetail.uss?fileID=7433441132597879392&amp;guid=0dd03073bf038894296fcb6901a75053&amp;type=3#AdminClassroomDetail"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
+                <ui:VisualElement name="header" class="header">
+                    <ui:VisualElement name="header-top-row" class="header-top-row">
+                        <ui:Button name="back-button" class="back-button">
+                            <ui:VisualElement class="back-icon"/>
+                        </ui:Button>
+                        <ui:Label name="classroom-name-label" text="Anatomi" class="header-title"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="classroom-code-box" class="classroom-code-box">
+                        <ui:VisualElement class="classroom-code-text-block">
+                            <ui:Label text="Classroom Code" class="classroom-code-caption"/>
+                            <ui:Label name="classroom-code-label" text="YG7XYYHJ" class="classroom-code-value"/>
+                        </ui:VisualElement>
+                        <ui:Button name="copy-code-button" class="copy-code-icon-button" style="background-image: none;">
+                            <ui:VisualElement class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-icon.png?fileID=2800000&amp;guid=efea9607a1058144f9b78865cdeecaca&amp;type=3#copy-icon&quot;); height: 49px; width: 45px;"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="stats-row" class="stats-row">
+                    <ui:VisualElement class="stat-card stat-card-spaced">
+                        <ui:VisualElement class="stat-icon icon-users-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/userclassroom-icon.png?fileID=2800000&amp;guid=c62a1173899cbf746950a52e454c7190&amp;type=3#userclassroom-icon&quot;); height: 64px; width: 79px;"/>
+                        <ui:Label name="students-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Students" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-card stat-card-spaced">
+                        <ui:VisualElement class="stat-icon icon-trend-green" style="background-image: url(&quot;project://database/Assets/UI/Icons/progress-icon.png?fileID=2800000&amp;guid=ac34e65b9a01a3542a77c551cdcb455b&amp;type=3#progress-icon&quot;); height: 54px; width: 56px;"/>
+                        <ui:Label name="avg-score-value-label" text="0%" class="stat-value"/>
+                        <ui:Label text="Avg Score" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-card">
+                        <ui:VisualElement class="stat-icon icon-ribbon-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon.png?fileID=2800000&amp;guid=775f1626d353491439de4a800cedcda0&amp;type=3#reward-icon&quot;); height: 77px; width: 64px;"/>
+                        <ui:Label name="quizzes-done-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Quizzes Done" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="tab-switcher" class="tab-switcher">
+                    <ui:Button name="students-tab-button" text="Students" class="tab-button tab-button-active"/>
+                    <ui:Button name="quizzes-tab-button" text="Quizzes" class="tab-button"/>
+                    <ui:Button name="analytics-tab-button" text="Analytics" class="tab-button"/>
+                    <ui:Button name="announcements-tab-button" text="Announcements" class="tab-button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="students-panel" class="tab-panel">
+                    <ui:VisualElement name="students-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-users-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/user-icon.png?fileID=2800000&amp;guid=55a2369fdf4771848b76ae9f9077db8e&amp;type=3#user-icon&quot;);"/>
+                        <ui:Label text="No students yet" class="empty-title"/>
+                        <ui:Label text="Share the classroom code with students to get started" class="empty-subtitle"/>
+                        <ui:Button name="copy-classroom-code-button" class="copy-classroom-code-button">
+                            <ui:VisualElement class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-icon.png?fileID=2800000&amp;guid=efea9607a1058144f9b78865cdeecaca&amp;type=3#copy-icon&quot;);"/>
+                            <ui:Label text="Copy Classroom Code" class="copy-classroom-code-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="students-list-card" class="panel-card students-list-card hidden">
+                        <ui:VisualElement name="students-list" class="students-list"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="quizzes-card" class="panel-card">
+                        <ui:Label text="Published Quizzes" class="panel-card-title"/>
+                        <ui:Label text="Select which quizzes are available to this classroom." class="panel-card-subtitle"/>
+                        <ui:VisualElement name="quiz-row-1" class="quiz-row">
+                            <ui:VisualElement class="quiz-row-text">
+                                <ui:Label name="quiz-title-1" text="Skeletal System Basics" class="quiz-row-title"/>
+                                <ui:Label name="quiz-subject-1" text="Skeletal System" class="quiz-row-subject"/>
+                            </ui:VisualElement>
+                            <ui:Button name="quiz-toggle-1" class="toggle-switch toggle-on">
+                                <ui:VisualElement class="toggle-knob"/>
+                            </ui:Button>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="quiz-row-2" class="quiz-row quiz-row-last">
+                            <ui:VisualElement class="quiz-row-text">
+                                <ui:Label name="quiz-title-2" text="Muscular System Advanced" class="quiz-row-title"/>
+                                <ui:Label name="quiz-subject-2" text="Muscular System" class="quiz-row-subject"/>
+                            </ui:VisualElement>
+                            <ui:Button name="quiz-toggle-2" class="toggle-switch">
+                                <ui:VisualElement class="toggle-knob"/>
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="analytics-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="performance-overview-card" class="panel-card">
+                        <ui:Label text="Performance Overview" class="panel-card-title"/>
+                        <ui:Label text="Class-wide statistics" class="panel-card-subtitle"/>
+                        <ui:VisualElement class="overview-row">
+                            <ui:Label text="Total Points Earned" class="overview-label"/>
+                            <ui:Label name="total-points-value-label" text="0" class="overview-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-row">
+                            <ui:Label text="Total Quizzes Completed" class="overview-label"/>
+                            <ui:Label name="total-quizzes-value-label" text="0" class="overview-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-row">
+                            <ui:Label text="Average Score" class="overview-label"/>
+                            <ui:Label name="analytics-avg-score-value-label" text="0%" class="overview-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-row overview-row-last">
+                            <ui:Label text="Active Students" class="overview-label"/>
+                            <ui:Label name="active-students-value-label" text="0" class="overview-value"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="top-performers-card" class="panel-card">
+                        <ui:VisualElement class="top-performers-header-row">
+                            <ui:VisualElement class="top-performers-text-block">
+                                <ui:Label text="Leaderboard" class="panel-card-title"/>
+                                <ui:Label text="Students ranked by points" class="panel-card-subtitle panel-card-subtitle-tight"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="show-to-students-toggle-block">
+                                <ui:Button name="show-to-students-toggle" class="toggle-switch">
+                                    <ui:VisualElement class="toggle-knob"/>
+                                </ui:Button>
+                                <ui:Label text="Show to Students" class="show-to-students-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="top-performers-empty-state" class="top-performers-empty-state">
+                            <ui:Label text="No student data yet" class="top-performers-empty-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="top-performers-list" class="top-performers-list hidden"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="announcements-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="announcement-compose-card" class="panel-card">
+                        <ui:Label text="Post an Announcement" class="panel-card-title"/>
+                        <ui:Label text="Share updates with everyone in this classroom." class="panel-card-subtitle"/>
+                        <ui:Label text="Title" class="announcement-field-label"/>
+                        <ui:TextField name="announcement-title-field" max-length="120" class="announcement-input"/>
+                        <ui:Label text="Message" class="announcement-field-label announcement-field-label-spaced"/>
+                        <ui:TextField name="announcement-body-field" multiline="true" max-length="2000" class="announcement-input announcement-textarea"/>
+                        <ui:Button name="post-announcement-button" text="Post Announcement" class="post-announcement-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Announcement History" class="announcements-section-title"/>
+                    <ui:VisualElement name="announcements-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-announce-gray"/>
+                        <ui:Label text="No announcements yet" class="empty-title"/>
+                        <ui:Label text="Announcements you post will show up here, and on students&apos; Overview tab." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="announcements-list" class="announcements-list hidden"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

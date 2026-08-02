@@ -1,0 +1,734 @@
+/* =========================================================
+   Anatomia 3D - Admin (Teacher) Dashboard (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header gradient is
+   generated as a Texture2D at runtime from
+   AdminDashboardController (see BuildGradientTexture). The color
+   below is a flat fallback.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 79px;
+    border-bottom-right-radius: 79px;
+    padding-left: 59px;
+    padding-right: 59px;
+    padding-top: 118px;
+    padding-bottom: 53px;
+    flex-shrink: 0;
+    flex-direction: column;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 45px;
+}
+
+.header-icon-circle
+{
+    width: 100px;
+    height: 100px;
+    border-radius: 51px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 0px;
+    padding: 0;
+    margin: 0;
+    margin-right: 29px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.header-icon-circle:hover
+{
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.header-icon-emoji
+{
+    font-size: 45px;
+    -unity-text-align: middle-center;
+}
+
+.header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 53px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 32px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.logout-button
+{
+    width: 92px;
+    height: 92px;
+    background-color: transparent;
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.logout-icon
+{
+    width: 45px;
+    height: 45px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.9);
+}
+
+.icon-logout
+{
+    background-image: url("project://database/Assets/UI/Icons/exit-logo.png");
+}
+
+/* ---------- Header Glass Stat Cards ---------- */
+
+.header-stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 34px;
+}
+
+.glass-stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.22);
+    border-radius: 32px;
+    padding-top: 29px;
+    padding-bottom: 26px;
+    align-items: center;
+}
+
+.glass-stat-card-left
+{
+    margin-right: 14px;
+}
+
+.glass-stat-card-mid
+{
+    margin-right: 14px;
+}
+
+.glass-stat-value
+{
+    font-size: 47px;
+    -unity-font-style: bold;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.glass-stat-label
+{
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Create Classroom (header button) ---------- */
+
+.create-classroom-header-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.24);
+    border-radius: 29px;
+    padding-top: 29px;
+    padding-bottom: 29px;
+    margin: 0;
+}
+
+.create-classroom-header-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.create-classroom-plus
+{
+    font-size: 39px;
+    -unity-font-style: bold;
+    color: white;
+    margin-right: 16px;
+}
+
+.create-classroom-header-label
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding-left: 59px;
+    padding-right: 59px;
+    padding-top: 47px;
+    padding-bottom: 79px;
+    max-width: 100%;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* ---------- Section titles ---------- */
+
+.section-title
+{
+    font-size: 39px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 26px;
+}
+
+.section-title-spaced
+{
+    margin-top: 45px;
+}
+
+/* ---------- My Classrooms: empty state ---------- */
+
+.classrooms-section
+{
+    width: 100%;
+}
+
+.classrooms-empty-state
+{
+    background-color: white;
+    border-radius: 37px;
+    padding-top: 74px;
+    padding-bottom: 59px;
+    padding-left: 39px;
+    padding-right: 39px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.empty-state-icon
+{
+    font-size: 85px;
+    opacity: 0.35;
+    margin-bottom: 29px;
+    -unity-text-align: middle-center;
+}
+
+.empty-state-text
+{
+    font-size: 34px;
+    color: rgb(138, 143, 163);
+    margin-bottom: 39px;
+}
+
+.empty-state-button
+{
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 24px;
+    padding-left: 45px;
+    padding-right: 45px;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.empty-state-button:hover
+{
+    background-color: rgb(248, 249, 251);
+}
+
+/* ---------- My Classrooms: populated list ---------- */
+
+.classrooms-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.classroom-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 37px;
+    padding: 39px;
+    margin-bottom: 29px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.classroom-card-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.classroom-name-label
+{
+    font-size: 39px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    flex-grow: 1;
+    white-space: normal;
+    margin-right: 21px;
+}
+
+.classroom-code-badge
+{
+    background-color: rgb(209, 250, 229);
+    border-radius: 18px;
+    padding-left: 21px;
+    padding-right: 21px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.classroom-code-badge-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(5, 122, 85);
+    letter-spacing: 1px;
+}
+
+.classroom-description-label
+{
+    font-size: 29px;
+    color: rgb(138, 143, 163);
+    margin-bottom: 29px;
+    white-space: normal;
+}
+
+.classroom-description-placeholder
+{
+    color: rgb(180, 184, 196);
+}
+
+.classroom-card-bottom-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.classroom-students-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.classroom-students-icon
+{
+    font-size: 29px;
+    margin-right: 10px;
+    opacity: 0.7;
+}
+
+.classroom-students-label
+{
+    font-size: 29px;
+    color: rgb(120, 123, 140);
+}
+
+.view-details-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+.view-details-button:hover
+{
+    color: rgb(29, 78, 216);
+}
+
+/* ---------- Quick Actions ---------- */
+
+.quick-actions-row
+{
+    flex-direction: row;
+    margin-bottom: 29px;
+}
+
+.quick-action-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-radius: 34px;
+    padding-top: 45px;
+    padding-bottom: 39px;
+    padding-left: 26px;
+    padding-right: 26px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    margin: 0;
+}
+
+.quick-action-card-left
+{
+    margin-right: 16px;
+}
+
+.quick-action-card-right
+{
+    margin-left: 16px;
+}
+
+.quick-action-icon-circle
+{
+    width: 108px;
+    height: 108px;
+    border-radius: 54px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
+.quick-action-icon-blue
+{
+    background-color: rgb(219, 234, 254);
+}
+
+.quick-action-icon-orange
+{
+    background-color: rgb(254, 235, 200);
+}
+
+.quick-action-icon-green
+{
+    background-color: rgb(209, 250, 229);
+}
+
+.quick-action-icon
+{
+    width: 51px;
+    height: 51px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.quick-action-icon-blue .quick-action-icon,
+.icon-book
+{
+    -unity-background-image-tint-color: rgb(37, 99, 235);
+    background-image: url("project://database/Assets/UI/Icons/open-book.png");
+}
+
+.quick-action-icon-orange .quick-action-icon,
+.icon-chart
+{
+    -unity-background-image-tint-color: rgb(234, 88, 12);
+    background-image: url("project://database/Assets/UI/Icons/chart-icon.png");
+}
+
+.quick-action-icon-green .quick-action-icon,
+.icon-ribbon
+{
+    -unity-background-image-tint-color: rgb(5, 150, 105);
+    background-image: url("project://database/Assets/UI/Icons/reward-icon.png");
+}
+
+.quick-action-title
+{
+    font-size: 33px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Gamification (full width row card) ---------- */
+
+.gamification-card
+{
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    border-radius: 34px;
+    padding: 32px;
+    margin: 0;
+    margin-bottom: 29px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.gamification-card .quick-action-icon-circle
+{
+    margin-bottom: 0;
+    margin-right: 29px;
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+}
+
+.gamification-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    white-space: normal;
+    -unity-text-align: middle-left;
+}
+
+/* ---------- Recent Activity ---------- */
+
+.recent-activity-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 37px;
+    padding: 40px 30px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.recent-activity-empty-label
+{
+    font-size: 32px;
+    color: rgb(150, 155, 168);
+}
+
+.recent-activity-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.recent-activity-row
+{
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding-top: 21px;
+    padding-bottom: 21px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+
+
+.recent-activity-text
+{
+    flex-grow: 1;
+    font-size: 29px;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.recent-activity-time
+{
+    font-size: 25px;
+    color: rgb(150, 155, 168);
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 39px;
+    padding-right: 39px;
+    padding-top: 87px;
+    padding-bottom: 43px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 32px;
+}
+
+.compact .header-icon-circle
+{
+    width: 79px;
+    height: 79px;
+    border-radius: 39px;
+    margin-right: 21px;
+}
+
+.compact .header-icon-emoji
+{
+    font-size: 34px;
+}
+
+.compact .header-title
+{
+    font-size: 39px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 25px;
+}
+
+.compact .glass-stat-value
+{
+    font-size: 37px;
+}
+
+.compact .glass-stat-label
+{
+    font-size: 20px;
+}
+
+.compact .create-classroom-header-label
+{
+    font-size: 28px;
+}
+
+.compact .content-wrapper
+{
+    padding-left: 37px;
+    padding-right: 37px;
+}
+
+.compact .section-title
+{
+    font-size: 32px;
+}
+
+.compact .classroom-name-label
+{
+    font-size: 32px;
+}
+
+.compact .classroom-description-label,
+.compact .classroom-students-label,
+.compact .empty-state-text
+{
+    font-size: 24px;
+}
+
+.compact .quick-action-icon-circle
+{
+    width: 85px;
+    height: 85px;
+    border-radius: 43px;
+}
+
+.compact .quick-action-title,
+.compact .gamification-title
+{
+    font-size: 26px;
+}

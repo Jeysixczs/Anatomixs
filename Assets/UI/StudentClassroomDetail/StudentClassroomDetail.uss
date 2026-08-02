@@ -1,0 +1,1063 @@
+/* =========================================================
+   Anatomia 3D - Student Classroom Detail (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient support, so the header
+   gradient is generated at runtime from
+   StudentClassroomDetailController.ApplyHeaderGradient(). The
+   color below is a flat fallback.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 59px;
+    border-bottom-right-radius: 59px;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 113px;
+    padding-bottom: 101px;
+    flex-shrink: 0;
+    flex-direction: column;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 33px;
+}
+
+.back-button
+{
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    background-color: transparent;
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin-right: 21px;
+    flex-shrink: 0;
+}
+
+.back-icon
+{
+    width: 45px;
+    height: 45px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 57px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 35px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 5px;
+    white-space: normal;
+}
+
+/* ---------- Header Glass Stat Cards ---------- */
+
+.header-stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.glass-stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.22);
+    border-radius: 26px;
+    padding: 24px;
+}
+
+.glass-stat-card-left
+{
+    margin-right: 14px;
+}
+
+.glass-stat-icon
+{
+    width: 50px;
+    height: 50px;
+    margin-right: 17px;
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.9);
+}
+
+.icon-users-white
+{
+    background-image: url("project://database/Assets/UI/Icons/student-icon.png");
+}
+
+.icon-book-white
+{
+    background-image: url("project://database/Assets/UI/Icons/quiz-icon.png");
+}
+
+.glass-stat-text-block
+{
+    flex-direction: column;
+    min-width: 0;
+}
+
+.glass-stat-value
+{
+    font-size: 50px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.glass-stat-label
+{
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: normal;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+   
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    position: relative;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 47px;
+  
+    flex-shrink: 0;
+}
+
+/* ---------- Tab Switcher (2 equal-width rows, matches AdminClassroomDetail's
+   flex-grow tab pattern) ----------
+   IMPORTANT: margin-top must stay positive/small. A negative margin here was
+   the original bug - it pulled the switcher up into the region the
+   ScrollView clips above its own visible content, which silently ate taps
+   on whatever fell in that clipped strip. As long as the switcher stays
+   inside the ScrollView's normal flow (no negative margin pulling it out)
+   this is fine.
+   The previous version used flex-wrap with content-sized buttons, which
+   made "Available Quizzes"/"Leaderboard" grow much wider than the shorter
+   labels and produced an uneven, hard-to-tap row that could clip at the
+   ScrollView edge. Splitting into two explicit rows of equal-width
+   (flex-grow) buttons - one row per AdminClassroomDetail's own tab-button
+   rule - fixes both the visual mismatch and the touch-target inconsistency. ---------- */
+
+.tab-switcher
+{
+    flex-direction: column;
+    background-color: rgb(228, 229, 235);
+    border-radius: 26px;
+    padding: 9px;
+    margin-top: 26px;
+    margin-bottom: 35px;
+}
+
+.tab-switcher-row
+{
+    flex-direction: row;
+}
+
+.tab-switcher-row-2
+{
+    margin-top: 8px;
+}
+
+.tab-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 85px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 19px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(110, 115, 128);
+    margin: 4px;
+    -unity-text-align: middle-center;
+}
+
+.tab-button-active
+{
+    background-color: white;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Tab Panels / Cards ---------- */
+
+.tab-panel
+{
+    flex-direction: column;
+}
+
+.hidden
+{
+    display: none;
+}
+
+.panel-card
+{
+    background-color: white;
+    border-radius: 35px;
+    padding: 57px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 35px;
+}
+
+.panel-card-title
+{
+    font-size: 47px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.panel-card-subtitle
+{
+    font-size: 38px;
+    color: rgb(150, 155, 168);
+    margin-top: 7px;
+    margin-bottom: 31px;
+    white-space: normal;
+}
+
+.section-title
+{
+    font-size: 47px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 7px;
+}
+
+.section-subtitle
+{
+    font-size: 35px;
+    color: rgb(150, 155, 168);
+    margin-bottom: 26px;
+}
+
+/* ---------- Empty States (shared) ---------- */
+
+.empty-state
+{
+    align-items: center;
+    padding-top: 66px;
+    padding-bottom: 66px;
+}
+
+.empty-state-inline
+{
+    padding-top: 35px;
+    padding-bottom: 24px;
+}
+
+.empty-icon
+{
+    width: 85px;
+    height: 85px;
+    margin-bottom: 26px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-users-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.icon-quiz-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.icon-lock-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.icon-announce-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.icon-history-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.empty-title
+{
+    font-size: 42px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 12px;
+}
+
+.empty-subtitle
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 590px;
+}
+
+/* ---------- Overview: Classroom Info ---------- */
+
+.info-row
+{
+    flex-direction: column;
+    padding-top: 21px;
+    padding-bottom: 21px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(238, 239, 244);
+}
+
+.info-row-last
+{
+    border-bottom-width: 0;
+    padding-bottom: 0;
+}
+
+.info-label
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    margin-bottom: 7px;
+}
+
+.info-value
+{
+    font-size: 40px;
+    color: rgb(37, 99, 235);
+    white-space: normal;
+}
+
+.info-value-big
+{
+    font-size: 50px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Overview: Announcements ---------- */
+
+.announcements-list
+{
+    flex-direction: column;
+}
+
+.announcement-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 38px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.announcement-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.announcement-title-label
+{
+    font-size: 42px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    flex-grow: 1;
+    white-space: normal;
+    margin-right: 17px;
+}
+
+.announcement-date-label
+{
+    font-size: 28px;
+    color: rgb(150, 155, 168);
+    flex-shrink: 0;
+}
+
+.announcement-body-label
+{
+    font-size: 35px;
+    color: rgb(80, 85, 100);
+    white-space: normal;
+}
+
+/* ---------- Students: Peer rows ---------- */
+
+.peers-list
+{
+    flex-direction: column;
+}
+
+.peer-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 21px 5px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(238, 239, 244);
+}
+
+.peer-row-last
+{
+    border-bottom-width: 0;
+}
+
+.peer-avatar
+{
+    width: 71px;
+    height: 71px;
+    border-radius: 35px;
+    background-color: rgb(219, 234, 254);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+}
+
+.peer-avatar-label
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+.peer-name-label
+{
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+}
+
+.peer-level-badge
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 110);
+    background-color: rgb(238, 239, 244);
+    border-radius: 14px;
+    padding: 9px 19px;
+    flex-shrink: 0;
+}
+
+/* ---------- Available Quizzes ---------- */
+
+.quizzes-list
+{
+    flex-direction: column;
+}
+
+.quiz-card
+{
+    background-color: white;
+    border-radius: 26px;
+    border-left-width: 7px;
+    border-left-color: rgb(34, 197, 94);
+    padding: 35px;
+    margin-bottom: 26px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-top-color: rgba(0, 0, 0, 0.05);
+    border-right-color: rgba(0, 0, 0, 0.05);
+    border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+.quiz-card-locked
+{
+    border-left-color: rgb(203, 206, 216);
+}
+
+.quiz-card-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.quiz-card-title
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    flex-grow: 1;
+    white-space: normal;
+    margin-right: 17px;
+}
+
+.quiz-card-subject
+{
+    font-size: 35px;
+    color: rgb(34, 197, 94);
+    margin-bottom: 26px;
+}
+
+.quiz-status-pill
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(21, 128, 61);
+    background-color: rgb(220, 252, 231);
+    border-radius: 17px;
+    padding: 9px 21px;
+    flex-shrink: 0;
+}
+
+.quiz-status-pill-locked
+{
+    color: rgb(120, 123, 140);
+    background-color: rgb(238, 239, 244);
+}
+
+.quiz-meta-grid
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 31px;
+}
+
+.quiz-meta-column
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.quiz-meta-row
+{
+    flex-direction: row;
+    margin-bottom: 9px;
+}
+
+.quiz-meta-key
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    margin-right: 9px;
+}
+
+.quiz-meta-value
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.quiz-card-bottom-row
+{
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.quiz-start-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 106px;
+    padding-left: 35px;
+    padding-right: 35px;
+    border-width: 0;
+    border-radius: 21px;
+    background-color: rgb(34, 197, 94);
+    color: white;
+    font-size: 38px;
+    -unity-font-style: bold;
+}
+
+.quiz-start-button:hover
+{
+    background-color: rgb(22, 163, 74);
+}
+
+.quiz-start-play-icon
+{
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/play-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.quiz-locked-badge
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: rgb(150, 155, 168);
+    background-color: rgb(238, 239, 244);
+    border-radius: 19px;
+    padding: 24px 35px;
+}
+
+/* ---------- Leaderboard ---------- */
+
+.top-performers-header-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.trophy-icon-box
+{
+    width: 52px;
+    height: 52px;
+    margin-right: 17px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.trophy-icon
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/reward-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(234, 179, 8);
+}
+
+.top-performers-empty-state
+{
+    align-items: center;
+    padding-top: 35px;
+    padding-bottom: 35px;
+}
+
+.top-performers-empty-text
+{
+    font-size: 38px;
+    color: rgb(150, 155, 168);
+}
+
+.top-performers-list
+{
+    flex-direction: column;
+}
+
+.performer-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 26px 21px;
+    border-radius: 21px;
+    margin-bottom: 14px;
+    background-color: rgb(248, 249, 251);
+}
+
+.performer-row-gold
+{
+    background-color: rgb(254, 249, 224);
+}
+
+.performer-row-silver
+{
+    background-color: rgb(243, 244, 248);
+}
+
+.performer-row-bronze
+{
+    background-color: rgb(253, 237, 220);
+}
+
+.performer-row-you
+{
+    border-width: 2px;
+    border-color: rgb(13, 148, 136);
+}
+
+.performer-rank-badge
+{
+    width: 71px;
+    height: 71px;
+    border-radius: 35px;
+    background-color: rgb(238, 239, 244);
+    justify-content: center;
+    align-items: center;
+    margin-right: 19px;
+    flex-shrink: 0;
+}
+
+.performer-rank-badge-gold
+{
+    background-color: rgb(254, 240, 138);
+}
+
+.performer-rank-badge-silver
+{
+    background-color: rgb(226, 228, 234);
+}
+
+.performer-rank-badge-bronze
+{
+    background-color: rgb(253, 220, 178);
+}
+
+.performer-rank-label
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 110);
+}
+
+.performer-avatar
+{
+    width: 78px;
+    height: 78px;
+    border-radius: 39px;
+    background-color: rgb(219, 234, 254);
+    justify-content: center;
+    align-items: center;
+    margin-right: 21px;
+    flex-shrink: 0;
+}
+
+.performer-avatar-label
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+.performer-info
+{
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.performer-name-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.performer-name-label
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.performer-you-badge
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: white;
+    background-color: rgb(13, 148, 136);
+    border-radius: 9px;
+    padding: 4px 12px;
+    margin-left: 12px;
+}
+
+.performer-meta-label
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    margin-top: 4px;
+}
+
+.performer-score-block
+{
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.performer-score-percent
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(22, 163, 74);
+}
+
+.performer-points-sub
+{
+    font-size: 28px;
+    color: rgb(150, 155, 168);
+    margin-top: 2px;
+}
+
+/* ---------- Scores (Quiz History) ---------- */
+
+.scores-list
+{
+    flex-direction: column;
+}
+
+.score-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 40px;
+    margin-bottom: 26px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.score-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.score-title-block
+{
+    flex-direction: column;
+    flex-shrink: 1;
+    flex-grow: 1;
+    margin-right: 17px;
+}
+
+.score-title-label
+{
+    font-size: 42px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.score-completed-label
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    margin-top: 5px;
+}
+
+.score-status-pill
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    border-radius: 17px;
+    padding: 9px 21px;
+    flex-shrink: 0;
+}
+
+.score-status-pill-passed
+{
+    color: rgb(21, 128, 61);
+    background-color: rgb(220, 252, 231);
+}
+
+.score-status-pill-failed
+{
+    color: rgb(185, 28, 28);
+    background-color: rgb(254, 226, 226);
+}
+
+.score-mid-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.score-fraction-label
+{
+    font-size: 38px;
+    color: rgb(80, 85, 100);
+}
+
+.score-percent-label
+{
+    font-size: 50px;
+    -unity-font-style: bold;
+}
+
+.score-percent-label-passed
+{
+    color: rgb(22, 163, 74);
+}
+
+.score-percent-label-failed
+{
+    color: rgb(220, 38, 38);
+}
+
+.score-bottom-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 21px;
+    padding-top: 21px;
+    border-top-width: 1px;
+    border-top-color: rgb(238, 239, 244);
+}
+
+.score-meta-label
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 31px;
+    padding-right: 31px;
+    padding-top: 66px;
+    padding-bottom: 71px;
+}
+
+.compact .header-title
+{
+    font-size: 31px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 20px;
+}
+
+.compact .glass-stat-value
+{
+    font-size: 28px;
+}
+
+.compact .glass-stat-label
+{
+    font-size: 17px;
+}
+
+.compact .content-wrapper
+{
+    padding: 28px;
+}
+
+.compact .tab-button
+{
+    height: 71px;
+    font-size: 17px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.compact .panel-card
+{
+    padding: 28px;
+    border-radius: 26px;
+}
+
+.compact .empty-title
+{
+    font-size: 26px;
+}
+
+.compact .empty-subtitle
+{
+    font-size: 21px;
+}
+
+.compact .quiz-card-title,
+.compact .score-title-label
+{
+    font-size: 26px;
+}
+
+.compact .quiz-start-button
+{
+    height: 68px;
+    font-size: 22px;
+}

@@ -1,0 +1,75 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminDashboard/AdminDashboard.uss?fileID=7433441132597879392&amp;guid=52586ffcf29bb3141b7297cdb3317ab1&amp;type=3#AdminDashboard"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="profile-button" class="header-icon-circle">
+                        <ui:Label text="" class="header-icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 70px; width: 62px;"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="Teacher Dashboard" class="header-title"/>
+                        <ui:Label name="header-subtitle-label" text="Welcome back, Teacher" class="header-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="logout-button" class="logout-button">
+                        <ui:VisualElement class="logout-icon icon-logout"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement name="header-stats-row" class="header-stats-row">
+                    <ui:VisualElement name="classrooms-stat-card" class="glass-stat-card glass-stat-card-left">
+                        <ui:Label name="classrooms-count-label" text="0" class="glass-stat-value"/>
+                        <ui:Label text="Classrooms" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="students-stat-card" class="glass-stat-card glass-stat-card-mid">
+                        <ui:Label name="students-count-label" text="0" class="glass-stat-value"/>
+                        <ui:Label text="Students" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="avg-score-stat-card" class="glass-stat-card glass-stat-card-right">
+                        <ui:Label name="avg-score-value-label" text="85%" class="glass-stat-value"/>
+                        <ui:Label text="Avg Score" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="create-classroom-button" class="create-classroom-header-button">
+                    <ui:Label text="+" class="create-classroom-plus"/>
+                    <ui:Label text="Create New Classroom" class="create-classroom-header-label"/>
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:Label text="My Classrooms" class="section-title"/>
+                <ui:VisualElement name="classrooms-section" class="classrooms-section">
+                    <ui:VisualElement name="classrooms-empty-state" class="classrooms-empty-state">
+                        <ui:Label text="" class="empty-state-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 132px; width: 143px; background-color: rgb(255, 255, 255); -unity-background-image-tint-color: rgb(123, 113, 113);"/>
+                        <ui:Label text="No classrooms yet" class="empty-state-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="classrooms-list" class="classrooms-list hidden"/>
+                </ui:VisualElement>
+                <ui:Label text="Quick Actions" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="quick-actions-row" class="quick-actions-row">
+                    <ui:Button name="manage-quizzes-button" class="quick-action-card quick-action-card-left">
+                        <ui:VisualElement class="quick-action-icon-circle quick-action-icon-blue">
+                            <ui:VisualElement class="quick-action-icon icon-book"/>
+                        </ui:VisualElement>
+                        <ui:Label text="Manage Quizzes" class="quick-action-title"/>
+                    </ui:Button>
+                    <ui:Button name="view-analytics-button" class="quick-action-card quick-action-card-right">
+                        <ui:VisualElement class="quick-action-icon-circle quick-action-icon-orange">
+                            <ui:VisualElement class="quick-action-icon icon-chart"/>
+                        </ui:VisualElement>
+                        <ui:Label text="View Analytics" class="quick-action-title"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:Button name="gamification-button" class="gamification-card">
+                    <ui:VisualElement class="quick-action-icon-circle quick-action-icon-green">
+                        <ui:VisualElement class="quick-action-icon icon-ribbon"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Gamification Configuration" class="gamification-title"/>
+                </ui:Button>
+                <ui:Label text="Recent Activity" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="recent-activity-card" class="recent-activity-card">
+                    <ui:Label name="recent-activity-empty-label" text="No recent activity yet" class="recent-activity-empty-label"/>
+                    <ui:VisualElement name="recent-activity-list" class="recent-activity-list hidden"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

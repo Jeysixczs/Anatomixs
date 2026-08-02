@@ -1,0 +1,769 @@
+/* =========================================================
+   Anatomia 3D - Admin Gamification Settings (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header, "Add" buttons,
+   modal submit buttons and the pale preview-card background are
+   generated as Texture2D at runtime from
+   AdminGamificationSettingsController. The colors below are flat
+   fallbacks.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    padding-left: 53px;
+    padding-right: 53px;
+    padding-top: 118px;
+    padding-bottom: 53px;
+    flex-shrink: 0;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 29px;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.back-icon
+{
+    width: 43px;
+    height: 43px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-title
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.save-changes-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.28);
+    border-radius: 24px;
+    padding: 16px 22px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.save-changes-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.save-icon
+{
+    width: 32px;
+    height: 32px;
+    margin-right: 14px;
+    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.save-changes-label
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.screen-scroll .unity-scroller--vertical
+{
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 36px 32px 60px 32px;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Section Cards (Points Config / Badges / Levels) ---------- */
+
+.section-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 37px;
+    padding: 43px;
+    margin-bottom: 32px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.section-card-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.section-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 29px;
+}
+
+/* ---------- Fields (shared by Points Config + modals) ---------- */
+
+.field-label
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.field-label-spaced
+{
+    margin-top: 29px;
+    margin-bottom: 14px;
+}
+
+.text-field
+{
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.text-field > .unity-text-field__input
+{
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 21px;
+    padding: 18px 20px;
+    -unity-text-align: upper-left;
+}
+
+.field-error
+{
+    font-size: 26px;
+    color: rgb(220, 38, 38);
+    margin-top: 8px;
+}
+
+/* ---------- Add Badge / Add Level buttons (gradient at runtime) ---------- */
+
+.add-item-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    border-width: 0;
+    padding: 16px 24px;
+    margin: 0;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.add-item-plus
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+    margin-right: 10px;
+}
+
+.add-item-label
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- Badges / Levels lists ---------- */
+
+.empty-list-label
+{
+    align-items: center;
+    padding: 20px 0;
+}
+
+.empty-list-label Label
+{
+    font-size: 29px;
+    color: rgb(150, 155, 168);
+}
+
+.items-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.item-row
+{
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(247, 248, 251);
+    border-radius: 26px;
+    padding: 26px;
+    margin-bottom: 21px;
+}
+
+
+
+.item-icon-circle
+{
+    width: 74px;
+    height: 74px;
+    border-radius: 37px;
+    background-color: white;
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.item-icon-emoji
+{
+    font-size: 34px;
+    -unity-text-align: middle-center;
+}
+
+.item-text-col
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.item-title-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.item-subtitle-label
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    margin-top: 2px;
+    white-space: normal;
+}
+
+.item-delete-button
+{
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: transparent;
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+.item-delete-button:hover
+{
+    background-color: rgba(220, 38, 38, 0.08);
+}
+
+.item-delete-icon
+{
+    font-size: 32px;
+    color: rgb(220, 38, 38);
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Preview card (pale gradient background at runtime) ---------- */
+
+.preview-card
+{
+    width: 100%;
+    border-radius: 37px;
+    padding: 39px;
+    border-width: 1px;
+    border-color: rgba(16, 185, 129, 0.18);
+    background-color: rgb(238, 246, 244); /* fallback, overridden by gradient texture */
+}
+
+.preview-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 24px;
+}
+
+.preview-inner-card
+{
+    background-color: white;
+    border-radius: 29px;
+    padding: 34px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.preview-inner-card-spaced
+{
+    margin-top: 26px;
+}
+
+.preview-inner-title
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 24px;
+}
+
+.points-preview-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.points-preview-box
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    border-radius: 24px;
+    padding-top: 24px;
+    padding-bottom: 21px;
+    margin-right: 16px;
+}
+
+
+.points-preview-easy
+{
+    background-color: rgb(220, 247, 232);
+}
+
+.points-preview-medium
+{
+    background-color: rgb(254, 243, 205);
+}
+
+.points-preview-hard
+{
+    background-color: rgb(253, 226, 226);
+}
+
+.points-preview-value
+{
+    font-size: 39px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.points-preview-easy .points-preview-value
+{
+    color: rgb(5, 150, 105);
+}
+
+.points-preview-medium .points-preview-value
+{
+    color: rgb(180, 130, 10);
+}
+
+.points-preview-hard .points-preview-value
+{
+    color: rgb(200, 40, 60);
+}
+
+.points-preview-label
+{
+    font-size: 25px;
+    color: rgb(120, 123, 140);
+    margin-top: 6px;
+    -unity-text-align: middle-center;
+}
+
+.progression-summary-text
+{
+    font-size: 28px;
+    color: rgb(90, 95, 112);
+    white-space: normal;
+}
+
+/* ---------- Status label (modals) ---------- */
+
+.status-label
+{
+    font-size: 26px;
+    color: rgb(120, 123, 140);
+    margin-top: 18px;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Modal overlay ---------- */
+
+.modal-overlay
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 18, 28, 0.55);
+    justify-content: center;
+    align-items: center;
+    padding: 53px;
+}
+
+.modal-card
+{
+    width: 100%;
+    max-width: 846px;
+    background-color: white;
+    border-radius: 37px;
+    padding: 47px;
+}
+
+.modal-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.modal-header-text-col
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.modal-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.modal-subtitle
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.modal-close-button
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
+    background-color: transparent;
+    border-width: 0;
+    font-size: 34px;
+    color: rgb(138, 143, 163);
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+.modal-close-button:hover
+{
+    background-color: rgb(243, 244, 248);
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Badge icon grid ---------- */
+
+.icon-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.icon-grid-item
+{
+    width: 100px;
+    height: 100px;
+    border-radius: 24px;
+    background-color: rgb(240, 241, 245);
+    border-width: 2px;
+    border-color: transparent;
+    justify-content: center;
+    align-items: center;
+    margin-right: 18px;
+    margin-bottom: 18px;
+    padding: 0;
+}
+
+.icon-grid-item:hover
+{
+    background-color: rgb(232, 233, 239);
+}
+
+.icon-grid-item-selected
+{
+    background-color: rgb(219, 234, 254);
+    border-color: rgb(37, 99, 235);
+}
+
+.icon-grid-item-emoji
+{
+    font-size: 39px;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Modal buttons (gradient submit at runtime) ---------- */
+
+.modal-submit-button
+{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    border-width: 0;
+    padding-top: 29px;
+    padding-bottom: 29px;
+    margin: 0;
+    margin-top: 37px;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.modal-submit-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.modal-cancel-button
+{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    border-width: 1px;
+    border-color: rgb(224, 226, 232);
+    background-color: white;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    margin: 0;
+    margin-top: 18px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.modal-cancel-button:hover
+{
+    background-color: rgb(248, 249, 251);
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 87px;
+    padding-bottom: 39px;
+}
+
+.compact .header-title
+{
+    font-size: 34px;
+}
+
+.compact .back-button
+{
+    width: 104px;
+    height: 104px;
+    border-radius: 52px;
+    margin-right: 21px;
+}
+
+.compact .back-icon
+{
+    width: 34px;
+    height: 34px;
+}
+
+.compact .save-changes-label
+{
+    display: none;
+}
+
+.compact .save-changes-button
+{
+    padding: 21px;
+}
+
+.compact .save-icon
+{
+    margin-right: 0;
+}
+
+.compact .content-wrapper
+{
+    padding: 28px 22px 48px 22px;
+}
+
+.compact .section-card
+{
+    padding: 32px;
+}
+
+.compact .section-card-title
+{
+    font-size: 30px;
+}
+
+.compact .add-item-label
+{
+    font-size: 25px;
+}
+
+.compact .item-title-label
+{
+    font-size: 26px;
+}
+
+.compact .item-subtitle-label
+{
+    font-size: 23px;
+}
+
+.compact .modal-card
+{
+    padding: 34px;
+}
+
+.compact .modal-title
+{
+    font-size: 32px;
+}
+
+.compact .icon-grid-item
+{
+    width: 82px;
+    height: 82px;
+    margin-right: 14px;
+    margin-bottom: 14px;
+}

@@ -1,0 +1,116 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
+                <ui:VisualElement name="header" class="header">
+                    <ui:VisualElement name="header-top-row" class="header-top-row">
+                        <ui:Button name="back-button" class="back-button">
+                            <ui:VisualElement name="back-icon" class="back-icon"/>
+                        </ui:Button>
+                        <ui:VisualElement name="header-text" class="header-text">
+                            <ui:Label text="Quiz Management" class="header-title"/>
+                            <ui:Label text="Create and manage quizzes" class="header-subtitle"/>
+                        </ui:VisualElement>
+                        <ui:Button name="new-quiz-button" class="new-quiz-button">
+                            <ui:Label text="+" class="new-quiz-plus"/>
+                            <ui:Label text="New Quiz" class="new-quiz-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="stats-row" class="stats-row">
+                    <ui:VisualElement name="total-quizzes-stat-card" class="stat-card stat-card-left">
+                        <ui:Label name="total-quizzes-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Total Quizzes" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="total-questions-stat-card" class="stat-card stat-card-mid">
+                        <ui:Label name="total-questions-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Total Questions" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="categories-stat-card" class="stat-card stat-card-right">
+                        <ui:Label name="categories-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Categories" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
+                    <ui:Label text="No quizzes yet" class="empty-state-text"/>
+                    <ui:Button name="create-first-quiz-button" text="Create Your First Quiz" class="empty-state-button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement name="create-quiz-modal-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="create-quiz-modal-card" class="modal-card">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-header-text-col">
+                        <ui:Label text="Create New Quiz" class="modal-title"/>
+                        <ui:Label text="Add a new quiz to the system" class="modal-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="create-quiz-close-button" text="✕" class="modal-close-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Quiz Title" class="field-label field-label-spaced"/>
+                <ui:TextField name="quiz-title-field" class="text-field"/>
+                <ui:Label name="quiz-title-error" text="" class="field-error hidden"/>
+                <ui:Label text="Category" class="field-label field-label-spaced"/>
+                <ui:TextField name="quiz-category-field" class="text-field"/>
+                <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
+                <ui:VisualElement class="two-column-row">
+                    <ui:VisualElement class="two-column-item two-column-item-left">
+                        <ui:Label text="Time Limit (seconds)" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-time-limit-field" value="600" class="text-field"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="two-column-item two-column-item-right">
+                        <ui:Label text="Passing Score (%)" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-passing-score-field" value="70" class="text-field"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="create-quiz-status-label" text="" class="status-label hidden"/>
+                <ui:Button name="create-quiz-submit-button" class="modal-submit-button">
+                    <ui:Label text="Create Quiz" class="modal-submit-label"/>
+                </ui:Button>
+                <ui:Button name="create-quiz-cancel-button" text="Cancel" class="modal-cancel-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="add-question-modal-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="add-question-modal-card" class="modal-card">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-header-text-col">
+                        <ui:Label text="Add Question" class="modal-title"/>
+                        <ui:Label text="Create a new question for this quiz" class="modal-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="add-question-close-button" text="✕" class="modal-close-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Question" class="field-label field-label-spaced"/>
+                <ui:TextField name="question-text-field" multiline="true" class="text-field text-area"/>
+                <ui:Label name="question-text-error" text="" class="field-error hidden"/>
+                <ui:Label text="Question Type" class="field-label field-label-spaced"/>
+                <ui:DropdownField name="question-type-dropdown" class="dropdown-field"/>
+                <ui:VisualElement name="options-container" class="options-container">
+                    <ui:Label text="Options" class="field-label field-label-spaced"/>
+                    <ui:TextField name="option-1-field" class="text-field option-field"/>
+                    <ui:TextField name="option-2-field" class="text-field option-field"/>
+                    <ui:TextField name="option-3-field" class="text-field option-field"/>
+                    <ui:TextField name="option-4-field" class="text-field option-field"/>
+                </ui:VisualElement>
+                <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
+                <ui:TextField name="correct-answer-field" class="text-field"/>
+                <ui:Label name="correct-answer-error" text="" class="field-error hidden"/>
+                <ui:VisualElement class="two-column-row">
+                    <ui:VisualElement class="two-column-item two-column-item-left">
+                        <ui:Label text="Difficulty" class="field-label field-label-spaced"/>
+                        <ui:DropdownField name="difficulty-dropdown" class="dropdown-field"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="two-column-item two-column-item-right">
+                        <ui:Label text="Points" class="field-label field-label-spaced"/>
+                        <ui:TextField name="question-points-field" value="10" class="text-field"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="add-question-status-label" text="" class="status-label hidden"/>
+                <ui:Button name="add-question-submit-button" class="modal-submit-button">
+                    <ui:Label text="Add Question" class="modal-submit-label"/>
+                </ui:Button>
+                <ui:Button name="add-question-cancel-button" text="Cancel" class="modal-cancel-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

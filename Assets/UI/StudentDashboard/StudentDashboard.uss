@@ -1,0 +1,955 @@
+/* =========================================================
+   Anatomia 3D - Student Dashboard (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(234,243,251);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+/* Target the Unity vertical scroller element */
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+/* CRITICAL FIX: Reset the translate transform on the content container */
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Header ---------- */
+
+.header
+{
+    width: 100%;
+    background-color: rgb(142,45,226);
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 80px;
+    padding-bottom: 70px;
+    flex-shrink: 0;
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 45px;
+}
+
+.icon-button
+{
+    width: 60px;
+    height: 60px;
+    background-color: transparent;
+    border-width: 0px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    -unity-background-image-tint-color: white;
+    flex-shrink: 0;
+}
+
+.icon-menu
+{
+    background-image: url("project://database/Assets/UI/Icons/menu-icon.png");
+}
+
+.icon-logout
+{
+    background-image: url("project://database/Assets/UI/Icons/exit-logo.png");
+}
+
+.header-title-block
+{
+    flex-grow: 1;
+    margin-left: 25px;
+    margin-right: 15px;
+}
+
+.welcome-title
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.welcome-subtitle
+{
+    font-size: 50px;
+    color: white;
+}
+
+/* ---------- Level Card ---------- */
+
+.level-card
+{
+    background-color: rgba(255,255,255,0.16);
+    border-radius: 32px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 38px;
+    padding-bottom: 38px;
+    margin-top: 15px;
+}
+
+.level-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.level-text
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.progress-track
+{
+    width: 100%;
+    height: 18px;
+    background-color: rgba(255,255,255,0.3);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.progress-fill
+{
+    height: 100%;
+    background-color: rgb(20,20,20);
+    border-radius: 9px;
+}
+
+.level-caption
+{
+    font-size: 26px;
+    color: rgba(255,255,255,0.85);
+    margin-top: 20px;
+}
+
+/* ---------- Join a Classroom ---------- */
+
+.join-classroom-card
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    border-radius: 32px;
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: -35px;
+    margin-bottom: 25px;
+    padding: 34px;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.05);
+}
+
+.join-classroom-icon-box
+{
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    background-color: rgb(13,148,136);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 28px;
+}
+
+.join-classroom-icon-emoji
+{
+    font-size: 40px;
+    -unity-text-align: middle-center;
+}
+
+.join-classroom-text
+{
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.join-classroom-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+}
+
+.join-classroom-subtitle
+{
+    font-size: 24px;
+    color: rgb(138,143,163);
+    margin-top: 4px;
+    white-space: normal;
+}
+
+.join-classroom-button
+{
+    background-color: rgb(17,17,20);
+    border-radius: 26px;
+    border-width: 0px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-left: 20px;
+    flex-shrink: 0;
+    -unity-font-style: bold;
+    color: white;
+    font-size: 28px;
+}
+
+/* ---------- Stat Cards ---------- */
+
+.stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    padding-left: 50px;
+    padding-right: 50px;
+    margin-top: -40px;
+    margin-bottom: 0px;
+}
+
+.stats-row-spaced
+{
+    margin-top: 25px;
+    margin-bottom: 0px;
+}
+
+.stat-card
+{
+    flex: 1;
+    background-color: white;
+    border-radius: 32px;
+    padding: 36px;
+    flex-shrink: 0;
+    min-width: 0;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.05);
+}
+
+/* Left card in a row */
+.stat-card-left
+{
+    margin-right: 14px;
+}
+
+/* Right card in a row */
+.stat-card-right
+{
+    margin-left: 14px;
+}
+
+/* Half width card (points card) - matches quizzes card */
+.stat-card-half
+{
+    flex: 1;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.stat-card-spacer
+{
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-icon
+{
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
+    margin-bottom: 22px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    -unity-background-image-tint-color: white;
+}
+
+.icon-book
+{
+    background-image: url("project://database/Assets/UI/Icons/book-icon.png");
+}
+
+.icon-target
+{
+    background-image: url("project://database/Assets/UI/Icons/target-icon.png");
+}
+
+.icon-trophy
+{
+    background-image: url("project://database/Assets/UI/Icons/trophy-icon.png");
+}
+
+.stat-value
+{
+    font-size: 50px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+    margin-bottom: 8px;
+}
+
+.stat-label
+{
+    font-size: 24px;
+    color: rgb(138,143,163);
+    white-space: normal;
+}
+
+/* ---------- Quick Actions ---------- */
+
+.quick-actions-card
+{
+    background-color: white;
+    border-radius: 40px;
+    margin-left: 50px;
+    margin-right: 50px;
+    padding: 52px;
+    margin-top: 35px;
+    margin-bottom: 0px;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.05);
+}
+
+.section-title
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+    margin-bottom: 35px;
+}
+
+.actions-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.action-button
+{
+    flex: 1;
+    height: 180px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 28px;
+    border-width: 0px;
+    min-width: 0;
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.2);
+}
+
+.action-button-left
+{
+    margin-right: 14px;
+}
+
+.action-button-right
+{
+    margin-left: 14px;
+}
+
+.action-icon
+{
+    width: 62px;
+    height: 62px;
+    margin-bottom: 18px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    -unity-background-image-tint-color: white;
+}
+
+.icon-cube
+{
+    background-image: url("project://database/Assets/UI/Icons/brain-icon.png");
+}
+
+.icon-quiz
+{
+    background-image: url("project://database/Assets/UI/Icons/takequiz-icon.png");
+}
+
+.icon-badge
+{
+    background-image: url("project://database/Assets/UI/Icons/badges-icon.png");
+}
+
+.icon-progress
+{
+    background-image: url("project://database/Assets/UI/Icons/progress-icon.png");
+}
+
+.action-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.action-blue
+{
+    background-color: rgb(37,99,235);
+}
+
+.action-purple
+{
+    background-color: rgb(147,51,234);
+}
+
+.action-gold
+{
+    background-color: rgb(217,119,6);
+}
+
+.action-green
+{
+    background-color: rgb(22,163,74);
+}
+
+/* ---------- Recent Activity ---------- */
+
+.recent-activity-card
+{
+    background-color: white;
+    border-radius: 40px;
+    margin-left: 50px;
+    margin-right: 50px;
+    padding: 52px;
+    margin-top: 35px;
+    margin-bottom: 70px;
+    min-height: 260px;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.05);
+}
+
+.recent-activity-list
+{
+    flex-direction: column;
+}
+
+/* ---------- Activity Items ---------- */
+
+.activity-item
+{
+    flex-direction: row;
+    align-items: center;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0,0,0,0.06);
+}
+
+.activity-item-last
+{
+    border-bottom-width: 0px;
+}
+
+.activity-icon
+{
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    margin-right: 24px;
+    flex-shrink: 0;
+    background-color: rgb(142,45,226);
+}
+
+.activity-content
+{
+    flex-grow: 1;
+    margin-right: 18px;
+}
+
+.activity-title
+{
+    font-size: 24px;
+    color: rgb(31,36,48);
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.activity-time
+{
+    font-size: 20px;
+    color: rgb(138,143,163);
+}
+
+.activity-points
+{
+    font-size: 24px;
+    color: rgb(37,99,235);
+    -unity-font-style: bold;
+    flex-shrink: 0;
+    margin-left: 14px;
+}
+
+/* ---------- Compact Layout (Use C# to toggle this class) ---------- */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
+    padding-bottom: 60px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 38px;
+}
+
+.compact .welcome-title
+{
+    font-size: 32px;
+}
+
+.compact .welcome-subtitle
+{
+    font-size: 40px;
+}
+
+.compact .level-card
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    margin-top: 10px;
+}
+
+.compact .level-text
+{
+    font-size: 26px;
+}
+
+.compact .level-caption
+{
+    font-size: 22px;
+}
+
+.compact .join-classroom-card
+{
+    margin-left: 34px;
+    margin-right: 34px;
+    padding: 26px;
+}
+
+.compact .join-classroom-icon-box
+{
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    margin-right: 22px;
+}
+
+.compact .join-classroom-icon-emoji
+{
+    font-size: 32px;
+}
+
+.compact .join-classroom-title
+{
+    font-size: 28px;
+}
+
+.compact .join-classroom-subtitle
+{
+    font-size: 20px;
+}
+
+.compact .join-classroom-button
+{
+    font-size: 24px;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    margin-left: 14px;
+}
+
+.compact .stats-row
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    margin-top: -34px;
+}
+
+.compact .stats-row-spaced
+{
+    margin-top: 20px;
+}
+
+.compact .stat-card
+{
+    padding: 28px;
+}
+
+.compact .stat-card-left
+{
+    margin-right: 10px;
+}
+
+.compact .stat-card-right
+{
+    margin-left: 10px;
+}
+
+.compact .stat-value
+{
+    font-size: 40px;
+}
+
+.compact .stat-label
+{
+    font-size: 20px;
+}
+
+.compact .stat-icon
+{
+    width: 52px;
+    height: 52px;
+}
+
+.compact .quick-actions-card
+{
+    margin-left: 34px;
+    margin-right: 34px;
+    padding: 40px;
+    margin-top: 28px;
+}
+
+.compact .recent-activity-card
+{
+    margin-left: 34px;
+    margin-right: 34px;
+    padding: 40px;
+    margin-top: 28px;
+    margin-bottom: 60px;
+}
+
+.compact .action-button
+{
+    height: 155px;
+}
+
+.compact .action-button-left
+{
+    margin-right: 10px;
+}
+
+.compact .action-button-right
+{
+    margin-left: 10px;
+}
+
+.compact .action-icon
+{
+    width: 54px;
+    height: 54px;
+}
+
+.compact .action-label
+{
+    font-size: 28px;
+}
+
+.compact .section-title
+{
+    font-size: 32px;
+    margin-bottom: 28px;
+}
+
+.compact .icon-button
+{
+    width: 50px;
+    height: 50px;
+}
+
+.compact .header-title-block
+{
+    margin-left: 18px;
+}
+
+.compact .actions-row
+{
+    margin-bottom: 22px;
+}
+
+.compact .activity-item
+{
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.compact .activity-icon
+{
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    margin-right: 18px;
+}
+
+.compact .activity-title
+{
+    font-size: 20px;
+}
+
+.compact .activity-time
+{
+    font-size: 18px;
+}
+
+.compact .activity-points
+{
+    font-size: 20px;
+}
+
+/* ---------- Extra Small Layout (Use C# to toggle this class) ---------- */
+
+.extra-small .header
+{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 60px;
+    padding-bottom: 50px;
+}
+
+.extra-small .header-top-row
+{
+    margin-bottom: 30px;
+}
+
+.extra-small .welcome-title
+{
+    font-size: 26px;
+}
+
+.extra-small .welcome-subtitle
+{
+    font-size: 34px;
+}
+
+.extra-small .level-card
+{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    margin-top: 8px;
+}
+
+.extra-small .level-text
+{
+    font-size: 22px;
+}
+
+.extra-small .level-caption
+{
+    font-size: 18px;
+}
+
+.extra-small .stats-row
+{
+    padding-left: 24px;
+    padding-right: 24px;
+    margin-top: -30px;
+}
+
+.extra-small .stats-row-spaced
+{
+    margin-top: 14px;
+}
+
+.extra-small .stat-card
+{
+    padding: 22px;
+    min-width: 80px;
+}
+
+.extra-small .stat-card-left
+{
+    margin-right: 8px;
+}
+
+.extra-small .stat-card-right
+{
+    margin-left: 8px;
+}
+
+.extra-small .stat-value
+{
+    font-size: 34px;
+}
+
+.extra-small .stat-label
+{
+    font-size: 18px;
+}
+
+.extra-small .stat-icon
+{
+    width: 44px;
+    height: 44px;
+}
+
+.extra-small .quick-actions-card
+{
+    margin-left: 24px;
+    margin-right: 24px;
+    padding: 30px;
+    margin-top: 22px;
+}
+
+.extra-small .recent-activity-card
+{
+    margin-left: 24px;
+    margin-right: 24px;
+    padding: 30px;
+    margin-top: 22px;
+    margin-bottom: 50px;
+}
+
+.extra-small .action-button
+{
+    width: 47%;
+    min-width: 80px;
+    height: 130px;
+    margin-bottom: 14px;
+}
+
+.extra-small .action-button-left
+{
+    margin-right: 8px;
+}
+
+.extra-small .action-button-right
+{
+    margin-left: 8px;
+}
+
+.extra-small .action-icon
+{
+    width: 46px;
+    height: 46px;
+}
+
+.extra-small .action-label
+{
+    font-size: 24px;
+}
+
+.extra-small .section-title
+{
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+.extra-small .actions-row
+{
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.extra-small .stat-card-spacer
+{
+    display: none;
+}
+
+.extra-small .activity-item
+{
+    padding-top: 18px;
+    padding-bottom: 18px;
+}
+
+.extra-small .activity-icon
+{
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    margin-right: 16px;
+}
+
+.extra-small .activity-title
+{
+    font-size: 19px;
+}
+
+.extra-small .activity-time
+{
+    font-size: 17px;
+}
+
+.extra-small .activity-points
+{
+    font-size: 19px;
+}

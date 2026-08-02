@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isStudent() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/students/$(request.auth.uid));
+    }
+
+    // Written once at signup by the client, never edited afterwards.
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && request.resource.data.role in ['admin', 'student'];
+      allow update, delete: if false;
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSelf(adminId);
+      allow create: if isSelf(adminId);
+      allow update: if isSelf(adminId);
+      allow delete: if false;
+    }
+
+    match /students/{studentId} {
+      allow read: if isSelf(studentId) || isAdmin();
+      allow create: if isSelf(studentId);
+      allow update: if isSelf(studentId) || isAdmin();
+      allow delete: if false;
+
+      match /notifications/{notificationId} {
+        allow read, update, delete: if isSelf(studentId);
+        allow create: if isSelf(studentId) || isAdmin();
+      }
+    }
+
+    // A student must be able to check "does this code exist" before joining,
+    // and an admin must be able to reserve a code when creating a classroom.
+    match /classroomCodes/{code} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /classrooms/{classroomId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && request.resource.data.teacherId == request.auth.uid;
+      // Owning admin can edit classroom fields; a joining student can only
+      // touch studentCount/memberIds via the transaction in ClassroomService,
+      // so we allow student updates only when they're adding themselves.
+      allow update: if (isAdmin() && resource.data.teacherId == request.auth.uid) ||
+        (isStudent() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'studentCount']) &&
+          request.resource.data.memberIds.hasAll(resource.data.memberIds) &&
+          request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1);
+      allow delete: if false;
+
+      match /members/{studentId} {
+        allow read: if isSignedIn();
+        allow create: if isSelf(studentId);
+        allow update, delete: if isSelf(studentId) ||
+          (isAdmin() &&
+            get(/databases/$(database)/documents/classrooms/$(classroomId)).data.teacherId == request.auth.uid);
+      }
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin() && request.resource.data.createdBy == request.auth.uid;
+      allow delete: if isAdmin() && resource.data.createdBy == request.auth.uid;
+    }
+
+    match /quizAttempts/{attemptId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == request.auth.uid || isAdmin());
+      allow create: if isStudent() && request.resource.data.studentId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /gamificationSettings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

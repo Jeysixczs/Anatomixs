@@ -1,0 +1,80 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminProfile/AdminProfile.uss?fileID=7433441132597879392&amp;guid=4b4aaebfd99c1d044a872de995c600ce&amp;type=3#AdminProfile"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row" style="height: 122px; width: 962px;">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="Profile" class="header-title"/>
+                        <ui:Label text="Manage your account" class="header-subtitle"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="profile-summary-card" class="profile-summary-card">
+                    <ui:VisualElement name="avatar" class="avatar">
+                        <ui:Label name="avatar-initials-label" text="TC" class="avatar-initials"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="profile-summary-text" class="profile-summary-text">
+                        <ui:Label name="teacher-name-label" text="Teacher Cruz" class="profile-name"/>
+                        <ui:Label name="teacher-email-label" text="teacher.cruz@email.com" class="profile-email"/>
+                        <ui:VisualElement name="role-badge" class="role-badge">
+                            <ui:Label name="role-badge-label" text="Teacher" class="role-badge-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="stats-row" class="stats-row">
+                    <ui:VisualElement name="classrooms-card" class="stat-card stat-card-left">
+                        <ui:VisualElement name="classrooms-background" class="stat-icon stat-icon-blue">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/classroom-icon.png?fileID=2800000&amp;guid=5739fd750ddf3d64c8795b29466ce716&amp;type=3#classroom-icon&quot;); height: 45px; width: 49px;"/>
+                        </ui:VisualElement>
+                        <ui:Label name="classrooms-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Classrooms" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="students-stat-card" class="stat-card stat-card-mid">
+                        <ui:VisualElement name="students-background" class="stat-icon stat-icon-orange">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/users-icon.png?fileID=2800000&amp;guid=283e313d0909bc04882c7217209f7b5f&amp;type=3#users-icon&quot;); height: 47px; width: 45px;"/>
+                        </ui:VisualElement>
+                        <ui:Label name="students-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Students" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-right">
+                        <ui:VisualElement name="quizzes-background" class="stat-icon stat-icon-purple">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-icon.png?fileID=2800000&amp;guid=94d1609b9c3ba5c45a6b760d524ff279&amp;type=3#quiz-icon&quot;); height: 38px; width: 39px;"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quizzes-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Quizzes Created" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label text="Account" class="section-title"/>
+                <ui:VisualElement name="account-menu-card" class="menu-card">
+                    <ui:Button name="edit-profile-button" class="menu-item">
+                        <ui:VisualElement name="editprofile-background" class="menu-icon-box menu-icon-blue">
+                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/edit-white-icon.png?fileID=2800000&amp;guid=d7b6e690e0161be4381875bed43494c5&amp;type=3#edit-white-icon&quot;); height: 44px; width: 47px; background-color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
+                        </ui:VisualElement>
+                        <ui:Label text="Edit Profile" class="menu-item-label"/>
+                        <ui:VisualElement class="menu-chevron"/>
+                    </ui:Button>
+                    <ui:VisualElement class="menu-divider"/>
+                    <ui:Button name="about-button" class="menu-item">
+                        <ui:VisualElement name="about-background" class="menu-icon-box menu-icon-gray">
+                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/about-white-icon.png?fileID=2800000&amp;guid=98c2cf8ab000a754db61770d48a95c75&amp;type=3#about-white-icon&quot;); height: 46px; width: 51px;"/>
+                        </ui:VisualElement>
+                        <ui:Label text="About Anatomia 3D" class="menu-item-label"/>
+                        <ui:VisualElement class="menu-chevron"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:Button name="logout-button" class="logout-button">
+                    <ui:VisualElement name="logout-background" class="menu-icon-box menu-icon-red">
+                        <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/exit-logo.png?fileID=2800000&amp;guid=26de3f2ef3fd2cd41b2536793a9f4398&amp;type=3#exit-logo&quot;); height: 43px; width: 44px;"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Log Out" class="logout-label"/>
+                </ui:Button>
+                <ui:Label text="Anatomia 3D  v1.0.0" class="version-label"/>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

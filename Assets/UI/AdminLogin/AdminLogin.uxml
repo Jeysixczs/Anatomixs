@@ -1,0 +1,53 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminLogin/AdminLogin.uss?fileID=7433441132597879392&amp;guid=44e0350b50f34f64993663515ae5925d&amp;type=3#AdminLogin"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:VisualElement name="screen-container" class="screen-container">
+            <ui:ScrollView name="scroll-view" class="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden">
+                <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                    <ui:VisualElement name="logo-circle" class="logo-circle">
+                        <ui:VisualElement name="logo-icon" class="logo-icon icon-shield" style="background-image: url(&quot;project://database/Assets/UI/Icons/shield-icon.png?fileID=2800000&amp;guid=567fc6a50cdaf8440b5c049c17b1aeb8&amp;type=3#shield-icon&quot;); height: 191px; width: 166px;"/>
+                    </ui:VisualElement>
+                    <ui:Label name="app-title" text="Administrator Access" class="app-title"/>
+                    <ui:Label name="app-subtitle" text="Secure login required" class="app-subtitle"/>
+                    <ui:VisualElement name="login-card" class="login-card">
+                        <ui:Label text="Admin Email" class="field-label"/>
+                        <ui:VisualElement class="input-container">
+                            <ui:VisualElement class="input-icon icon-email"/>
+                            <ui:TextField name="admin-email-field" placeholder-text="admin@anatomylearn.com" hide-placeholder-on-focus="true" class="input-field"/>
+                        </ui:VisualElement>
+                        <ui:Label name="email-error" text="Please enter a valid admin email" class="field-error hidden"/>
+                        <ui:Label text="Password" class="field-label field-label-spaced"/>
+                        <ui:VisualElement class="input-container">
+                            <ui:VisualElement class="input-icon icon-lock"/>
+                            <ui:TextField name="password-field" password="true" placeholder-text="Enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
+                            <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
+                        </ui:VisualElement>
+                        <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
+                        <ui:Button name="forgot-password-button" text="Forgot Password?" class="forgot-password-link"/>
+                        <ui:Button name="secure-login-button" text="Secure Login" class="secure-login-button"/>
+                        <ui:VisualElement class="divider-row">
+                            <ui:VisualElement class="divider-line"/>
+                            <ui:Label text="Or continue with" class="divider-text"/>
+                            <ui:VisualElement class="divider-line"/>
+                        </ui:VisualElement>
+                        <ui:Button name="google-signin-button" class="google-button">
+                            <ui:VisualElement class="icon-google"/>
+                            <ui:Label text="Sign in with Google" class="google-button-text"/>
+                        </ui:Button>
+                        <ui:VisualElement name="encryption-row" class="encryption-row">
+                            <ui:VisualElement class="encryption-dot"/>
+                            <ui:Label text="Secured with enterprise-grade encryption" class="encryption-text"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="create-account-row" class="create-account-row">
+                        <ui:Label text="Don&apos;t have an admin account?" class="create-account-text"/>
+                        <ui:Button name="navigate-to-create-account-button" text="Create Account" class="create-account-link"/>
+                    </ui:VisualElement>
+                    <ui:Button name="back-to-student-login-button" text="← Back to Student Login" class="back-to-student-link"/>
+                    <ui:Label name="footer-warning-label" text="This is a restricted area. All access attempts are logged and monitored." class="footer-warning-label"/>
+                    <ui:Label name="status-label" text="" class="status-label hidden"/>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

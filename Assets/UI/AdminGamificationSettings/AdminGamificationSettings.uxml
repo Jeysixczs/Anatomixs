@@ -1,0 +1,126 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminGamificationSettings/AdminGamificationSettings.uss?fileID=7433441132597879392&amp;guid=fa61be93c142b78438326c8dacd57d46&amp;type=3#AdminGamificationSettings"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
+                <ui:VisualElement name="header" class="header">
+                    <ui:VisualElement name="header-top-row" class="header-top-row">
+                        <ui:Button name="back-button" class="back-button">
+                            <ui:VisualElement name="back-icon" class="back-icon"/>
+                        </ui:Button>
+                        <ui:Label text="Gamification Settings" class="header-title"/>
+                        <ui:Button name="save-changes-button" class="save-changes-button">
+                            <ui:VisualElement name="save-icon" class="save-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); height: 51px; width: 45px;"/>
+                            <ui:Label text="Save Changes" class="save-changes-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="points-config-card" class="section-card">
+                    <ui:Label text="Points Configuration" class="section-card-title"/>
+                    <ui:Label text="Easy Question Points" class="field-label field-label-spaced"/>
+                    <ui:TextField name="easy-points-field" value="10" class="text-field"/>
+                    <ui:Label text="Medium Question Points" class="field-label field-label-spaced"/>
+                    <ui:TextField name="medium-points-field" value="20" class="text-field"/>
+                    <ui:Label text="Hard Question Points" class="field-label field-label-spaced"/>
+                    <ui:TextField name="hard-points-field" value="30" class="text-field"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="badges-section" class="section-card">
+                    <ui:VisualElement name="badges-header-row" class="section-header-row">
+                        <ui:Label text="Badges" class="section-card-title"/>
+                        <ui:Button name="add-badge-button" class="add-item-button">
+                            <ui:Label text="+" class="add-item-plus"/>
+                            <ui:Label text="Add Badge" class="add-item-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="badges-empty-label" class="empty-list-label hidden">
+                        <ui:Label text="No badges yet"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="badges-list" class="items-list"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="levels-section" class="section-card">
+                    <ui:VisualElement name="levels-header-row" class="section-header-row">
+                        <ui:Label text="Level Progression" class="section-card-title"/>
+                        <ui:Button name="add-level-button" class="add-item-button">
+                            <ui:Label text="+" class="add-item-plus"/>
+                            <ui:Label text="Add Level" class="add-item-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="levels-empty-label" class="empty-list-label hidden">
+                        <ui:Label text="No levels yet"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="levels-list" class="items-list"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="preview-card" class="preview-card">
+                    <ui:Label text="Preview" class="preview-title"/>
+                    <ui:VisualElement class="preview-inner-card">
+                        <ui:Label text="Points System" class="preview-inner-title"/>
+                        <ui:VisualElement class="points-preview-row">
+                            <ui:VisualElement class="points-preview-box points-preview-easy">
+                                <ui:Label name="preview-easy-value" text="10" class="points-preview-value"/>
+                                <ui:Label text="Easy" class="points-preview-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="points-preview-box points-preview-medium">
+                                <ui:Label name="preview-medium-value" text="20" class="points-preview-value"/>
+                                <ui:Label text="Medium" class="points-preview-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="points-preview-box points-preview-hard">
+                                <ui:Label name="preview-hard-value" text="30" class="points-preview-value"/>
+                                <ui:Label text="Hard" class="points-preview-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="preview-inner-card preview-inner-card-spaced">
+                        <ui:Label text="Progression Path" class="preview-inner-title"/>
+                        <ui:Label name="progression-summary-label" text="Students will progress through 8 levels and can earn 4 unique badges." class="progression-summary-text"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement name="add-badge-modal-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="add-badge-modal-card" class="modal-card">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-header-text-col">
+                        <ui:Label text="Add New Badge" class="modal-title"/>
+                        <ui:Label text="Create a new achievement badge" class="modal-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="add-badge-close-button" text="✕" class="modal-close-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Badge Name" class="field-label field-label-spaced"/>
+                <ui:TextField name="badge-name-field" class="text-field"/>
+                <ui:Label name="badge-name-error" text="" class="field-error hidden"/>
+                <ui:Label text="Points Required" class="field-label field-label-spaced"/>
+                <ui:TextField name="badge-points-field" value="0" class="text-field"/>
+                <ui:Label text="Badge Icon" class="field-label field-label-spaced"/>
+                <ui:VisualElement name="badge-icon-grid" class="icon-grid"/>
+                <ui:Label name="add-badge-status-label" text="" class="status-label hidden"/>
+                <ui:Button name="add-badge-submit-button" class="modal-submit-button">
+                    <ui:Label text="Add Badge" class="modal-submit-label"/>
+                </ui:Button>
+                <ui:Button name="add-badge-cancel-button" text="Cancel" class="modal-cancel-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="add-level-modal-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="add-level-modal-card" class="modal-card">
+                <ui:VisualElement class="modal-header-row">
+                    <ui:VisualElement class="modal-header-text-col">
+                        <ui:Label text="Add New Level" class="modal-title"/>
+                        <ui:Label text="Define a new progression level" class="modal-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="add-level-close-button" text="✕" class="modal-close-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Level Number" class="field-label field-label-spaced"/>
+                <ui:TextField name="level-number-field" value="0" class="text-field"/>
+                <ui:Label text="Level Title" class="field-label field-label-spaced"/>
+                <ui:TextField name="level-title-field" class="text-field"/>
+                <ui:Label name="level-title-error" text="" class="field-error hidden"/>
+                <ui:Label text="Points Required" class="field-label field-label-spaced"/>
+                <ui:TextField name="level-points-field" value="0" class="text-field"/>
+                <ui:Label name="add-level-status-label" text="" class="status-label hidden"/>
+                <ui:Button name="add-level-submit-button" class="modal-submit-button">
+                    <ui:Label text="Add Level" class="modal-submit-label"/>
+                </ui:Button>
+                <ui:Button name="add-level-cancel-button" text="Cancel" class="modal-cancel-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

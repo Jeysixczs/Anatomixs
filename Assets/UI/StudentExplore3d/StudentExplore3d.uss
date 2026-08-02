@@ -1,0 +1,457 @@
+/* ==========================================================
+   Anatomy Systems - USS (ENLARGED VERSION)
+   Reference resolution: 1080 x 1920
+   Use Panel Settings > Scale Mode = "Scale With Screen Size"
+   with Reference Resolution = 1080 x 1920 and
+   Screen Match Mode = 0.5 for best responsiveness.
+   ========================================================== */
+
+.screen-root {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    flex-direction: column;
+    background-color: rgb(243, 244, 248);
+    overflow: hidden;
+}
+
+/* ---------------- HEADER ---------------- */
+
+.header {
+    width: 100%;
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 100px;
+    padding-bottom: 50px;
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.header-top-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.back-button {
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 30px;
+    flex-shrink: 0;
+}
+
+.back-icon {
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png?fileID=2800000&guid=654673ba2b0b2264293f6bc9049c798e&type=3#back-icon");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text {
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title {
+    font-size: 44px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.header-subtitle {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------------- SCROLL VIEW ---------------- */
+
+.screen-scroll {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* Hide scrollbar completely (descendant selector - the scroller lives inside
+   #unity-content-and-vertical-scroll-container, not as a direct child) */
+.screen-scroll .unity-scroller--vertical,
+.screen-scroll #unity-scroller {
+    width: 0;
+    display: none;
+}
+
+/* Fix the content viewport to fill the scroll view */
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+/* CRITICAL: Reset the translate transform on the content container */
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------------- CONTENT WRAPPER ---------------- */
+
+.content-wrapper {
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------------- CARD LIST ---------------- */
+
+.card-list {
+    flex-direction: column;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 36px;
+    padding-bottom: 52px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ---------------- CARD ---------------- */
+
+.card {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    border-radius: 30px;
+    padding: 30px;
+    margin-bottom: 30px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.icon-box {
+    width: 114px;
+    height: 114px;
+    border-radius: 28px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 30px;
+}
+
+.icon-emoji {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 76px;
+    height: 76px;
+}
+
+.icon-skeletal .icon-emoji {
+    background-image: url("project://database/Assets/UI/Icons/bone-icon.png?fileID=2800000&guid=5f2ddac3878d0804aa57af268471e5c9&type=3#bone-icon");
+}
+
+.icon-muscular .icon-emoji {
+    background-image: url("project://database/Assets/UI/Icons/heart-icon.png?fileID=2800000&guid=851c6857ff514bd4dbbca36eb494fe14&type=3#heart-icon");
+}
+
+.icon-cardio .icon-emoji {
+    background-image: url("project://database/Assets/UI/Icons/beat-icon.png?fileID=2800000&guid=1ae2eacb79bdd984cbbb6e3fb624774b&type=3#beat-icon");
+}
+
+.icon-skeletal { background-color: rgb(41, 98, 224); }
+.icon-muscular { background-color: rgb(224, 49, 63); }
+.icon-cardio { background-color: rgb(224, 41, 130); }
+
+.card-info {
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.card-title {
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(26, 27, 38);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.card-subtitle {
+    font-size: 26px;
+    color: rgb(120, 123, 140);
+    margin-top: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------------- PROGRESS BAR ---------------- */
+
+.progress-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 18px;
+    width: 100%;
+}
+
+.progress-track {
+    flex-grow: 1;
+    height: 16px;
+    border-radius: 8px;
+    background-color: rgb(228, 229, 235);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.fill-skeletal { width: 75%; background-color: rgb(41, 98, 224); }
+.fill-muscular { width: 45%; background-color: rgb(224, 49, 63); }
+.fill-cardio { width: 30%; background-color: rgb(224, 41, 130); }
+
+.progress-label {
+    font-size: 26px;
+    color: rgb(120, 123, 140);
+    margin-left: 20px;
+    flex-shrink: 0;
+    min-width: 64px;
+    -unity-text-align: middle-right;
+}
+
+/* ---------------- PRO TIP CARD ---------------- */
+
+.pro-tip-card {
+    flex-direction: column;
+    background-color: rgb(238, 232, 252);
+    border-radius: 30px;
+    padding: 30px;
+    margin-top: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pro-tip-title {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(90, 60, 160);
+    margin-bottom: 10px;
+}
+
+.pro-tip-text {
+    font-size: 26px;
+    color: rgb(90, 80, 120);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ==========================================================
+   RESPONSIVE ADJUSTMENTS - ENLARGED
+   ========================================================== */
+
+/* Compact mode for smaller screens */
+.compact .header {
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
+    padding-bottom: 40px;
+}
+
+.compact .back-button {
+    width: 68px;
+    height: 68px;
+    border-radius: 34px;
+    margin-right: 20px;
+}
+
+.compact .back-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.compact .header-title {
+    font-size: 36px;
+}
+
+.compact .header-subtitle {
+    font-size: 22px;
+}
+
+.compact .card-list {
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 26px;
+}
+
+.compact .card {
+    padding: 22px;
+    border-radius: 22px;
+    margin-bottom: 22px;
+}
+
+.compact .icon-box {
+    width: 90px;
+    height: 90px;
+    border-radius: 22px;
+    margin-right: 22px;
+}
+
+.compact .icon-emoji {
+    width: 56px;
+    height: 56px;
+}
+
+.compact .card-title {
+    font-size: 30px;
+}
+
+.compact .card-subtitle {
+    font-size: 22px;
+}
+
+.compact .progress-track {
+    height: 12px;
+}
+
+.compact .progress-label {
+    font-size: 22px;
+    min-width: 50px;
+    margin-left: 14px;
+}
+
+.compact .pro-tip-card {
+    padding: 22px;
+    border-radius: 22px;
+}
+
+.compact .pro-tip-title {
+    font-size: 30px;
+}
+
+.compact .pro-tip-text {
+    font-size: 22px;
+}
+
+/* Extra compact for very small screens */
+.compact-extra .header {
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 60px;
+    padding-bottom: 30px;
+}
+
+.compact-extra .back-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    margin-right: 16px;
+}
+
+.compact-extra .back-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.compact-extra .header-title {
+    font-size: 30px;
+}
+
+.compact-extra .header-subtitle {
+    font-size: 20px;
+}
+
+.compact-extra .card-list {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+}
+
+.compact-extra .card {
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+}
+
+.compact-extra .icon-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    margin-right: 18px;
+}
+
+.compact-extra .icon-emoji {
+    width: 44px;
+    height: 44px;
+}
+
+.compact-extra .card-title {
+    font-size: 26px;
+}
+
+.compact-extra .card-subtitle {
+    font-size: 18px;
+}
+
+.compact-extra .progress-track {
+    height: 10px;
+}
+
+.compact-extra .progress-label {
+    font-size: 18px;
+    min-width: 44px;
+    margin-left: 12px;
+}
+
+.compact-extra .pro-tip-card {
+    padding: 18px;
+    border-radius: 18px;
+}
+
+.compact-extra .pro-tip-title {
+    font-size: 26px;
+}
+
+.compact-extra .pro-tip-text {
+    font-size: 18px;
+}
