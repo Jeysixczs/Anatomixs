@@ -1,0 +1,191 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentProgress/StudentProgress.uss"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+
+        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <!-- ================= HEADER (gradient applied at runtime via C#) ================= -->
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="Progress Tracker" class="header-title"/>
+                        <ui:Label text="Your learning journey" class="header-subtitle"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
+                <!-- ================= LEVEL PROGRESS CARD ================= -->
+                <ui:VisualElement name="level-progress-card" class="level-progress-card">
+                    <ui:Label text="Level Progress" class="section-title"/>
+                    <ui:VisualElement name="level-row" class="level-row">
+                        <ui:VisualElement class="level-block">
+                            <ui:Label name="current-level-label" text="Level 5" class="level-number"/>
+                            <ui:Label name="current-level-title-label" text="Expert" class="level-caption-small"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="level-block level-block-right">
+                            <ui:Label name="next-level-label" text="Level 6" class="level-number"/>
+                            <ui:Label name="next-level-title-label" text="Master" class="level-caption-small"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="progress-track">
+                        <ui:VisualElement name="progress-fill" class="progress-fill" style="width: 62%;"/>
+                    </ui:VisualElement>
+                    <ui:Label name="points-to-next-label" text="250 points to next level" class="level-caption"/>
+                </ui:VisualElement>
+
+                <!-- ================= STATS GRID ================= -->
+                <ui:VisualElement name="stats-row-1" class="stats-row">
+                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
+                        <ui:VisualElement class="stat-icon stat-icon-blue icon-book">
+                            <ui:Label text="&#128218;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
+                        <ui:Label text="Quizzes Completed" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="avg-score-card" class="stat-card stat-card-right">
+                        <ui:VisualElement class="stat-icon stat-icon-green icon-target">
+                            <ui:Label text="&#127919;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="avg-score-value-label" text="87%" class="stat-value"/>
+                        <ui:Label text="Avg. Score" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced">
+                    <ui:VisualElement name="points-card" class="stat-card stat-card-left">
+                        <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy">
+                            <ui:Label text="&#127942;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="points-value-label" text="1250" class="stat-value"/>
+                        <ui:Label text="Total Points" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="badges-card" class="stat-card stat-card-right">
+                        <ui:VisualElement class="stat-icon stat-icon-gold icon-badge">
+                            <ui:Label text="&#127894;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="badges-value-label" text="3" class="stat-value"/>
+                        <ui:Label text="Badges Earned" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- ================= TAB TOGGLE ================= -->
+                <ui:VisualElement name="tab-toggle" class="tab-toggle">
+                    <ui:Button name="weekly-tab-button" text="Weekly Activity" class="tab-button tab-button-active"/>
+                    <ui:Button name="performance-tab-button" text="Performance" class="tab-button"/>
+                </ui:VisualElement>
+
+                <!-- ================= WEEKLY ACTIVITY PANEL ================= -->
+                <ui:VisualElement name="weekly-activity-panel" class="tab-panel">
+                    <ui:VisualElement name="weekly-chart-card" class="weekly-chart-card">
+                        <ui:Label text="Points This Week" class="section-title"/>
+                        <ui:VisualElement name="chart-area" class="chart-area">
+                            <ui:VisualElement name="chart-y-axis" class="chart-y-axis">
+                                <ui:Label text="220" class="chart-axis-label"/>
+                                <ui:Label text="165" class="chart-axis-label"/>
+                                <ui:Label text="110" class="chart-axis-label"/>
+                                <ui:Label text="55" class="chart-axis-label"/>
+                                <ui:Label text="0" class="chart-axis-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="chart-bars-row" class="chart-bars-row">
+                                <ui:VisualElement name="bar-col-mon" class="bar-col">
+                                    <ui:VisualElement name="bar-mon" class="chart-bar" style="height: 50%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-tue" class="bar-col">
+                                    <ui:VisualElement name="bar-tue" class="chart-bar" style="height: 75%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-wed" class="bar-col">
+                                    <ui:VisualElement name="bar-wed" class="chart-bar" style="height: 36%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-thu" class="bar-col">
+                                    <ui:VisualElement name="bar-thu" class="chart-bar" style="height: 91%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-fri" class="bar-col">
+                                    <ui:VisualElement name="bar-fri" class="chart-bar" style="height: 59%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-sat" class="bar-col">
+                                    <ui:VisualElement name="bar-sat" class="chart-bar" style="height: 86%;"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="bar-col-sun" class="bar-col">
+                                    <ui:VisualElement name="bar-sun" class="chart-bar" style="height: 80%;"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="chart-x-axis" class="chart-x-axis">
+                            <ui:Label text="Mon" class="chart-day-label"/>
+                            <ui:Label text="Tue" class="chart-day-label"/>
+                            <ui:Label text="Wed" class="chart-day-label"/>
+                            <ui:Label text="Thu" class="chart-day-label"/>
+                            <ui:Label text="Fri" class="chart-day-label"/>
+                            <ui:Label text="Sat" class="chart-day-label"/>
+                            <ui:Label text="Sun" class="chart-day-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- ================= PERFORMANCE PANEL ================= -->
+                <ui:VisualElement name="performance-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="category-card" class="category-card">
+                        <ui:Label text="Progress by Category" class="section-title"/>
+
+                        <ui:VisualElement name="category-skeletal" class="category-item">
+                            <ui:VisualElement class="category-header-row">
+                                <ui:Label text="Skeletal" class="category-name"/>
+                                <ui:Label name="category-skeletal-count" text="12 quizzes" class="category-count"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="category-progress-row">
+                                <ui:VisualElement class="category-track">
+                                    <ui:VisualElement name="category-skeletal-fill" class="category-fill" style="width: 85%;"/>
+                                </ui:VisualElement>
+                                <ui:Label name="category-skeletal-percent" text="85%" class="category-percent"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <ui:VisualElement name="category-muscular" class="category-item">
+                            <ui:VisualElement class="category-header-row">
+                                <ui:Label text="Muscular" class="category-name"/>
+                                <ui:Label name="category-muscular-count" text="8 quizzes" class="category-count"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="category-progress-row">
+                                <ui:VisualElement class="category-track">
+                                    <ui:VisualElement name="category-muscular-fill" class="category-fill" style="width: 78%;"/>
+                                </ui:VisualElement>
+                                <ui:Label name="category-muscular-percent" text="78%" class="category-percent"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <ui:VisualElement name="category-nervous" class="category-item">
+                            <ui:VisualElement class="category-header-row">
+                                <ui:Label text="Nervous" class="category-name"/>
+                                <ui:Label name="category-nervous-count" text="10 quizzes" class="category-count"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="category-progress-row">
+                                <ui:VisualElement class="category-track">
+                                    <ui:VisualElement name="category-nervous-fill" class="category-fill" style="width: 92%;"/>
+                                </ui:VisualElement>
+                                <ui:Label name="category-nervous-percent" text="92%" class="category-percent"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <ui:VisualElement name="category-cardiovascular" class="category-item category-item-last">
+                            <ui:VisualElement class="category-header-row">
+                                <ui:Label text="Cardiovascular" class="category-name"/>
+                                <ui:Label name="category-cardiovascular-count" text="6 quizzes" class="category-count"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="category-progress-row">
+                                <ui:VisualElement class="category-track">
+                                    <ui:VisualElement name="category-cardiovascular-fill" class="category-fill" style="width: 70%;"/>
+                                </ui:VisualElement>
+                                <ui:Label name="category-cardiovascular-percent" text="70%" class="category-percent"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

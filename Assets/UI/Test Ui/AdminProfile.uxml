@@ -1,0 +1,91 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminProfile/AdminProfile.uss"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+
+        <!-- ===================== HEADER ===================== -->
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-top-row" class="header-top-row">
+                <ui:Button name="back-button" class="back-button">
+                    <ui:VisualElement name="back-icon" class="back-icon"/>
+                </ui:Button>
+                <ui:VisualElement name="header-text" class="header-text">
+                    <ui:Label text="Profile" class="header-title"/>
+                    <ui:Label text="Manage your account" class="header-subtitle"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="profile-summary-card" class="profile-summary-card">
+                <ui:VisualElement name="avatar" class="avatar">
+                    <ui:Label name="avatar-initials-label" text="TC" class="avatar-initials"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="profile-summary-text" class="profile-summary-text">
+                    <ui:Label name="teacher-name-label" text="Teacher Cruz" class="profile-name"/>
+                    <ui:Label name="teacher-email-label" text="teacher.cruz@email.com" class="profile-email"/>
+                    <ui:VisualElement name="role-badge" class="role-badge">
+                        <ui:Label name="role-badge-label" text="Teacher" class="role-badge-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===================== SCROLLABLE CONTENT ===================== -->
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
+                <ui:VisualElement name="stats-row" class="stats-row">
+                    <ui:VisualElement name="classrooms-card" class="stat-card stat-card-left">
+                        <ui:VisualElement class="stat-icon stat-icon-blue">
+                            <ui:Label text="&#127979;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="classrooms-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Classrooms" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="students-stat-card" class="stat-card stat-card-mid">
+                        <ui:VisualElement class="stat-icon stat-icon-orange">
+                            <ui:Label text="&#128101;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="students-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Students" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-right">
+                        <ui:VisualElement class="stat-icon stat-icon-purple">
+                            <ui:Label text="&#128221;" class="stat-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quizzes-value-label" text="0" class="stat-value"/>
+                        <ui:Label text="Quizzes Created" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:Label text="Account" class="section-title"/>
+                <ui:VisualElement name="account-menu-card" class="menu-card">
+                    <ui:Button name="edit-profile-button" class="menu-item">
+                        <ui:VisualElement class="menu-icon-box menu-icon-blue">
+                            <ui:Label text="&#9999;" class="menu-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label text="Edit Profile" class="menu-item-label"/>
+                        <ui:VisualElement class="menu-chevron"/>
+                    </ui:Button>
+                   
+                    <ui:VisualElement class="menu-divider"/>
+                    <ui:Button name="about-button" class="menu-item">
+                        <ui:VisualElement class="menu-icon-box menu-icon-gray">
+                            <ui:Label text="&#8505;" class="menu-icon-glyph"/>
+                        </ui:VisualElement>
+                        <ui:Label text="About Anatomia 3D" class="menu-item-label"/>
+                        <ui:VisualElement class="menu-chevron"/>
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:Button name="logout-button" class="logout-button">
+                    <ui:VisualElement class="menu-icon-box menu-icon-red">
+                        <ui:Label text="&#128682;" class="menu-icon-glyph"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Log Out" class="logout-label"/>
+                </ui:Button>
+
+                <ui:Label text="Anatomia 3D  v1.0.0" class="version-label"/>
+
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

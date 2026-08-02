@@ -1,0 +1,373 @@
+/* =========================================================
+   Anatomia 3D - Student Edit Profile (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header and submit
+   button gradients are generated as Texture2D at runtime from
+   StudentEditProfileController. The colors below are flat
+   fallbacks.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 79px;
+    border-bottom-right-radius: 79px;
+    padding-left: 66px;
+    padding-right: 66px;
+    padding-top: 132px;
+    padding-bottom: 79px;
+    flex-shrink: 0;
+    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 39px;
+    flex-shrink: 0;
+}
+
+.back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.back-icon
+{
+    width: 53px;
+    height: 53px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 59px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 34px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 34px 50px 60px 50px;
+    max-width: 100%;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* ---------- Form Cards ---------- */
+
+.form-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 43px;
+    padding: 47px;
+    margin-bottom: 39px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.card-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.card-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-subtitle
+{
+    font-size: 28px;
+    color: rgb(138, 143, 163);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+.toggle-visibility-button
+{
+    background-color: transparent;
+    border-width: 0px;
+    padding: 0;
+    margin: 0;
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(142, 45, 226);
+}
+
+.toggle-visibility-button:hover
+{
+    color: rgb(118, 34, 191);
+}
+
+.field-label
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-top: 32px;
+    margin-bottom: 14px;
+}
+
+.field-label-spaced
+{
+    margin-top: 37px;
+}
+
+.text-field
+{
+    font-size: 34px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.text-field > .unity-text-field__input
+{
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 21px;
+    padding: 20px 22px;
+}
+
+.field-error
+{
+    font-size: 28px;
+    color: rgb(220, 38, 38);
+    margin-top: 10px;
+}
+
+/* ---------- Status label ---------- */
+
+.status-label
+{
+    font-size: 29px;
+    color: rgb(120, 123, 140);
+    margin-bottom: 21px;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Submit Button (gradient applied at runtime via C#) ---------- */
+
+.save-changes-submit-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-radius: 32px;
+    border-width: 0px;
+    padding-top: 34px;
+    padding-bottom: 34px;
+    margin: 0;
+    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+}
+
+.save-changes-icon
+{
+    width: 37px;
+    height: 37px;
+    margin-right: 18px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+}
+
+.save-changes-label
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 45px;
+    padding-right: 45px;
+    padding-top: 92px;
+    padding-bottom: 59px;
+}
+
+.compact .header-title
+{
+    font-size: 47px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 29px;
+}
+
+.compact .back-button
+{
+    width: 104px;
+    height: 104px;
+    border-radius: 52px;
+    margin-right: 26px;
+}
+
+.compact .back-icon
+{
+    width: 43px;
+    height: 43px;
+}
+
+.compact .content-wrapper
+{
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+.compact .form-card
+{
+    padding: 34px;
+}
+
+.compact .card-title
+{
+    font-size: 32px;
+}
+
+.compact .card-subtitle,
+.compact .toggle-visibility-button
+{
+    font-size: 24px;
+}
+
+.compact .field-label
+{
+    font-size: 25px;
+}
+
+.compact .text-field
+{
+    font-size: 29px;
+}
+
+.compact .field-error
+{
+    font-size: 24px;
+}
+
+.compact .save-changes-label
+{
+    font-size: 32px;
+}
+
+.compact .save-changes-submit-button
+{
+    padding-top: 26px;
+    padding-bottom: 26px;
+}

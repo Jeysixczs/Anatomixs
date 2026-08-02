@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "386800185692",
+    "project_id": "anatomia3d-82258",
+    "storage_bucket": "anatomia3d-82258.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386800185692:android:f0d78d8166e9e988045199",
+        "android_client_info": {
+          "package_name": "com.fouras.anatomia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZmQbljXBxpPsRG1rHfIIki5tw2oPC3Ec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

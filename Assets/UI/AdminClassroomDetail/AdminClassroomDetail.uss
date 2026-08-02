@@ -1,0 +1,964 @@
+/* =========================================================
+   Anatomia 3D - Admin Classroom Detail (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient support, so the header
+   gradient is generated at runtime from
+   AdminClassroomDetailController.ApplyHeaderGradient(). The
+   colors below are flat fallbacks.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 66px;
+    border-bottom-right-radius: 66px;
+    padding-left: 53px;
+    padding-right: 53px;
+    padding-top: 106px;
+    padding-bottom: 53px;
+    flex-shrink: 0;
+    flex-direction: column;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 39px;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: transparent;
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin-right: 26px;
+    flex-shrink: 0;
+}
+
+.back-icon
+{
+    width: 47px;
+    height: 47px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-title
+{
+    font-size: 51px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    flex-shrink: 1;
+}
+
+/* ---------- Classroom Code Box ---------- */
+
+.classroom-code-box
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.24);
+    border-radius: 32px;
+    padding: 26px 28px;
+}
+
+.classroom-code-text-block
+{
+    flex-direction: column;
+}
+
+.classroom-code-caption
+{
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+}
+
+.classroom-code-value
+{
+    font-size: 43px;
+    -unity-font-style: bold;
+    color: white;
+    letter-spacing: 2px;
+}
+
+.copy-code-icon-button
+{
+    width: 92px;
+    height: 92px;
+    border-radius: 26px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.copy-code-icon-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.copy-code-icon
+{
+    width: 39px;
+    height: 39px;
+    background-image: url("project://database/Assets/UI/Icons/copy-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    position: relative;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 45px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* ---------- Stat Row ---------- */
+
+.stats-row
+{
+    flex-direction: row;
+    margin-bottom: 39px;
+}
+
+.stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-radius: 32px;
+    padding: 22px 16px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.stat-card-spaced
+{
+    margin-right: 21px;
+}
+
+.stat-icon
+{
+    width: 43px;
+    height: 43px;
+    margin-bottom: 18px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-users-blue
+{
+    background-image: url("project://database/Assets/UI/Icons/users-icon.png");
+    -unity-background-image-tint-color: rgb(59, 130, 246);
+}
+
+.icon-trend-green
+{
+    background-image: url("project://database/Assets/UI/Icons/trend-up-icon.png");
+    -unity-background-image-tint-color: rgb(34, 197, 94);
+}
+
+.icon-ribbon-blue
+{
+    background-image: url("project://database/Assets/UI/Icons/ribbon-icon.png");
+    -unity-background-image-tint-color: rgb(59, 130, 246);
+}
+
+.stat-value
+{
+    font-size: 43px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.stat-label
+{
+    font-size: 25px;
+    color: rgb(150, 155, 168);
+    margin-top: 6px;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Tab Switcher ---------- */
+
+.tab-switcher
+{
+    flex-direction: row;
+    background-color: rgb(228, 229, 235);
+    border-radius: 29px;
+    padding: 8px;
+    margin-bottom: 34px;
+}
+
+.tab-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 100px;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 24px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(110, 115, 128);
+}
+
+.tab-button-active
+{
+    background-color: white;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Tab Panels / Cards ---------- */
+
+.tab-panel
+{
+    flex-direction: column;
+}
+
+.hidden
+{
+    display: none;
+}
+
+.panel-card
+{
+    background-color: white;
+    border-radius: 37px;
+    padding: 47px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 34px;
+}
+
+.panel-card-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.panel-card-subtitle
+{
+    font-size: 30px;
+    color: rgb(150, 155, 168);
+    margin-top: 8px;
+    margin-bottom: 39px;
+    white-space: normal;
+}
+
+.panel-card-subtitle-tight
+{
+    margin-bottom: 0;
+}
+
+/* ---------- Students: Empty State ---------- */
+
+.empty-state
+{
+    align-items: center;
+    padding-top: 79px;
+    padding-bottom: 79px;
+}
+
+.empty-icon
+{
+    width: 85px;
+    height: 85px;
+    margin-bottom: 32px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-users-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/users-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.icon-announce-gray
+{
+    background-image: url("project://database/Assets/UI/Icons/announce-icon.png");
+    -unity-background-image-tint-color: rgb(190, 194, 204);
+}
+
+.empty-title
+{
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 14px;
+}
+
+.empty-subtitle
+{
+    font-size: 29px;
+    color: rgb(150, 155, 168);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-bottom: 39px;
+    max-width: 688px;
+}
+
+.copy-classroom-code-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 112px;
+    padding-left: 39px;
+    padding-right: 39px;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(226, 227, 233);
+    border-radius: 26px;
+}
+
+.copy-classroom-code-button:hover
+{
+    background-color: rgb(248, 248, 250);
+}
+
+.copy-classroom-code-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-left: 18px;
+}
+
+/* ---------- Students: List (populated state, rows built in C#) ---------- */
+
+.students-list-card
+{
+    padding: 26px;
+}
+
+.students-list
+{
+    flex-direction: column;
+}
+
+.student-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 20px 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(238, 239, 244);
+}
+
+.student-row-last
+{
+    border-bottom-width: 0;
+}
+
+.student-avatar
+{
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    background-color: rgb(219, 234, 254);
+    justify-content: center;
+    align-items: center;
+    margin-right: 26px;
+    flex-shrink: 0;
+}
+
+.student-avatar-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+.student-info
+{
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.student-name-label
+{
+    font-size: 33px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.student-meta-label
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+    margin-top: 6px;
+}
+
+.student-points-label
+{
+    font-size: 33px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    flex-shrink: 0;
+}
+
+/* ---------- Quizzes ---------- */
+
+.quiz-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(238, 239, 244);
+}
+
+.quiz-row-last
+{
+    border-bottom-width: 0;
+    padding-bottom: 6px;
+}
+
+.quiz-row-text
+{
+    flex-direction: column;
+    flex-shrink: 1;
+    flex-grow: 1;
+    margin-right: 26px;
+}
+
+.quiz-row-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.quiz-row-subject
+{
+    font-size: 28px;
+    color: rgb(150, 155, 168);
+    margin-top: 6px;
+}
+
+/* ---------- Toggle Switch (reusable) ---------- */
+
+.toggle-switch
+{
+    width: 126px;
+    height: 71px;
+    border-radius: 36px;
+    background-color: rgb(214, 216, 224);
+    border-width: 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
+}
+
+.toggle-switch:hover
+{
+    opacity: 0.9;
+}
+
+.toggle-on
+{
+    background-color: rgb(34, 197, 94);
+}
+
+.toggle-knob
+{
+    width: 59px;
+    height: 59px;
+    border-radius: 29px;
+    background-color: white;
+    margin-left: 7px;
+    transition-property: margin-left;
+    transition-duration: 0.15s;
+}
+
+.toggle-on .toggle-knob
+{
+    margin-left: 62px;
+}
+
+/* ---------- Analytics: Performance Overview ---------- */
+
+.overview-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(238, 239, 244);
+}
+
+.overview-row-last
+{
+    border-bottom-width: 0;
+    padding-bottom: 0;
+}
+
+.overview-label
+{
+    font-size: 32px;
+    color: rgb(59, 130, 246);
+}
+
+.overview-value
+{
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Analytics: Top Performers ---------- */
+
+.top-performers-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 26px;
+}
+
+.top-performers-text-block
+{
+    flex-direction: column;
+    flex-shrink: 1;
+    flex-grow: 1;
+    margin-right: 21px;
+}
+
+.show-to-students-toggle-block
+{
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.show-to-students-label
+{
+    font-size: 24px;
+    color: rgb(150, 155, 168);
+    margin-top: 10px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    max-width: 185px;
+}
+
+.top-performers-empty-state
+{
+    align-items: center;
+    padding-top: 39px;
+    padding-bottom: 39px;
+}
+
+.top-performers-empty-text
+{
+    font-size: 30px;
+    color: rgb(150, 155, 168);
+}
+
+.top-performers-list
+{
+    flex-direction: column;
+    margin-bottom: 14px;
+}
+
+.performer-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 18px 14px;
+    border-radius: 24px;
+    margin-bottom: 16px;
+    background-color: rgb(248, 249, 251);
+}
+
+.performer-row-gold
+{
+    background-color: rgb(254, 249, 224);
+}
+
+.performer-row-silver
+{
+    background-color: rgb(243, 244, 248);
+}
+
+.performer-row-bronze
+{
+    background-color: rgb(253, 237, 220);
+}
+
+.performer-rank-badge
+{
+    width: 63px;
+    height: 63px;
+    border-radius: 32px;
+    background-color: rgb(210, 213, 222);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+}
+
+.performer-rank-badge-gold
+{
+    background-color: rgb(234, 179, 8);
+}
+
+.performer-rank-badge-silver
+{
+    background-color: rgb(148, 163, 184);
+}
+
+.performer-rank-badge-bronze
+{
+    background-color: rgb(180, 111, 51);
+}
+
+.performer-rank-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.performer-name-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+}
+
+.performer-points-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    flex-shrink: 0;
+}
+
+/* ---------- Announcements ---------- */
+
+.announcement-field-label
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 110);
+    margin-bottom: 14px;
+}
+
+.announcement-field-label-spaced
+{
+    margin-top: 32px;
+}
+
+.announcement-input
+{
+    background-color: rgb(248, 249, 251);
+    border-width: 1px;
+    border-color: rgb(226, 227, 233);
+    border-radius: 21px;
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+}
+
+/* Unity's built-in TextField draws its own inner input element - flatten it
+   so the field reads as one seamless box matching the app's card style. */
+.announcement-input > .unity-text-field__input,
+.announcement-input > .unity-base-text-field__input
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 14px 16px;
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+}
+
+.announcement-textarea
+{
+    min-height: 238px;
+}
+
+.announcement-textarea > .unity-text-field__input,
+.announcement-textarea > .unity-base-text-field__input
+{
+    min-height: 238px;
+    white-space: normal;
+    -unity-text-align: upper-left;
+}
+
+.post-announcement-button
+{
+    align-self: flex-end;
+    height: 112px;
+    padding-left: 45px;
+    padding-right: 45px;
+    margin-top: 39px;
+    background-color: rgb(34, 197, 94);
+    border-width: 0;
+    border-radius: 24px;
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.post-announcement-button:hover
+{
+    background-color: rgb(22, 163, 74);
+}
+
+.announcements-section-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 24px;
+}
+
+.announcements-list
+{
+    flex-direction: column;
+}
+
+.announcement-card
+{
+    background-color: white;
+    border-radius: 32px;
+    padding: 37px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.announcement-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.announcement-title-label
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    flex-grow: 1;
+    white-space: normal;
+    margin-right: 18px;
+}
+
+.announcement-date-label
+{
+    font-size: 25px;
+    color: rgb(150, 155, 168);
+    flex-shrink: 0;
+}
+
+.announcement-body-label
+{
+    font-size: 29px;
+    color: rgb(80, 85, 100);
+    white-space: normal;
+    margin-bottom: 18px;
+}
+
+.announcement-delete-button
+{
+    align-self: flex-end;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(220, 38, 38);
+}
+
+.announcement-delete-button:hover
+{
+    color: rgb(185, 28, 28);
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 37px;
+    padding-right: 37px;
+    padding-top: 74px;
+    padding-bottom: 39px;
+}
+
+.compact .header-title
+{
+    font-size: 39px;
+}
+
+.compact .classroom-code-value
+{
+    font-size: 34px;
+}
+
+.compact .content-wrapper
+{
+    padding: 32px;
+}
+
+.compact .stat-card
+{
+    padding: 16px 10px;
+    border-radius: 24px;
+}
+
+.compact .stat-value
+{
+    font-size: 33px;
+}
+
+.compact .stat-label
+{
+    font-size: 21px;
+}
+
+.compact .tab-button
+{
+    height: 82px;
+    font-size: 21px;
+}
+
+.compact .panel-card
+{
+    padding: 34px;
+    border-radius: 29px;
+}
+
+.compact .empty-title
+{
+    font-size: 30px;
+}
+
+.compact .empty-subtitle
+{
+    font-size: 25px;
+}
+
+.compact .announcement-field-label
+{
+    font-size: 24px;
+}
+
+.compact .announcement-input > .unity-text-field__input,
+.compact .announcement-input > .unity-base-text-field__input
+{
+    font-size: 25px;
+    padding: 10px 12px;
+}
+
+.compact .announcement-textarea,
+.compact .announcement-textarea > .unity-text-field__input,
+.compact .announcement-textarea > .unity-base-text-field__input
+{
+    min-height: 172px;
+}
+
+.compact .post-announcement-button
+{
+    height: 85px;
+    font-size: 26px;
+    padding-left: 34px;
+    padding-right: 34px;
+}
+
+.compact .announcements-section-title
+{
+    font-size: 28px;
+}
+
+.compact .announcement-title-label
+{
+    font-size: 28px;
+}
+
+.compact .announcement-body-label
+{
+    font-size: 24px;
+}

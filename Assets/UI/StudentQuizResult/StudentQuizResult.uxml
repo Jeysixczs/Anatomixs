@@ -1,0 +1,72 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentQuizResult/StudentQuizResult.uss?fileID=7433441132597879392&amp;guid=bd735ff159359cd4ab349c8a69a6aa02&amp;type=3#StudentQuizResult"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="trophy-icon-box" class="trophy-icon-box">
+                <ui:VisualElement name="trophy-icon" class="trophy-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-big-icon.png?fileID=2800000&amp;guid=9292264cfd43ce04cae89dad977f9b71&amp;type=3#trophy-big-icon&quot;); height: 150px; width: 145px;"/>
+            </ui:VisualElement>
+            <ui:Label name="result-title-label" text="Keep Practicing!" class="result-title"/>
+            <ui:Label name="quiz-name-label" text="Skeletal System Basics" class="quiz-name"/>
+        </ui:VisualElement>
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="score-card" class="score-card">
+                    <ui:Label name="score-percent-label" text="50%" class="score-percent"/>
+                    <ui:Label text="Your Score" class="score-caption"/>
+                    <ui:VisualElement class="score-stats-row">
+                        <ui:VisualElement class="score-stat-item">
+                            <ui:Label name="correct-count-label" text="1" class="score-stat-value"/>
+                            <ui:Label text="Correct" class="score-stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="score-stat-item">
+                            <ui:Label name="incorrect-count-label" text="1" class="score-stat-value"/>
+                            <ui:Label text="Incorrect" class="score-stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="score-stat-item score-stat-item-last">
+                            <ui:Label name="total-count-label" text="2" class="score-stat-value"/>
+                            <ui:Label text="Total" class="score-stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="score-divider"/>
+                    <ui:VisualElement class="points-earned-row">
+                        <ui:Label text="Points Earned" class="points-earned-label"/>
+                        <ui:Label name="points-earned-value-label" text="10 / 20" class="points-earned-value"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="points-progress-track">
+                        <ui:VisualElement name="points-progress-fill" class="points-progress-fill" style="width: 50%;"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="mini-stats-row" class="mini-stats-row">
+                    <ui:VisualElement name="points-mini-card" class="mini-card mini-card-left">
+                        <ui:VisualElement class="mini-icon-box mini-icon-blue">
+                            <ui:VisualElement class="mini-icon icon-trend-up" style="background-image: url(&quot;project://database/Assets/UI/Icons/beat-icon.png?fileID=2800000&amp;guid=1ae2eacb79bdd984cbbb6e3fb624774b&amp;type=3#beat-icon&quot;);"/>
+                        </ui:VisualElement>
+                        <ui:Label name="points-mini-value-label" text="+10" class="mini-value"/>
+                        <ui:Label text="Points" class="mini-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="bonus-mini-card" class="mini-card mini-card-right">
+                        <ui:VisualElement class="mini-icon-box mini-icon-gold">
+                            <ui:VisualElement class="mini-icon icon-target"/>
+                        </ui:VisualElement>
+                        <ui:Label name="bonus-mini-value-label" text="+25" class="mini-value"/>
+                        <ui:Label text="Bonus XP" class="mini-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="back-to-dashboard-button" class="back-to-dashboard-button">
+                    <ui:VisualElement class="back-to-dashboard-icon icon-home" style="background-image: url(&quot;project://database/Assets/UI/Icons/share-icon.png?fileID=2800000&amp;guid=f1fe6e7c9a36c3946ab9415bdb9b5fdc&amp;type=3#share-icon&quot;); height: 70px; width: 68px;"/>
+                    <ui:Label text="Back to Dashboard" class="back-to-dashboard-label"/>
+                </ui:Button>
+                <ui:VisualElement name="secondary-actions-row" class="secondary-actions-row">
+                    <ui:Button name="retry-button" class="secondary-action-button secondary-action-button-left">
+                        <ui:VisualElement class="secondary-action-icon icon-retry" style="background-image: url(&quot;project://database/Assets/UI/Icons/retry-icon.png?fileID=2800000&amp;guid=7144cd08c6ffaad4c8580bfcbca4f648&amp;type=3#retry-icon&quot;);"/>
+                        <ui:Label text="Retry" class="secondary-action-label"/>
+                    </ui:Button>
+                    <ui:Button name="share-button" class="secondary-action-button secondary-action-button-right">
+                        <ui:VisualElement class="secondary-action-icon icon-share" style="background-image: url(&quot;project://database/Assets/UI/Icons/share-icon.png?fileID=2800000&amp;guid=f1fe6e7c9a36c3946ab9415bdb9b5fdc&amp;type=3#share-icon&quot;);"/>
+                        <ui:Label text="Share" class="secondary-action-label"/>
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,500 @@
+/* =========================================================
+   Anatomia 3D - Student Achievements (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 100px;
+    padding-bottom: 50px;
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
+.back-button
+{
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 30px;
+    flex-shrink: 0;
+}
+
+.back-icon
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 44px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.header-subtitle
+{
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------- Summary Card ---------- */
+
+.summary-card
+{
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 28px;
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    flex-direction: column;
+}
+
+.summary-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.summary-divider
+{
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.summary-label
+{
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.summary-value
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Badge List / Cards ---------- */
+
+.badge-list
+{
+    flex-direction: column;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.badge-card
+{
+    flex-direction: row;
+    align-items: flex-start;
+    background-color: white;
+    border-radius: 30px;
+    padding: 30px;
+    margin-bottom: 30px;
+    width: 100%;
+    box-sizing: border-box;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.badge-card-locked
+{
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.badge-icon-box
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 26px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 28px;
+}
+
+.badge-icon-gold
+{
+    background-color: rgb(247, 148, 29);
+}
+
+.badge-icon-locked
+{
+    background-color: rgb(224, 226, 232);
+}
+
+.badge-icon-emoji
+{
+    font-size: 44px;
+    -unity-text-align: middle-center;
+}
+
+.badge-lock-icon
+{
+    width: 36px;
+    height: 40px;
+    background-color: rgb(160, 165, 178);
+    border-radius: 6px;
+}
+
+.badge-info
+{
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.badge-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.badge-title-locked
+{
+    color: rgb(150, 155, 168);
+}
+
+.badge-status
+{
+    font-size: 24px;
+    margin-top: 4px;
+}
+
+.badge-status-unlocked
+{
+    color: rgb(120, 123, 140);
+}
+
+.badge-status-locked
+{
+    color: rgb(160, 165, 178);
+}
+
+.badge-progress-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-top: 18px;
+    width: 100%;
+}
+
+.progress-track
+{
+    flex-grow: 1;
+    height: 16px;
+    border-radius: 8px;
+    background-color: rgb(228, 229, 235);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.progress-fill
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.progress-fill-complete
+{
+    background-color: rgb(247, 148, 29);
+}
+
+.progress-fill-locked
+{
+    background-color: rgb(75, 85, 99);
+}
+
+.progress-label
+{
+    font-size: 24px;
+    margin-left: 18px;
+    flex-shrink: 0;
+    -unity-text-align: middle-right;
+    -unity-font-style: bold;
+}
+
+.progress-label-complete
+{
+    color: rgb(22, 163, 74);
+}
+
+.badge-progress-footer-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.progress-footer-label
+{
+    font-size: 22px;
+    color: rgb(150, 155, 168);
+}
+
+.progress-footer-label-right
+{
+    -unity-text-align: middle-right;
+}
+
+/* ---------- Special Achievements ---------- */
+
+.special-achievements-section
+{
+    padding-top: 10px;
+    padding-bottom: 60px;
+}
+
+.section-title
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    padding-left: 40px;
+    padding-right: 40px;
+    margin-bottom: 20px;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
+    padding-bottom: 40px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 26px;
+}
+
+.compact .header-title
+{
+    font-size: 36px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 22px;
+}
+
+.compact .back-button
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 34px;
+    margin-right: 20px;
+}
+
+.compact .back-icon
+{
+    width: 32px;
+    height: 32px;
+}
+
+.compact .summary-card
+{
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+}
+
+.compact .summary-label
+{
+    font-size: 22px;
+}
+
+.compact .summary-value
+{
+    font-size: 26px;
+}
+
+.compact .badge-list
+{
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 26px;
+}
+
+.compact .badge-card
+{
+    padding: 22px;
+    border-radius: 24px;
+    margin-bottom: 22px;
+}
+
+.compact .badge-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    margin-right: 20px;
+}
+
+.compact .badge-icon-emoji
+{
+    font-size: 34px;
+}
+
+.compact .badge-title
+{
+    font-size: 28px;
+}
+
+.compact .badge-status
+{
+    font-size: 20px;
+}
+
+.compact .progress-track
+{
+    height: 12px;
+}
+
+.compact .progress-label
+{
+    font-size: 20px;
+    margin-left: 14px;
+}
+
+.compact .progress-footer-label
+{
+    font-size: 18px;
+}
+
+.compact .section-title
+{
+    font-size: 28px;
+    padding-left: 26px;
+    padding-right: 26px;
+}

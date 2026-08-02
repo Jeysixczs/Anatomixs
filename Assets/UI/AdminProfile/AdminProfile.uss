@@ -1,0 +1,561 @@
+/* =========================================================
+   Anatomia 3D - Admin (Teacher) Profile (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 79px;
+    border-bottom-right-radius: 79px;
+    padding-left: 66px;
+    padding-right: 66px;
+    padding-top: 132px;
+    padding-bottom: 66px;
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 53px;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 39px;
+    flex-shrink: 0;
+}
+
+.back-icon
+{
+    width: 53px;
+    height: 53px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 59px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.header-subtitle
+{
+    font-size: 34px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 8px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------- Profile Summary Card ---------- */
+
+.profile-summary-card
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 37px;
+    padding: 39px;
+}
+
+.avatar
+{
+    width: 159px;
+    height: 159px;
+    border-radius: 79px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.6);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 37px;
+}
+
+.avatar-initials
+{
+    font-size: 61px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.profile-summary-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.profile-name
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.profile-email
+{
+    font-size: 32px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 6px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.role-badge
+{
+    align-self: flex-start;
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 24px;
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-top: 18px;
+}
+
+.role-badge-label
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Stat Row (mirrors Dashboard's stat cards, 3-up) ---------- */
+
+.stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    padding-left: 66px;
+    padding-right: 66px;
+    margin-top: 39px;
+    margin-bottom: 14px;
+}
+
+.stat-card
+{
+    flex: 1;
+    background-color: white;
+    border-radius: 34px;
+    padding: 32px;
+    flex-shrink: 0;
+    min-width: 0;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    align-items: flex-start;
+}
+
+.stat-card-left
+{
+    margin-right: 10px;
+}
+
+.stat-card-mid
+{
+    margin-right: 10px;
+}
+
+.stat-card-right
+{
+    margin-left: 0;
+}
+
+.stat-icon
+{
+    width: 59px;
+    height: 59px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    justify-content: center;
+    align-items: center;
+}
+
+.stat-icon-glyph
+{
+    font-size: 29px;
+    -unity-text-align: middle-center;
+}
+
+.stat-icon-blue { background-color: rgb(37, 99, 235); }
+.stat-icon-orange { background-color: rgb(217, 119, 6); }
+.stat-icon-purple { background-color: rgb(147, 51, 234); }
+
+.stat-value
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 6px;
+}
+
+.stat-label
+{
+    font-size: 24px;
+    color: rgb(138, 143, 163);
+    white-space: normal;
+}
+
+/* ---------- Menu Cards ---------- */
+
+.section-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    padding-left: 66px;
+    padding-right: 66px;
+    margin-top: 34px;
+    margin-bottom: 21px;
+}
+
+.menu-card
+{
+    background-color: white;
+    border-radius: 37px;
+    margin-left: 66px;
+    margin-right: 66px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.menu-item
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: transparent;
+    border-width: 0px;
+    padding: 29px;
+    margin: 0;
+    border-radius: 0;
+}
+
+.menu-item:hover
+{
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.menu-divider
+{
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.06);
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+.menu-icon-box
+{
+    width: 79px;
+    height: 79px;
+    border-radius: 24px;
+    margin-right: 32px;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-icon-blue { background-color: rgb(37, 99, 235); }
+.menu-icon-orange { background-color: rgb(217, 119, 6); }
+.menu-icon-green { background-color: rgb(22, 163, 74); }
+.menu-icon-purple { background-color: rgb(147, 51, 234); }
+.menu-icon-gray { background-color: rgb(148, 153, 168); }
+.menu-icon-red { background-color: rgb(220, 38, 38); }
+
+.menu-icon-glyph
+{
+    font-size: 34px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.menu-item-label
+{
+    font-size: 37px;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+}
+
+.menu-chevron
+{
+    width: 21px;
+    height: 21px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-color: rgb(190, 193, 204);
+    rotate: 45deg;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+/* ---------- Log Out ---------- */
+
+.logout-button
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    border-radius: 37px;
+    margin-left: 66px;
+    margin-right: 66px;
+    margin-top: 39px;
+    padding: 29px;
+    border-width: 1px;
+    border-color: rgba(220, 38, 38, 0.15);
+}
+
+.logout-button:hover
+{
+    background-color: rgba(220, 38, 38, 0.04);
+}
+
+.logout-label
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(220, 38, 38);
+}
+
+.version-label
+{
+    font-size: 26px;
+    color: rgb(160, 165, 178);
+    -unity-text-align: middle-center;
+    margin-top: 34px;
+    margin-bottom: 66px;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 45px;
+    padding-right: 45px;
+    padding-top: 92px;
+    padding-bottom: 53px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 37px;
+}
+
+.compact .header-title
+{
+    font-size: 47px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 29px;
+}
+
+.compact .back-button
+{
+    width: 104px;
+    height: 104px;
+    border-radius: 52px;
+    margin-right: 26px;
+}
+
+.compact .back-icon
+{
+    width: 43px;
+    height: 43px;
+}
+
+.compact .profile-summary-card
+{
+    padding: 29px;
+}
+
+.compact .avatar
+{
+    width: 118px;
+    height: 118px;
+    border-radius: 60px;
+    margin-right: 26px;
+}
+
+.compact .avatar-initials
+{
+    font-size: 47px;
+}
+
+.compact .profile-name
+{
+    font-size: 37px;
+}
+
+.compact .profile-email
+{
+    font-size: 26px;
+}
+
+.compact .role-badge-label
+{
+    font-size: 24px;
+}
+
+.compact .stats-row
+{
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+.compact .stat-card
+{
+    padding: 24px;
+}
+
+.compact .stat-value
+{
+    font-size: 37px;
+}
+
+.compact .stat-label
+{
+    font-size: 21px;
+}
+
+.compact .section-title
+{
+    font-size: 32px;
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+.compact .menu-card,
+.compact .logout-button
+{
+    margin-left: 45px;
+    margin-right: 45px;
+}
+
+.compact .menu-item-label,
+.compact .logout-label
+{
+    font-size: 32px;
+}
+
+.compact .menu-icon-box
+{
+    width: 66px;
+    height: 66px;
+    margin-right: 24px;
+}
+
+.compact .menu-icon-glyph
+{
+    font-size: 29px;
+}
+
+.compact .stat-icon-glyph
+{
+    font-size: 24px;
+}

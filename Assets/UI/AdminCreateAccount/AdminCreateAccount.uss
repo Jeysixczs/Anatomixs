@@ -1,0 +1,628 @@
+/* =========================================================
+   Anatomia 3D - Admin Create Account (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient support, so the dark purple
+   screen background, the shield logo circle and the "Create
+   Admin Account" button gradients are all applied at runtime
+   from AdminCreateAccountController.ApplyGradients() (see
+   BuildGradientTexture). The colors below are flat fallbacks so
+   the screen still looks correct in the UI Builder preview
+   before the controller runs. Matches AdminLogin.uss.
+   ========================================================= */
+
+/* ---------- Full Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+
+    flex-grow: 1;
+
+    background-color: rgb(24, 12, 39); /* deep purple/black fallback, overridden by gradient texture */
+}
+
+.screen-container
+{
+    width: 100%;
+    height: 100%;
+}
+
+.scroll-view
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+}
+
+.scroll-view > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+    padding-left: 80px;
+    padding-right: 80px;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+/* ---------- Main Column ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    max-width: 900px;
+    justify-content: center;
+    align-items: stretch;
+    flex-direction: column;
+}
+
+/* ---------- Logo ---------- */
+
+.logo-circle
+{
+    width: 170px;
+    height: 170px;
+
+    align-self: center;
+
+    border-radius: 85px;
+
+    background-color: rgb(180, 45, 200); /* fallback, gradient applied at runtime */
+
+    justify-content: center;
+    align-items: center;
+
+    margin-bottom: 34px;
+}
+
+.logo-icon
+{
+    width: 74px;
+    height: 74px;
+}
+
+.icon-shield
+{
+    background-image: url("project://database/Assets/UI/Icons/shield-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+/* ---------- Title ---------- */
+
+.app-title
+{
+    font-size: 48px;
+    -unity-font-style: bold;
+    color: rgb(255,255,255);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 12px;
+}
+
+.app-subtitle
+{
+    font-size: 28px;
+    color: rgb(196,182,214);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 45px;
+}
+
+/* ---------- Card ---------- */
+
+.create-account-card
+{
+    width: 100%;
+
+    background-color: rgba(255,255,255,0.06);
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.12);
+
+    border-radius: 44px;
+
+    padding-left: 55px;
+    padding-right: 55px;
+    padding-top: 55px;
+    padding-bottom: 45px;
+
+    margin-bottom: 40px;
+}
+
+/* ---------- Labels ---------- */
+
+.field-label
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(230,225,240);
+
+    margin-bottom: 14px;
+}
+
+.field-label-spaced
+{
+    margin-top: 30px;
+}
+
+.field-error
+{
+    font-size: 22px;
+    color: rgb(255,120,170);
+
+    margin-top: 10px;
+    white-space: normal;
+}
+
+.hidden
+{
+    display: none;
+}
+
+/* ---------- Input Container ---------- */
+
+.input-container
+{
+    width: 100%;
+
+    height: 106px;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    background-color: rgba(255,255,255,0.05);
+
+    border-radius: 24px;
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.14);
+
+    padding-left: 28px;
+    padding-right: 18px;
+}
+
+.input-container-focused
+{
+    border-color: rgb(200,60,210);
+    border-width: 2px;
+}
+
+/* ---------- Icons ---------- */
+
+.input-icon
+{
+    width: 36px;
+    height: 36px;
+
+    margin-right: 18px;
+    flex-shrink: 0;
+
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+.icon-user
+{
+    background-image: url("project://database/Assets/UI/Icons/user-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-email
+{
+    background-image: url("project://database/Assets/UI/Icons/email-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-lock
+{
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-eye
+{
+    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 38px;
+    height: 38px;
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+.icon-eye-off
+{
+    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 38px;
+    height: 38px;
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+/* ---------- TextField ---------- */
+
+.input-field
+{
+    flex-grow: 1;
+
+    font-size: 30px;
+
+    color: rgb(240,236,248);
+
+    background-color: transparent;
+
+    border-width: 0;
+}
+
+.input-field > #unity-text-input
+{
+    background-color: transparent;
+    border-width: 0;
+    color: rgb(240,236,248);
+}
+
+.input-field-with-right-icon
+{
+    margin-right: 8px;
+}
+
+/* ---------- Eye Button ---------- */
+
+.input-icon-button
+{
+    width: 60px;
+    height: 60px;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    justify-content: center;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+/* ---------- Terms Row ---------- */
+
+.terms-row
+{
+    flex-direction: row;
+    align-items: flex-start;
+
+    margin-top: 34px;
+    margin-bottom: 10px;
+}
+
+.terms-checkbox
+{
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.3);
+
+    background-color: rgba(255,255,255,0.05);
+
+    margin-right: 18px;
+    flex-shrink: 0;
+}
+
+.terms-checkbox.checked
+{
+    background-color: rgb(200,60,210);
+    border-color: rgb(200,60,210);
+}
+
+.terms-label-container
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    flex-grow: 1;
+}
+
+.terms-text
+{
+    font-size: 24px;
+    color: rgb(196,182,214);
+}
+
+.terms-link-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(216,150,240);
+}
+
+.terms-link-button:hover
+{
+    opacity: 0.8;
+}
+
+/* ---------- Create Account Button ---------- */
+
+.create-account-button
+{
+    width: 100%;
+    height: 112px;
+
+    margin-top: 30px;
+
+    background-color: rgb(160,45,210); /* fallback, gradient applied at runtime */
+
+    color: white;
+
+    border-radius: 26px;
+
+    border-width: 0;
+
+    font-size: 32px;
+    -unity-font-style: bold;
+}
+
+.create-account-button:hover
+{
+    opacity: 0.92;
+}
+
+.create-account-button:disabled
+{
+    opacity: 0.6;
+}
+
+/* ---------- Divider ---------- */
+
+.divider-row
+{
+    flex-direction: row;
+    align-items: center;
+
+    margin-top: 36px;
+    margin-bottom: 36px;
+}
+
+.divider-line
+{
+    flex-grow: 1;
+    height: 2px;
+    background-color: rgba(255,255,255,0.14);
+}
+
+.divider-text
+{
+    font-size: 22px;
+    color: rgb(180,168,204);
+
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+/* ---------- Google Button ---------- */
+
+.google-button
+{
+    width: 100%;
+    height: 106px;
+
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgba(255,255,255,0.06);
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.16);
+
+    border-radius: 24px;
+}
+
+.google-button:hover
+{
+    background-color: rgba(255,255,255,0.1);
+}
+
+.icon-google
+{
+    width: 38px;
+    height: 38px;
+
+    margin-right: 18px;
+    flex-shrink: 0;
+
+    background-image: url("project://database/Assets/UI/Icons/google-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.google-button-text
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+
+    color: rgb(240,236,248);
+}
+
+/* ---------- Bottom Links ---------- */
+
+.bottom-links
+{
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    margin-bottom: 24px;
+}
+
+.bottom-link-text
+{
+    font-size: 26px;
+    color: rgb(180,168,204);
+
+    margin-right: 10px;
+}
+
+.bottom-link-button
+{
+    background-color: transparent;
+    border-width: 0;
+
+    color: rgb(216,150,240);
+
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+.bottom-link-button:hover
+{
+    opacity: 0.8;
+}
+
+/* ---------- Status ---------- */
+
+.status-label
+{
+    margin-top: 12px;
+    margin-bottom: 20px;
+
+    font-size: 26px;
+
+    color: rgb(255,140,190);
+
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Footer Warning ---------- */
+
+.footer-warning-label
+{
+    font-size: 20px;
+
+    color: rgb(140,128,158);
+
+    -unity-text-align: middle-center;
+
+    white-space: normal;
+
+    max-width: 720px;
+
+    align-self: center;
+}
+
+/* =========================================================
+   COMPACT MODE
+   ========================================================= */
+
+.compact .content-wrapper
+{
+    max-width: 760px;
+}
+
+.compact .logo-circle
+{
+    width: 130px;
+    height: 130px;
+
+    border-radius: 65px;
+}
+
+.compact .logo-icon
+{
+    width: 58px;
+    height: 58px;
+}
+
+.compact .app-title
+{
+    font-size: 38px;
+}
+
+.compact .app-subtitle
+{
+    font-size: 24px;
+}
+
+.compact .create-account-card
+{
+    padding-left: 36px;
+    padding-right: 36px;
+    padding-top: 36px;
+    padding-bottom: 32px;
+}
+
+.compact .field-label
+{
+    font-size: 24px;
+}
+
+.compact .input-container
+{
+    height: 88px;
+}
+
+.compact .input-field
+{
+    font-size: 26px;
+}
+
+.compact .input-field > #unity-text-input
+{
+    font-size: 26px;
+}
+
+.compact .terms-text,
+.compact .terms-link-button
+{
+    font-size: 21px;
+}
+
+.compact .create-account-button
+{
+    height: 96px;
+    font-size: 28px;
+}
+
+.compact .google-button
+{
+    height: 90px;
+}
+
+.compact .google-button-text
+{
+    font-size: 25px;
+}
+
+.compact .bottom-link-text,
+.compact .bottom-link-button
+{
+    font-size: 22px;
+}
+
+.compact .footer-warning-label
+{
+    font-size: 18px;
+}

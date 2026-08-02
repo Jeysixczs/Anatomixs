@@ -1,0 +1,540 @@
+/* =========================================================
+   Anatomia 3D - Student Classroom Hub (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   Mirrors AdminDashboard's visual language (glass stat cards in
+   the header, header CTA button, classroom-card list) so the
+   student-side "My Classrooms" screen matches the teacher-side
+   dashboard.
+
+   NOTE: USS has no linear-gradient, so the header gradient is
+   generated as a Texture2D at runtime from
+   StudentClassroomHubController (see BuildGradientTexture). The
+   color below is a flat fallback.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 71px;
+    border-bottom-right-radius: 71px;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 106px;
+    padding-bottom: 47px;
+    flex-shrink: 0;
+    flex-direction: column;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.header-icon-circle
+{
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 26px;
+}
+
+.back-button-circle:hover
+{
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.back-icon
+{
+    width: 38px;
+    height: 38px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 47px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 5px;
+    white-space: normal;
+}
+
+/* ---------- Header Glass Stat Cards ---------- */
+
+.header-stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 31px;
+}
+
+.glass-stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.22);
+    border-radius: 28px;
+    padding-top: 26px;
+    padding-bottom: 24px;
+    align-items: center;
+}
+
+.glass-stat-card-left
+{
+    margin-right: 12px;
+}
+
+.glass-stat-card-mid
+{
+    margin-right: 12px;
+}
+
+.glass-stat-value
+{
+    font-size: 42px;
+    -unity-font-style: bold;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.glass-stat-label
+{
+    font-size: 21px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 5px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Join a Classroom (header button) ---------- */
+
+.create-classroom-header-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.24);
+    border-radius: 26px;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    margin: 0;
+}
+
+.create-classroom-header-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.create-classroom-plus
+{
+    font-size: 35px;
+    -unity-font-style: bold;
+    color: white;
+    margin-right: 14px;
+}
+
+.create-classroom-header-label
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 42px;
+    padding-bottom: 71px;
+    max-width: 100%;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* ---------- Section titles ---------- */
+
+.section-title
+{
+    font-size: 35px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 24px;
+}
+
+/* ---------- My Classrooms: empty state ---------- */
+
+.classrooms-section
+{
+    width: 100%;
+}
+
+.classrooms-empty-state
+{
+    background-color: white;
+    border-radius: 33px;
+    padding-top: 66px;
+    padding-bottom: 52px;
+    padding-left: 35px;
+    padding-right: 35px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.empty-state-icon-box
+{
+    width: 127px;
+    height: 127px;
+    border-radius: 64px;
+    background-color: rgb(240, 253, 244);
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
+.empty-state-icon
+{
+    width: 61px;
+    height: 61px;
+    background-image: url("project://database/Assets/UI/Icons/userclassroom-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(13, 148, 136);
+}
+
+.empty-state-text
+{
+    font-size: 31px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 12px;
+}
+
+.empty-state-subtext
+{
+    font-size: 25px;
+    color: rgb(138, 143, 163);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 566px;
+    margin-bottom: 35px;
+}
+
+.empty-state-button
+{
+    background-color: rgb(13, 148, 136);
+    border-width: 0;
+    border-radius: 21px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: white;
+    margin: 0;
+}
+
+.empty-state-button:hover
+{
+    background-color: rgb(11, 128, 118);
+}
+
+/* ---------- My Classrooms: populated list ---------- */
+
+.classrooms-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.classroom-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 33px;
+    padding: 35px;
+    margin-bottom: 26px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.classroom-card-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 7px;
+}
+
+.classroom-name-label
+{
+    font-size: 35px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    flex-grow: 1;
+    white-space: normal;
+    margin-right: 19px;
+}
+
+.classroom-code-badge
+{
+    background-color: rgb(209, 250, 229);
+    border-radius: 17px;
+    padding-left: 19px;
+    padding-right: 19px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    flex-shrink: 0;
+}
+
+.classroom-code-badge-label
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(5, 122, 85);
+    letter-spacing: 1px;
+}
+
+.classroom-teacher-label
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    margin-bottom: 26px;
+    white-space: normal;
+}
+
+.classroom-card-bottom-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.classroom-students-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.classroom-students-icon
+{
+    width: 28px;
+    height: 28px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/userclassroom-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(150, 155, 168);
+}
+
+.classroom-students-label
+{
+    font-size: 26px;
+    color: rgb(120, 123, 140);
+}
+
+.view-classroom-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 27px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+.view-classroom-button:hover
+{
+    color: rgb(29, 78, 216);
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 35px;
+    padding-right: 35px;
+    padding-top: 78px;
+    padding-bottom: 38px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 28px;
+}
+
+.compact .header-icon-circle
+{
+    width: 71px;
+    height: 71px;
+    border-radius: 35px;
+    margin-right: 19px;
+}
+
+.compact .back-icon
+{
+    width: 31px;
+    height: 31px;
+}
+
+.compact .header-title
+{
+    font-size: 35px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 22px;
+}
+
+.compact .glass-stat-value
+{
+    font-size: 33px;
+}
+
+.compact .glass-stat-label
+{
+    font-size: 18px;
+}
+
+.compact .create-classroom-header-label
+{
+    font-size: 25px;
+}
+
+.compact .content-wrapper
+{
+    padding-left: 33px;
+    padding-right: 33px;
+}
+
+.compact .section-title
+{
+    font-size: 28px;
+}
+
+.compact .classroom-name-label
+{
+    font-size: 28px;
+}
+
+.compact .classroom-teacher-label,
+.compact .classroom-students-label,
+.compact .empty-state-subtext
+{
+    font-size: 21px;
+}
+
+.compact .empty-state-text
+{
+    font-size: 26px;
+}

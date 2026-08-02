@@ -1,0 +1,928 @@
+/* =========================================================
+   Anatomia 3D - Student Login & Create Account (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   All px values below are sized against that 1080-wide canvas
+   (Panel Settings should reference 1080x1920 in "Scale With
+   Screen Size" mode so this scales correctly to other devices).
+   ========================================================= */
+
+/* ---------- Full Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+
+    flex-grow: 1;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgb(234,243,251);
+}
+
+/* ---------- Center Container ---------- */
+
+.screen-container
+{
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-left: 80px;
+    padding-right: 80px;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+/* ---------- Scroll View ---------- */
+
+.scroll-view
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+}
+
+.scroll-view > #unity-content-container
+{
+    /* min-height (not height) is the trick: when the content is shorter
+       than the viewport, this forces the container to fill it so
+       justify-content can center the content-wrapper inside. When the
+       content is taller than the viewport, min-height is simply
+       satisfied by the content itself, so it lays out from the top and
+       scrolls normally instead of being clipped/centered off-screen. */
+    min-height: 100%;
+    width: 100%;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.scroll-view > .unity-scroller--vertical,
+.scroll-view > #unity-scroller
+{
+    width: 0;
+    opacity: 0;
+}
+
+.scroll-view > .unity-scroller--vertical > .unity-tracker,
+.scroll-view > .unity-scroller--vertical > .unity-dragger,
+.scroll-view > #unity-scroller > #unity-tracker,
+.scroll-view > #unity-scroller > #unity-dragger
+{
+    display: none;
+    opacity: 0;
+    width: 0;
+}
+
+/* ---------- Main Column ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    max-width: 900px;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: stretch;
+    align-self: center;
+    flex-direction: column;
+}
+
+/* ---------- Logo ---------- */
+
+.logo-circle
+{
+    width: 220px;
+    height: 220px;
+
+    align-self: center;
+
+    border-radius: 110px;
+
+    background-image: url("project://database/Assets/UI/Icons/Anatomia-logo.png");
+
+    background-position: center;
+    background-size: cover;
+
+    margin-bottom: 30px;
+}
+
+/* ---------- Title ---------- */
+
+.app-title
+{
+    font-size: 56px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 10px;
+}
+
+.app-subtitle
+{
+    font-size: 34px;
+    color: rgb(138,143,163);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 60px;
+}
+
+/* ---------- Card ---------- */
+
+.login-card,
+.create-account-card
+{
+    width: 100%;
+
+    background-color: white;
+
+    border-radius: 48px;
+
+    padding-left: 60px;
+    padding-right: 60px;
+    padding-top: 60px;
+    padding-bottom: 60px;
+
+    margin-bottom: 50px;
+}
+
+/* ---------- Labels ---------- */
+
+.field-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+
+    margin-bottom: 14px;
+}
+
+.field-label-spaced
+{
+    margin-top: 34px;
+}
+
+.field-error
+{
+    font-size: 26px;
+    color: rgb(224,33,138);
+
+    margin-top: 10px;
+    white-space: normal;
+}
+
+.hidden
+{
+    display: none;
+}
+
+/* ---------- Input Container ---------- */
+
+.input-container
+{
+    width: 100%;
+
+    height: 118px;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    background-color: rgb(244,245,247);
+
+    border-radius: 28px;
+
+    border-width: 2px;
+    border-color: rgb(231,232,237);
+
+    padding-left: 30px;
+    padding-right: 20px;
+}
+
+/* ---------- Icons ---------- */
+
+.input-icon
+{
+    width: 44px;
+    height: 44px;
+
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.icon-user
+{
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-email
+{
+    background-image: url("project://database/Assets/UI/Icons/email-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-lock
+{
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-eye
+{
+    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 44px;
+    height: 44px;
+}
+.icon-eye-off
+{
+    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 44px;
+    height: 44px;
+}
+.icon-google
+{
+    width: 44px;
+    height: 44px;
+
+    margin-right: 20px;
+    flex-shrink: 0;
+
+    background-image: url("project://database/Assets/UI/Icons/google-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ---------- TextField ---------- */
+
+.input-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+
+    font-size: 34px;
+
+    color: rgb(31,36,48);
+
+    background-color: transparent;
+
+    border-width: 0;
+}
+
+.input-field > #unity-text-input
+{
+    background-color: transparent;
+    border-width: 0;
+}
+
+.input-field-with-right-icon
+{
+    margin-right: 10px;
+}
+
+/* ---------- Eye Button ---------- */
+
+.input-icon-button
+{
+    width: 68px;
+    height: 68px;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    justify-content: center;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+/* ---------- Sign In / Create Account Button ---------- */
+
+.sign-in-button,
+.create-account-button
+{
+    width: 100%;
+    height: 118px;
+
+    margin-top: 48px;
+
+    background-color: rgb(142,45,226);
+
+    color: white;
+
+    border-radius: 28px;
+
+    border-width: 0;
+
+    font-size: 36px;
+    -unity-font-style: bold;
+}
+
+/* ---------- Divider ---------- */
+
+.divider-row
+{
+    flex-direction: row;
+
+    align-items: center;
+
+    margin-top: 48px;
+    margin-bottom: 48px;
+}
+
+.divider-line
+{
+    flex-grow: 1;
+
+    height: 2px;
+
+    background-color: rgb(231,232,237);
+}
+
+.divider-text
+{
+    margin-left: 24px;
+    margin-right: 24px;
+
+    font-size: 28px;
+
+    color: rgb(138,143,163);
+}
+
+/* ---------- Google Button ---------- */
+
+.google-button
+{
+    width: 100%;
+    height: 118px;
+
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+
+    border-width: 2px;
+    border-color: rgb(231,232,237);
+
+    border-radius: 28px;
+}
+
+.google-button-text
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+
+    color: rgb(31,36,48);
+}
+
+/* ---------- Admin Link ---------- */
+
+.admin-login-link
+{
+    align-self: center;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(142,45,226);
+
+    font-size: 34px;
+
+    -unity-font-style: bold;
+}
+
+/* ---------- Status ---------- */
+
+.status-label
+{
+    margin-top: 28px;
+
+    font-size: 28px;
+
+    color: rgb(224,33,138);
+
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Forgot Password ---------- */
+
+.forgot-password-link
+{
+    align-self: flex-end;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(142,45,226);
+
+    font-size: 26px;
+
+    margin-top: 16px;
+    margin-bottom: 24px;
+
+    -unity-font-style: bold;
+}
+
+/* ---------- Create Account ---------- */
+
+.create-account-row
+{
+    flex-direction: row;
+
+    justify-content: center;
+
+    align-items: center;
+
+    margin-top: 20px;
+}
+
+.create-account-text
+{
+    font-size: 28px;
+
+    color: rgb(138,143,163);
+
+    margin-right: 10px;
+}
+
+.create-account-link
+{
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(142,45,226);
+
+    font-size: 28px;
+
+    -unity-font-style: bold;
+}
+
+/* =========================================================
+   CREATE ACCOUNT SPECIFIC STYLES
+   ========================================================= */
+
+/* ---------- Terms Row ---------- */
+
+.terms-row
+{
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 35px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.terms-checkbox
+{
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    margin-right: 15px;
+    background-color: rgb(244,245,247);
+    border-width: 2px;
+    border-color: rgb(231,232,237);
+    border-radius: 8px;
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.terms-label-container
+{
+    flex-grow: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.terms-text
+{
+    font-size: 26px;
+    color: rgb(138,143,163);
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.terms-link-button
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(142,45,226);
+    background-color: transparent;
+    border-width: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    height: auto;
+    min-height: 0;
+}
+
+/* ---------- Bottom Links (Create Account) ---------- */
+
+.bottom-links
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.bottom-link-text
+{
+    font-size: 28px;
+    color: rgb(138,143,163);
+    margin-right: 10px;
+}
+
+.bottom-link-button
+{
+    background-color: transparent;
+    border-width: 0;
+    color: rgb(142,45,226);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+/* ---------- Hover States ---------- */
+
+.sign-in-button:hover,
+.create-account-button:hover
+{
+    background-color: rgb(128,35,210);
+}
+
+.google-button:hover
+{
+    background-color: rgb(244,245,247);
+}
+
+.bottom-link-button:hover,
+.create-account-link:hover,
+.admin-login-link:hover,
+.terms-link-button:hover,
+.forgot-password-link:hover
+{
+    opacity: 0.8;
+}
+
+/* =========================================================
+   COMPACT MODE (Both Screens)
+   ========================================================= */
+
+.compact .screen-container
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+.compact .content-wrapper
+{
+    max-width: 760px;
+}
+
+.compact .logo-circle
+{
+    width: 170px;
+    height: 170px;
+
+    border-radius: 85px;
+}
+
+.compact .app-title
+{
+    font-size: 46px;
+}
+
+.compact .login-card,
+.compact .create-account-card
+{
+    padding-left: 42px;
+    padding-right: 42px;
+    padding-top: 42px;
+    padding-bottom: 42px;
+}
+
+.compact .field-label
+{
+    font-size: 28px;
+}
+
+.compact .input-container
+{
+    height: 100px;
+}
+
+.compact .input-field
+{
+    font-size: 28px;
+}
+
+.compact .input-field > #unity-text-input
+{
+    font-size: 28px;
+}
+
+.compact .terms-checkbox
+{
+    width: 35px;
+    height: 35px;
+    min-width: 35px;
+}
+
+.compact .terms-text
+{
+    font-size: 24px;
+}
+
+.compact .terms-link-button
+{
+    font-size: 24px;
+}
+
+.compact .sign-in-button,
+.compact .create-account-button,
+.compact .google-button
+{
+    height: 105px;
+}
+
+.compact .google-button-text
+{
+    font-size: 30px;
+}
+
+.compact .bottom-link-text,
+.compact .bottom-link-button
+{
+    font-size: 24px;
+}
+
+/* =========================================================
+   LANDSCAPE / SHORT-HEIGHT MODE
+   Triggered by the controller when the panel's resolved height
+   gets short (typically after rotating a phone to landscape).
+   Compact narrows things down; landscape shortens them up.
+   Both classes can be active at the same time.
+   ========================================================= */
+
+.landscape .screen-container
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.landscape .logo-circle
+{
+    width: 90px;
+    height: 90px;
+
+    border-radius: 45px;
+
+    margin-bottom: 10px;
+}
+
+.landscape .app-title
+{
+    font-size: 34px;
+
+    margin-bottom: 4px;
+}
+
+.landscape .app-subtitle
+{
+    font-size: 24px;
+
+    margin-bottom: 20px;
+}
+
+.landscape .login-card,
+.landscape .create-account-card
+{
+    padding-left: 42px;
+    padding-right: 42px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+
+    margin-bottom: 20px;
+}
+
+.landscape .field-label
+{
+    font-size: 26px;
+
+    margin-bottom: 8px;
+}
+
+.landscape .field-label-spaced
+{
+    margin-top: 16px;
+}
+
+.landscape .input-container
+{
+    height: 84px;
+}
+
+.landscape .input-field,
+.landscape .input-field > #unity-text-input
+{
+    font-size: 26px;
+}
+
+.landscape .sign-in-button,
+.landscape .create-account-button,
+.landscape .google-button
+{
+    height: 84px;
+
+    margin-top: 24px;
+}
+
+.landscape .divider-row
+{
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.landscape .forgot-password-link
+{
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.landscape .create-account-row,
+.landscape .bottom-links
+{
+    margin-top: 10px;
+}
+
+.input-container-focused
+{
+    border-color: rgb(142,45,226);
+    border-width: 2px;
+}
+
+/* ---------- Terms Checkbox States ---------- */
+
+.terms-checkbox.checked
+{
+    background-color: rgb(142,45,226);
+    border-color: rgb(142,45,226);
+    background-image: none;
+}
+
+/* =========================================================
+   ULTRA-COMPACT MODE
+   Very narrow panels only (small phones in portrait, split
+   screen / multi-window, folded foldables). Stacks on top of
+   .compact - both classes are active together in this state.
+   ========================================================= */
+
+.ultra-compact .screen-container
+{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.ultra-compact .logo-circle
+{
+    width: 120px;
+    height: 120px;
+
+    border-radius: 60px;
+
+    margin-bottom: 16px;
+}
+
+.ultra-compact .app-title
+{
+    font-size: 38px;
+}
+
+.ultra-compact .app-subtitle
+{
+    font-size: 26px;
+
+    margin-bottom: 30px;
+}
+
+.ultra-compact .login-card,
+.ultra-compact .create-account-card
+{
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-top: 32px;
+    padding-bottom: 32px;
+
+    margin-bottom: 30px;
+}
+
+.ultra-compact .field-label
+{
+    font-size: 24px;
+
+    margin-bottom: 8px;
+}
+
+.ultra-compact .field-label-spaced
+{
+    margin-top: 20px;
+}
+
+.ultra-compact .field-error
+{
+    font-size: 20px;
+}
+
+.ultra-compact .input-container
+{
+    height: 84px;
+
+    padding-left: 20px;
+    padding-right: 14px;
+}
+
+.ultra-compact .input-icon
+{
+    width: 34px;
+    height: 34px;
+
+    margin-right: 12px;
+}
+
+.ultra-compact .input-field,
+.ultra-compact .input-field > #unity-text-input
+{
+    font-size: 24px;
+}
+
+.ultra-compact .sign-in-button,
+.ultra-compact .create-account-button,
+.ultra-compact .google-button
+{
+    height: 90px;
+
+    margin-top: 30px;
+
+    font-size: 28px;
+}
+
+.ultra-compact .google-button-text
+{
+    font-size: 26px;
+}
+
+.ultra-compact .divider-row
+{
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.ultra-compact .divider-text
+{
+    font-size: 22px;
+}
+
+.ultra-compact .admin-login-link
+{
+    font-size: 26px;
+}
+
+.ultra-compact .status-label
+{
+    font-size: 22px;
+}

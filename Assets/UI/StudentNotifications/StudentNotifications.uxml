@@ -1,0 +1,36 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentNotifications/StudentNotifications.uss" />
+    <ui:VisualElement name="screen-root" class="screen-root">
+
+        <!-- ===================== SCROLLABLE CONTENT ===================== -->
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+
+            <!-- ===================== HEADER ===================== -->
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="Notifications" class="header-title"/>
+                        <ui:Label name="header-subtitle-label" text="You're all caught up" class="header-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="mark-all-read-button" class="mark-all-read-button" text="Mark all read"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
+                <ui:VisualElement name="notifications-empty-state" class="notifications-empty-state hidden">
+                    <ui:Label text="&#128276;" class="empty-state-icon"/>
+                    <ui:Label text="No notifications yet" class="empty-state-text"/>
+                    <ui:Label text="We'll let you know when something new happens." class="empty-state-subtext"/>
+                </ui:VisualElement>
+
+                <!-- Populated with notification-row elements at runtime by the controller -->
+                <ui:VisualElement name="notifications-list" class="notifications-list"/>
+
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

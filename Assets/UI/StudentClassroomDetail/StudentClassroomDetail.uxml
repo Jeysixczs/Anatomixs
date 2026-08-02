@@ -1,0 +1,120 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentClassroomDetail/StudentClassroomDetail.uss?fileID=7433441132597879392&amp;guid=f9201abecd5a51947ae68a6497cf488d&amp;type=3#StudentClassroomDetail"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label name="classroom-name-label" text="Anatomy 101 - Section A" class="header-title"/>
+                        <ui:Label name="instructor-label" text="Instructor: Dr. Smith" class="header-subtitle"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="header-stats-row" class="header-stats-row">
+                    <ui:VisualElement name="students-stat-card" class="glass-stat-card glass-stat-card-left">
+                        <ui:VisualElement class="glass-stat-icon icon-users-white" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 76px; width: 80px;"/>
+                        <ui:VisualElement class="glass-stat-text-block">
+                            <ui:Label name="students-enrolled-value-label" text="4" class="glass-stat-value"/>
+                            <ui:Label text="Students Enrolled" class="glass-stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-stat-card" class="glass-stat-card glass-stat-card-right">
+                        <ui:VisualElement class="glass-stat-icon icon-book-white" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-icon.png?fileID=2800000&amp;guid=94d1609b9c3ba5c45a6b760d524ff279&amp;type=3#quiz-icon&quot;); height: 82px; width: 70px;"/>
+                        <ui:VisualElement class="glass-stat-text-block">
+                            <ui:Label name="quizzes-available-value-label" text="1" class="glass-stat-value"/>
+                            <ui:Label text="Quizzes Available" class="glass-stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="tab-switcher" class="tab-switcher">
+                    <ui:VisualElement name="tab-switcher-row-1" class="tab-switcher-row">
+                        <ui:Button name="overview-tab-button" text="Overview" class="tab-button tab-button-active"/>
+                        <ui:Button name="students-tab-button" text="Students" class="tab-button"/>
+                        <ui:Button name="quizzes-tab-button" text="Available Quizzes" class="tab-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="tab-switcher-row-2" class="tab-switcher-row tab-switcher-row-2">
+                        <ui:Button name="leaderboard-tab-button" text="Leaderboard" class="tab-button"/>
+                        <ui:Button name="scores-tab-button" text="Scores" class="tab-button"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="overview-panel" class="tab-panel">
+                    <ui:VisualElement name="classroom-info-card" class="panel-card">
+                        <ui:Label text="Classroom Info" class="panel-card-title"/>
+                        <ui:VisualElement class="info-row">
+                            <ui:Label text="Teacher" class="info-label"/>
+                            <ui:Label name="teacher-value-label" text="Dr. Smith" class="info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-row">
+                            <ui:Label text="Description" class="info-label"/>
+                            <ui:Label name="description-value-label" text="Introduction to Human Anatomy" class="info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-row info-row-last">
+                            <ui:Label text="Total Points" class="info-label"/>
+                            <ui:Label name="total-points-value-label" text="1250" class="info-value info-value-big"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="Announcements" class="section-title"/>
+                    <ui:VisualElement name="announcements-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-announce-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
+                        <ui:Label text="No announcements yet" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t posted anything for this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="announcements-list" class="announcements-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="students-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="students-card" class="panel-card">
+                        <ui:Label name="students-count-title-label" text="Enrolled Students (0)" class="panel-card-title"/>
+                        <ui:Label text="Your peers in this class" class="panel-card-subtitle"/>
+                        <ui:VisualElement name="students-empty-state" class="empty-state empty-state-inline">
+                            <ui:VisualElement class="empty-icon icon-users-gray"/>
+                            <ui:Label text="No classmates yet" class="empty-title"/>
+                            <ui:Label text="Invite friends with the classroom code to see them here." class="empty-subtitle"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="peers-list" class="peers-list hidden"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="quizzes-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-quiz-gray"/>
+                        <ui:Label text="No quizzes available yet" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t published any quizzes to this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-list" class="quizzes-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="leaderboard-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="leaderboard-locked-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-lock-gray"/>
+                        <ui:Label text="Leaderboard is off" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t turned on the leaderboard for this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="leaderboard-card" class="panel-card hidden">
+                        <ui:VisualElement class="top-performers-header-row">
+                            <ui:VisualElement class="trophy-icon-box">
+                                <ui:VisualElement class="trophy-icon"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Top Performers" class="panel-card-title"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="leaderboard-empty-state" class="top-performers-empty-state">
+                            <ui:Label text="No student data yet" class="top-performers-empty-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="leaderboard-list" class="top-performers-list hidden"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="scores-panel" class="tab-panel hidden">
+                    <ui:Label text="Quiz History" class="section-title"/>
+                    <ui:Label text="Your completed quizzes and scores" class="section-subtitle"/>
+                    <ui:VisualElement name="scores-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-history-gray"/>
+                        <ui:Label text="No quiz attempts yet" class="empty-title"/>
+                        <ui:Label text="Quizzes you complete in this classroom will show up here." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="scores-list" class="scores-list hidden"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

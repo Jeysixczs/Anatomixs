@@ -1,0 +1,1023 @@
+/* =========================================================
+   Anatomia 3D - Administrator Login (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   All px values below are sized against that 1080-wide canvas
+   (Panel Settings should reference 1080x1920 in "Scale With
+   Screen Size" mode so this scales correctly to other devices).
+
+   NOTE: USS has no linear-gradient support, so the dark purple
+   screen background, the shield logo circle and the "Secure
+   Login" button gradients are all applied at runtime from
+   AdminLoginController.ApplyGradients() (see BuildGradientTexture).
+   The colors below are flat fallbacks so the screen still looks
+   correct in the UI Builder preview before the controller runs.
+   ========================================================= */
+
+/* ---------- Full Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+
+    flex-grow: 1;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgb(24, 12, 39); /* deep purple/black fallback, overridden by gradient texture */
+}
+
+/* ---------- Center Container ---------- */
+
+.screen-container
+{
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-left: 80px;
+    padding-right: 80px;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+/* ---------- Scroll View ---------- */
+
+.scroll-view
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+}
+
+.scroll-view > #unity-content-container
+{
+    /* min-height (not height) is the trick: when the content is shorter
+       than the viewport, this forces the container to fill it so
+       justify-content can center the content-wrapper inside. When the
+       content is taller than the viewport, min-height is simply
+       satisfied by the content itself, so it lays out from the top and
+       scrolls normally instead of being clipped/centered off-screen. */
+    min-height: 100%;
+    width: 100%;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.scroll-view > .unity-scroller--vertical,
+.scroll-view > #unity-scroller
+{
+    width: 0;
+    opacity: 0;
+}
+
+.scroll-view > .unity-scroller--vertical > .unity-tracker,
+.scroll-view > .unity-scroller--vertical > .unity-dragger,
+.scroll-view > #unity-scroller > #unity-tracker,
+.scroll-view > #unity-scroller > #unity-dragger
+{
+    display: none;
+    opacity: 0;
+    width: 0;
+}
+
+/* ---------- Main Column ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    max-width: 900px;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: stretch;
+    align-self: center;
+    flex-direction: column;
+}
+
+/* ---------- Logo ---------- */
+
+.logo-circle
+{
+    width: 190px;
+    height: 190px;
+
+    align-self: center;
+
+    border-radius: 95px;
+
+    background-color: rgb(180, 45, 200); /* fallback, gradient applied at runtime */
+
+    justify-content: center;
+    align-items: center;
+
+    margin-bottom: 40px;
+}
+
+.logo-icon
+{
+    width: 84px;
+    height: 84px;
+}
+
+.icon-shield
+{
+    background-image: url("project://database/Assets/UI/Icons/shield-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+/* ---------- Title ---------- */
+
+.app-title
+{
+    font-size: 52px;
+    -unity-font-style: bold;
+    color: rgb(255,255,255);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 12px;
+}
+
+.app-subtitle
+{
+    font-size: 30px;
+    color: rgb(196,182,214);
+    -unity-text-align: middle-center;
+
+    margin-bottom: 55px;
+}
+
+/* ---------- Card ---------- */
+
+.login-card,
+.reset-card
+{
+    width: 100%;
+
+    background-color: rgba(255,255,255,0.06);
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.12);
+
+    border-radius: 44px;
+
+    padding-left: 55px;
+    padding-right: 55px;
+    padding-top: 55px;
+    padding-bottom: 45px;
+
+    margin-bottom: 45px;
+}
+
+/* ---------- Labels ---------- */
+
+.field-label
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(230,225,240);
+
+    margin-bottom: 14px;
+}
+
+.field-label-spaced
+{
+    margin-top: 34px;
+}
+
+.field-error
+{
+    font-size: 24px;
+    color: rgb(255,120,170);
+
+    margin-top: 10px;
+    white-space: normal;
+}
+
+.success-message
+{
+    font-size: 24px;
+    color: rgb(140,230,180);
+
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.hidden
+{
+    display: none;
+}
+
+/* ---------- Input Container ---------- */
+
+.input-container
+{
+    width: 100%;
+
+    height: 112px;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    background-color: rgba(255,255,255,0.05);
+
+    border-radius: 26px;
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.14);
+
+    padding-left: 30px;
+    padding-right: 20px;
+}
+
+.input-container-focused
+{
+    border-color: rgb(200,60,210);
+    border-width: 2px;
+}
+
+/* ---------- Icons ---------- */
+
+.input-icon
+{
+    width: 38px;
+    height: 38px;
+
+    margin-right: 20px;
+    flex-shrink: 0;
+
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+.icon-email
+{
+    background-image: url("project://database/Assets/UI/Icons/email-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-lock
+{
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-eye
+{
+    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+.icon-eye-off
+{
+    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: rgb(180,168,204);
+}
+
+/* ---------- TextField ---------- */
+
+.input-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+
+    font-size: 32px;
+
+    color: rgb(240,236,248);
+
+    background-color: transparent;
+
+    border-width: 0;
+}
+
+.input-field > #unity-text-input
+{
+    background-color: transparent;
+    border-width: 0;
+    color: rgb(240,236,248);
+}
+
+.input-field-with-right-icon
+{
+    margin-right: 10px;
+}
+
+/* ---------- Eye Button ---------- */
+
+.input-icon-button
+{
+    width: 64px;
+    height: 64px;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    justify-content: center;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+/* ---------- Secure Login Button ---------- */
+
+.secure-login-button,
+.send-reset-link-button
+{
+    width: 100%;
+    height: 116px;
+
+    margin-top: 44px;
+
+    background-color: rgb(160,45,210); /* fallback, gradient applied at runtime */
+
+    color: white;
+
+    border-radius: 26px;
+
+    border-width: 0;
+
+    font-size: 34px;
+    -unity-font-style: bold;
+}
+
+.secure-login-button:hover,
+.send-reset-link-button:hover
+{
+    opacity: 0.92;
+}
+
+/* ---------- Encryption Row ---------- */
+
+.encryption-row
+{
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    margin-top: 28px;
+}
+
+.encryption-dot
+{
+    width: 20px;
+    height: 20px;
+
+    border-radius: 10px;
+
+    border-width: 2px;
+    border-color: rgb(150,220,190);
+
+    margin-right: 14px;
+}
+
+.encryption-text
+{
+    font-size: 24px;
+
+    color: rgb(180,196,192);
+}
+
+/* ---------- Forgot Password ---------- */
+
+.forgot-password-link
+{
+    align-self: flex-end;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(216,150,240);
+
+    font-size: 26px;
+
+    margin-top: 16px;
+    margin-bottom: 6px;
+
+    -unity-font-style: bold;
+}
+
+.forgot-password-link:hover
+{
+    opacity: 0.8;
+}
+
+/* ---------- Divider ---------- */
+
+.divider-row
+{
+    flex-direction: row;
+
+    align-items: center;
+
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.divider-line
+{
+    flex-grow: 1;
+
+    height: 2px;
+
+    background-color: rgba(255,255,255,0.14);
+}
+
+.divider-text
+{
+    font-size: 24px;
+
+    color: rgb(180,168,204);
+
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+/* ---------- Google Sign-In Button ---------- */
+
+.google-button
+{
+    width: 100%;
+    height: 112px;
+
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgba(255,255,255,0.06);
+
+    border-width: 2px;
+    border-color: rgba(255,255,255,0.16);
+
+    border-radius: 26px;
+}
+
+.google-button:hover
+{
+    background-color: rgba(255,255,255,0.1);
+}
+
+.icon-google
+{
+    width: 40px;
+    height: 40px;
+
+    margin-right: 18px;
+    flex-shrink: 0;
+
+    background-image: url("project://database/Assets/UI/Icons/google-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.google-button-text
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+
+    color: rgb(240,236,248);
+}
+
+/* ---------- Create Account ---------- */
+
+.create-account-row
+{
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    margin-bottom: 32px;
+}
+
+.create-account-text
+{
+    font-size: 26px;
+
+    color: rgb(180,168,204);
+
+    margin-right: 10px;
+}
+
+.create-account-link
+{
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(216,150,240);
+
+    font-size: 26px;
+
+    -unity-font-style: bold;
+}
+
+.create-account-link:hover
+{
+    opacity: 0.8;
+}
+
+/* ---------- Back to Student Login ---------- */
+
+.back-to-student-link,
+.back-to-admin-link
+{
+    align-self: center;
+
+    background-color: transparent;
+
+    border-width: 0;
+
+    color: rgb(200,120,235);
+
+    font-size: 30px;
+
+    -unity-font-style: bold;
+
+    margin-top: 6px;
+}
+
+.back-to-student-link:hover,
+.back-to-admin-link:hover
+{
+    opacity: 0.8;
+}
+
+/* ---------- Status ---------- */
+
+.status-label
+{
+    margin-top: 24px;
+
+    font-size: 26px;
+
+    color: rgb(255,140,190);
+
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Footer Warning ---------- */
+
+.footer-warning-label
+{
+    width: 100%;
+    max-width: 720px;
+
+    align-self: center;
+
+    margin-top: 50px;
+
+    font-size: 22px;
+
+    color: rgb(140,128,158);
+
+    -unity-text-align: middle-center;
+    justify-content: flex-start;
+
+    white-space: normal;
+}
+
+/* =========================================================
+   COMPACT MODE
+   ========================================================= */
+
+.compact .content-wrapper
+{
+    max-width: 760px;
+}
+
+.compact .screen-container
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+.compact .logo-circle
+{
+    width: 150px;
+    height: 150px;
+
+    border-radius: 75px;
+}
+
+.compact .logo-icon
+{
+    width: 66px;
+    height: 66px;
+}
+
+.compact .app-title
+{
+    font-size: 42px;
+}
+
+.compact .app-subtitle
+{
+    font-size: 26px;
+}
+
+.compact .login-card,
+.compact .reset-card
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 40px;
+    padding-bottom: 36px;
+}
+
+.compact .field-label
+{
+    font-size: 26px;
+}
+
+.compact .success-message
+{
+    font-size: 20px;
+}
+
+.compact .input-container
+{
+    height: 96px;
+}
+
+.compact .input-field
+{
+    font-size: 28px;
+}
+
+.compact .input-field > #unity-text-input
+{
+    font-size: 28px;
+}
+
+.compact .secure-login-button,
+.compact .send-reset-link-button
+{
+    height: 102px;
+    font-size: 30px;
+}
+
+.compact .encryption-text
+{
+    font-size: 22px;
+}
+
+.compact .back-to-student-link,
+.compact .back-to-admin-link
+{
+    font-size: 26px;
+}
+
+.compact .footer-warning-label
+{
+    font-size: 20px;
+}
+
+.compact .forgot-password-link
+{
+    font-size: 22px;
+}
+
+.compact .divider-row
+{
+    margin-top: 28px;
+    margin-bottom: 28px;
+}
+
+.compact .divider-text
+{
+    font-size: 20px;
+}
+
+.compact .google-button
+{
+    height: 92px;
+}
+
+.compact .icon-google
+{
+    width: 32px;
+    height: 32px;
+}
+
+.compact .google-button-text
+{
+    font-size: 26px;
+}
+
+.compact .create-account-text,
+.compact .create-account-link
+{
+    font-size: 22px;
+}
+
+/* =========================================================
+   LANDSCAPE / SHORT-HEIGHT MODE
+   Triggered by the controller when the panel's resolved height
+   gets short (typically after rotating a phone to landscape).
+   Compact narrows things down; landscape shortens them up.
+   Both classes can be active at the same time.
+   ========================================================= */
+
+.landscape .screen-container
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.landscape .logo-circle
+{
+    width: 90px;
+    height: 90px;
+
+    border-radius: 45px;
+
+    margin-bottom: 10px;
+}
+
+.landscape .logo-icon
+{
+    width: 42px;
+    height: 42px;
+}
+
+.landscape .app-title
+{
+    font-size: 34px;
+
+    margin-bottom: 4px;
+}
+
+.landscape .app-subtitle
+{
+    font-size: 24px;
+
+    margin-bottom: 20px;
+}
+
+.landscape .login-card,
+.landscape .reset-card
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 30px;
+    padding-bottom: 26px;
+
+    margin-bottom: 20px;
+}
+
+.landscape .field-label
+{
+    font-size: 24px;
+
+    margin-bottom: 8px;
+}
+
+.landscape .success-message
+{
+    font-size: 20px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.landscape .field-label-spaced
+{
+    margin-top: 16px;
+}
+
+.landscape .input-container
+{
+    height: 84px;
+}
+
+.landscape .input-field,
+.landscape .input-field > #unity-text-input
+{
+    font-size: 26px;
+}
+
+.landscape .secure-login-button,
+.landscape .send-reset-link-button,
+.landscape .google-button
+{
+    height: 84px;
+
+    margin-top: 24px;
+}
+
+.landscape .divider-row
+{
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.landscape .encryption-row
+{
+    margin-top: 16px;
+}
+
+.landscape .forgot-password-link
+{
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.landscape .create-account-row
+{
+    margin-bottom: 16px;
+}
+
+.landscape .footer-warning-label
+{
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+/* =========================================================
+   ULTRA-COMPACT MODE
+   Very narrow panels only (small phones in portrait, split
+   screen / multi-window, folded foldables). Stacks on top of
+   .compact - both classes are active together in this state.
+   ========================================================= */
+
+.ultra-compact .screen-container
+{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.ultra-compact .logo-circle
+{
+    width: 110px;
+    height: 110px;
+
+    border-radius: 55px;
+
+    margin-bottom: 16px;
+}
+
+.ultra-compact .logo-icon
+{
+    width: 50px;
+    height: 50px;
+}
+
+.ultra-compact .app-title
+{
+    font-size: 36px;
+}
+
+.ultra-compact .app-subtitle
+{
+    font-size: 24px;
+
+    margin-bottom: 30px;
+}
+
+.ultra-compact .login-card,
+.ultra-compact .reset-card
+{
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 30px;
+    padding-bottom: 26px;
+
+    margin-bottom: 30px;
+}
+
+.ultra-compact .field-label
+{
+    font-size: 22px;
+
+    margin-bottom: 8px;
+}
+
+.ultra-compact .field-label-spaced
+{
+    margin-top: 20px;
+}
+
+.ultra-compact .field-error
+{
+    font-size: 18px;
+}
+
+.ultra-compact .success-message
+{
+    font-size: 18px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.ultra-compact .input-container
+{
+    height: 80px;
+
+    padding-left: 20px;
+    padding-right: 14px;
+}
+
+.ultra-compact .input-icon
+{
+    width: 30px;
+    height: 30px;
+
+    margin-right: 12px;
+}
+
+.ultra-compact .input-field,
+.ultra-compact .input-field > #unity-text-input
+{
+    font-size: 22px;
+}
+
+.ultra-compact .secure-login-button,
+.ultra-compact .send-reset-link-button
+{
+    height: 86px;
+
+    margin-top: 28px;
+
+    font-size: 26px;
+}
+
+.ultra-compact .google-button
+{
+    height: 84px;
+}
+
+.ultra-compact .google-button-text
+{
+    font-size: 24px;
+}
+
+.ultra-compact .divider-row
+{
+    margin-top: 28px;
+    margin-bottom: 28px;
+}
+
+.ultra-compact .divider-text
+{
+    font-size: 18px;
+}
+
+.ultra-compact .encryption-text
+{
+    font-size: 18px;
+}
+
+.ultra-compact .back-to-student-link,
+.ultra-compact .back-to-admin-link
+{
+    font-size: 24px;
+}
+
+.ultra-compact .footer-warning-label
+{
+    font-size: 18px;
+}
+
+.ultra-compact .create-account-text,
+.ultra-compact .create-account-link
+{
+    font-size: 20px;
+}
+
+.ultra-compact .status-label
+{
+    font-size: 20px;
+}

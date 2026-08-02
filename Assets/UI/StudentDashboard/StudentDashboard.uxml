@@ -1,0 +1,119 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentDashboard/StudentDashboard.uss?fileID=7433441132597879392&amp;guid=aae9f4de504d9f240900c8a586fb8998&amp;type=3"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll" style="flex-grow: 1; width: 100%; height: 100%; padding: 0; margin: 0;">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="width: 100%; flex-direction: column; padding: 0; margin: 0;">
+                <ui:VisualElement name="header" class="header">
+                    <ui:VisualElement name="header-top-row" class="header-top-row" style="margin-top: 45px; margin-bottom: 45px;">
+                        <ui:Button name="menu-button" class="icon-button icon-menu" style="width: 124px; height: 130px; background-image: url(&quot;project://database/Assets/UI/Icons/profile-icon.png?fileID=2800000&amp;guid=c67a1460b59385c4d82be69e72468ab3&amp;type=3#profile-icon&quot;);"/>
+                        <ui:VisualElement name="header-title-block" class="header-title-block">
+                            <ui:Label text="Welcome back!" class="welcome-title"/>
+                            <ui:Label name="student-name-label" text="Jeysi" class="welcome-subtitle"/>
+                        </ui:VisualElement>
+                        <ui:Button name="logout-button" class="icon-button icon-logout" style="width: 70px; height: 70px;"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="level-card" class="level-card" style="margin-top: 20px; margin-bottom: 20px;">
+                        <ui:VisualElement class="level-row">
+                            <ui:Label name="current-level-label" text="Level 5" class="level-text"/>
+                            <ui:Label name="next-level-label" text="Level 6" class="level-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="progress-track">
+                            <ui:VisualElement name="progress-fill" class="progress-fill" style="width: 62%;"/>
+                        </ui:VisualElement>
+                        <ui:Label name="points-to-next-label" text="350 points to next level" class="level-caption"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="join-classroom-card" class="join-classroom-card" style="margin-bottom: 50px; height: 197px;">
+                    <ui:VisualElement name="join-classroom-icon-box" class="join-classroom-icon-box">
+                        <ui:Label text="" class="join-classroom-icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/users-icon.png?fileID=2800000&amp;guid=283e313d0909bc04882c7217209f7b5f&amp;type=3#users-icon&quot;); height: 55px; width: 50px;"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="join-classroom-text" class="join-classroom-text">
+                        <ui:Label text="Join a Classroom" class="join-classroom-title"/>
+                        <ui:Label text="Connect with your teacher" class="join-classroom-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="join-classroom-button" text="Join" class="join-classroom-button" style="height: 86px; width: 159px;"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="stats-row" class="stats-row" style="margin-top: -20px;">
+                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
+                        <ui:VisualElement class="stat-icon stat-icon-blue icon-book" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-black-icon.png?fileID=2800000&amp;guid=5f4d5118721f3fa4d84099d7ee4d0cf0&amp;type=3#quiz-black-icon&quot;);"/>
+                        <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
+                        <ui:Label text="Quizzes Completed" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="level-stat-card" class="stat-card stat-card-right">
+                        <ui:VisualElement class="stat-icon stat-icon-orange icon-target" style="background-image: url(&quot;project://database/Assets/UI/Icons/targets-icon.png?fileID=2800000&amp;guid=610a11ae98f929648acdeb473e7a2764&amp;type=3#targets-icon&quot;);"/>
+                        <ui:Label name="level-value-label" text="5" class="stat-value"/>
+                        <ui:Label text="Current Level" class="stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced" style="margin-top: 20px;">
+                    <ui:VisualElement name="points-card" class="stat-card stat-card-left">
+                        <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-black-icon.png?fileID=2800000&amp;guid=86cf8116800ab33499fdcb875badace8&amp;type=3#trophy-black-icon&quot;);"/>
+                        <ui:Label name="points-value-label" text="1250" class="stat-value"/>
+                        <ui:Label text="Total Points" class="stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="empty" class="stat-card stat-card-left" style="border-left-color: rgba(0, 5, 0, 0); border-right-color: rgba(0, 5, 0, 0); border-top-color: rgba(0, 5, 0, 0); border-bottom-color: rgba(0, 5, 0, 0); background-color: rgba(255, 255, 255, 0);"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quick-actions-card" class="quick-actions-card">
+                    <ui:Label text="Quick Actions" class="section-title"/>
+                    <ui:VisualElement class="actions-row">
+                        <ui:Button name="explore-3d-button" class="action-button action-blue action-button-left">
+                            <ui:VisualElement class="action-icon icon-cube" style="height: 64px; width: 80px;"/>
+                            <ui:Label text="Explore 3D" class="action-label"/>
+                        </ui:Button>
+                        <ui:Button name="classroom-hub-button" class="action-button action-purple action-button-right">
+                            <ui:VisualElement class="action-icon icon-classroom-hub" style="background-image: url(&quot;project://database/Assets/UI/Icons/classroom-icon.png?fileID=2800000&amp;guid=5739fd750ddf3d64c8795b29466ce716&amp;type=3#classroom-icon&quot;); height: 86px; width: 115px;"/>
+                            <ui:Label text="Classroom Hub" class="action-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="actions-row">
+                        <ui:Button name="badges-button" class="action-button action-gold action-button-left">
+                            <ui:VisualElement class="action-icon icon-badge" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-white-icon.png?fileID=2800000&amp;guid=fcabf8ec9e546d54ea2c70e9d8b581d4&amp;type=3#trophy-white-icon&quot;); height: 85px; width: 104px;"/>
+                            <ui:Label text="Badges" class="action-label"/>
+                        </ui:Button>
+                        <ui:Button name="progress-button" class="action-button action-green action-button-right">
+                            <ui:VisualElement class="action-icon icon-progress" style="height: 85px; width: 132px;"/>
+                            <ui:Label text="Progress" class="action-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="recent-activity-card" class="recent-activity-card">
+                    <ui:Label text="Recent Activity" class="section-title"/>
+                    <ui:VisualElement name="recent-activity-list" class="recent-activity-list">
+                        <ui:VisualElement class="activity-item">
+                            <ui:VisualElement class="activity-icon" style="background-color: rgb(37, 99, 235);"/>
+                            <ui:VisualElement class="activity-content">
+                                <ui:Label text="Completed &apos;Skeletal System&apos; Quiz" class="activity-title"/>
+                                <ui:Label text="2 hours ago" class="activity-time"/>
+                            </ui:VisualElement>
+                            <ui:Label text="+50" class="activity-points"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="activity-item">
+                            <ui:VisualElement class="activity-icon" style="background-color: rgb(217, 119, 6);"/>
+                            <ui:VisualElement class="activity-content">
+                                <ui:Label text="Explored 3D Heart Model" class="activity-title"/>
+                                <ui:Label text="Yesterday" class="activity-time"/>
+                            </ui:VisualElement>
+                            <ui:Label text="+30" class="activity-points"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="activity-item">
+                            <ui:VisualElement class="activity-icon" style="background-color: rgb(147, 51, 234);"/>
+                            <ui:VisualElement class="activity-content">
+                                <ui:Label text="Earned &apos;Anatomy Novice&apos; Badge" class="activity-title"/>
+                                <ui:Label text="2 days ago" class="activity-time"/>
+                            </ui:VisualElement>
+                            <ui:Label text="+100" class="activity-points"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="activity-item activity-item-last">
+                            <ui:VisualElement class="activity-icon" style="background-color: rgb(22, 163, 74);"/>
+                            <ui:VisualElement class="activity-content">
+                                <ui:Label text="Reached Level 5" class="activity-title"/>
+                                <ui:Label text="3 days ago" class="activity-time"/>
+                            </ui:VisualElement>
+                            <ui:Label text="+200" class="activity-points"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

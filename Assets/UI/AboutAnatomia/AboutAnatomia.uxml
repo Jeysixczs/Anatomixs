@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AboutAnatomia/AboutAnatomia.uss?fileID=7433441132597879392&amp;guid=ea4f4cc1f97c6744c81842c6a49b4d69&amp;type=3#AboutAnatomia"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:Label text="About" class="header-title"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="app-identity-card" class="app-identity-card">
+                    <ui:VisualElement name="app-logo-circle" class="app-logo-circle">
+                        <ui:Label text="" class="app-logo-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/Anatomia-logo.png?fileID=2800000&amp;guid=d98c520272f85c14e84436a94d5ebd88&amp;type=3#Anatomia-logo&quot;); height: 255px; width: 255px;"/>
+                    </ui:VisualElement>
+                    <ui:Label name="app-name-label" text="ANATOMIA" class="app-name"/>
+                    <ui:Label name="app-full-title-label" text="A Gamified Mobile Application for Interactive Human Anatomy Learning" class="app-full-title"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:Label text="Description" class="section-title"/>
+                <ui:VisualElement name="description-card" class="info-card">
+                    <ui:Label name="description-text-label" text="ANATOMIA is a gamified mobile application that makes learning human anatomy interactive and engaging. Through 3D models, quizzes, points, and levels, it transforms traditional anatomy lessons into a fun and immersive learning experience for students, with tools that let teachers create classrooms and track progress." class="info-card-text"/>
+                </ui:VisualElement>
+                <ui:Label text="Developers" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="developers-card" class="menu-card">
+                    <ui:VisualElement name="developers-list" class="developers-list"/>
+                </ui:VisualElement>
+                <ui:Label name="version-label" text="SANATOMIA  v1.0.0" class="version-label"/>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

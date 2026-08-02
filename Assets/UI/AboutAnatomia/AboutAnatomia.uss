@@ -1,0 +1,412 @@
+/* =========================================================
+   Anatomia 3D - About (SANATOMIA) (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header is generated as
+   a Texture2D at runtime from AboutAnatomiaController (see
+   BuildGradientTexture), matching StudentProfile's purple->pink
+   header. The color below is a flat fallback.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 79px;
+    border-bottom-right-radius: 79px;
+    padding-left: 66px;
+    padding-right: 66px;
+    padding-top: 132px;
+    padding-bottom: 74px;
+    flex-shrink: 0;
+    flex-direction: column;
+    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 53px;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 39px;
+    flex-shrink: 0;
+}
+
+.back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.26);
+}
+
+.back-icon
+{
+    width: 53px;
+    height: 53px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-title
+{
+    font-size: 53px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- App Identity: logo, title, full description ---------- */
+
+.app-identity-card
+{
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 37px;
+    padding: 44px 34px;
+}
+
+.app-logo-circle
+{
+    width: 169px;
+    height: 169px;
+    border-radius: 85px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.6);
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.app-logo-emoji
+{
+    font-size: 74px;
+    -unity-text-align: middle-center;
+}
+
+.app-name
+{
+    font-size: 53px;
+    -unity-font-style: bold;
+    color: white;
+    -unity-text-align: middle-center;
+    letter-spacing: 1px;
+    white-space: normal;
+}
+
+.app-full-title
+{
+    font-size: 29px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 16px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 820px;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical
+{
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Section titles ---------- */
+
+.section-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    padding-left: 66px;
+    padding-right: 66px;
+    margin-top: 45px;
+    margin-bottom: 21px;
+}
+
+.section-title-spaced
+{
+    margin-top: 53px;
+}
+
+/* ---------- Description card ---------- */
+
+.info-card
+{
+    background-color: white;
+    border-radius: 37px;
+    margin-left: 66px;
+    margin-right: 66px;
+    padding: 43px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.info-card-text
+{
+    font-size: 30px;
+    color: rgb(90, 95, 112);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* ---------- Developers list ---------- */
+
+.menu-card
+{
+    background-color: white;
+    border-radius: 37px;
+    margin-left: 66px;
+    margin-right: 66px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.developers-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.developer-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 29px;
+}
+
+.developer-row-last
+{
+    padding-bottom: 29px;
+}
+
+.developer-avatar
+{
+    width: 79px;
+    height: 79px;
+    border-radius: 39px;
+    background-color: rgb(147, 51, 234);
+    justify-content: center;
+    align-items: center;
+    margin-right: 32px;
+    flex-shrink: 0;
+}
+
+.developer-avatar-initials
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.developer-name-label
+{
+    font-size: 33px;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: normal;
+}
+
+.menu-divider
+{
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.06);
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+/* ---------- Footer ---------- */
+
+.version-label
+{
+    font-size: 26px;
+    color: rgb(160, 165, 178);
+    -unity-text-align: middle-center;
+    margin-top: 47px;
+    margin-bottom: 66px;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 45px;
+    padding-right: 45px;
+    padding-top: 92px;
+    padding-bottom: 55px;
+}
+
+.compact .header-top-row
+{
+    margin-bottom: 37px;
+}
+
+.compact .header-title
+{
+    font-size: 43px;
+}
+
+.compact .back-button
+{
+    width: 104px;
+    height: 104px;
+    border-radius: 52px;
+    margin-right: 26px;
+}
+
+.compact .back-icon
+{
+    width: 43px;
+    height: 43px;
+}
+
+.compact .app-identity-card
+{
+    padding: 32px 22px;
+}
+
+.compact .app-logo-circle
+{
+    width: 126px;
+    height: 126px;
+    border-radius: 63px;
+    margin-bottom: 24px;
+}
+
+.compact .app-logo-emoji
+{
+    font-size: 55px;
+}
+
+.compact .app-name
+{
+    font-size: 39px;
+}
+
+.compact .app-full-title
+{
+    font-size: 24px;
+}
+
+.compact .section-title
+{
+    font-size: 32px;
+    padding-left: 45px;
+    padding-right: 45px;
+}
+
+.compact .info-card,
+.compact .menu-card
+{
+    margin-left: 45px;
+    margin-right: 45px;
+}
+
+.compact .info-card-text
+{
+    font-size: 25px;
+}
+
+.compact .developer-name-label
+{
+    font-size: 28px;
+}
+
+.compact .developer-avatar
+{
+    width: 66px;
+    height: 66px;
+    border-radius: 33px;
+    margin-right: 24px;
+}
+
+.compact .developer-avatar-initials
+{
+    font-size: 24px;
+}

@@ -1,0 +1,397 @@
+/* =========================================================
+   Anatomia 3D - Student Notifications (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header gradient is
+   generated as a Texture2D at runtime from
+   StudentNotificationsController. The color below is a flat
+   fallback.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 69px;
+    border-bottom-right-radius: 69px;
+    padding-left: 51px;
+    padding-right: 51px;
+    padding-top: 115px;
+    padding-bottom: 57px;
+    flex-shrink: 0;
+    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.back-button
+{
+    width: 101px;
+    height: 101px;
+    border-radius: 51px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 34px;
+    flex-shrink: 0;
+}
+
+.back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.back-icon
+{
+    width: 46px;
+    height: 46px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 46px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 7px;
+    white-space: normal;
+}
+
+.mark-all-read-button
+{
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.24);
+    border-radius: 18px;
+    padding-left: 21px;
+    padding-right: 21px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.mark-all-read-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.26);
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    -unity-overflow-scrolling: touch;
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 34px 44px 60px 44px;
+    max-width: 100%;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* ---------- Empty state ---------- */
+
+.notifications-empty-state
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 32px;
+    padding-top: 69px;
+    padding-bottom: 57px;
+    padding-left: 34px;
+    padding-right: 34px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.empty-state-icon
+{
+    font-size: 74px;
+    opacity: 0.35;
+    margin-bottom: 25px;
+}
+
+.empty-state-text
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 12px;
+}
+
+.empty-state-subtext
+{
+    font-size: 24px;
+    color: rgb(138, 143, 163);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Notifications list ---------- */
+
+.notifications-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.notification-row
+{
+    width: 100%;
+    flex-direction: row;
+    align-items: flex-start;
+    background-color: white;
+    border-radius: 28px;
+    padding: 28px;
+    margin-bottom: 21px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    border-left-width: 5px;
+    border-left-color: rgba(0, 0, 0, 0.05);
+}
+
+.notification-row-unread
+{
+    background-color: rgb(250, 246, 255);
+    border-left-color: rgb(142, 45, 226);
+}
+
+.notification-icon-box
+{
+    width: 69px;
+    height: 69px;
+    border-radius: 21px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 23px;
+    flex-shrink: 0;
+}
+
+.notification-icon-purple { background-color: rgb(237, 224, 253); }
+.notification-icon-green  { background-color: rgb(209, 250, 229); }
+.notification-icon-orange { background-color: rgb(253, 235, 208); }
+.notification-icon-blue   { background-color: rgb(219, 234, 254); }
+
+.notification-icon-emoji
+{
+    font-size: 30px;
+    -unity-text-align: middle-center;
+}
+
+.notification-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.notification-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.notification-title
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    white-space: normal;
+    margin-right: 12px;
+}
+
+.notification-unread-dot
+{
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    background-color: rgb(142, 45, 226);
+    flex-shrink: 0;
+    margin-top: 7px;
+}
+
+.notification-message
+{
+    font-size: 24px;
+    color: rgb(120, 123, 140);
+    margin-top: 5px;
+    white-space: normal;
+}
+
+.notification-time
+{
+    font-size: 21px;
+    color: rgb(170, 174, 188);
+    margin-top: 12px;
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 80px;
+    padding-bottom: 46px;
+}
+
+.compact .header-title
+{
+    font-size: 37px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 22px;
+}
+
+.compact .back-button
+{
+    width: 78px;
+    height: 78px;
+    border-radius: 39px;
+    margin-right: 23px;
+}
+
+.compact .back-icon
+{
+    width: 37px;
+    height: 37px;
+}
+
+.compact .mark-all-read-button
+{
+    font-size: 18px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.compact .content-wrapper
+{
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.compact .notification-title
+{
+    font-size: 23px;
+}
+
+.compact .notification-message
+{
+    font-size: 21px;
+}
+
+.compact .notification-time
+{
+    font-size: 17px;
+}
+
+.compact .notification-icon-box
+{
+    width: 57px;
+    height: 57px;
+    margin-right: 18px;
+}

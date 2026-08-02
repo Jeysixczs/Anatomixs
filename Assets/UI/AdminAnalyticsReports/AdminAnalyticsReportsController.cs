@@ -1,0 +1,715 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace Anatomia3D.UI
+{
+    /// <summary>
+    /// Backend for AdminAnalyticsReports.uxml. Attach to the same GameObject as
+    /// UIManager (it uses RequireComponent(UIDocument) like the other screen
+    /// controllers, and UIManager finds it via GetComponent).
+    ///
+    /// Responsibilities:
+    ///  - Wires up the back button and the Excel / PDF export buttons
+    ///  - Drives the "Performance / Students / Mistakes" segmented tab control
+    ///    (only one panel visible at a time, matching the mock)
+    ///  - Populates the four overview stat cards (Active Users, Avg Score,
+    ///    Quizzes Done, Completion)
+    ///  - Builds the Top Performers list, Student Activity summary, Common
+    ///    Incorrect Answers list and Recommendations list at runtime
+    ///  - A simple "compact" breakpoint toggle for smaller phone screens
+    ///  - Exposes SetOverviewStats() / SetTopPerformers() / SetStudentActivity()
+    ///    / SetTopicPerformance() / SetScoreTrend() / SetCommonMistakes() /
+    ///    SetRecommendations() so real analytics data can be pushed in instead
+    ///    of the placeholder mock data below.
+    ///
+    /// Hook up your real reporting/export calls inside OnExportExcelClicked()
+    /// and OnExportPdfClicked(), and your real date-range picker inside
+    /// OnDateFilterClicked().
+    /// </summary>
+    [RequireComponent(typeof(UIDocument))]
+    public class AdminAnalyticsReportsController : MonoBehaviour
+    {
+        private const string TabPerformance = "performance";
+        private const string TabStudents = "students";
+        private const string TabMistakes = "mistakes";
+
+        /// <summary>Plain data for a single row in the "Top Performers" list.</summary>
+        public struct TopPerformer
+        {
+            public string Name;
+            public int QuizzesCompleted;
+            public int Points;
+            public int Level;
+
+            public TopPerformer(string name, int quizzesCompleted, int points, int level)
+            {
+                Name = name;
+                QuizzesCompleted = quizzesCompleted;
+                Points = points;
+                Level = level;
+            }
+        }
+
+        /// <summary>Plain data for the "Student Activity" summary card.</summary>
+        public struct StudentActivitySummary
+        {
+            public int TotalStudents;
+            public int ActiveThisMonth;
+            public float AverageLevel;
+            public int AveragePoints;
+
+            public StudentActivitySummary(int totalStudents, int activeThisMonth, float averageLevel, int averagePoints)
+            {
+                TotalStudents = totalStudents;
+                ActiveThisMonth = activeThisMonth;
+                AverageLevel = averageLevel;
+                AveragePoints = averagePoints;
+            }
+        }
+
+        /// <summary>Plain data for a single row in the "Common Incorrect Answers" list.</summary>
+        public struct MistakeEntry
+        {
+            public string Question;
+            public string Category;
+            public int Errors;
+
+            public MistakeEntry(string question, string category, int errors)
+            {
+                Question = question;
+                Category = category;
+                Errors = errors;
+            }
+        }
+
+        /// <summary>Plain data for a single "Recommendations" item.</summary>
+        public struct RecommendationEntry
+        {
+            public string Title;
+            public string Description;
+
+            public RecommendationEntry(string title, string description)
+            {
+                Title = title;
+                Description = description;
+            }
+        }
+
+        /// <summary>Plain data for a single row in the "Score Trend" list (0-100).</summary>
+        public struct ScoreTrendEntry
+        {
+            public string Label;
+            public float ScorePercent;
+
+            public ScoreTrendEntry(string label, float scorePercent)
+            {
+                Label = label;
+                ScorePercent = scorePercent;
+            }
+        }
+
+        /// <summary>Plain data for a single row in the "Performance by Topic" list (0-100).</summary>
+        public struct TopicPerformanceEntry
+        {
+            public string Topic;
+            public float ScorePercent;
+
+            public TopicPerformanceEntry(string topic, float scorePercent)
+            {
+                Topic = topic;
+                ScorePercent = scorePercent;
+            }
+        }
+
+        [Header("Compact breakpoint (px, reference is 1080x1920)")]
+        [SerializeField] private int compactWidthThreshold = 900;
+
+        private UIDocument _document;
+        private VisualElement _root;
+        private VisualElement _screenRoot;
+
+        private Button _backButton;
+        private Button _exportExcelButton;
+        private Button _exportPdfButton;
+
+        private Button _dateFilterButton;
+        private Label _dateFilterLabel;
+
+        private Label _activeUsersValueLabel;
+        private Label _activeUsersDeltaLabel;
+        private Label _avgScoreValueLabel;
+        private Label _avgScoreDeltaLabel;
+        private Label _quizzesDoneValueLabel;
+        private Label _quizzesDoneDeltaLabel;
+        private Label _completionValueLabel;
+        private Label _completionDeltaLabel;
+
+        private Button _performanceTabButton;
+        private Button _studentsTabButton;
+        private Button _mistakesTabButton;
+
+        private VisualElement _performancePanel;
+        private VisualElement _studentsPanel;
+        private VisualElement _mistakesPanel;
+
+        private VisualElement _scoreTrendList;
+        private VisualElement _topicPerformanceList;
+
+        private VisualElement _topPerformersList;
+
+        private Label _totalStudentsValueLabel;
+        private Label _activeThisMonthValueLabel;
+        private Label _averageLevelValueLabel;
+        private Label _averagePointsValueLabel;
+
+        private VisualElement _commonMistakesList;
+        private VisualElement _recommendationsList;
+
+        private string _activeTab = TabStudents;
+
+        private List<ScoreTrendEntry> _currentScoreTrend = new List<ScoreTrendEntry>();
+        private List<TopicPerformanceEntry> _currentTopicPerformance = new List<TopicPerformanceEntry>();
+        private List<TopPerformer> _currentTopPerformers = new List<TopPerformer>();
+        private StudentActivitySummary _currentStudentActivity;
+        private List<MistakeEntry> _currentMistakes = new List<MistakeEntry>();
+        private List<RecommendationEntry> _currentRecommendations = new List<RecommendationEntry>();
+
+        private void OnEnable()
+        {
+            Debug.Log("[AdminAnalyticsReportsController] OnEnable called");
+
+            if (_document == null)
+            {
+                _document = GetComponent<UIDocument>();
+            }
+
+            if (UIManager.Instance != null)
+            {
+                var uiDocument = UIManager.Instance.GetComponent<UIDocument>();
+                if (uiDocument != null)
+                {
+                    _root = uiDocument.rootVisualElement;
+                }
+            }
+
+            if (_root == null && _document != null)
+            {
+                _root = _document.rootVisualElement;
+            }
+
+            if (_root == null)
+            {
+                Debug.LogError("[AdminAnalyticsReportsController] Root is null!");
+                return;
+            }
+
+            UnregisterCallbacks();
+
+            QueryElements();
+            WireCallbacks();
+            UpdateResponsiveLayout();
+
+            LoadPlaceholderDataIfEmpty();
+            RefreshScoreTrendUI();
+            RefreshTopicPerformanceUI();
+            RefreshTopPerformersUI();
+            RefreshStudentActivityUI();
+            RefreshMistakesUI();
+            RefreshRecommendationsUI();
+            SetActiveTab(_activeTab);
+        }
+
+        private void OnDisable()
+        {
+            UnregisterCallbacks();
+        }
+
+        private void UnregisterCallbacks()
+        {
+            if (_screenRoot == null) return;
+
+            _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _exportExcelButton?.UnregisterCallback<ClickEvent>(OnExportExcelClicked);
+            _exportPdfButton?.UnregisterCallback<ClickEvent>(OnExportPdfClicked);
+            _dateFilterButton?.UnregisterCallback<ClickEvent>(OnDateFilterClicked);
+            _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
+            _mistakesTabButton?.UnregisterCallback<ClickEvent>(OnMistakesTabClicked);
+            _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+        }
+
+        private void QueryElements()
+        {
+            _screenRoot = _root.Q<VisualElement>("screen-root");
+
+            if (_screenRoot == null)
+            {
+                Debug.LogWarning("[AdminAnalyticsReportsController] screen-root not found, using root directly");
+                _screenRoot = _root;
+            }
+
+            _backButton = _screenRoot.Q<Button>("back-button");
+            _exportExcelButton = _screenRoot.Q<Button>("export-excel-button");
+            _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
+
+            _dateFilterButton = _screenRoot.Q<Button>("date-filter-button");
+            _dateFilterLabel = _screenRoot.Q<Label>("date-filter-label");
+
+            _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
+            _activeUsersDeltaLabel = _screenRoot.Q<Label>("active-users-delta-label");
+            _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
+            _avgScoreDeltaLabel = _screenRoot.Q<Label>("avg-score-delta-label");
+            _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
+            _quizzesDoneDeltaLabel = _screenRoot.Q<Label>("quizzes-done-delta-label");
+            _completionValueLabel = _screenRoot.Q<Label>("completion-value-label");
+            _completionDeltaLabel = _screenRoot.Q<Label>("completion-delta-label");
+
+            _performanceTabButton = _screenRoot.Q<Button>("performance-tab-button");
+            _studentsTabButton = _screenRoot.Q<Button>("students-tab-button");
+            _mistakesTabButton = _screenRoot.Q<Button>("mistakes-tab-button");
+
+            _performancePanel = _screenRoot.Q<VisualElement>("performance-panel");
+            _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
+            _mistakesPanel = _screenRoot.Q<VisualElement>("mistakes-panel");
+
+            _scoreTrendList = _screenRoot.Q<VisualElement>("score-trend-list");
+            _topicPerformanceList = _screenRoot.Q<VisualElement>("topic-performance-list");
+
+            _topPerformersList = _screenRoot.Q<VisualElement>("top-performers-list");
+
+            _totalStudentsValueLabel = _screenRoot.Q<Label>("total-students-value-label");
+            _activeThisMonthValueLabel = _screenRoot.Q<Label>("active-this-month-value-label");
+            _averageLevelValueLabel = _screenRoot.Q<Label>("average-level-value-label");
+            _averagePointsValueLabel = _screenRoot.Q<Label>("average-points-value-label");
+
+            _commonMistakesList = _screenRoot.Q<VisualElement>("common-mistakes-list");
+            _recommendationsList = _screenRoot.Q<VisualElement>("recommendations-list");
+
+            Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
+        }
+
+        private void WireCallbacks()
+        {
+            _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _exportExcelButton?.RegisterCallback<ClickEvent>(OnExportExcelClicked);
+            _exportPdfButton?.RegisterCallback<ClickEvent>(OnExportPdfClicked);
+            _dateFilterButton?.RegisterCallback<ClickEvent>(OnDateFilterClicked);
+            _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
+            _mistakesTabButton?.RegisterCallback<ClickEvent>(OnMistakesTabClicked);
+
+            if (_screenRoot != null)
+            {
+                _screenRoot.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            }
+        }
+
+        // ---------------- Public API ----------------
+
+        /// <summary>Push the four overview stat cards. Deltas are shown as-is (include the sign), e.g. "+12%".</summary>
+        public void SetOverviewStats(int activeUsers, string activeUsersDelta, int avgScorePercent, string avgScoreDelta,
+            int quizzesDone, string quizzesDoneDelta, int completionPercent, string completionDelta)
+        {
+            if (_activeUsersValueLabel != null) _activeUsersValueLabel.text = activeUsers.ToString();
+            if (_activeUsersDeltaLabel != null) _activeUsersDeltaLabel.text = $"{activeUsersDelta} from last month";
+
+            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent}%";
+            if (_avgScoreDeltaLabel != null) _avgScoreDeltaLabel.text = $"{avgScoreDelta} from last month";
+
+            if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = quizzesDone.ToString();
+            if (_quizzesDoneDeltaLabel != null) _quizzesDoneDeltaLabel.text = $"{quizzesDoneDelta} from last month";
+
+            if (_completionValueLabel != null) _completionValueLabel.text = $"{completionPercent}%";
+            if (_completionDeltaLabel != null) _completionDeltaLabel.text = $"{completionDelta} from last month";
+        }
+
+        /// <summary>Update the date-range filter label (e.g. "Last 7 days", "This term").</summary>
+        public void SetDateRangeLabel(string label)
+        {
+            if (_dateFilterLabel != null) _dateFilterLabel.text = label;
+        }
+
+        public void SetScoreTrend(List<ScoreTrendEntry> entries)
+        {
+            _currentScoreTrend = entries ?? new List<ScoreTrendEntry>();
+            RefreshScoreTrendUI();
+        }
+
+        public void SetTopicPerformance(List<TopicPerformanceEntry> entries)
+        {
+            _currentTopicPerformance = entries ?? new List<TopicPerformanceEntry>();
+            RefreshTopicPerformanceUI();
+        }
+
+        public void SetTopPerformers(List<TopPerformer> performers)
+        {
+            _currentTopPerformers = performers ?? new List<TopPerformer>();
+            RefreshTopPerformersUI();
+        }
+
+        public void SetStudentActivity(StudentActivitySummary summary)
+        {
+            _currentStudentActivity = summary;
+            RefreshStudentActivityUI();
+        }
+
+        public void SetCommonMistakes(List<MistakeEntry> mistakes)
+        {
+            _currentMistakes = mistakes ?? new List<MistakeEntry>();
+            RefreshMistakesUI();
+        }
+
+        public void SetRecommendations(List<RecommendationEntry> recommendations)
+        {
+            _currentRecommendations = recommendations ?? new List<RecommendationEntry>();
+            RefreshRecommendationsUI();
+        }
+
+        // ---------------- Tabs ----------------
+
+        private void OnPerformanceTabClicked(ClickEvent evt) => SetActiveTab(TabPerformance);
+        private void OnStudentsTabClicked(ClickEvent evt) => SetActiveTab(TabStudents);
+        private void OnMistakesTabClicked(ClickEvent evt) => SetActiveTab(TabMistakes);
+
+        private void SetActiveTab(string tab)
+        {
+            _activeTab = tab;
+
+            _performanceTabButton?.EnableInClassList("tab-button-active", tab == TabPerformance);
+            _studentsTabButton?.EnableInClassList("tab-button-active", tab == TabStudents);
+            _mistakesTabButton?.EnableInClassList("tab-button-active", tab == TabMistakes);
+
+            _performancePanel?.EnableInClassList("hidden", tab != TabPerformance);
+            _studentsPanel?.EnableInClassList("hidden", tab != TabStudents);
+            _mistakesPanel?.EnableInClassList("hidden", tab != TabMistakes);
+        }
+
+        // ---------------- Performance tab ----------------
+
+        private void RefreshScoreTrendUI()
+        {
+            if (_scoreTrendList == null) return;
+
+            _scoreTrendList.Clear();
+
+            for (int i = 0; i < _currentScoreTrend.Count; i++)
+            {
+                var entry = _currentScoreTrend[i];
+
+                var row = new VisualElement();
+                row.AddToClassList("score-trend-row");
+                if (i == _currentScoreTrend.Count - 1) row.AddToClassList("score-trend-row-last");
+
+                var topRow = new VisualElement();
+                topRow.AddToClassList("score-trend-top-row");
+
+                var nameLabel = new Label(entry.Label);
+                nameLabel.AddToClassList("score-trend-name-label");
+
+                var valueLabel = new Label($"{Mathf.RoundToInt(entry.ScorePercent)}%");
+                valueLabel.AddToClassList("score-trend-value-label");
+
+                topRow.Add(nameLabel);
+                topRow.Add(valueLabel);
+                row.Add(topRow);
+
+                var track = new VisualElement();
+                track.AddToClassList("score-trend-bar-track");
+
+                var fill = new VisualElement();
+                fill.AddToClassList("score-trend-bar-fill");
+                fill.style.width = new Length(Mathf.Clamp(entry.ScorePercent, 0f, 100f), LengthUnit.Percent);
+                track.Add(fill);
+
+                row.Add(track);
+                _scoreTrendList.Add(row);
+            }
+        }
+
+        private void RefreshTopicPerformanceUI()
+        {
+            if (_topicPerformanceList == null) return;
+
+            _topicPerformanceList.Clear();
+
+            for (int i = 0; i < _currentTopicPerformance.Count; i++)
+            {
+                var entry = _currentTopicPerformance[i];
+
+                var row = new VisualElement();
+                row.AddToClassList("topic-row");
+                if (i == _currentTopicPerformance.Count - 1) row.AddToClassList("topic-row-last");
+
+                var topRow = new VisualElement();
+                topRow.AddToClassList("topic-top-row");
+
+                var nameLabel = new Label(entry.Topic);
+                nameLabel.AddToClassList("topic-name-label");
+
+                var valueLabel = new Label($"{Mathf.RoundToInt(entry.ScorePercent)}%");
+                valueLabel.AddToClassList("topic-value-label");
+
+                topRow.Add(nameLabel);
+                topRow.Add(valueLabel);
+                row.Add(topRow);
+
+                var track = new VisualElement();
+                track.AddToClassList("topic-bar-track");
+
+                var fill = new VisualElement();
+                fill.AddToClassList("topic-bar-fill");
+                fill.style.width = new Length(Mathf.Clamp(entry.ScorePercent, 0f, 100f), LengthUnit.Percent);
+                track.Add(fill);
+
+                row.Add(track);
+                _topicPerformanceList.Add(row);
+            }
+        }
+
+        // ---------------- Students tab ----------------
+
+        private void RefreshTopPerformersUI()
+        {
+            if (_topPerformersList == null) return;
+
+            _topPerformersList.Clear();
+
+            for (int i = 0; i < _currentTopPerformers.Count; i++)
+            {
+                var performer = _currentTopPerformers[i];
+                int rank = i + 1;
+
+                var row = new VisualElement();
+                row.AddToClassList("performer-row");
+                if (i == _currentTopPerformers.Count - 1) row.AddToClassList("performer-row-last");
+
+                var badge = new VisualElement();
+                badge.AddToClassList("performer-rank-badge");
+                badge.AddToClassList(RankBadgeClass(rank));
+                var rankLabel = new Label(rank.ToString());
+                rankLabel.AddToClassList("performer-rank-label");
+                badge.Add(rankLabel);
+                row.Add(badge);
+
+                var info = new VisualElement();
+                info.AddToClassList("performer-info");
+                var nameLabel = new Label(performer.Name);
+                nameLabel.AddToClassList("performer-name-label");
+                var quizzesLabel = new Label($"{performer.QuizzesCompleted} quizzes completed");
+                quizzesLabel.AddToClassList("performer-quizzes-label");
+                info.Add(nameLabel);
+                info.Add(quizzesLabel);
+                row.Add(info);
+
+                var stats = new VisualElement();
+                stats.AddToClassList("performer-stats");
+                var pointsLabel = new Label($"{performer.Points} pts");
+                pointsLabel.AddToClassList("performer-points-label");
+                var levelLabel = new Label($"Level {performer.Level}");
+                levelLabel.AddToClassList("performer-level-label");
+                stats.Add(pointsLabel);
+                stats.Add(levelLabel);
+                row.Add(stats);
+
+                _topPerformersList.Add(row);
+            }
+        }
+
+        private static string RankBadgeClass(int rank)
+        {
+            switch (rank)
+            {
+                case 1: return "performer-rank-gold";
+                case 2: return "performer-rank-silver";
+                case 3: return "performer-rank-bronze";
+                default: return "performer-rank-default";
+            }
+        }
+
+        private void RefreshStudentActivityUI()
+        {
+            if (_totalStudentsValueLabel != null) _totalStudentsValueLabel.text = _currentStudentActivity.TotalStudents.ToString();
+            if (_activeThisMonthValueLabel != null) _activeThisMonthValueLabel.text = _currentStudentActivity.ActiveThisMonth.ToString();
+            if (_averageLevelValueLabel != null) _averageLevelValueLabel.text = _currentStudentActivity.AverageLevel.ToString("0.0");
+            if (_averagePointsValueLabel != null) _averagePointsValueLabel.text = _currentStudentActivity.AveragePoints.ToString("N0");
+        }
+
+        // ---------------- Mistakes tab ----------------
+
+        private void RefreshMistakesUI()
+        {
+            if (_commonMistakesList == null) return;
+
+            _commonMistakesList.Clear();
+
+            foreach (var mistake in _currentMistakes)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("mistake-row");
+
+                var info = new VisualElement();
+                info.AddToClassList("mistake-info");
+                var questionLabel = new Label(mistake.Question);
+                questionLabel.AddToClassList("mistake-question-label");
+                var categoryLabel = new Label(mistake.Category);
+                categoryLabel.AddToClassList("mistake-category-label");
+                info.Add(questionLabel);
+                info.Add(categoryLabel);
+                row.Add(info);
+
+                var countCol = new VisualElement();
+                countCol.AddToClassList("mistake-count-col");
+                var countValue = new Label(mistake.Errors.ToString());
+                countValue.AddToClassList("mistake-count-value");
+                var countLabel = new Label("errors");
+                countLabel.AddToClassList("mistake-count-label");
+                countCol.Add(countValue);
+                countCol.Add(countLabel);
+                row.Add(countCol);
+
+                _commonMistakesList.Add(row);
+            }
+        }
+
+        private void RefreshRecommendationsUI()
+        {
+            if (_recommendationsList == null) return;
+
+            _recommendationsList.Clear();
+
+            foreach (var recommendation in _currentRecommendations)
+            {
+                var item = new VisualElement();
+                item.AddToClassList("recommendation-item");
+
+                var iconCircle = new VisualElement();
+                iconCircle.AddToClassList("recommendation-icon-circle");
+                var icon = new Label("\U0001F4A1"); // 💡
+                icon.AddToClassList("recommendation-icon");
+                iconCircle.Add(icon);
+                item.Add(iconCircle);
+
+                var textCol = new VisualElement();
+                textCol.AddToClassList("recommendation-text-col");
+                var titleLabel = new Label(recommendation.Title);
+                titleLabel.AddToClassList("recommendation-title-label");
+                var descLabel = new Label(recommendation.Description);
+                descLabel.AddToClassList("recommendation-description-label");
+                textCol.Add(titleLabel);
+                textCol.Add(descLabel);
+                item.Add(textCol);
+
+                _recommendationsList.Add(item);
+            }
+        }
+
+        // ---------------- Button handlers ----------------
+
+        private void OnBackClicked(ClickEvent evt)
+        {
+            Debug.Log("[AdminAnalyticsReportsController] Navigating back to admin dashboard");
+            UIManager.Instance.ShowAdminDashboard();
+        }
+
+        private void OnExportExcelClicked(ClickEvent evt)
+        {
+            Debug.Log("[AdminAnalyticsReportsController] Export to Excel tapped.");
+
+            // TODO: hook up your real report export, e.g.:
+            // AdminReportsService.Instance.ExportToExcel(currentDateRange);
+        }
+
+        private void OnExportPdfClicked(ClickEvent evt)
+        {
+            Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
+
+            // TODO: hook up your real report export, e.g.:
+            // AdminReportsService.Instance.ExportToPdf(currentDateRange);
+        }
+
+        private void OnDateFilterClicked(ClickEvent evt)
+        {
+            Debug.Log("[AdminAnalyticsReportsController] Date range filter tapped.");
+
+            // TODO: show a real date-range picker and call SetDateRangeLabel() +
+            // reload analytics data for the chosen range.
+        }
+
+        // ---------------- Responsive layout ----------------
+
+        private void OnRootGeometryChanged(GeometryChangedEvent evt) => UpdateResponsiveLayout();
+
+        private void UpdateResponsiveLayout()
+        {
+            if (_screenRoot == null) return;
+            bool compact = _screenRoot.resolvedStyle.width > 0 && _screenRoot.resolvedStyle.width < compactWidthThreshold;
+            _screenRoot.EnableInClassList("compact", compact);
+        }
+
+        // ---------------- Placeholder data (matches the mock) ----------------
+
+        private void LoadPlaceholderDataIfEmpty()
+        {
+            if (_currentScoreTrend.Count == 0)
+            {
+                _currentScoreTrend = new List<ScoreTrendEntry>
+                {
+                    new ScoreTrendEntry("Skeletal System Quiz", 88f),
+                    new ScoreTrendEntry("Cell Biology Quiz", 76f),
+                    new ScoreTrendEntry("Muscular System Quiz", 82f),
+                    new ScoreTrendEntry("Circulatory System Quiz", 79f),
+                };
+            }
+
+            if (_currentTopicPerformance.Count == 0)
+            {
+                _currentTopicPerformance = new List<TopicPerformanceEntry>
+                {
+                    new TopicPerformanceEntry("Skeletal System", 74f),
+                    new TopicPerformanceEntry("Cell Biology", 68f),
+                    new TopicPerformanceEntry("Muscular System", 85f),
+                    new TopicPerformanceEntry("Circulatory System", 81f),
+                };
+            }
+
+            if (_currentTopPerformers.Count == 0)
+            {
+                _currentTopPerformers = new List<TopPerformer>
+                {
+                    new TopPerformer("John Carlo Aquino", 24, 2400, 8),
+                    new TopPerformer("Jorge Acopio", 15, 1250, 5),
+                    new TopPerformer("John Carl Alvaro", 8, 650, 3),
+                    new TopPerformer("Christian Abuyan", 8, 650, 3),
+                };
+            }
+
+            if (_currentStudentActivity.TotalStudents == 0 && _currentStudentActivity.ActiveThisMonth == 0)
+            {
+                _currentStudentActivity = new StudentActivitySummary(4, 2, 5.3f, 1433);
+            }
+
+            if (_currentMistakes.Count == 0)
+            {
+                _currentMistakes = new List<MistakeEntry>
+                {
+                    new MistakeEntry("How many bones in adult body?", "Skeletal System", 45),
+                    new MistakeEntry("Function of mitochondria", "Cell Biology", 38),
+                    new MistakeEntry("Types of muscle tissue", "Muscular System", 32),
+                    new MistakeEntry("Cardiac cycle phases", "Circulatory System", 28),
+                };
+            }
+
+            if (_currentRecommendations.Count == 0)
+            {
+                _currentRecommendations = new List<RecommendationEntry>
+                {
+                    new RecommendationEntry("Focus on Skeletal System", "Add more practice questions about bone count and structure"),
+                };
+            }
+
+            // Overview stat cards
+            SetOverviewStats(2, "+12%", 82, "+5%", 505, "+18%", 78, "+3%");
+        }
+    }
+}

@@ -1,0 +1,923 @@
+/* =========================================================
+   Anatomia 3D - Admin Quiz Management (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient, so the header, "New Quiz"
+   header button and the two modal submit buttons are generated
+   as Texture2D at runtime from AdminQuizManagementController.
+   The colors below are flat fallbacks.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    padding-left: 53px;
+    padding-right: 53px;
+    padding-top: 118px;
+    padding-bottom: 53px;
+    flex-shrink: 0;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.back-button
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 66px;
+    background-color: transparent;
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin-right: 16px;
+    margin-top: 6px;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.back-icon
+{
+    width: 39px;
+    height: 39px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.header-subtitle
+{
+    font-size: 29px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+.new-quiz-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 150, 105); /* fallback, overridden by gradient texture */
+    border-width: 0;
+    border-radius: 21px;
+    padding: 14px 20px;
+    margin: 0;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.new-quiz-button:hover
+{
+    opacity: 0.92;
+}
+
+.new-quiz-plus
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+    margin-right: 10px;
+}
+
+.new-quiz-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.screen-scroll .unity-scroller--vertical
+{
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 30px 32px 60px 32px;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* ---------- Stats row ---------- */
+
+.stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
+.stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-radius: 29px;
+    padding-top: 34px;
+    padding-bottom: 29px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.stat-card-left
+{
+    margin-right: 14px;
+}
+
+.stat-card-mid
+{
+    margin-right: 14px;
+}
+
+.stat-value
+{
+    font-size: 45px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-center;
+}
+
+.stat-label
+{
+    font-size: 23px;
+    color: rgb(138, 143, 163);
+    margin-top: 8px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Quizzes empty state ---------- */
+
+.quizzes-empty-state
+{
+    background-color: white;
+    border-radius: 37px;
+    padding-top: 74px;
+    padding-bottom: 59px;
+    padding-left: 39px;
+    padding-right: 39px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 29px;
+}
+
+.empty-state-text
+{
+    font-size: 34px;
+    color: rgb(138, 143, 163);
+    margin-bottom: 39px;
+}
+
+.empty-state-button
+{
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 24px;
+    padding-left: 45px;
+    padding-right: 45px;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.empty-state-button:hover
+{
+    background-color: rgb(248, 249, 251);
+}
+
+/* ---------- Quizzes list / cards ---------- */
+
+.quizzes-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.quiz-card
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 34px;
+    padding: 37px;
+    margin-bottom: 26px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.quiz-card-top-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.quiz-title-label
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: normal;
+    margin-right: 16px;
+}
+
+.quiz-header-actions
+{
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.quiz-expand-button
+{
+    width: 92px;
+    height: 92px;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 26px;
+    color: rgb(90, 95, 112);
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+}
+
+.quiz-expand-button:hover
+{
+    color: rgb(31, 36, 48);
+}
+
+.quiz-delete-button
+{
+    width: 92px;
+    height: 92px;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    margin-left: 18px;
+    justify-content: center;
+    align-items: center;
+}
+
+.quiz-delete-button:hover
+{
+    background-color: rgba(220, 38, 38, 0.08);
+    border-radius: 24px;
+}
+
+.quiz-delete-icon
+{
+    font-size: 29px;
+    color: rgb(220, 38, 38);
+    -unity-text-align: middle-center;
+}
+
+.quiz-category-label
+{
+    font-size: 28px;
+    color: rgb(138, 143, 163);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.quiz-meta-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.quiz-meta-text
+{
+    font-size: 25px;
+    color: rgb(150, 155, 168);
+}
+
+.quiz-meta-dot
+{
+    font-size: 25px;
+    color: rgb(150, 155, 168);
+    margin-left: 14px;
+    margin-right: 14px;
+}
+
+/* ---------- Expanded quiz content: Questions ---------- */
+
+.quiz-divider
+{
+    width: 100%;
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.07);
+    margin-top: 32px;
+    margin-bottom: 29px;
+}
+
+.questions-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.questions-header-title
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.add-question-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-radius: 21px;
+    border-width: 0;
+    padding: 14px 20px;
+    margin: 0;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.add-question-plus
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: white;
+    margin-right: 10px;
+}
+
+.add-question-label
+{
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.questions-empty-label
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+    padding: 10px 0;
+}
+
+.questions-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.question-row
+{
+    width: 100%;
+    background-color: rgb(247, 248, 251);
+    border-radius: 24px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    flex-direction: column;
+}
+
+
+.question-row-top
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.question-index-badge
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    margin-right: 14px;
+}
+
+.question-difficulty-badge
+{
+    border-radius: 14px;
+    padding: 4px 12px;
+    margin-right: 14px;
+}
+
+.question-difficulty-easy
+{
+    background-color: rgb(209, 250, 229);
+}
+
+.question-difficulty-medium
+{
+    background-color: rgb(254, 240, 199);
+}
+
+.question-difficulty-hard
+{
+    background-color: rgb(253, 220, 220);
+}
+
+.question-difficulty-label
+{
+    font-size: 21px;
+    -unity-font-style: bold;
+}
+
+.question-difficulty-easy .question-difficulty-label
+{
+    color: rgb(5, 122, 85);
+}
+
+.question-difficulty-medium .question-difficulty-label
+{
+    color: rgb(161, 98, 7);
+}
+
+.question-difficulty-hard .question-difficulty-label
+{
+    color: rgb(185, 28, 28);
+}
+
+.question-type-badge
+{
+    background-color: white;
+    border-width: 1px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 14px;
+    padding: 4px 12px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.question-type-label
+{
+    font-size: 21px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+    white-space: normal;
+}
+
+.question-delete-button
+{
+    width: 80px;
+    height: 80px;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    margin-left: 14px;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.question-delete-button:hover
+{
+    background-color: rgba(220, 38, 38, 0.08);
+    border-radius: 21px;
+}
+
+.question-delete-icon
+{
+    font-size: 25px;
+    color: rgb(220, 38, 38);
+    -unity-text-align: middle-center;
+}
+
+.question-text-label
+{
+    font-size: 29px;
+    color: rgb(31, 36, 48);
+    margin-top: 16px;
+    white-space: normal;
+}
+
+.question-points-label
+{
+    font-size: 24px;
+    color: rgb(150, 155, 168);
+    margin-top: 10px;
+}
+
+/* ---------- Fields (shared by modals) ---------- */
+
+.field-label
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.field-label-spaced
+{
+    margin-top: 29px;
+    margin-bottom: 14px;
+}
+
+.text-field
+{
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.text-field > .unity-text-field__input
+{
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 21px;
+    padding: 18px 20px;
+    -unity-text-align: upper-left;
+}
+
+.text-area > .unity-text-field__input
+{
+    min-height: 132px;
+    -unity-text-align: upper-left;
+    white-space: normal;
+}
+
+.option-field
+{
+    margin-bottom: 16px;
+}
+
+.field-error
+{
+    font-size: 26px;
+    color: rgb(220, 38, 38);
+    margin-top: 8px;
+}
+
+.status-label
+{
+    font-size: 26px;
+    color: rgb(120, 123, 140);
+    margin-top: 18px;
+    -unity-text-align: middle-center;
+}
+
+.two-column-row
+{
+    flex-direction: row;
+}
+
+.two-column-item
+{
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.two-column-item-left
+{
+    margin-right: 14px;
+}
+
+.two-column-item-right
+{
+    margin-left: 14px;
+}
+
+/* ---------- Dropdown fields ---------- */
+
+.dropdown-field
+{
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+}
+
+.dropdown-field > .unity-base-popup-field__input
+{
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 21px;
+    padding: 16px 20px;
+}
+
+.options-container
+{
+    flex-direction: column;
+}
+
+/* ---------- Modal overlay ---------- */
+
+.modal-overlay
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 18, 28, 0.55);
+    justify-content: center;
+    align-items: center;
+    padding: 53px;
+}
+
+.modal-card
+{
+    width: 100%;
+    max-width: 846px;
+    max-height: 90%;
+    background-color: white;
+    border-radius: 37px;
+    padding: 47px;
+}
+
+.modal-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.modal-header-text-col
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.modal-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.modal-subtitle
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.modal-close-button
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
+    background-color: transparent;
+    border-width: 0;
+    font-size: 34px;
+    color: rgb(138, 143, 163);
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+.modal-close-button:hover
+{
+    background-color: rgb(243, 244, 248);
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Modal buttons (gradient submit at runtime) ---------- */
+
+.modal-submit-button
+{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    border-width: 0;
+    padding-top: 29px;
+    padding-bottom: 29px;
+    margin: 0;
+    margin-top: 37px;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+}
+
+.modal-submit-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.modal-cancel-button
+{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    border-width: 1px;
+    border-color: rgb(224, 226, 232);
+    background-color: white;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    margin: 0;
+    margin-top: 18px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.modal-cancel-button:hover
+{
+    background-color: rgb(248, 249, 251);
+}
+
+/* ---------- Utility ---------- */
+
+.hidden
+{
+    display: none;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 87px;
+    padding-bottom: 39px;
+}
+
+.compact .header-title
+{
+    font-size: 36px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 24px;
+}
+
+.compact .new-quiz-label
+{
+    display: none;
+}
+
+.compact .new-quiz-button
+{
+    padding: 18px;
+}
+
+.compact .new-quiz-plus
+{
+    margin-right: 0;
+}
+
+.compact .content-wrapper
+{
+    padding: 24px 22px 48px 22px;
+}
+
+.compact .stat-value
+{
+    font-size: 34px;
+}
+
+.compact .stat-label
+{
+    font-size: 18px;
+}
+
+.compact .quiz-title-label
+{
+    font-size: 29px;
+}
+
+.compact .quiz-category-label
+{
+    font-size: 24px;
+}
+
+.compact .add-question-label
+{
+    display: none;
+}
+
+.compact .add-question-plus
+{
+    margin-right: 0;
+}
+
+.compact .question-text-label
+{
+    font-size: 25px;
+}
+
+.compact .modal-card
+{
+    padding: 34px;
+}
+
+.compact .modal-title
+{
+    font-size: 32px;
+}

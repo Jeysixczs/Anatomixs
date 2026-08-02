@@ -1,0 +1,53 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentClassroomHub/StudentClassroomHub.uss"/>
+    <ui:VisualElement name="screen-root" class="screen-root">
+
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <!-- ================= HEADER (gradient applied at runtime via C#) ================= -->
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="header-icon-circle back-button-circle">
+                        <ui:VisualElement class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="My Classrooms" class="header-title"/>
+                        <ui:Label name="header-subtitle-label" text="You're enrolled in 0 classrooms" class="header-subtitle"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="header-stats-row" class="header-stats-row">
+                    <ui:VisualElement name="classrooms-stat-card" class="glass-stat-card glass-stat-card-left">
+                        <ui:Label name="classrooms-count-label" text="0" class="glass-stat-value"/>
+                        <ui:Label text="Classrooms" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="classmates-stat-card" class="glass-stat-card glass-stat-card-mid">
+                        <ui:Label name="classmates-count-label" text="0" class="glass-stat-value"/>
+                        <ui:Label text="Classmates" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-available-stat-card" class="glass-stat-card glass-stat-card-right">
+                        <ui:Label name="quizzes-available-count-label" text="0" class="glass-stat-value"/>
+                        <ui:Label text="Quizzes Open" class="glass-stat-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Button name="join-classroom-header-button" class="create-classroom-header-button">
+                    <ui:Label text="+" class="create-classroom-plus"/>
+                    <ui:Label text="Join a Classroom" class="create-classroom-header-label"/>
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:Label text="My Classrooms" class="section-title"/>
+                <ui:VisualElement name="classrooms-section" class="classrooms-section">
+                    <ui:VisualElement name="classrooms-empty-state" class="classrooms-empty-state">
+                        <ui:VisualElement class="empty-state-icon-box">
+                            <ui:VisualElement class="empty-state-icon"/>
+                        </ui:VisualElement>
+                        <ui:Label text="No classrooms yet" class="empty-state-text"/>
+                        <ui:Label text="Join a classroom with the code your teacher gave you." class="empty-state-subtext"/>
+                        <ui:Button name="join-first-classroom-button" text="Join Your First Classroom" class="empty-state-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="classrooms-list" class="classrooms-list hidden"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

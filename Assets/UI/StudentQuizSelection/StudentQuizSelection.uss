@@ -1,0 +1,489 @@
+/* =========================================================
+   Anatomia 3D - Quiz Selection (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+.screen-root
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: rgb(243, 244, 248);
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Header (gradient applied at runtime via C#) ---------- */
+
+.header
+{
+    width: 100%;
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 100px;
+    padding-bottom: 50px;
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.back-button
+{
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 30px;
+    flex-shrink: 0;
+}
+
+.back-icon
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.header-title
+{
+    font-size: 44px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+
+}
+
+.header-subtitle
+{
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+    white-space: normal;
+   
+}
+
+/* ---------- ScrollView ---------- */
+
+.screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+}
+
+.screen-scroll .unity-scroller--vertical {
+    width: 0;
+    display: none;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
+    padding: 0;
+    margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 100%;
+}
+
+/* ---------- Content Wrapper ---------- */
+
+.content-wrapper
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 40px;
+    max-width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+
+}
+
+/* ---------- Quiz List / Cards ---------- */
+
+.quiz-list
+{
+    flex-direction: column;
+    width: 100%;
+}
+
+.quiz-card
+{
+    background-color: white;
+    border-radius: 30px;
+    padding: 36px;
+    margin-bottom: 30px;
+    width: 100%;
+    
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.quiz-card-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.quiz-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    margin-right: 16px;
+}
+
+.difficulty-badge
+{
+    font-size: 22px;
+    -unity-font-style: bold;
+    border-radius: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+.badge-easy
+{
+    background-color: rgb(220, 245, 230);
+    color: rgb(21, 128, 78);
+}
+
+.badge-medium
+{
+    background-color: rgb(254, 243, 205);
+    color: rgb(161, 98, 7);
+}
+
+.badge-hard
+{
+    background-color: rgb(253, 226, 226);
+    color: rgb(185, 28, 28);
+}
+
+.quiz-subject
+{
+    font-size: 26px;
+    color: rgb(138, 143, 163);
+    margin-top: 6px;
+}
+
+.quiz-divider
+{
+    height: 1px;
+    background-color: rgb(235, 236, 241);
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.quiz-meta-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.quiz-meta-item
+{
+    flex-direction: column;
+    flex-grow: 1;
+    margin-right: 20px;
+}
+
+.quiz-meta-item-last
+{
+    margin-right: 0;
+}
+
+.quiz-meta-label-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.quiz-meta-icon
+{
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.icon-clock
+{
+    background-image: url("project://database/Assets/UI/Icons/time-icon.png");
+}
+
+.icon-ribbon
+{
+    background-image: url("project://database/Assets/UI/Icons/trophy-icon.png");
+}
+
+.icon-coin
+{
+    background-image: url("project://database/Assets/UI/Icons/target-icon.png");
+}
+
+.quiz-meta-label
+{
+    font-size: 22px;
+    color: rgb(150, 155, 168);
+}
+
+.quiz-meta-value
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Start Quiz Button (gradient applied at runtime via C#) ---------- */
+
+.start-quiz-button
+{
+    width: 100%;
+    height: 108px;
+    background-color: rgb(37, 99, 235);
+    color: white;
+    border-radius: 24px;
+    border-width: 0;
+    font-size: 32px;
+    -unity-font-style: bold;
+}
+
+.start-quiz-button:hover
+{
+    opacity: 0.92;
+}
+
+/* ---------- Quiz Stats Card ---------- */
+
+.quiz-stats-card
+{
+    background-color: rgb(232, 247, 238);
+    border-radius: 28px;
+    border-width: 1px;
+    border-color: rgb(200, 234, 213);
+    padding: 34px;
+    margin-bottom: 40px;
+}
+
+.quiz-stats-header-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.quiz-stats-icon
+{
+    width: 34px;
+    height: 34px;
+    margin-right: 16px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/chart-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.quiz-stats-title
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.quiz-stats-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.quiz-stat-item
+{
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    margin-right: 16px;
+}
+
+.quiz-stat-item-last
+{
+    margin-right: 0;
+}
+
+.quiz-stat-value
+{
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(21, 128, 78);
+    -unity-text-align: middle-center;
+}
+
+.quiz-stat-label
+{
+    font-size: 22px;
+    color: rgb(90, 130, 105);
+    margin-top: 6px;
+    -unity-text-align: middle-center;
+}
+
+/* =========================================================
+   Compact Layout (toggled by C# based on panel width)
+   ========================================================= */
+
+.compact .header
+{
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
+    padding-bottom: 40px;
+}
+
+.compact .header-title
+{
+    font-size: 36px;
+}
+
+.compact .header-subtitle
+{
+    font-size: 22px;
+}
+
+.compact .back-button
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 34px;
+    margin-right: 20px;
+}
+
+.compact .back-icon
+{
+    width: 32px;
+    height: 32px;
+}
+
+.compact .content-wrapper
+{
+    padding: 26px;
+}
+
+.compact .quiz-card
+{
+    padding: 26px;
+    border-radius: 24px;
+    margin-bottom: 22px;
+}
+
+.compact .quiz-title
+{
+    font-size: 28px;
+}
+
+.compact .difficulty-badge
+{
+    font-size: 20px;
+}
+
+.compact .quiz-subject
+{
+    font-size: 22px;
+}
+
+.compact .quiz-meta-label
+{
+    font-size: 19px;
+}
+
+.compact .quiz-meta-value
+{
+    font-size: 24px;
+}
+
+.compact .start-quiz-button
+{
+    height: 92px;
+    font-size: 28px;
+}
+
+.compact .quiz-stats-card
+{
+    padding: 26px;
+    border-radius: 22px;
+}
+
+.compact .quiz-stats-title
+{
+    font-size: 26px;
+}
+
+.compact .quiz-stat-value
+{
+    font-size: 30px;
+}
+
+.compact .quiz-stat-label
+{
+    font-size: 19px;
+}
