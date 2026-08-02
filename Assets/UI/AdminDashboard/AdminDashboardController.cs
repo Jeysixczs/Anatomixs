@@ -34,13 +34,15 @@ namespace Anatomia3D.UI
         /// <summary>Plain data for a single row in the "My Classrooms" list.</summary>
         public struct ClassroomSummary
         {
+            public string ClassroomId;
             public string Name;
             public string Code;
             public string Description;
             public int StudentCount;
 
-            public ClassroomSummary(string name, string code, string description, int studentCount)
+            public ClassroomSummary(string classroomId, string name, string code, string description, int studentCount)
             {
+                ClassroomId = classroomId;
                 Name = name;
                 Code = code;
                 Description = description;
@@ -285,7 +287,7 @@ namespace Anatomia3D.UI
                 {
                     foreach (var record in records)
                     {
-                        summaries.Add(new ClassroomSummary(record.Name, record.Code, record.Description, record.StudentCount));
+                        summaries.Add(new ClassroomSummary(record.ClassroomId, record.Name, record.Code, record.Description, record.StudentCount));
                         totalStudents += record.StudentCount;
                     }
                 }
@@ -425,13 +427,14 @@ namespace Anatomia3D.UI
         {
             Debug.Log($"[AdminDashboardController] View Details tapped for classroom '{classroom.Name}' ({classroom.Code}).");
 
+            string classroomId = classroom.ClassroomId;
             string classroomName = classroom.Name;
             string classroomCode = classroom.Code;
             int classroomStudentCount = classroom.StudentCount;
             float avgScorePercent = 0f; // TODO: fetch real average score from backend when available
             int quizCount = 0; // TODO: fetch real quiz count from backend when available
 
-            UIManager.Instance.ShowAdminClassroomDetail(classroomName, classroomCode, classroomStudentCount, avgScorePercent, quizCount);   
+            UIManager.Instance.ShowAdminClassroomDetail(classroomId, classroomName, classroomCode, classroomStudentCount, avgScorePercent, quizCount);
 
         }
 

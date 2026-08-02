@@ -241,6 +241,10 @@ namespace Anatomia3D.UI
             SetQuizzes(_lastQuizzes);
             SetLeaderboard(_leaderboardVisible, _lastLeaderboard);
             SetScores(_lastScores);
+
+            // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
+            // with a classroom already loaded - refresh from Firestore.
+            if (!string.IsNullOrEmpty(_classroomId)) LoadClassroomContent();
         }
 
         private void OnDisable()
@@ -339,7 +343,9 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Called by UIManager.ShowStudentClassroomDetail() right after the screen is shown.</summary>
+        /// <summary>Called by UIManager.ShowStudentClassroomDetail() right after the screen
+        /// is shown. Also kicks off the Firestore loads for every tab (Overview,
+        /// Students, Available Quizzes, Leaderboard, Scores) via ClassroomService.</summary>
         public void SetClassroomIdentity(string classroomId, string classroomName, string instructorName)
         {
             _classroomId = classroomId ?? "";
@@ -348,6 +354,84 @@ namespace Anatomia3D.UI
 
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
             if (_instructorLabel != null) _instructorLabel.text = $"Instructor: {_instructorName}";
+
+            LoadClassroomContent();
+        }
+
+        // ---------------- Loading from ClassroomService ----------------
+
+        private void LoadClassroomContent()
+        {
+            if (string.IsNullOrEmpty(_classroomId))
+            {
+                Debug.LogWarning("[StudentClassroomDetailController] LoadClassroomContent called with no classroom id set.");
+                return;
+            }
+
+            if (ClassroomService.Instance == null)
+            {
+                Debug.LogWarning("[StudentClassroomDetailController] ClassroomService not available yet.");
+                return;
+            }
+
+            ClassroomService.Instance.FetchClassroomDetail(_classroomId, detail =>
+            {
+                if (detail == null) return;
+
+                SetHeaderStats(detail.StudentCount, detail.PublishedQuizIds?.Count ?? 0);
+
+                ClassroomService.Instance.FetchAvailableQuizzes(_classroomId, quizzes =>
+                {
+                    var cards = quizzes.ConvertAll(q => new QuizCardInfo(
+                        q.Title, q.Category, q.QuestionCount, Mathf.CeilToInt(q.TimeLimitSeconds / 60f),
+                        q.TotalPoints, Capitalize(q.Difficulty), true));
+                    SetQuizzes(cards);
+                });
+
+                ClassroomService.Instance.FetchClassroomRoster(_classroomId, roster =>
+                {
+                    var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+
+                    SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
+
+                    var ranked = new List<ClassroomService.MemberStat>(roster);
+                    ranked.Sort((a, b) => b.Points != a.Points ? b.Points.CompareTo(a.Points) : b.QuizzesCompleted.CompareTo(a.QuizzesCompleted));
+
+                    SetLeaderboard(detail.LeaderboardVisible, ranked.ConvertAll(m => new PerformerInfo(
+                        m.Name, m.Level, m.QuizzesCompleted, m.AvgScorePercent, m.Points,
+                        student != null && m.StudentId == student.Uid)));
+
+                    int myPoints = 0;
+                    if (student != null)
+                    {
+                        var me = roster.Find(m => m.StudentId == student.Uid);
+                        if (me != null) myPoints = me.Points;
+                    }
+                    SetClassroomInfo(detail.TeacherName, detail.Description, myPoints);
+                });
+            });
+
+            ClassroomService.Instance.FetchAnnouncements(_classroomId, announcements =>
+            {
+                SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
+                    a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
+            });
+
+            ClassroomService.Instance.FetchMyScores(_classroomId, scores =>
+            {
+                SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
+                    s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
+                    s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
+            });
+        }
+
+        private static string Capitalize(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
+
+        private static string FormatDuration(int totalSeconds)
+        {
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            return minutes > 0 ? $"{minutes}m {seconds}s" : $"{seconds}s";
         }
 
         /// <summary>Push the two glass header stat cards.</summary>

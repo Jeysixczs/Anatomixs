@@ -191,7 +191,7 @@ namespace Anatomia3D.UI
 
         public void ShowStudentProfile()
         {
-           
+
             ShowScreen(studentProfileScreen, _studentProfileController);
         }
 
@@ -268,11 +268,11 @@ namespace Anatomia3D.UI
             ShowScreen(adminCreateClassroomScreen, _adminCreateClassroomController);
         }
 
-        public void ShowAdminClassroomCreated(string classroomCode, string classroomName, int studentCount)
+        public void ShowAdminClassroomCreated(string classroomId, string classroomCode, string classroomName, int studentCount)
         {
             ShowScreen(adminClassroomCreatedScreen, _adminClassroomCreatedController, () =>
             {
-                _adminClassroomCreatedController?.SetClassroomData(classroomCode, classroomName, studentCount);
+                _adminClassroomCreatedController?.SetClassroomData(classroomId, classroomCode, classroomName, studentCount);
             });
         }
 
@@ -293,7 +293,7 @@ namespace Anatomia3D.UI
         }
 
         public void ShowAdminClassroomDetail(
-            
+            string classroomId,
             string classroomName,
             string classroomCode,
             int studentCount,
@@ -302,7 +302,7 @@ namespace Anatomia3D.UI
         {
             ShowScreen(adminClassroomDetailScreen, _adminClassroomDetailController, () =>
             {
-                _adminClassroomDetailController?.SetClassroomData(classroomName, classroomCode, studentCount, avgScorePercent ,quizCount);
+                _adminClassroomDetailController?.SetClassroomData(classroomId, classroomName, classroomCode, studentCount, avgScorePercent, quizCount);
             });
         }
         public void ShowAdminProfile()
@@ -318,7 +318,7 @@ namespace Anatomia3D.UI
                 _adminEditProfileController?.LoadProfileData(fullName, email);
             });
         }
-        
+
 
         // ---------------- Core Screen Management ----------------
 
