@@ -213,8 +213,23 @@ namespace Anatomia3D.UI
 
         private void OnGoogleClicked(ClickEvent evt)
         {
-            // TODO: hook up Google sign-in flow.
             Debug.Log("[StudentLoginController] Google sign-in tapped.");
+            SetStatus("Signing in with Google...");
+            _googleButton.SetEnabled(false);
+
+            PlayerSessionManager.Instance.LoginWithGoogle((success, errorMessage) =>
+            {
+                _googleButton.SetEnabled(true);
+
+                if (success)
+                {
+                    UIManager.Instance.ShowStudentDashboard();
+                }
+                else
+                {
+                    SetStatus(errorMessage);
+                }
+            });
         }
 
         private void OnAdminLoginClicked(ClickEvent evt)
