@@ -175,24 +175,27 @@ namespace Anatomia3D.UI
             // AdminClassroomService.Instance.CreateClassroom(name, description, OnCreateResult);
             AdminClassroomService.Instance.CreateClassroom(name, description, (success, errorMessage, record) =>
             {
-                string classroomCode = record?.Code ?? string.Empty;
-                OnCreateResult(success, classroomCode, errorMessage);
+                OnCreateResult(success, record, errorMessage);
             });
 
         }
 
-        private void OnCreateResult(bool success, string classroomCode, string errorMessage)
+        private void OnCreateResult(bool success, AdminClassroomService.ClassroomRecord record, string errorMessage)
         {
             _createButton.SetEnabled(true);
             if (success)
             {
                 SetStatus(string.Empty);
-                Debug.Log($"[AdminCreateClassroomController] Classroom created successfully with code: {classroomCode}");
+                Debug.Log($"[AdminCreateClassroomController] Classroom created successfully with code: {record.Code}");
                 string createdName = string.IsNullOrEmpty(_nameField.value) ? "Classroom" : _nameField.value;
                 // Clear the form for the next classroom.
                 _nameField.value = string.Empty;
                 _descriptionField.value = string.Empty;
-                UIManager.Instance.ShowAdminClassroomCreated(classroomCode, createdName, 0);
+                // NOTE: ShowAdminClassroomCreated now needs a leading classroomId
+                // parameter (record.ClassroomId) - update its signature in UIManager.cs
+                // to match, so AdminClassroomCreatedController can forward it on to
+                // ShowAdminClassroomDetail().
+                UIManager.Instance.ShowAdminClassroomCreated(record.ClassroomId, record.Code, createdName, 0);
             }
             else
             {
@@ -201,7 +204,7 @@ namespace Anatomia3D.UI
                 Debug.LogError($"[AdminCreateClassroomController] Failed to create classroom: {errorMessage}");
             }
         }
-      
+
 
 
         // ---------------- Helpers ----------------

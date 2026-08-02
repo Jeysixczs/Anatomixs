@@ -278,52 +278,14 @@ namespace Anatomia3D.Backend
                 });
         }
 
-        // ==================================================================
-        // Student: quiz selection + attempts
-        // ==================================================================
-
-        /// <summary>
-        /// Call when showing StudentQuizSelectionController. Returns quizzes with
-        /// classroomId == null (available to everyone) plus, if the student is
-        /// viewing a specific classroom, quizzes assigned to that classroom.
-        /// </summary>
-        public void FetchAvailableQuizzes(string classroomId, Action<List<QuizRecord>> onComplete)
-        {
-            var globalQuery = Db.Collection("quizzes").WhereEqualTo("classroomId", null).GetSnapshotAsync();
-
-            if (string.IsNullOrEmpty(classroomId))
-            {
-                globalQuery.ContinueWithOnMainThread(task =>
-                {
-                    var results = new List<QuizRecord>();
-                    if (!task.IsCanceled && !task.IsFaulted)
-                    {
-                        foreach (var doc in task.Result.Documents) results.Add(ToQuizRecord(doc));
-                    }
-                    onComplete?.Invoke(results);
-                });
-                return;
-            }
-
-            var classroomQuery = Db.Collection("quizzes").WhereEqualTo("classroomId", classroomId).GetSnapshotAsync();
-
-            System.Threading.Tasks.Task.WhenAll(globalQuery, classroomQuery).ContinueWithOnMainThread(_ =>
-            {
-                var results = new List<QuizRecord>();
-
-                if (!globalQuery.IsCanceled && !globalQuery.IsFaulted)
-                {
-                    foreach (var doc in globalQuery.Result.Documents) results.Add(ToQuizRecord(doc));
-                }
-
-                if (!classroomQuery.IsCanceled && !classroomQuery.IsFaulted)
-                {
-                    foreach (var doc in classroomQuery.Result.Documents) results.Add(ToQuizRecord(doc));
-                }
-
-                onComplete?.Invoke(results);
-            });
-        }
+        // Quiz browsing for students lives entirely in the classroom's "Available
+        // Quizzes" tab (StudentClassroomDetailController), which reads
+        // ClassroomService.FetchAvailableQuizzes() -> the classroom's publishedQuizIds
+        // array (set via AdminClassroomService.SetQuizPublished /
+        // AdminClassroomDetailController's Quizzes tab). There's no separate
+        // "browse all quizzes" screen, so no quiz-listing method belongs here -
+        // StudentQuizSelectionController is reached per-quiz from that tab and only
+        // needs FetchQuizStats() below for the specific quiz being started.
 
         /// <summary>
         /// Call once gameplay finishes, right before showing StudentQuizResultController.
@@ -418,7 +380,7 @@ namespace Anatomia3D.Backend
                 onComplete?.Invoke(true, null, task.Result);
             });
         }
- 
+
 
         /// <summary>Call when showing StudentQuizSelectionController - feeds SetQuizStats() directly.</summary>
         public void FetchQuizStats(string quizId, Action<bool, string, int, int, float> onComplete)
