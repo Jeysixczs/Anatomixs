@@ -221,9 +221,26 @@ namespace Anatomia3D.UI
 
         private void OnGoogleSigninClicked(ClickEvent evt)
         {
-            // TODO: hook up Google sign-in flow for admins, e.g.:
-            // AdminAuthService.Instance.LoginWithGoogle(OnLoginResult);
             Debug.Log("[AdminLoginController] Google sign-in tapped.");
+            SetStatus("Signing in with Google...");
+            _googleSigninButton.SetEnabled(false);
+
+            AdminAuthService.Instance.LoginWithGoogle((success, errorMessage) =>
+            {
+                _googleSigninButton.SetEnabled(true);
+
+                if (success)
+                {
+                    Debug.Log("[AdminLoginController] Google admin login successful.");
+                    SetStatus(string.Empty);
+                    UIManager.Instance.ShowAdminDashboard();
+                }
+                else
+                {
+                    Debug.LogWarning($"[AdminLoginController] Google admin login failed: {errorMessage}");
+                    SetStatus(errorMessage);
+                }
+            });
         }
 
         private void OnCreateAccountClicked(ClickEvent evt)
@@ -268,7 +285,7 @@ namespace Anatomia3D.UI
 
             // TODO: replace with your real admin auth call, e.g.:
             // AdminAuthService.Instance.LoginAdmin(email, _passwordField.value, OnLoginResult);
-           
+
             AdminAuthService.Instance.LoginAdmin(email, _passwordField.value, (success, errorMessage) =>
             {
                 if (success)

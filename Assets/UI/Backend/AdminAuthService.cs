@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Firebase.Auth;
 using Firebase.Extensions;
 using Firebase.Firestore;
+using Google;
 using UnityEngine;
 
 namespace Anatomia3D.Backend
@@ -69,6 +70,158 @@ namespace Anatomia3D.Backend
                     onComplete?.Invoke(true, null);
                 });
             });
+        }
+
+        // ---------------- Google sign-in ----------------
+
+        /// <summary>Call from AdminLoginController.OnGoogleSigninClicked(). Signs the
+        /// admin in with Google, and - like CreateAdminAccount - transparently
+        /// provisions the `users/{uid}` + `admins/{uid}` docs the first time a given
+        /// Google account is used here. If that Google account is already registered
+        /// with a different role (e.g. as a student), this fails rather than silently
+        /// double-provisioning it.</summary>
+        public void LoginWithGoogle(Action<bool, string> onComplete)
+        {
+#if UNITY_EDITOR
+            onComplete?.Invoke(false, "Google sign-in needs a real Android/iOS build - it doesn't work in the Editor.");
+            return;
+#else
+            ConfigureGoogleSignIn();
+
+            GoogleSignIn.DefaultInstance.SignIn().ContinueWithOnMainThread(signInTask =>
+            {
+                if (signInTask.IsCanceled)
+                {
+                    onComplete?.Invoke(false, "Google sign-in was cancelled.");
+                    return;
+                }
+
+                if (signInTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, DescribeGoogleSignInError(signInTask.Exception));
+                    return;
+                }
+
+                Credential credential = GoogleAuthProvider.GetCredential(signInTask.Result.IdToken, null);
+                Auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(authTask =>
+                {
+                    if (authTask.IsCanceled || authTask.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, DescribeAuthError(authTask.Exception));
+                        return;
+                    }
+
+                    var user = authTask.Result;
+                    string displayName = string.IsNullOrEmpty(user.DisplayName) ? user.Email : user.DisplayName;
+                    ResolveGoogleAdmin(user.UserId, displayName, user.Email, onComplete);
+                });
+            });
+#endif
+        }
+
+        private void ResolveGoogleAdmin(string uid, string displayName, string email, Action<bool, string> onComplete)
+        {
+            Db.Collection("users").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(userTask =>
+            {
+                if (userTask.IsCanceled || userTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Could not verify your account. Please try again.");
+                    return;
+                }
+
+                var userSnap = userTask.Result;
+                if (userSnap.Exists)
+                {
+                    string role = userSnap.ContainsField("role") ? userSnap.GetValue<string>("role") : null;
+                    if (role != "admin")
+                    {
+                        Auth.SignOut();
+                        onComplete?.Invoke(false, "This Google account is already registered as a student, not an admin.");
+                        return;
+                    }
+
+                    FetchAdminDoc(uid, (ok, profile, error) =>
+                    {
+                        if (!ok)
+                        {
+                            onComplete?.Invoke(false, error ?? "Admin profile not found.");
+                            return;
+                        }
+
+                        CurrentAdmin = profile;
+                        onComplete?.Invoke(true, null);
+                    });
+                    return;
+                }
+
+                // First time this Google account has signed in here - provision the
+                // same docs CreateAdminAccount writes for a password-based signup.
+                ProvisionAdminProfile(uid, displayName, email, onComplete);
+            });
+        }
+
+        private void ProvisionAdminProfile(string uid, string fullName, string email, Action<bool, string> onComplete)
+        {
+            var profile = new AdminProfile { Uid = uid, FullName = fullName, Email = email };
+
+            var batch = Db.StartBatch();
+            batch.Set(Db.Collection("users").Document(uid), new
+            {
+                role = "admin",
+                email = email,
+                createdAt = Timestamp.GetCurrentTimestamp()
+            });
+            batch.Set(Db.Collection("admins").Document(uid), new
+            {
+                fullName = fullName,
+                email = email,
+                createdAt = Timestamp.GetCurrentTimestamp(),
+                classroomCount = 0,
+                studentCount = 0,
+                quizzesCreated = 0
+            });
+
+            batch.CommitAsync().ContinueWithOnMainThread(writeTask =>
+            {
+                if (writeTask.IsCanceled || writeTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Signed in, but saving your profile failed. Please try again.");
+                    return;
+                }
+
+                CurrentAdmin = profile;
+                onComplete?.Invoke(true, null);
+            });
+        }
+
+        private void ConfigureGoogleSignIn()
+        {
+            if (GoogleSignIn.Configuration != null) return;
+
+            GoogleSignIn.Configuration = new GoogleSignInConfiguration
+            {
+                WebClientId = FirebaseBootstrap.Instance.GoogleWebClientId,
+                RequestIdToken = true,
+                RequestEmail = true,
+                UseGameSignIn = false
+            };
+        }
+
+        private static string DescribeGoogleSignInError(AggregateException ex)
+        {
+            if (ex?.InnerException is GoogleSignIn.SignInException signInEx)
+            {
+                switch (signInEx.Status)
+                {
+                    case GoogleSignInStatusCode.Canceled:
+                        return "Google sign-in was cancelled.";
+                    case GoogleSignInStatusCode.NetworkError:
+                        return "Network error during Google sign-in. Check your connection.";
+                    default:
+                        return "Google sign-in failed. Please try again.";
+                }
+            }
+            return "Google sign-in failed. Please try again.";
         }
 
         // ---------------- Create account ----------------
@@ -197,6 +350,7 @@ namespace Anatomia3D.Backend
         public void LogoutAdmin()
         {
             Auth.SignOut();
+            try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentAdmin = null;
         }
 
