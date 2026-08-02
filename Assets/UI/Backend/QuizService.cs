@@ -68,6 +68,7 @@ namespace Anatomia3D.Backend
             public int NewTotalPoints;
             public int NewLevel;
             public string NewLevelTitle;
+            public List<string> NewlyEarnedBadgeIds = new List<string>();
             public List<string> NewlyEarnedBadgeNames = new List<string>();
         }
 
@@ -309,7 +310,13 @@ namespace Anatomia3D.Backend
 
             var attemptRef = Db.Collection("quizAttempts").Document();
             var studentRef = Db.Collection("students").Document(student.Uid);
-            var configRef = Db.Collection("gamificationSettings").Document("config");
+            // classroomId identifies which teacher's gamificationSettings/{teacherId}
+            // doc to score against (badges/points are per-teacher - see
+            // AdminGamificationService). If this ever fires for a classroom-less
+            // "available to everyone" quiz (empty classroomId), there's no teacher
+            // to resolve and we fall back to built-in defaults inside ToSettings().
+            var classroomRef = string.IsNullOrEmpty(classroomId) ? null : Db.Collection("classrooms").Document(classroomId);
+            var levelsRef = AdminGamificationService.Instance.LevelsRef;
 
             int total = correctCount + incorrectCount;
             float percent = total > 0 ? (correctCount / (float)total) * 100f : 0f;
@@ -317,7 +324,23 @@ namespace Anatomia3D.Backend
             Db.RunTransactionAsync(async transaction =>
             {
                 var studentSnap = await transaction.GetSnapshotAsync(studentRef);
-                var configSnap = await transaction.GetSnapshotAsync(configRef);
+
+                string teacherId = null;
+                if (classroomRef != null)
+                {
+                    var classroomSnap = await transaction.GetSnapshotAsync(classroomRef);
+                    teacherId = classroomSnap.Exists && classroomSnap.ContainsField("teacherId")
+                        ? classroomSnap.GetValue<string>("teacherId")
+                        : null;
+                }
+
+                DocumentSnapshot configSnap = null;
+                if (!string.IsNullOrEmpty(teacherId))
+                {
+                    configSnap = await transaction.GetSnapshotAsync(AdminGamificationService.Instance.ConfigRefFor(teacherId));
+                }
+
+                var levelsSnap = await transaction.GetSnapshotAsync(levelsRef);
 
                 int currentTotalPoints = studentSnap.ContainsField("totalPoints") ? studentSnap.GetValue<int>("totalPoints") : 0;
                 var existingBadges = studentSnap.ContainsField("badgesEarned")
@@ -325,7 +348,7 @@ namespace Anatomia3D.Backend
                     : new List<string>();
 
                 int newTotalPoints = currentTotalPoints + pointsEarned + bonusXp;
-                var settings = AdminGamificationService.ToSettings(configSnap);
+                var settings = AdminGamificationService.ToSettings(configSnap, levelsSnap);
                 var levelInfo = AdminGamificationService.ComputeLevelProgress(settings, newTotalPoints);
                 var newBadgeIds = AdminGamificationService.ComputeNewlyEarnedBadges(settings, newTotalPoints, existingBadges);
 
@@ -367,6 +390,7 @@ namespace Anatomia3D.Backend
                     NewTotalPoints = newTotalPoints,
                     NewLevel = levelInfo.level,
                     NewLevelTitle = levelInfo.title,
+                    NewlyEarnedBadgeIds = newBadgeIds,
                     NewlyEarnedBadgeNames = badgeNames
                 };
             }).ContinueWithOnMainThread(task =>
@@ -377,8 +401,101 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                onComplete?.Invoke(true, null, task.Result);
+                var result = task.Result;
+
+                // Keep this classroom's members/{uid} roster doc in sync (Students tab,
+                // Leaderboard, Analytics) - pass the just-computed GLOBAL level through
+                // rather than letting ClassroomService recompute it from this classroom's
+                // own points, so the level shown here always matches the student's real
+                // level everywhere else.
+                ClassroomService.Instance?.RecordQuizCompletion(
+                    classroomId, pointsEarned + bonusXp, percent, result.NewLevel);
+
+                if (result.NewlyEarnedBadgeIds.Count > 0)
+                {
+                    RecordBadgeAwards(student.Uid, result.NewlyEarnedBadgeIds, classroomId, quizId, quizName);
+                }
+
+                onComplete?.Invoke(true, null, result);
             });
+        }
+
+        /// <summary>
+        /// Writes one `students/{uid}/badgeAwards/{badgeId}` doc per newly-earned badge,
+        /// recording which classroom and quiz triggered it. Badge *definitions* live on
+        /// the awarding teacher's own doc (gamificationSettings/{teacherId}.badges), but
+        /// this lets the UI show "earned in [classroom]" detail for each badge a student
+        /// has - e.g. StudentProgress or a
+        /// future badges screen can FetchBadgeAwards() then resolve classroomId to a name
+        /// via ClassroomService.FetchClassroomDetail(), the same lazy-resolve pattern
+        /// ClassroomService.FetchAvailableQuizzes() already uses.
+        /// Fire-and-forget outside the main transaction - if this write fails the badge
+        /// is still recorded on students/{uid}.badgesEarned, just without source detail.
+        /// </summary>
+        private void RecordBadgeAwards(string studentUid, List<string> badgeIds, string classroomId, string quizId, string quizName)
+        {
+            var badgeAwardsCol = Db.Collection("students").Document(studentUid).Collection("badgeAwards");
+            var batch = Db.StartBatch();
+
+            foreach (var badgeId in badgeIds)
+            {
+                batch.Set(badgeAwardsCol.Document(badgeId), new Dictionary<string, object>
+                {
+                    { "classroomId", classroomId },
+                    { "quizId", quizId },
+                    { "quizName", quizName },
+                    { "earnedAt", Timestamp.GetCurrentTimestamp() }
+                });
+            }
+
+            batch.CommitAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogWarning("[QuizService] Could not record badge award source detail.");
+                }
+            });
+        }
+
+        [Serializable]
+        public class BadgeAwardRecord
+        {
+            public string BadgeId;
+            public string ClassroomId;
+            public string QuizId;
+            public string QuizName;
+            public Timestamp EarnedAt;
+        }
+
+        /// <summary>Call when showing a badges screen that needs "earned in [classroom]"
+        /// detail. Returns one record per badge the student has earned; resolve
+        /// ClassroomId to a display name via ClassroomService.FetchClassroomDetail().</summary>
+        public void FetchBadgeAwards(Action<List<BadgeAwardRecord>> onComplete)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(new List<BadgeAwardRecord>()); return; }
+
+            Db.Collection("students").Document(student.Uid).Collection("badgeAwards")
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    var results = new List<BadgeAwardRecord>();
+                    if (!task.IsCanceled && !task.IsFaulted)
+                    {
+                        foreach (var doc in task.Result.Documents)
+                        {
+                            results.Add(new BadgeAwardRecord
+                            {
+                                BadgeId = doc.Id,
+                                ClassroomId = doc.ContainsField("classroomId") ? doc.GetValue<string>("classroomId") : "",
+                                QuizId = doc.ContainsField("quizId") ? doc.GetValue<string>("quizId") : "",
+                                QuizName = doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "",
+                                EarnedAt = doc.ContainsField("earnedAt") ? doc.GetValue<Timestamp>("earnedAt") : Timestamp.GetCurrentTimestamp()
+                            });
+                        }
+                    }
+                    onComplete?.Invoke(results);
+                });
         }
 
 
@@ -420,12 +537,16 @@ namespace Anatomia3D.Backend
             if (student == null) { onComplete?.Invoke(false, null); return; }
 
             var studentRef = Db.Collection("students").Document(student.Uid);
-            var configRef = Db.Collection("gamificationSettings").Document("config");
+            // A student's overall progress spans every classroom (and thus every
+            // teacher) they're enrolled in, so there's no single teacher's
+            // points/badges to score against here - only the shared global levels
+            // doc is needed to compute level/progress from their totalPoints.
+            var levelsRef = AdminGamificationService.Instance.LevelsRef;
 
             var studentTask = studentRef.GetSnapshotAsync();
-            var configTask = configRef.GetSnapshotAsync();
+            var levelsTask = levelsRef.GetSnapshotAsync();
 
-            System.Threading.Tasks.Task.WhenAll(studentTask, configTask).ContinueWithOnMainThread(_ =>
+            System.Threading.Tasks.Task.WhenAll(studentTask, levelsTask).ContinueWithOnMainThread(_ =>
             {
                 if (studentTask.IsFaulted || !studentTask.Result.Exists)
                 {
@@ -438,7 +559,7 @@ namespace Anatomia3D.Backend
                 int quizzesCompleted = studentSnap.ContainsField("quizzesCompleted") ? studentSnap.GetValue<int>("quizzesCompleted") : 0;
                 int badgeCount = studentSnap.ContainsField("badgesEarned") ? studentSnap.GetValue<List<string>>("badgesEarned").Count : 0;
 
-                var settings = (!configTask.IsFaulted) ? AdminGamificationService.ToSettings(configTask.Result) : null;
+                var settings = AdminGamificationService.ToSettings(null, levelsTask.IsFaulted ? null : levelsTask.Result);
                 var levelInfo = AdminGamificationService.ComputeLevelProgress(settings, totalPoints);
 
                 FetchStudentAttempts(attempts =>

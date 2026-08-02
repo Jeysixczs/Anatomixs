@@ -339,6 +339,31 @@ namespace Anatomia3D.UI
         {
             SetStatus("Connecting to Google...");
             Debug.Log("[CreateAccountController] Google signup clicked");
+            _googleSignupButton.SetEnabled(false);
+
+            PlayerSessionManager.Instance?.LoginWithGoogle((success, errorMessage) =>
+            {
+                _googleSignupButton.SetEnabled(true);
+
+                if (success)
+                {
+                    Debug.Log("[CreateAccountController] Google account signed up/in successfully");
+                    SetStatus("Signed in with Google! Redirecting...");
+                    Invoke(nameof(RedirectAfterGoogle), 1f);
+                }
+                else
+                {
+                    Debug.LogError($"[CreateAccountController] Google signup failed: {errorMessage}");
+                    SetStatus(errorMessage ?? "Google sign-in failed. Please try again.");
+                }
+            });
+        }
+
+        private void RedirectAfterGoogle()
+        {
+            // LoginWithGoogle already signs the student in, so go straight to
+            // the dashboard rather than back through the login screen.
+            UIManager.Instance?.ShowStudentDashboard();
         }
 
         private void OnCreateAccountClicked(ClickEvent evt)

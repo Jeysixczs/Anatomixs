@@ -40,11 +40,11 @@
                 <ui:VisualElement name="levels-section" class="section-card">
                     <ui:VisualElement name="levels-header-row" class="section-header-row">
                         <ui:Label text="Level Progression" class="section-card-title"/>
-                        <ui:Button name="add-level-button" class="add-item-button">
-                            <ui:Label text="+" class="add-item-plus"/>
-                            <ui:Label text="Add Level" class="add-item-label"/>
-                        </ui:Button>
+                        <ui:VisualElement name="levels-global-tag" class="global-tag">
+                            <ui:Label text="Global &amp; Fixed" class="global-tag-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
+                    <ui:Label text="These levels apply to every classroom and can&apos;t be added, edited, or deleted here. A student&apos;s level is based on their total points across all classrooms they&apos;re enrolled in." class="levels-note"/>
                     <ui:VisualElement name="levels-empty-label" class="empty-list-label hidden">
                         <ui:Label text="No levels yet"/>
                     </ui:VisualElement>
@@ -97,29 +97,6 @@
                     <ui:Label text="Add Badge" class="modal-submit-label"/>
                 </ui:Button>
                 <ui:Button name="add-badge-cancel-button" text="Cancel" class="modal-cancel-button"/>
-            </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement name="add-level-modal-overlay" class="modal-overlay hidden">
-            <ui:VisualElement name="add-level-modal-card" class="modal-card">
-                <ui:VisualElement class="modal-header-row">
-                    <ui:VisualElement class="modal-header-text-col">
-                        <ui:Label text="Add New Level" class="modal-title"/>
-                        <ui:Label text="Define a new progression level" class="modal-subtitle"/>
-                    </ui:VisualElement>
-                    <ui:Button name="add-level-close-button" text="✕" class="modal-close-button"/>
-                </ui:VisualElement>
-                <ui:Label text="Level Number" class="field-label field-label-spaced"/>
-                <ui:TextField name="level-number-field" value="0" class="text-field"/>
-                <ui:Label text="Level Title" class="field-label field-label-spaced"/>
-                <ui:TextField name="level-title-field" class="text-field"/>
-                <ui:Label name="level-title-error" text="" class="field-error hidden"/>
-                <ui:Label text="Points Required" class="field-label field-label-spaced"/>
-                <ui:TextField name="level-points-field" value="0" class="text-field"/>
-                <ui:Label name="add-level-status-label" text="" class="status-label hidden"/>
-                <ui:Button name="add-level-submit-button" class="modal-submit-button">
-                    <ui:Label text="Add Level" class="modal-submit-label"/>
-                </ui:Button>
-                <ui:Button name="add-level-cancel-button" text="Cancel" class="modal-cancel-button"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

@@ -82,11 +82,15 @@ namespace Anatomia3D.Backend
         /// double-provisioning it.</summary>
         public void LoginWithGoogle(Action<bool, string> onComplete)
         {
-#if UNITY_EDITOR
-            onComplete?.Invoke(false, "Google sign-in needs a real Android/iOS build - it doesn't work in the Editor.");
-            return;
-#else
             ConfigureGoogleSignIn();
+
+            // GoogleSignIn.SignIn() silently reuses a cached credential from a
+            // previous session if one exists, which is why the account chooser
+            // stops appearing after the first sign-in. Signing out immediately
+            // beforehand clears that cached credential (this is a local/plugin-side
+            // reset, not a network call) so the native picker is shown every time,
+            // letting the user pick a different Google account.
+            GoogleSignIn.DefaultInstance.SignOut();
 
             GoogleSignIn.DefaultInstance.SignIn().ContinueWithOnMainThread(signInTask =>
             {
@@ -116,7 +120,7 @@ namespace Anatomia3D.Backend
                     ResolveGoogleStudent(user.UserId, displayName, user.Email, onComplete);
                 });
             });
-#endif
+
         }
 
         private void ResolveGoogleStudent(string uid, string displayName, string email, Action<bool, string> onComplete)

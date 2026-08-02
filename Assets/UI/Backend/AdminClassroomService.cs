@@ -40,13 +40,12 @@ namespace Anatomia3D.Backend
 
         /// <summary>One row in the Students tab / Leaderboard - reads straight off the
         /// `classrooms/{id}/members/{studentId}` doc's denormalized `points` /
-        /// `quizzesCompleted` / `avgScorePercent` fields (see ClassroomService.
-        /// RecordQuizCompletion, which QuizService should call right after writing
-        /// each quizAttempts doc, in the same spirit as the JoinClassroom transaction
-        /// below). Rolling these up here - rather than querying quizAttempts directly -
-        /// matters because students can only read their *own* quizAttempts docs
-        /// (see the Firestore rules), so a classroom-wide read has to come from
-        /// something everyone in the classroom is allowed to read: the members
+        /// `quizzesCompleted` / `avgScorePercent` / `level` fields (see ClassroomService.
+        /// RecordQuizCompletion, called by QuizService.SubmitQuizAttempt right after it
+        /// writes each quizAttempts doc). Rolling these up here - rather than querying
+        /// quizAttempts directly - matters because students can only read their *own*
+        /// quizAttempts docs (see the Firestore rules), so a classroom-wide read has to
+        /// come from something everyone in the classroom is allowed to read: the members
         /// subcollection.</summary>
         [Serializable]
         public class StudentStat

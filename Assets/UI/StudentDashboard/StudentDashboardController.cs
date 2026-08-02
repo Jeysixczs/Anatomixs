@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Anatomia3D.Backend;
 
 namespace Anatomia3D.UI
 {
@@ -77,6 +78,7 @@ namespace Anatomia3D.UI
             ApplyGradients();
             WireCallbacks();
             UpdateResponsiveLayout();
+            PopulateDashboard();
         }
 
         private void OnDisable()
@@ -102,7 +104,7 @@ namespace Anatomia3D.UI
 
         private void QueryElements()
         {
-           
+
             _screenRoot = _root.Q<VisualElement>("screen-root");
 
             if (_screenRoot == null)
@@ -157,6 +159,47 @@ namespace Anatomia3D.UI
             }
         }
 
+        // ---------------- Data loading ----------------
+
+        /// <summary>Pulls the signed-in student's profile from PlayerSessionManager and the
+        /// level thresholds from AdminGamificationService, then feeds SetStudentData().
+        /// Call whenever the dashboard is shown so it reflects the latest points/quiz count
+        /// (e.g. right after finishing a quiz).</summary>
+        private void PopulateDashboard()
+        {
+            var student = PlayerSessionManager.Instance?.CurrentStudent;
+            if (student == null)
+            {
+                Debug.LogWarning("[StudentDashboardController] No signed-in student found - " +
+                    "showing the dashboard with placeholder data. Was this screen opened without " +
+                    "going through login/create-account first?");
+                return;
+            }
+
+            if (AdminGamificationService.Instance == null)
+            {
+                Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
+                    "falling back to raw points/quiz stats without level-progress math.");
+                SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
+                return;
+            }
+
+            AdminGamificationService.Instance.FetchSettings(settings =>
+            {
+                var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
+
+                SetStudentData(
+                    studentName: student.FullName,
+                    currentLevel: progress.level,
+                    nextLevel: progress.nextLevel,
+                    levelProgress01: progress.progress01,
+                    pointsToNextLevel: progress.pointsToNext,
+                    quizzesCompleted: student.QuizzesCompleted,
+                    totalPoints: student.TotalPoints
+                );
+            });
+        }
+
         public void SetStudentData(
             string studentName,
             int currentLevel,
@@ -168,7 +211,7 @@ namespace Anatomia3D.UI
         {
             if (_studentNameLabel != null) _studentNameLabel.text = studentName;
             if (_currentLevelLabel != null) _currentLevelLabel.text = $"Level {currentLevel}";
-            if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {nextLevel}";
+            if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {currentLevel + 1}";
             if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(levelProgress01) * 100f, LengthUnit.Percent);
             if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
@@ -186,6 +229,8 @@ namespace Anatomia3D.UI
         private void OnLogoutClicked(ClickEvent evt)
         {
             Debug.Log("[DashboardController] Logout tapped.");
+            PlayerSessionManager.Instance?.LogoutStudent();
+            UIManager.Instance?.ShowStudentLogin();
         }
 
         private void OnExplore3DClicked(ClickEvent evt)
@@ -212,7 +257,7 @@ namespace Anatomia3D.UI
         {
 
             UIManager.Instance.ShowJoinClassroom();
-            
+
         }
 
         // ---------------- Responsive layout ----------------
@@ -233,7 +278,7 @@ namespace Anatomia3D.UI
             if (_header == null) return;
             var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
             _header.style.backgroundImage = new StyleBackground(horizontal);
-           _joinclassroomcard.style.backgroundImage = new StyleBackground(horizontal);
+            _joinclassroomcard.style.backgroundImage = new StyleBackground(horizontal);
             _joinClassroomButton.style.backgroundImage = new StyleBackground(horizontal);
         }
 
