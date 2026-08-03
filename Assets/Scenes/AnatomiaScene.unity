@@ -429,6 +429,7 @@ GameObject:
   - component: {fileID: 1051780042}
   - component: {fileID: 1051780041}
   - component: {fileID: 1051780043}
+  - component: {fileID: 1051780044}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -1072,6 +1073,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f200c67013cfe9a4b82037a719e670d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.QuizService
+--- !u!114 &1051780044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899062d770d399d4eb225bece29517df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminGamificationService
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

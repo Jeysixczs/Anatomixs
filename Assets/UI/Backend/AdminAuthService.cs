@@ -358,6 +358,26 @@ namespace Anatomia3D.Backend
             CurrentAdmin = null;
         }
 
+        // ---------------- Refresh ----------------
+
+        /// <summary>Re-fetches `admins/{uid}` and replaces CurrentAdmin with the
+        /// result, so classroomCount/quizzesCreated reflect anything changed
+        /// elsewhere this session (a classroom created/deleted, a quiz
+        /// published/deleted). Note this does NOT fix studentCount - see
+        /// AdminProfileController, which computes that separately since the
+        /// `admins/{uid}.studentCount` field itself is never incremented
+        /// anywhere and would just come back 0.</summary>
+        public void RefreshCurrentAdmin(Action<bool> onComplete = null)
+        {
+            if (CurrentAdmin == null) { onComplete?.Invoke(false); return; }
+
+            FetchAdminDoc(CurrentAdmin.Uid, (ok, profile, error) =>
+            {
+                if (ok) CurrentAdmin = profile;
+                onComplete?.Invoke(ok);
+            });
+        }
+
         // ---------------- Helpers ----------------
 
         private void FetchAdminDoc(string uid, Action<bool, AdminProfile, string> onComplete)

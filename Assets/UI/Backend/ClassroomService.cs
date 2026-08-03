@@ -224,6 +224,120 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        // ---------------- Notifications (derived live from per-classroom announcements) ----------------
+
+        /// <summary>
+        /// One row for StudentNotificationsController. There's no separate
+        /// `notifications` collection/fan-out write - this is just each enrolled
+        /// classroom's `announcements` subcollection, merged and re-sorted, with
+        /// `IsRead` computed client-side against the student's
+        /// `students/{uid}.notificationsLastReadAt` cursor. Call
+        /// MarkAllNotificationsRead() to advance that cursor (e.g. from
+        /// StudentNotificationsController.OnMarkAllReadClicked()).
+        /// </summary>
+        [Serializable]
+        public class NotificationRecord
+        {
+            public string ClassroomId;
+            public string ClassroomName;
+            public string AnnouncementId;
+            public string Title;
+            public string Body;
+            public Timestamp CreatedAt;
+            public bool IsRead;
+        }
+
+        /// <summary>Call when showing StudentNotificationsController. Reads every
+        /// classroom the student is a member of, pulls each one's most recent
+        /// announcements (newest `maxPerClassroom` each), and merges them into one
+        /// list sorted newest-first. Each entry's classroom name is included since
+        /// notifications span multiple classrooms.</summary>
+        public void FetchNotifications(Action<List<NotificationRecord>> onComplete, int maxPerClassroom = 20)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(new List<NotificationRecord>()); return; }
+
+            var studentRef = Db.Collection("students").Document(student.Uid);
+            studentRef.GetSnapshotAsync().ContinueWithOnMainThread(studentTask =>
+            {
+                bool hasLastRead = !studentTask.IsCanceled && !studentTask.IsFaulted
+                    && studentTask.Result.Exists && studentTask.Result.ContainsField("notificationsLastReadAt");
+                Timestamp lastReadAt = hasLastRead
+                    ? studentTask.Result.GetValue<Timestamp>("notificationsLastReadAt")
+                    : default;
+
+                Db.Collection("classrooms")
+                    .WhereArrayContains("memberIds", student.Uid)
+                    .GetSnapshotAsync()
+                    .ContinueWithOnMainThread(classroomsTask =>
+                    {
+                        if (classroomsTask.IsCanceled || classroomsTask.IsFaulted || classroomsTask.Result.Count == 0)
+                        {
+                            onComplete?.Invoke(new List<NotificationRecord>());
+                            return;
+                        }
+
+                        var classroomDocs = classroomsTask.Result.Documents.ToList();
+                        var results = new List<NotificationRecord>();
+                        int remaining = classroomDocs.Count;
+
+                        foreach (var classroomDoc in classroomDocs)
+                        {
+                            string classroomId = classroomDoc.Id;
+                            string classroomName = classroomDoc.ContainsField("name") ? classroomDoc.GetValue<string>("name") : "Classroom";
+
+                            Db.Collection("classrooms").Document(classroomId).Collection("announcements")
+                                .OrderByDescending("createdAt")
+                                .Limit(maxPerClassroom)
+                                .GetSnapshotAsync()
+                                .ContinueWithOnMainThread(annTask =>
+                                {
+                                    if (!annTask.IsCanceled && !annTask.IsFaulted)
+                                    {
+                                        foreach (var doc in annTask.Result.Documents)
+                                        {
+                                            var createdAt = doc.ContainsField("createdAt") ? doc.GetValue<Timestamp>("createdAt") : Timestamp.GetCurrentTimestamp();
+
+                                            results.Add(new NotificationRecord
+                                            {
+                                                ClassroomId = classroomId,
+                                                ClassroomName = classroomName,
+                                                AnnouncementId = doc.Id,
+                                                Title = doc.ContainsField("title") ? doc.GetValue<string>("title") : "",
+                                                Body = doc.ContainsField("body") ? doc.GetValue<string>("body") : "",
+                                                CreatedAt = createdAt,
+                                                IsRead = hasLastRead && createdAt.ToDateTime() <= lastReadAt.ToDateTime()
+                                            });
+                                        }
+                                    }
+
+                                    remaining--;
+                                    if (remaining == 0)
+                                    {
+                                        results.Sort((a, b) => b.CreatedAt.ToDateTime().CompareTo(a.CreatedAt.ToDateTime()));
+                                        onComplete?.Invoke(results);
+                                    }
+                                });
+                        }
+                    });
+            });
+        }
+
+        /// <summary>Call from StudentNotificationsController.OnMarkAllReadClicked().
+        /// Advances the student's read cursor to now, so every announcement posted
+        /// up to this point reads as read next time FetchNotifications() runs (a
+        /// fresh sign-in / re-open will re-derive IsRead from this cursor, since it
+        /// isn't tracked per-notification).</summary>
+        public void MarkAllNotificationsRead(Action<bool> onComplete = null)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(false); return; }
+
+            Db.Collection("students").Document(student.Uid)
+                .UpdateAsync("notificationsLastReadAt", Timestamp.GetCurrentTimestamp())
+                .ContinueWithOnMainThread(task => onComplete?.Invoke(!task.IsCanceled && !task.IsFaulted));
+        }
+
         // ---------------- Students / roster / leaderboard ----------------
 
         /// <summary>One row from the classroom's `members` subcollection. `Points` /
