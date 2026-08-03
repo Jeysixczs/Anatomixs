@@ -355,6 +355,16 @@ namespace Anatomia3D.UI
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
             if (_instructorLabel != null) _instructorLabel.text = $"Instructor: {_instructorName}";
 
+            // Clear whatever the previously-viewed classroom left behind so there's
+            // no window where this classroom's screen still shows another
+            // classroom's announcements/roster/etc. while the new fetch is in
+            // flight - better an empty state briefly than the wrong classroom's data.
+            SetAnnouncements(new List<AnnouncementInfo>());
+            SetPeers(new List<PeerInfo>());
+            SetQuizzes(new List<QuizCardInfo>());
+            SetLeaderboard(false, new List<PerformerInfo>());
+            SetScores(new List<ScoreHistoryInfo>());
+
             LoadClassroomContent();
         }
 
@@ -374,22 +384,38 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            ClassroomService.Instance.FetchClassroomDetail(_classroomId, detail =>
+            // This screen is reused across classrooms (see the OnEnable comment about
+            // surviving screen rebuilds), so if a student opens classroom A then
+            // quickly backs out and opens classroom B, an in-flight Firestore call
+            // for A can still resolve after _classroomId has moved on to B - Task
+            // completion order isn't guaranteed to match call order. Snapshot the id
+            // we're fetching FOR here, and every callback below checks it against
+            // the live _classroomId before touching the UI, so a late response for a
+            // classroom the student already left can never overwrite what's on
+            // screen for the classroom they're now viewing (announcements included).
+            string requestedClassroomId = _classroomId;
+            bool IsStale() => requestedClassroomId != _classroomId;
+
+            ClassroomService.Instance.FetchClassroomDetail(requestedClassroomId, detail =>
             {
-                if (detail == null) return;
+                if (IsStale() || detail == null) return;
 
                 SetHeaderStats(detail.StudentCount, detail.PublishedQuizIds?.Count ?? 0);
 
-                ClassroomService.Instance.FetchAvailableQuizzes(_classroomId, quizzes =>
+                ClassroomService.Instance.FetchAvailableQuizzes(requestedClassroomId, quizzes =>
                 {
+                    if (IsStale()) return;
+
                     var cards = quizzes.ConvertAll(q => new QuizCardInfo(
                         q.Title, q.Category, q.QuestionCount, Mathf.CeilToInt(q.TimeLimitSeconds / 60f),
                         q.TotalPoints, Capitalize(q.Difficulty), true));
                     SetQuizzes(cards);
                 });
 
-                ClassroomService.Instance.FetchClassroomRoster(_classroomId, roster =>
+                ClassroomService.Instance.FetchClassroomRoster(requestedClassroomId, roster =>
                 {
+                    if (IsStale()) return;
+
                     var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
 
                     SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
@@ -411,14 +437,21 @@ namespace Anatomia3D.UI
                 });
             });
 
-            ClassroomService.Instance.FetchAnnouncements(_classroomId, announcements =>
+            // Announcements: scoped to requestedClassroomId at the Firestore level
+            // (classrooms/{id}/announcements), AND guarded against a stale/late
+            // response painting a previous classroom's announcements over this one.
+            ClassroomService.Instance.FetchAnnouncements(requestedClassroomId, announcements =>
             {
+                if (IsStale()) return;
+
                 SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
                     a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
             });
 
-            ClassroomService.Instance.FetchMyScores(_classroomId, scores =>
+            ClassroomService.Instance.FetchMyScores(requestedClassroomId, scores =>
             {
+                if (IsStale()) return;
+
                 SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
                     s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
                     s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));

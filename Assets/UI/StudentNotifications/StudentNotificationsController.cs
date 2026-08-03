@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,18 +13,17 @@ namespace Anatomia3D.UI
     ///
     /// Responsibilities:
     ///  - Wires up the back button and "Mark all read"
-    ///  - Builds the notification list at runtime from in-memory data (no
-    ///    notifications -> shows the empty state)
+    ///  - Loads notifications from ClassroomService.FetchNotifications() - these
+    ///    are teacher announcements merged across every classroom the student is
+    ///    enrolled in (no separate "notifications" collection - see that method's
+    ///    doc comment), and shows the empty state when there are none
     ///  - Keeps the header subtitle in sync with the unread count
     ///  - Applies the purple->pink gradient (matches StudentProfile) to the
     ///    header at runtime
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
-    ///  - Exposes SetNotifications() so gameplay/session code can push real
-    ///    notifications in instead of the placeholder mock data.
-    ///
-    /// Hook up your real "fetch notifications" / "mark as read" calls where
-    /// noted below - e.g. call into your existing PlayerSessionManager /
-    /// NotificationService.
+    ///  - Exposes SetNotifications() so other code (e.g. push-notification /
+    ///    deep-link handling) can inject entries directly instead of going
+    ///    through RefreshFromBackend().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class StudentNotificationsController : MonoBehaviour
@@ -42,14 +43,19 @@ namespace Anatomia3D.UI
             public string TimeAgo;
             public bool IsRead;
             public NotificationIcon Icon;
+            /// <summary>Which classroom this came from (empty for entries not tied
+            /// to a classroom, e.g. injected via SetNotifications()). Shown next to
+            /// TimeAgo since one student can belong to several classrooms.</summary>
+            public string ClassroomName;
 
-            public NotificationEntry(string title, string message, string timeAgo, bool isRead, NotificationIcon icon)
+            public NotificationEntry(string title, string message, string timeAgo, bool isRead, NotificationIcon icon, string classroomName = "")
             {
                 Title = title;
                 Message = message;
                 TimeAgo = timeAgo;
                 IsRead = isRead;
                 Icon = icon;
+                ClassroomName = classroomName;
             }
         }
 
@@ -73,16 +79,10 @@ namespace Anatomia3D.UI
         private VisualElement _emptyState;
         private VisualElement _notificationsList;
 
-        // Placeholder mock data so the screen is demonstrable out of the box.
-        // Replace with a call to SetNotifications() once a real backend exists.
-        private List<NotificationEntry> _notifications = new List<NotificationEntry>
-        {
-            new NotificationEntry("Quiz graded", "You scored 90% on \"Skeletal System Basics\".", "2h ago", false, NotificationIcon.Quiz),
-            new NotificationEntry("New badge unlocked", "You earned the \"Quiz Master\" badge!", "5h ago", false, NotificationIcon.Achievement),
-            new NotificationEntry("Classroom announcement", "Your teacher posted an update in Anatomia.", "1d ago", false, NotificationIcon.Classroom),
-            new NotificationEntry("Level up!", "You reached Level 5. Keep it up!", "2d ago", true, NotificationIcon.Achievement),
-            new NotificationEntry("Welcome to Anatomia 3D", "Explore the 3D model to get started.", "5d ago", true, NotificationIcon.System),
-        };
+        // Populated by RefreshFromBackend() (ClassroomService.FetchNotifications).
+        // Starts empty so the empty state shows correctly if the fetch is slow
+        // or the student isn't in any classrooms yet.
+        private List<NotificationEntry> _notifications = new List<NotificationEntry>();
 
         private void OnEnable()
         {
@@ -120,7 +120,10 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
+            // Show whatever we already have (empty on first open) immediately,
+            // then replace it once the live fetch below comes back.
             RefreshNotificationsUI();
+            RefreshFromBackend();
         }
 
         private void OnDisable()
@@ -184,6 +187,48 @@ namespace Anatomia3D.UI
             RefreshNotificationsUI();
         }
 
+        /// <summary>Loads teacher announcements from every classroom the student is
+        /// enrolled in via ClassroomService.FetchNotifications() and rebuilds the
+        /// list. Safe to call any time (e.g. pull-to-refresh) since it always
+        /// replaces _notifications wholesale rather than diffing.</summary>
+        public void RefreshFromBackend()
+        {
+            if (ClassroomService.Instance == null)
+            {
+                Debug.LogWarning("[StudentNotificationsController] ClassroomService.Instance is null - showing empty state.");
+                SetNotifications(new List<NotificationEntry>());
+                return;
+            }
+
+            ClassroomService.Instance.FetchNotifications(records =>
+            {
+                var entries = records.ConvertAll(r => new NotificationEntry(
+                    string.IsNullOrEmpty(r.Title) ? "New announcement" : r.Title,
+                    r.Body,
+                    FormatTimeAgo(r.CreatedAt.ToDateTime()),
+                    r.IsRead,
+                    NotificationIcon.Classroom,
+                    r.ClassroomName));
+
+                SetNotifications(entries);
+            });
+        }
+
+        /// <summary>Converts a UTC timestamp into a short relative label ("2h ago",
+        /// "3d ago", etc.) for the notification row.</summary>
+        private static string FormatTimeAgo(DateTime utcTime)
+        {
+            var elapsed = DateTime.UtcNow - utcTime;
+            if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
+
+            if (elapsed.TotalMinutes < 1) return "Just now";
+            if (elapsed.TotalMinutes < 60) return $"{(int)elapsed.TotalMinutes}m ago";
+            if (elapsed.TotalHours < 24) return $"{(int)elapsed.TotalHours}h ago";
+            if (elapsed.TotalDays < 7) return $"{(int)elapsed.TotalDays}d ago";
+            if (elapsed.TotalDays < 30) return $"{(int)(elapsed.TotalDays / 7)}w ago";
+            return $"{(int)(elapsed.TotalDays / 30)}mo ago";
+        }
+
         // ---------------- Notifications list ----------------
 
         private void RefreshNotificationsUI()
@@ -244,7 +289,10 @@ namespace Anatomia3D.UI
             var messageLabel = new Label(entry.Message);
             messageLabel.AddToClassList("notification-message");
 
-            var timeLabel = new Label(entry.TimeAgo);
+            string timeText = string.IsNullOrEmpty(entry.ClassroomName)
+                ? entry.TimeAgo
+                : $"{entry.ClassroomName} • {entry.TimeAgo}";
+            var timeLabel = new Label(timeText);
             timeLabel.AddToClassList("notification-time");
 
             textCol.Add(topRow);
@@ -254,8 +302,13 @@ namespace Anatomia3D.UI
             row.Add(iconBox);
             row.Add(textCol);
 
-            // Tapping a notification marks it read (a real app might also deep-link
-            // to the relevant screen here, e.g. the related quiz or classroom).
+            // Tapping a notification marks it read for this session (a real app
+            // might also deep-link to the relevant screen here, e.g. the classroom
+            // that posted it). This is local-only: read state isn't tracked per
+            // notification server-side, only as a single "read up to" cursor (see
+            // ClassroomService.MarkAllNotificationsRead) - re-opening this screen
+            // re-derives IsRead from that cursor, so an individual tap won't persist
+            // across sessions until "Mark all read" is used.
             row.RegisterCallback<ClickEvent>(_ =>
             {
                 if (entry.IsRead) return;
@@ -298,12 +351,23 @@ namespace Anatomia3D.UI
 
         private void OnMarkAllReadClicked(ClickEvent evt)
         {
+            // Optimistic UI update - flip everything to read immediately...
             foreach (var entry in _notifications) entry.IsRead = true;
             RefreshNotificationsUI();
 
-            // TODO: replace with your real call, e.g.:
-            // NotificationService.Instance.MarkAllRead();
-            Debug.Log("[StudentNotificationsController] Marked all notifications as read.");
+            // ...then persist the "read up to now" cursor so it survives a
+            // re-open/sign-out. If this fails, the next RefreshFromBackend() call
+            // (e.g. next time this screen opens) will correctly show unread items
+            // again rather than silently losing the failure.
+            if (ClassroomService.Instance == null) return;
+
+            ClassroomService.Instance.MarkAllNotificationsRead(success =>
+            {
+                if (!success)
+                {
+                    Debug.LogWarning("[StudentNotificationsController] Could not persist mark-all-read; will re-sync next time this screen opens.");
+                }
+            });
         }
 
         // ---------------- Responsive layout ----------------

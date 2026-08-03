@@ -378,6 +378,26 @@ namespace Anatomia3D.Backend
             CurrentStudent = null;
         }
 
+        // ---------------- Refresh ----------------
+
+        /// <summary>Re-fetches `students/{uid}` and replaces CurrentStudent with the
+        /// result. Gameplay code (QuizService.SubmitQuizAttempt) writes updated
+        /// level/totalPoints/quizzesCompleted straight to Firestore but doesn't
+        /// touch this cached copy, so without calling this, screens reading
+        /// CurrentStudent (e.g. StudentProfileController) can keep showing
+        /// pre-quiz numbers for the rest of the session. Call when showing any
+        /// screen that needs current stats.</summary>
+        public void RefreshCurrentStudent(Action<bool> onComplete = null)
+        {
+            if (CurrentStudent == null) { onComplete?.Invoke(false); return; }
+
+            FetchStudentDoc(CurrentStudent.Uid, (ok, profile, error) =>
+            {
+                if (ok) CurrentStudent = profile;
+                onComplete?.Invoke(ok);
+            });
+        }
+
         // ---------------- Helpers ----------------
 
         private void FetchStudentDoc(string uid, Action<bool, StudentProfile, string> onComplete)
