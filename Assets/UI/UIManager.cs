@@ -64,6 +64,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset adminClassroomDetailScreen;
         [SerializeField] private VisualTreeAsset adminProfileScreen;
         [SerializeField] private VisualTreeAsset adminEditProfileScreen;
+        [SerializeField] private VisualTreeAsset adminAboutAnatomiaScreen;
         // ADMIN CONTROLLERS
 
         private AdminLoginController _adminLoginController;
@@ -78,6 +79,7 @@ namespace Anatomia3D.UI
         private AdminClassroomDetailController _adminClassroomDetailController;
         private AdminProfileController _adminProfileController;
         private AdminEditProfileController _adminEditProfileController;
+        private AboutAnatomiaAdminController _aboutAnatomiaAdminController;
 
         private UIDocument _uiDocument;
         private VisualElement _root;
@@ -150,6 +152,7 @@ namespace Anatomia3D.UI
             _adminClassroomDetailController = GetComponent<AdminClassroomDetailController>();
             _adminProfileController = GetComponent<AdminProfileController>();
             _adminEditProfileController = GetComponent<AdminEditProfileController>();
+            _aboutAnatomiaAdminController = GetComponent<AboutAnatomiaAdminController>();
             // Disable all controllers initially
 
             _aboutAnatomiaController = GetComponent<AboutAnatomiaController>();
@@ -340,6 +343,10 @@ namespace Anatomia3D.UI
             });
         }
 
+        public void ShowAboutAnatomiaAdmin()
+        {
+            ShowScreen(adminAboutAnatomiaScreen, _aboutAnatomiaAdminController);
+        }
 
         // ---------------- Core Screen Management ----------------
 
@@ -423,6 +430,7 @@ namespace Anatomia3D.UI
             if (_adminEditProfileController != null) _adminEditProfileController.enabled = false;
 
 
+            if (_aboutAnatomiaAdminController != null) _aboutAnatomiaAdminController.enabled = false;
             if (_aboutAnatomiaController != null) _aboutAnatomiaController.enabled = false;
         }
 
