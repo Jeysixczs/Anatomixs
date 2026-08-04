@@ -36,6 +36,12 @@ namespace Anatomia3D.Backend
             public int StudentCount;
             public List<string> PublishedQuizIds = new List<string>();
             public bool LeaderboardVisible;
+
+            /// <summary>Archived classrooms stay visible (read-only) in the teacher's "My
+            /// Classrooms" list but are blocked from student access - see
+            /// AdminClassroomDetailController's Archive button / SetArchived(), and
+            /// ClassroomService.FetchClassroomDetail on the student side.</summary>
+            public bool IsArchived;
         }
 
         /// <summary>One row in the Students tab / Leaderboard - reads straight off the
@@ -217,7 +223,8 @@ namespace Anatomia3D.Backend
                 TeacherName = doc.GetValue<string>("teacherName"),
                 StudentCount = doc.ContainsField("studentCount") ? doc.GetValue<int>("studentCount") : 0,
                 PublishedQuizIds = doc.ContainsField("publishedQuizIds") ? doc.GetValue<List<string>>("publishedQuizIds") : new List<string>(),
-                LeaderboardVisible = doc.ContainsField("leaderboardVisible") && doc.GetValue<bool>("leaderboardVisible")
+                LeaderboardVisible = doc.ContainsField("leaderboardVisible") && doc.GetValue<bool>("leaderboardVisible"),
+                IsArchived = doc.ContainsField("isArchived") && doc.GetValue<bool>("isArchived")
             };
         }
 
@@ -272,6 +279,31 @@ namespace Anatomia3D.Backend
                     if (task.IsCanceled || task.IsFaulted)
                     {
                         onComplete?.Invoke(false, "Could not update leaderboard visibility.");
+                        return;
+                    }
+                    onComplete?.Invoke(true, null);
+                });
+        }
+
+        // ---------------- Archiving ----------------
+
+        /// <summary>Call from AdminClassroomDetailController's Archive-confirmation dialog
+        /// (archived: true) and its Unarchive/Restore action (archived: false). Setting
+        /// isArchived does not delete or otherwise touch any classroom data - it's purely
+        /// a flag that ClassroomService.FetchClassroomDetail / FetchMyClassrooms on the
+        /// student side check to block access, and that AdminDashboardController's "My
+        /// Classrooms" list can check to show an "Archived" badge.</summary>
+        public void SetArchived(string classroomId, bool archived, Action<bool, string> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(false, "Missing classroom id."); return; }
+
+            Db.Collection("classrooms").Document(classroomId)
+                .UpdateAsync("isArchived", archived)
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, archived ? "Could not archive classroom." : "Could not restore classroom.");
                         return;
                     }
                     onComplete?.Invoke(true, null);

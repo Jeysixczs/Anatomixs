@@ -156,6 +156,29 @@
     margin-top: 15px;
 }
 
+.classroom-card-archived
+{
+    opacity: 0.6;
+}
+
+.classroom-archived-badge
+{
+    padding: 8px 18px;
+    margin-left: 12px;
+    border-radius: 20px;
+    background-color: rgba(150, 155, 168, 0.18);
+    border-width: 1px;
+    border-color: rgba(150, 155, 168, 0.35);
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(110, 115, 128);
+}
+
+.view-classroom-button-disabled
+{
+    opacity: 0.5;
+}
+
 .level-row
 {
     flex-direction: row;

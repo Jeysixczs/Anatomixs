@@ -66,6 +66,20 @@ namespace Anatomia3D.UI
         private Label _classroomCodeLabel;
         private Button _copyCodeButton;
 
+        // Archive
+        private Button _archiveButton;
+        private Label _archivedBadgeLabel;
+        private VisualElement _archiveDialogOverlay;
+        private Label _archiveDialogTitleLabel;
+        private Label _archiveDialogMessageLabel;
+        private Button _archiveDialogCancelButton;
+        private Button _archiveDialogConfirmButton;
+
+        /// <summary>Whether this classroom is currently archived. Archived classrooms are
+        /// blocked from student access - see ClassroomService.FetchClassroomDetail /
+        /// StudentClassroomDetailController.LoadClassroomContent() on the student side.</summary>
+        public bool IsArchived { get; private set; }
+
         // Stats
         private Label _studentsValueLabel;
         private Label _avgScoreValueLabel;
@@ -210,6 +224,8 @@ namespace Anatomia3D.UI
             SetQuizPublished(1, Quiz1Published);
             SetQuizPublished(2, Quiz2Published);
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
+            SetArchived(IsArchived);
+            _archiveDialogOverlay?.AddToClassList("hidden");
             RefreshAnnouncementsUI();
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
@@ -235,6 +251,10 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _copyCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
+
+            _archiveButton?.UnregisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _archiveDialogCancelButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
+            _archiveDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
 
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
@@ -266,6 +286,14 @@ namespace Anatomia3D.UI
             _classroomNameLabel = _screenRoot.Q<Label>("classroom-name-label");
             _classroomCodeLabel = _screenRoot.Q<Label>("classroom-code-label");
             _copyCodeButton = _screenRoot.Q<Button>("copy-code-button");
+
+            _archiveButton = _screenRoot.Q<Button>("archive-button");
+            _archivedBadgeLabel = _screenRoot.Q<Label>("archived-badge-label");
+            _archiveDialogOverlay = _screenRoot.Q<VisualElement>("archive-dialog-overlay");
+            _archiveDialogTitleLabel = _screenRoot.Q<Label>("archive-dialog-title-label");
+            _archiveDialogMessageLabel = _screenRoot.Q<Label>("archive-dialog-message-label");
+            _archiveDialogCancelButton = _screenRoot.Q<Button>("archive-dialog-cancel-button");
+            _archiveDialogConfirmButton = _screenRoot.Q<Button>("archive-dialog-confirm-button");
 
             _studentsValueLabel = _screenRoot.Q<Label>("students-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
@@ -318,6 +346,10 @@ namespace Anatomia3D.UI
             _copyCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
 
+            _archiveButton?.RegisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _archiveDialogCancelButton?.RegisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
+            _archiveDialogConfirmButton?.RegisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
+
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
@@ -359,6 +391,11 @@ namespace Anatomia3D.UI
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
             if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = quizzesDone.ToString("N0");
 
+            // Reset from whatever classroom was previously loaded into this reused screen -
+            // LoadClassroomContent()'s FetchClassroomDetail callback will set the real value
+            // once it resolves.
+            SetArchived(false);
+
             LoadClassroomContent();
         }
 
@@ -387,6 +424,7 @@ namespace Anatomia3D.UI
                 if (record == null) return;
                 _publishedQuizIds = record.PublishedQuizIds ?? new List<string>();
                 SetLeaderboardVisibility(record.LeaderboardVisible);
+                SetArchived(record.IsArchived);
                 LoadQuizzesTab();
             });
 
@@ -628,6 +666,68 @@ namespace Anatomia3D.UI
         {
             LeaderboardVisibleToStudents = visible;
             _showToStudentsToggle?.EnableInClassList("toggle-on", visible);
+        }
+
+        // ---------------- Archive ----------------
+
+        /// <summary>Reflects the classroom's archived state in the header badge and the
+        /// Archive/Unarchive button label. Does not itself write to Firestore - see
+        /// OnArchiveDialogConfirmClicked() for that.</summary>
+        public void SetArchived(bool archived)
+        {
+            IsArchived = archived;
+            _archivedBadgeLabel?.EnableInClassList("hidden", !archived);
+            if (_archiveButton != null) _archiveButton.text = archived ? "Unarchive" : "Archive";
+        }
+
+        private void OnArchiveButtonClicked(ClickEvent evt)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || _archiveDialogOverlay == null) return;
+
+            if (IsArchived)
+            {
+                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Restore Classroom";
+                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Students will be able to access this classroom again. Continue?";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Unarchive";
+            }
+            else
+            {
+                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Archive Classroom";
+                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Are you sure you want to archive this classroom? Archived classrooms will no longer accept student access.";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Archive";
+            }
+
+            _archiveDialogOverlay.RemoveFromClassList("hidden");
+        }
+
+        private void OnArchiveDialogCancelClicked(ClickEvent evt)
+        {
+            _archiveDialogOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnArchiveDialogConfirmClicked(ClickEvent evt)
+        {
+            _archiveDialogOverlay?.AddToClassList("hidden");
+
+            if (string.IsNullOrEmpty(_classroomId) || AdminClassroomService.Instance == null) return;
+
+            bool newState = !IsArchived;
+
+            _archiveButton?.SetEnabled(false);
+
+            AdminClassroomService.Instance.SetArchived(_classroomId, newState, (success, error) =>
+            {
+                _archiveButton?.SetEnabled(true);
+
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not update archived state: {error}");
+                    return;
+                }
+
+                SetArchived(newState);
+                Debug.Log($"[AdminClassroomDetailController] Classroom {_classroomId} archived: {newState}");
+            });
         }
 
         // ---------------- Announcements ----------------

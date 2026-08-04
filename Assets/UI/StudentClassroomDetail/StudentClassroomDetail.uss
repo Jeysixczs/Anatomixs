@@ -21,6 +21,73 @@
     align-items: stretch;
 }
 
+/* ---------- Archived-blocked state ----------
+   Shown instead of the classroom's content when
+   ClassroomDetailRecord.IsArchived is true - see
+   StudentClassroomDetailController.LoadClassroomContent(). */
+
+.archived-blocked-panel
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(243, 244, 248);
+    justify-content: center;
+    align-items: center;
+    padding: 80px;
+}
+
+.archived-blocked-icon
+{
+    width: 110px;
+    height: 110px;
+    margin-bottom: 34px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.archived-blocked-title
+{
+    font-size: 46px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 16px;
+    -unity-text-align: middle-center;
+}
+
+.archived-blocked-message
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 640px;
+    margin-bottom: 48px;
+}
+
+.archived-blocked-back-button
+{
+    height: 112px;
+    padding-left: 48px;
+    padding-right: 48px;
+    background-color: rgb(34, 197, 94);
+    border-width: 0;
+    border-radius: 24px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.archived-blocked-back-button:hover
+{
+    background-color: rgb(22, 163, 74);
+}
+
 /* ---------- Header ---------- */
 
 .header
