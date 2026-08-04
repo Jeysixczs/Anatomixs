@@ -274,7 +274,7 @@ namespace Anatomia3D.UI
 
         private void OnAboutClicked(ClickEvent evt)
         {
-            UIManager.Instance.ShowAboutAnatomia();
+            UIManager.Instance.ShowAboutAnatomiaAdmin();
         }
 
         private void OnLogoutClicked(ClickEvent evt)

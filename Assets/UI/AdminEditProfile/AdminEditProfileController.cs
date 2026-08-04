@@ -60,6 +60,7 @@ namespace Anatomia3D.UI
         private Label _verifyEmailStatusBadge;
         private Button _verifyEmailButton;
         private Label _verifyEmailStatusLabel;
+        private Label _cardSubtitle;
         private VisualElement _verifyEmailWarning;
         private Label _emailPendingHint;
 
@@ -174,6 +175,7 @@ namespace Anatomia3D.UI
             _verifyEmailButton = _screenRoot.Q<Button>("verify-email-button");
             _verifyEmailStatusLabel = _screenRoot.Q<Label>("verify-email-status-label");
             _verifyEmailWarning = _screenRoot.Q<VisualElement>("verify-email-warning");
+            _cardSubtitle = _screenRoot.Q<Label>("card-subtitle");
             _emailPendingHint = _screenRoot.Q<Label>("email-pending-hint");
 
             _togglePasswordVisibilityButton = _screenRoot.Q<Button>("toggle-password-visibility-button");
@@ -293,6 +295,16 @@ namespace Anatomia3D.UI
             // matters while the email is actually unverified - hide it once
             // verified instead of leaving it up permanently.
             _verifyEmailWarning?.EnableInClassList("hidden", isVerified);
+            _verifyEmailButton?.EnableInClassList("hidden", isVerified);
+
+            // chnage the label of the card subtitle mkae the you are verified
+
+            if (_cardSubtitle != null)
+            {
+                _cardSubtitle.text = isVerified ? "Your email is verified." : "We'll send a verification link to your current email address.";
+            }
+
+
         }
 
         private void SetVerifyEmailStatus(string message)
