@@ -103,6 +103,13 @@ namespace Anatomia3D.Backend
             public string Code;
             public string TeacherName;
             public int StudentCount;
+
+            /// <summary>When true, StudentClassroomHubController should render this classroom
+            /// with an "Archived" badge and treat its card as non-interactive (locked) rather
+            /// than routing into StudentClassroomDetailController - entry is blocked there too
+            /// (see ClassroomDetailRecord.IsArchived below) but the hub should avoid the
+            /// navigation entirely so the student never sees an empty flash before the block.</summary>
+            public bool IsArchived;
         }
 
         /// <summary>
@@ -131,7 +138,8 @@ namespace Anatomia3D.Backend
                                 Name = doc.GetValue<string>("name"),
                                 Code = doc.GetValue<string>("code"),
                                 TeacherName = doc.GetValue<string>("teacherName"),
-                                StudentCount = doc.ContainsField("studentCount") ? doc.GetValue<int>("studentCount") : 0
+                                StudentCount = doc.ContainsField("studentCount") ? doc.GetValue<int>("studentCount") : 0,
+                                IsArchived = doc.ContainsField("isArchived") && doc.GetValue<bool>("isArchived")
                             });
                         }
                     }
@@ -154,10 +162,18 @@ namespace Anatomia3D.Backend
             public int StudentCount;
             public List<string> PublishedQuizIds = new List<string>();
             public bool LeaderboardVisible;
+
+            /// <summary>StudentClassroomDetailController checks this first, before loading any
+            /// tab content - if true it shows the archived-blocked state instead (see
+            /// LoadClassroomContent()) rather than letting the student view/interact with the
+            /// classroom.</summary>
+            public bool IsArchived;
         }
 
         /// <summary>Call when showing StudentClassroomDetailController - feeds the header
-        /// stats and Overview tab's Classroom Info card.</summary>
+        /// stats and Overview tab's Classroom Info card. Callers must check
+        /// IsArchived before rendering any classroom content - see
+        /// StudentClassroomDetailController.LoadClassroomContent().</summary>
         public void FetchClassroomDetail(string classroomId, Action<ClassroomDetailRecord> onComplete)
         {
             if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(null); return; }
@@ -177,7 +193,8 @@ namespace Anatomia3D.Backend
                     TeacherName = doc.GetValue<string>("teacherName"),
                     StudentCount = doc.ContainsField("studentCount") ? doc.GetValue<int>("studentCount") : 0,
                     PublishedQuizIds = doc.ContainsField("publishedQuizIds") ? doc.GetValue<List<string>>("publishedQuizIds") : new List<string>(),
-                    LeaderboardVisible = doc.ContainsField("leaderboardVisible") && doc.GetValue<bool>("leaderboardVisible")
+                    LeaderboardVisible = doc.ContainsField("leaderboardVisible") && doc.GetValue<bool>("leaderboardVisible"),
+                    IsArchived = doc.ContainsField("isArchived") && doc.GetValue<bool>("isArchived")
                 });
             });
         }

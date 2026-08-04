@@ -51,6 +51,12 @@ namespace Anatomia3D.UI
         private Label _studentsEnrolledValueLabel;
         private Label _quizzesAvailableValueLabel;
 
+        // Archived-blocked state (shown in place of screen-scroll when the
+        // classroom's isArchived flag is true - see LoadClassroomContent()).
+        private VisualElement _screenScroll;
+        private VisualElement _archivedBlockedPanel;
+        private Button _archivedBlockedBackButton;
+
         // Tabs
         private Button _overviewTabButton;
         private Button _studentsTabButton;
@@ -265,6 +271,7 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _archivedBlockedBackButton?.UnregisterCallback<ClickEvent>(OnArchivedBlockedBackClicked);
 
             _overviewTabButton?.UnregisterCallback<ClickEvent>(OnOverviewTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
@@ -284,6 +291,10 @@ namespace Anatomia3D.UI
                 Debug.LogWarning("[StudentClassroomDetailController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
+
+            _screenScroll = _screenRoot.Q<VisualElement>("screen-scroll");
+            _archivedBlockedPanel = _screenRoot.Q<VisualElement>("archived-blocked-panel");
+            _archivedBlockedBackButton = _screenRoot.Q<Button>("archived-blocked-back-button");
 
             _header = _screenRoot.Q<VisualElement>("header");
             _backButton = _screenRoot.Q<Button>("back-button");
@@ -330,6 +341,7 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _archivedBlockedBackButton?.RegisterCallback<ClickEvent>(OnArchivedBlockedBackClicked);
 
             _overviewTabButton?.RegisterCallback<ClickEvent>(OnOverviewTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
@@ -356,6 +368,10 @@ namespace Anatomia3D.UI
 
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
             if (_instructorLabel != null) _instructorLabel.text = $"Instructor: {_instructorName}";
+
+            // This screen is reused across classrooms - make sure a previous classroom's
+            // archived-block isn't still showing while we load this one.
+            HideArchivedBlockedState();
 
             // Clear whatever the previously-viewed classroom left behind so there's
             // no window where this classroom's screen still shows another
@@ -402,6 +418,14 @@ namespace Anatomia3D.UI
             {
                 if (IsStale() || detail == null) return;
 
+                if (detail.IsArchived)
+                {
+                    ShowArchivedBlockedState();
+                    return;
+                }
+
+                HideArchivedBlockedState();
+
                 SetHeaderStats(detail.StudentCount, detail.PublishedQuizIds?.Count ?? 0);
 
                 ClassroomService.Instance.FetchAvailableQuizzes(requestedClassroomId, quizzes =>
@@ -437,26 +461,28 @@ namespace Anatomia3D.UI
                     }
                     SetClassroomInfo(detail.TeacherName, detail.Description, myPoints);
                 });
-            });
 
-            // Announcements: scoped to requestedClassroomId at the Firestore level
-            // (classrooms/{id}/announcements), AND guarded against a stale/late
-            // response painting a previous classroom's announcements over this one.
-            ClassroomService.Instance.FetchAnnouncements(requestedClassroomId, announcements =>
-            {
-                if (IsStale()) return;
+                // Announcements/Scores are only fetched once we know the classroom isn't
+                // archived - both are scoped to requestedClassroomId at the Firestore level
+                // (classrooms/{id}/announcements, this student's own quizAttempts), AND
+                // guarded against a stale/late response painting a previous classroom's
+                // data over this one.
+                ClassroomService.Instance.FetchAnnouncements(requestedClassroomId, announcements =>
+                {
+                    if (IsStale()) return;
 
-                SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
-                    a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
-            });
+                    SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
+                        a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
+                });
 
-            ClassroomService.Instance.FetchMyScores(requestedClassroomId, scores =>
-            {
-                if (IsStale()) return;
+                ClassroomService.Instance.FetchMyScores(requestedClassroomId, scores =>
+                {
+                    if (IsStale()) return;
 
-                SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
-                    s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
-                    s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
+                    SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
+                        s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
+                        s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
+                });
             });
         }
 
@@ -847,6 +873,34 @@ namespace Anatomia3D.UI
         {
             Debug.Log("[StudentClassroomDetailController] Navigating back to classroom hub");
             UIManager.Instance.ShowStudentClassroomHub();
+        }
+
+        private void OnArchivedBlockedBackClicked(ClickEvent evt)
+        {
+            Debug.Log("[StudentClassroomDetailController] Archived classroom - returning to classroom hub");
+            UIManager.Instance.ShowStudentClassroomHub();
+        }
+
+        // ---------------- Archived-blocked state ----------------
+
+        /// <summary>Hides the classroom's content (screen-scroll) and shows the
+        /// archived-blocked message instead. Called from LoadClassroomContent() when
+        /// ClassroomDetailRecord.IsArchived comes back true - no tab content is fetched
+        /// or rendered for an archived classroom.</summary>
+        private void ShowArchivedBlockedState()
+        {
+            _screenScroll?.AddToClassList("hidden");
+            _archivedBlockedPanel?.RemoveFromClassList("hidden");
+        }
+
+        /// <summary>Reverts ShowArchivedBlockedState() - called at the start of every fresh
+        /// load (SetClassroomIdentity/LoadClassroomContent) so a previously-archived
+        /// classroom's block doesn't linger over a new, non-archived classroom in this
+        /// reused screen.</summary>
+        private void HideArchivedBlockedState()
+        {
+            _archivedBlockedPanel?.AddToClassList("hidden");
+            _screenScroll?.RemoveFromClassList("hidden");
         }
 
         private void OnOverviewTabClicked(ClickEvent evt) => ShowOverviewTab();

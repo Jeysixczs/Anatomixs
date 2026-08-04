@@ -40,13 +40,20 @@ namespace Anatomia3D.UI
             public string Description;
             public int StudentCount;
 
-            public ClassroomSummary(string classroomId, string name, string code, string description, int studentCount)
+            /// <summary>Drives the "Archived" badge on the card (see BuildClassroomCard()).
+            /// Archived classrooms stay visible here (read-only from the student's
+            /// perspective) so the teacher can still open View Details to review data or
+            /// Unarchive - see AdminClassroomDetailController's Archive/Unarchive button.</summary>
+            public bool IsArchived;
+
+            public ClassroomSummary(string classroomId, string name, string code, string description, int studentCount, bool isArchived = false)
             {
                 ClassroomId = classroomId;
                 Name = name;
                 Code = code;
                 Description = description;
                 StudentCount = studentCount;
+                IsArchived = isArchived;
             }
         }
 
@@ -287,7 +294,7 @@ namespace Anatomia3D.UI
                 {
                     foreach (var record in records)
                     {
-                        summaries.Add(new ClassroomSummary(record.ClassroomId, record.Name, record.Code, record.Description, record.StudentCount));
+                        summaries.Add(new ClassroomSummary(record.ClassroomId, record.Name, record.Code, record.Description, record.StudentCount, record.IsArchived));
                         totalStudents += record.StudentCount;
                     }
                 }
@@ -326,6 +333,7 @@ namespace Anatomia3D.UI
         {
             var card = new VisualElement();
             card.AddToClassList("classroom-card");
+            if (classroom.IsArchived) card.AddToClassList("classroom-card-archived");
 
             var topRow = new VisualElement();
             topRow.AddToClassList("classroom-card-top-row");
@@ -341,6 +349,14 @@ namespace Anatomia3D.UI
 
             topRow.Add(nameLabel);
             topRow.Add(codeBadge);
+
+            if (classroom.IsArchived)
+            {
+                var archivedBadge = new Label("Archived");
+                archivedBadge.AddToClassList("classroom-archived-badge");
+                topRow.Add(archivedBadge);
+            }
+
             card.Add(topRow);
 
             var descLabel = new Label(string.IsNullOrEmpty(classroom.Description) ? "Description" : classroom.Description);

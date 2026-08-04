@@ -41,13 +41,22 @@ namespace Anatomia3D.UI
             public string TeacherName;
             public int StudentCount;
 
-            public ClassroomSummary(string classroomId, string name, string code, string teacherName, int studentCount)
+            /// <summary>When true, BuildClassroomCard() renders this card locked - "Archived"
+            /// badge, disabled "View Classroom" button, no tap-to-open - so the student never
+            /// navigates into StudentClassroomDetail for it. (That screen also blocks entry
+            /// itself if somehow reached - see StudentClassroomDetailController.
+            /// LoadClassroomContent() - this is the friendlier, "don't even let them tap it"
+            /// layer on top of that.)</summary>
+            public bool IsArchived;
+
+            public ClassroomSummary(string classroomId, string name, string code, string teacherName, int studentCount, bool isArchived = false)
             {
                 ClassroomId = classroomId;
                 Name = name;
                 Code = code;
                 TeacherName = teacherName;
                 StudentCount = studentCount;
+                IsArchived = isArchived;
             }
         }
 
@@ -159,7 +168,8 @@ namespace Anatomia3D.UI
                     record.Name,
                     record.Code,
                     record.TeacherName,
-                    record.StudentCount));
+                    record.StudentCount,
+                    record.IsArchived));
 
                 // Exclude the current student from the "classmates" count.
                 totalClassmates += Mathf.Max(0, record.StudentCount - 1);
@@ -299,6 +309,7 @@ namespace Anatomia3D.UI
         {
             var card = new VisualElement();
             card.AddToClassList("classroom-card");
+            if (classroom.IsArchived) card.AddToClassList("classroom-card-archived");
 
             var topRow = new VisualElement();
             topRow.AddToClassList("classroom-card-top-row");
@@ -314,6 +325,8 @@ namespace Anatomia3D.UI
 
             topRow.Add(nameLabel);
             topRow.Add(codeBadge);
+
+
             card.Add(topRow);
 
             var teacherLabel = new Label($"Taught by {classroom.TeacherName}");
@@ -332,14 +345,28 @@ namespace Anatomia3D.UI
             studentsRow.Add(studentsIcon);
             studentsRow.Add(studentsLabel);
 
-            var viewClassroomButton = new Button(() => OnViewClassroomClicked(classroom)) { text = "View Classroom" };
+            var viewClassroomButton = new Button(() => OnViewClassroomClicked(classroom))
+            {
+                text = classroom.IsArchived ? "Archived" : "View Classroom"
+            };
             viewClassroomButton.AddToClassList("view-classroom-button");
+            if (classroom.IsArchived)
+            {
+                viewClassroomButton.AddToClassList("view-classroom-button-disabled");
+                viewClassroomButton.SetEnabled(false);
+            }
 
             bottomRow.Add(studentsRow);
             bottomRow.Add(viewClassroomButton);
             card.Add(bottomRow);
 
-            card.RegisterCallback<ClickEvent>(_ => OnViewClassroomClicked(classroom));
+            // Locked cards don't route into StudentClassroomDetail at all - no whole-card
+            // tap, and the button above is disabled - so an archived classroom is fully
+            // non-interactive here rather than just visually marked.
+            if (!classroom.IsArchived)
+            {
+                card.RegisterCallback<ClickEvent>(_ => OnViewClassroomClicked(classroom));
+            }
 
             return card;
         }
@@ -360,6 +387,15 @@ namespace Anatomia3D.UI
 
         private void OnViewClassroomClicked(ClassroomSummary classroom)
         {
+            // Defense in depth: the button/card are already disabled and non-clickable
+            // for archived classrooms (see BuildClassroomCard()), but guard here too in
+            // case this is ever called directly.
+            if (classroom.IsArchived)
+            {
+                Debug.Log($"[StudentClassroomHubController] Ignored tap on archived classroom '{classroom.Name}' ({classroom.Code}).");
+                return;
+            }
+
             Debug.Log($"[StudentClassroomHubController] Opening classroom '{classroom.Name}' ({classroom.Code}).");
             UIManager.Instance.ShowStudentClassroomDetail(classroom.ClassroomId, classroom.Name, classroom.TeacherName);
         }
