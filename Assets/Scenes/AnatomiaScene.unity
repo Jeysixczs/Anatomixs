@@ -400,7 +400,6 @@ GameObject:
   - component: {fileID: 1051780012}
   - component: {fileID: 1051780011}
   - component: {fileID: 1051780013}
-  - component: {fileID: 1051780014}
   - component: {fileID: 1051780015}
   - component: {fileID: 1051780016}
   - component: {fileID: 1051780017}
@@ -430,6 +429,8 @@ GameObject:
   - component: {fileID: 1051780041}
   - component: {fileID: 1051780043}
   - component: {fileID: 1051780044}
+  - component: {fileID: 1051780045}
+  - component: {fileID: 1051780046}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -511,9 +512,10 @@ MonoBehaviour:
   studentDashboardScreen: {fileID: 9197481963319205126, guid: 161409483230e814eb68c52de103d8ff, type: 3}
   studentExplore3dScreen: {fileID: 9197481963319205126, guid: e81f8e8965f069e4488de36fbfd626db, type: 3}
   studentAchivementScreen: {fileID: 9197481963319205126, guid: fa42bb56e3eb3764ebb4580c743bf2ae, type: 3}
-  studentProfileScreen: {fileID: 9197481963319205126, guid: 37106fae3cb7ed24ca33f20a258a09fb, type: 3}
+  studentProfileScreen: {fileID: 9197481963319205126, guid: 390fc6f8573df2a4685d4eeb8f00ba9d, type: 3}
   studentClassroomScreen: {fileID: 9197481963319205126, guid: aec2a91a4c1fef74d87866d95e62910b, type: 3}
   studentQuizSelectionScreen: {fileID: 9197481963319205126, guid: 83e939716f66ed143b86d87ac01673ac, type: 3}
+  studentQuizGameplayScreen: {fileID: 9197481963319205126, guid: d82b69fcc8b33314ea2cd01f9425e407, type: 3}
   studentProgressScreen: {fileID: 9197481963319205126, guid: 4f75a612e149db9428da5748333c5200, type: 3}
   studentQuizResultScreen: {fileID: 9197481963319205126, guid: 6ce67b8faabb61c4e927dbb33245d76f, type: 3}
   studentClassroomHubScreen: {fileID: 9197481963319205126, guid: f4987262301f4da4b8e24e5618bda6f5, type: 3}
@@ -617,21 +619,6 @@ MonoBehaviour:
   compactWidthThreshold: 900
   minCodeLength: 6
   maxCodeLength: 8
---- !u!114 &1051780014
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1051780004}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c54f1bd52e632ba4187508a6b19b2592, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentProfileController
-  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
-  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
-  compactWidthThreshold: 900
 --- !u!114 &1051780015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1012,6 +999,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8148568d65ac7e489bac8c7a778b80a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.PlayerSessionManager
+  emailConfirmationPollIntervalSeconds: 3
 --- !u!114 &1051780039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1037,6 +1025,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8927c38690756b94a993467cfe5b0987, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminAuthService
+  emailConfirmationPollIntervalSeconds: 3
 --- !u!114 &1051780041
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1085,6 +1074,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899062d770d399d4eb225bece29517df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminGamificationService
+--- !u!114 &1051780045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe6ef15050a46ce4a98642386e1a3980, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentProfileController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b48a64a721645744e91d0ddb46b7db9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Quiz.StudentQuizGameplayController
+  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

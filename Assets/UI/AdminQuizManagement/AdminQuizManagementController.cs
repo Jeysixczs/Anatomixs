@@ -20,8 +20,13 @@ namespace Anatomia3D.UI
     ///    list with an "Add Question" button
     ///  - "New Quiz" opens a modal (title/category/time limit/passing score)
     ///  - "Add Question" opens a modal (question text, question type dropdown,
-    ///    multiple-choice options shown only for that type, correct answer,
-    ///    difficulty dropdown, points)
+    ///    the 4 option fields shown for Multiple Choice AND Multiple
+    ///    Identification (distractors like "keyboard" need somewhere to live),
+    ///    correct answer, difficulty dropdown, points). Correct Answer is a
+    ///    single text field for every type - Enumeration and Multiple
+    ///    Identification expect a comma-separated list there (see
+    ///    UpdateCorrectAnswerHint), True/False expects literally "True" or
+    ///    "False".
     ///  - Each question row shows its Q# / difficulty / type badges, matching
     ///    the mock, with its own delete button
     ///  - Applies the green->blue gradient at runtime to the header, "New
@@ -647,7 +652,7 @@ namespace Anatomia3D.UI
             // classroomId is null - quizzes created here go into the shared
             // quiz bank (available to every classroom). Assign a specific
             // classroom from AdminClassroomDetailController if needed.
-            
+
             QuizService.Instance.CreateQuiz(title, category, timeLimit, passingScore, null, (ok, error, record) =>
             {
                 _createQuizSubmitButton?.SetEnabled(true);
@@ -688,6 +693,7 @@ namespace Anatomia3D.UI
             ClearError(_correctAnswerError);
             SetStatus(_addQuestionStatusLabel, string.Empty);
             UpdateOptionsVisibility(QuestionTypeDisplayChoices[0]);
+            UpdateCorrectAnswerHint(QuestionTypeDisplayChoices[0]);
 
             _addQuestionModalOverlay?.RemoveFromClassList("hidden");
         }
@@ -700,12 +706,34 @@ namespace Anatomia3D.UI
 
         private void OnAddQuestionCancelClicked(ClickEvent evt) => CloseAddQuestionModal();
 
-        private void OnQuestionTypeChanged(ChangeEvent<string> evt) => UpdateOptionsVisibility(evt.newValue);
+        private void OnQuestionTypeChanged(ChangeEvent<string> evt)
+        {
+            UpdateOptionsVisibility(evt.newValue);
+            UpdateCorrectAnswerHint(evt.newValue);
+        }
 
         private void UpdateOptionsVisibility(string displayType)
         {
-            bool isMultipleChoice = displayType == "Multiple Choice";
-            _optionsContainer?.EnableInClassList("hidden", !isMultipleChoice);
+            // Multiple Identification also needs the 4 option fields - that's where
+            // its distractors (e.g. "keyboard" alongside "Skin"/"Hair"/"Nails") live.
+            // Enumeration doesn't use them - it's free-text blanks on the student side.
+            bool showOptions = displayType == "Multiple Choice" || displayType == "Multiple Identification";
+            _optionsContainer?.EnableInClassList("hidden", !showOptions);
+        }
+
+        /// <summary>Correct Answer is a single TextField for every question type, so this
+        /// swaps its placeholder to spell out the expected format per type.</summary>
+        private void UpdateCorrectAnswerHint(string displayType)
+        {
+            if (_correctAnswerField == null) return;
+
+            _correctAnswerField.textEdition.placeholder = displayType switch
+            {
+                "True or False" => "True or False",
+                "Enumeration" => "Comma-separated, e.g. Epithelial, Connective, Muscle, Nervous",
+                "Multiple Identification" => "Comma-separated, must match option text exactly, e.g. Skin, Hair, Nails",
+                _ => "",
+            };
         }
 
         private void OnAddQuestionSubmitClicked(ClickEvent evt)
@@ -759,7 +787,7 @@ namespace Anatomia3D.UI
                 Points = ParseIntOrDefault(_questionPointsField, 10),
             };
 
-            if (typeSlug == TypeMultipleChoice)
+            if (typeSlug == TypeMultipleChoice || typeSlug == TypeMultipleIdentification)
             {
                 foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
                 {

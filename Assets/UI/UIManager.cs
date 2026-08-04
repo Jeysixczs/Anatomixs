@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Anatomia3D.UI.Quiz;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -19,6 +20,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset studentProfileScreen;
         [SerializeField] private VisualTreeAsset studentClassroomScreen;
         [SerializeField] private VisualTreeAsset studentQuizSelectionScreen;
+        [SerializeField] private VisualTreeAsset studentQuizGameplayScreen;
         [SerializeField] private VisualTreeAsset studentProgressScreen;
         [SerializeField] private VisualTreeAsset studentQuizResultScreen;
         [SerializeField] private VisualTreeAsset studentClassroomHubScreen;
@@ -39,6 +41,7 @@ namespace Anatomia3D.UI
         private StudentProfileController _studentProfileController;
         private StudentClassroomController _studentClassroomController;
         private StudentQuizSelectionController _studentQuizSelectionController;
+        private StudentQuizGameplayController _studentQuizGameplayController;
         private StudentQuizResultController _studentQuizResultController;
         private StudentProgressController _studentProgressController;
         private StudentClassroomHubController _studentClassroomHubController;
@@ -126,6 +129,7 @@ namespace Anatomia3D.UI
             _studentProfileController = GetComponent<StudentProfileController>();
             _studentClassroomController = GetComponent<StudentClassroomController>();
             _studentQuizSelectionController = GetComponent<StudentQuizSelectionController>();
+            _studentQuizGameplayController = GetComponent<StudentQuizGameplayController>();
             _studentQuizResultController = GetComponent<StudentQuizResultController>();
             _studentProgressController = GetComponent<StudentProgressController>();
             _studentClassroomHubController = GetComponent<StudentClassroomHubController>();
@@ -205,9 +209,26 @@ namespace Anatomia3D.UI
             ShowScreen(studentQuizSelectionScreen, _studentQuizSelectionController);
         }
 
-        public void ShowStudentQuizResult()
+        public void ShowStudentQuizGameplay(string quizId)
         {
-            ShowScreen(studentQuizResultScreen, _studentQuizResultController);
+            ShowScreen(studentQuizGameplayScreen, _studentQuizGameplayController, () =>
+            {
+                _studentQuizGameplayController?.LoadQuiz(quizId);
+            });
+        }
+
+        public void ShowStudentQuizResult(
+            string quizName,
+            int correctCount,
+            int incorrectCount,
+            int pointsEarned,
+            int pointsPossible,
+            int bonusXp)
+        {
+            ShowScreen(studentQuizResultScreen, _studentQuizResultController, () =>
+            {
+                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp);
+            });
         }
 
         public void ShowStudentProgress()
@@ -378,6 +399,7 @@ namespace Anatomia3D.UI
             if (_studentProfileController != null) _studentProfileController.enabled = false;
             if (_studentClassroomController != null) _studentClassroomController.enabled = false;
             if (_studentQuizSelectionController != null) _studentQuizSelectionController.enabled = false;
+            if (_studentQuizGameplayController != null) _studentQuizGameplayController.enabled = false;
             if (_studentQuizResultController != null) _studentQuizResultController.enabled = false;
             if (_studentProgressController != null) _studentProgressController.enabled = false;
             if (_studentClassroomHubController != null) _studentClassroomHubController.enabled = false;

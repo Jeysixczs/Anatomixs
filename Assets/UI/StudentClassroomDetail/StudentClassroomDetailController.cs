@@ -120,6 +120,7 @@ namespace Anatomia3D.UI
         /// <summary>A single card in the Available Quizzes tab.</summary>
         public struct QuizCardInfo
         {
+            public string QuizId;
             public string Title;
             public string Subject;
             public int Questions;
@@ -128,8 +129,9 @@ namespace Anatomia3D.UI
             public string Difficulty;
             public bool IsAvailable;
 
-            public QuizCardInfo(string title, string subject, int questions, int timeMinutes, int points, string difficulty, bool isAvailable)
+            public QuizCardInfo(string quizId, string title, string subject, int questions, int timeMinutes, int points, string difficulty, bool isAvailable)
             {
+                QuizId = quizId;
                 Title = title;
                 Subject = subject;
                 Questions = questions;
@@ -407,7 +409,7 @@ namespace Anatomia3D.UI
                     if (IsStale()) return;
 
                     var cards = quizzes.ConvertAll(q => new QuizCardInfo(
-                        q.Title, q.Category, q.QuestionCount, Mathf.CeilToInt(q.TimeLimitSeconds / 60f),
+                        q.QuizId, q.Title, q.Category, q.QuestionCount, Mathf.CeilToInt(q.TimeLimitSeconds / 60f),
                         q.TotalPoints, Capitalize(q.Difficulty), true));
                     SetQuizzes(cards);
                 });
@@ -882,9 +884,13 @@ namespace Anatomia3D.UI
         {
             Debug.Log($"[StudentClassroomDetailController] Start Quiz tapped: {quiz.Title} (classroom {_classroomId})");
 
-            // TODO: replace with your real quiz-launch call scoped to this classroom, e.g.:
-            // QuizManager.Instance.StartQuiz(_classroomId, quiz.Title);
-            UIManager.Instance.ShowStudentQuizSelection();
+            if (string.IsNullOrEmpty(quiz.QuizId))
+            {
+                Debug.LogError($"[StudentClassroomDetailController] '{quiz.Title}' has no quiz id - can't start it.");
+                return;
+            }
+
+            UIManager.Instance.ShowStudentQuizGameplay(quiz.QuizId);
         }
 
         // ---------------- Responsive layout ----------------
