@@ -188,7 +188,7 @@ namespace Anatomia3D.UI
 
             // TODO: replace with your real quiz-launch call, e.g.:
             // QuizManager.Instance.StartQuiz("skeletal-system-basics");
-            UIManager.Instance.ShowStudentQuizResult();
+         //   UIManager.Instance.ShowStudentQuizResult();
         }
 
         private void OnStartQuiz2Clicked(ClickEvent evt)

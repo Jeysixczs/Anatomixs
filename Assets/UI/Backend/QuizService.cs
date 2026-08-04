@@ -288,6 +288,28 @@ namespace Anatomia3D.Backend
         // StudentQuizSelectionController is reached per-quiz from that tab and only
         // needs FetchQuizStats() below for the specific quiz being started.
 
+        // NEW: nothing previously fetched a single quiz's full question list -
+        // FetchQuizStats() only returns past-attempt aggregates. StudentQuizGameplayController
+        // needs the actual QuizRecord (with Questions) once the student taps "Start", so
+        // this reads quizzes/{quizId} directly and reuses ToQuizRecord() like the admin path.
+        /// <summary>Call when starting gameplay (StudentQuizGameplayController) - fetches
+        /// the full quiz doc, including its questions, right before the student begins.</summary>
+        public void FetchQuiz(string quizId, Action<bool, string, QuizRecord> onComplete)
+        {
+            Db.Collection("quizzes").Document(quizId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
+                    {
+                        onComplete?.Invoke(false, "Could not load this quiz.", null);
+                        return;
+                    }
+
+                    onComplete?.Invoke(true, null, ToQuizRecord(task.Result));
+                });
+        }
+
         /// <summary>
         /// Call once gameplay finishes, right before showing StudentQuizResultController.
         /// Writes the `quizAttempts` doc, updates the student's totalPoints /

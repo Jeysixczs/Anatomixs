@@ -191,20 +191,8 @@ namespace Anatomia3D.UI
         }
 
         private void OnGoToDashboardClicked(ClickEvent evt)
-        {
-            Debug.Log("[AdminClassroomCreatedController] Navigating to admin dashboard");
-            //UIManager.Instance.ShowAdminDashboard();
-            string classroomName = classroom.Name;
-            string classroomCode = classroom.Code;
-            int classroomStudentCount = classroom.StudentCount;
-            float avgScorePercent = 0f; // a brand new classroom has no quiz attempts yet
-            int quizCount = 0;          // and no quizzes published yet
-
-            // NOTE: ShowAdminClassroomDetail now needs a leading classroomId parameter -
-            // update its signature in UIManager.cs to match
-            // AdminClassroomDetailController.SetClassroomData(classroomId, ...).
-            UIManager.Instance.ShowAdminClassroomDetail(_classroomId, classroomName, classroomCode, classroomStudentCount, avgScorePercent, quizCount);
-
+        {  
+            UIManager.Instance.ShowAdminDashboard();
         }
 
         // ---------------- Responsive layout ----------------
