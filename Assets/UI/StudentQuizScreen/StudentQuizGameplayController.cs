@@ -59,6 +59,12 @@ namespace Anatomia3D.UI.Quiz
         private bool _timerRunning;
         private Coroutine _timerRoutine;
 
+        // Wall-clock time the current attempt started, used to compute timeSpentSeconds
+        // for SubmitQuizAttempt (the Scores tab's "Time: Xm Ys" field). realtimeSinceStartup
+        // instead of DateTime.UtcNow since it isn't affected by device clock changes and
+        // keeps advancing across scenes without needing DontDestroyOnLoad bookkeeping.
+        private float _quizStartRealtime;
+
         // Answer storage per question index. Value type depends on question type:
         // MultipleChoice/TrueFalse/Identification -> string
         // MultipleIdentification -> HashSet<string>
@@ -76,6 +82,17 @@ namespace Anatomia3D.UI.Quiz
         // happen given how UIManager.ShowStudentQuizGameplay() calls it, but kept as
         // a safety net so a quiz id is never silently dropped).
         private string _pendingQuizId;
+        private string _pendingClassroomId;
+
+        // The classroom the student launched this quiz FROM (StudentClassroomDetail's
+        // Available Quizzes tab), as opposed to _quiz.ClassroomId (the quiz doc's own
+        // classroomId field, set once at quiz-creation time). These can differ - a quiz
+        // can be published into a classroom's publishedQuizIds without its own
+        // classroomId field pointing back at that classroom - so this is what actually
+        // gets written onto the quizAttempts doc (see SubmitQuizAttempt call below),
+        // otherwise Student Classroom Detail's Scores tab query (classroomId + studentId)
+        // never matches and the Scores tab looks permanently empty.
+        private string _launchClassroomId;
 
         private static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
         {
@@ -125,8 +142,10 @@ namespace Anatomia3D.UI.Quiz
             if (!string.IsNullOrEmpty(_pendingQuizId))
             {
                 string quizId = _pendingQuizId;
+                string classroomId = _pendingClassroomId;
                 _pendingQuizId = null;
-                LoadQuiz(quizId);
+                _pendingClassroomId = null;
+                LoadQuiz(classroomId, quizId);
             }
         }
 
@@ -214,8 +233,12 @@ namespace Anatomia3D.UI.Quiz
             StopTimer();
             OnCloseRequested?.Invoke();
 
-            // TODO: if you thread the originating classroom id through LoadQuiz(),
-            // prefer sending the student back there instead of the dashboard.
+            // _launchClassroomId is now available here (see LoadQuiz), but
+            // ShowStudentClassroomDetail also needs the classroom's display name and
+            // instructor name to render its header, and neither is threaded through
+            // to this screen today. Wire those through LoadQuiz()/_pendingClassroomId
+            // alongside classroomId if you want this to return to
+            // StudentClassroomDetail instead of the dashboard.
             UIManager.Instance.ShowStudentDashboard();
         }
 
@@ -242,15 +265,23 @@ namespace Anatomia3D.UI.Quiz
         // Loading a quiz from Firestore
         // ---------------------------------------------------------------
 
-        /// <summary>Call from UIManager.ShowStudentQuizGameplay() once this screen is showing.</summary>
-        public void LoadQuiz(string quizId)
+        /// <summary>Call from UIManager.ShowStudentQuizGameplay() once this screen is showing.
+        /// <paramref name="classroomId"/> is the classroom the student launched this quiz FROM
+        /// (StudentClassroomDetail's Available Quizzes tab) - NOT necessarily the same as the
+        /// quiz doc's own classroomId field. It's what gets attached to the quizAttempts doc on
+        /// submit, so Student Classroom Detail's Scores tab can find it again. Pass null/empty
+        /// for entry points with no classroom context (e.g. a future deep link).</summary>
+        public void LoadQuiz(string classroomId, string quizId)
         {
             if (_root == null)
             {
                 // Screen hasn't finished enabling yet - remember this and load once it has.
+                _pendingClassroomId = classroomId;
                 _pendingQuizId = quizId;
                 return;
             }
+
+            _launchClassroomId = classroomId;
 
             // _blockedOverlay?.AddToClassList("hidden");
 
@@ -291,6 +322,7 @@ namespace Anatomia3D.UI.Quiz
             _currentIndex = 0;
             _answers.Clear();
             _submitInFlight = false;
+            _quizStartRealtime = Time.realtimeSinceStartup;
             _quizLabel.text = quiz.Title;
 
             RenderQuestion(_currentIndex);
@@ -586,12 +618,24 @@ namespace Anatomia3D.UI.Quiz
 
             string quizTitle = _quiz.Title;
             int pointsPossible = _quiz.PointsPossible;
+            int timeSpentSeconds = Mathf.Max(0, Mathf.RoundToInt(Time.realtimeSinceStartup - _quizStartRealtime));
+
+            // Prefer the classroom the student actually launched this quiz from
+            // (_launchClassroomId) over the quiz doc's own classroomId field
+            // (_quiz.ClassroomId) - a quiz can be published into a classroom's
+            // publishedQuizIds without its own classroomId field pointing back at
+            // that classroom, and it's this value that Student Classroom Detail's
+            // Scores tab later queries by. Fall back to _quiz.ClassroomId only for
+            // entry points that never had classroom context to begin with.
+            string classroomIdForAttempt = !string.IsNullOrEmpty(_launchClassroomId)
+                ? _launchClassroomId
+                : _quiz.ClassroomId;
 
             QuizService.Instance.SubmitQuizAttempt(
                 _quiz.QuizId,
                 _quiz.Title,
                 _quiz.Category,
-                _quiz.ClassroomId,
+                classroomIdForAttempt,
                 correctCount,
                 incorrectCount,
                 pointsEarned,
@@ -622,7 +666,8 @@ namespace Anatomia3D.UI.Quiz
                             quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp: 0);
                     });
 
-                });
+                },
+                timeSpentSeconds: timeSpentSeconds);
         }
 
         // ---------------------------------------------------------------

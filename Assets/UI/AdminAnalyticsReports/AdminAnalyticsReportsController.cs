@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Anatomia3D.Backend;
 
 namespace Anatomia3D.UI
 {
@@ -168,6 +170,13 @@ namespace Anatomia3D.UI
 
         private string _activeTab = TabStudents;
 
+        // Classroom picker - lets the teacher pick which classroom this report covers
+        // (AdminAnalyticsReportsController shows one classroom at a time, unlike
+        // AdminClassroomDetailController which is already scoped to a classroomId).
+        private DropdownField _classroomPicker;
+        private List<AdminClassroomService.ClassroomRecord> _classrooms = new List<AdminClassroomService.ClassroomRecord>();
+        private string _selectedClassroomId;
+
         private List<ScoreTrendEntry> _currentScoreTrend = new List<ScoreTrendEntry>();
         private List<TopicPerformanceEntry> _currentTopicPerformance = new List<TopicPerformanceEntry>();
         private List<TopPerformer> _currentTopPerformers = new List<TopPerformer>();
@@ -218,6 +227,8 @@ namespace Anatomia3D.UI
             RefreshMistakesUI();
             RefreshRecommendationsUI();
             SetActiveTab(_activeTab);
+
+            LoadClassroomsAndData();
         }
 
         private void OnDisable()
@@ -236,6 +247,7 @@ namespace Anatomia3D.UI
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.UnregisterCallback<ClickEvent>(OnMistakesTabClicked);
+            _classroomPicker?.UnregisterValueChangedCallback(OnClassroomPickerChanged);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
 
@@ -364,6 +376,146 @@ namespace Anatomia3D.UI
         {
             _currentRecommendations = recommendations ?? new List<RecommendationEntry>();
             RefreshRecommendationsUI();
+        }
+
+        // ---------------- Classroom picker + real data loading ----------------
+
+        /// <summary>Loads the signed-in teacher's classrooms into the picker, then loads the
+        /// report for whichever one is selected (defaults to the first). If the teacher has
+        /// no classrooms yet, leaves the placeholder mock data in place instead.</summary>
+        private void LoadClassroomsAndData()
+        {
+            if (AdminClassroomService.Instance == null)
+            {
+                Debug.LogWarning("[AdminAnalyticsReportsController] AdminClassroomService.Instance is null - " +
+                    "leaving placeholder data in place.");
+                return;
+            }
+
+            AdminClassroomService.Instance.FetchMyClassrooms(classrooms =>
+            {
+                _classrooms = classrooms ?? new List<AdminClassroomService.ClassroomRecord>();
+                BuildClassroomPicker();
+
+                if (_classrooms.Count == 0)
+                {
+                    Debug.Log("[AdminAnalyticsReportsController] No classrooms yet - showing placeholder data.");
+                    return;
+                }
+
+                _selectedClassroomId = _classrooms[0].ClassroomId;
+                LoadAnalyticsFor(_selectedClassroomId);
+            });
+        }
+
+        /// <summary>Creates the classroom DropdownField the first time this runs and inserts it
+        /// into the header actions row (there's no dedicated element for it in the .uxml), then
+        /// keeps its choices in sync with _classrooms on every subsequent call.</summary>
+        private void BuildClassroomPicker()
+        {
+            if (_screenRoot == null) return;
+
+            if (_classroomPicker == null)
+            {
+                var headerActions = _screenRoot.Q<VisualElement>("header-actions");
+                if (headerActions == null) return;
+
+                _classroomPicker = new DropdownField();
+                _classroomPicker.AddToClassList("classroom-picker-dropdown");
+                _classroomPicker.RegisterValueChangedCallback(OnClassroomPickerChanged);
+                headerActions.Insert(0, _classroomPicker);
+            }
+
+            _classroomPicker.choices = _classrooms.Select(c => c.Name).ToList();
+
+            if (_classrooms.Count > 0)
+            {
+                _classroomPicker.SetValueWithoutNotify(_classrooms[0].Name);
+            }
+        }
+
+        private void OnClassroomPickerChanged(ChangeEvent<string> evt)
+        {
+            var match = _classrooms.FirstOrDefault(c => c.Name == evt.newValue);
+            if (match == null) return;
+
+            _selectedClassroomId = match.ClassroomId;
+            LoadAnalyticsFor(_selectedClassroomId);
+        }
+
+        /// <summary>Pulls real data for the given classroom from AdminClassroomService and
+        /// QuizService and pushes it through the same Set*() public API a caller with its own
+        /// data source would use - so this method doubles as a usage example.</summary>
+        private void LoadAnalyticsFor(string classroomId)
+        {
+            if (string.IsNullOrEmpty(classroomId)) return;
+
+            AdminClassroomService.Instance?.FetchClassroomAnalytics(classroomId, analytics =>
+            {
+                SetTopPerformers(analytics.Leaderboard
+                    .Take(10)
+                    .Select(s => new TopPerformer(s.Name, s.QuizzesCompleted, s.Points, s.Level))
+                    .ToList());
+
+                QuizService.Instance?.FetchClassroomOverviewStats(classroomId, overview =>
+                {
+                    int totalStudents = analytics.Students.Count;
+                    float avgLevel = totalStudents > 0 ? (float)analytics.Students.Average(s => s.Level) : 0f;
+                    int avgPoints = totalStudents > 0 ? Mathf.RoundToInt((float)analytics.Students.Average(s => s.Points)) : 0;
+
+                    SetStudentActivity(new StudentActivitySummary(totalStudents, overview.ActiveUsers, avgLevel, avgPoints));
+
+                    SetOverviewStats(
+                        overview.ActiveUsers, FormatDelta(overview.ActiveUsersDeltaPercent),
+                        Mathf.RoundToInt(overview.AvgScorePercent), FormatDelta(overview.AvgScoreDeltaPercent),
+                        overview.QuizzesDone, FormatDelta(overview.QuizzesDoneDeltaPercent),
+                        Mathf.RoundToInt(overview.CompletionPercent), FormatDelta(overview.CompletionDeltaPercent));
+                });
+            });
+
+            QuizService.Instance?.FetchClassroomReportData(classroomId, report =>
+            {
+                SetScoreTrend(report.ScoreTrend
+                    .Select(q => new ScoreTrendEntry(q.QuizTitle, q.AvgScorePercent))
+                    .ToList());
+
+                SetTopicPerformance(report.TopicPerformance
+                    .Select(c => new TopicPerformanceEntry(CapitalizeCategory(c.Category), c.AvgScorePercent))
+                    .ToList());
+
+                SetCommonMistakes(report.TopMistakes
+                    .Select(m => new MistakeEntry(m.QuestionText, CapitalizeCategory(m.Category), m.ErrorCount))
+                    .ToList());
+
+                SetRecommendations(BuildRecommendations(report.TopicPerformance));
+            });
+        }
+
+        /// <summary>One simple recommendation: call out whichever topic is scoring lowest.
+        /// Replace/extend with real rules once you know what else you want flagged.</summary>
+        private List<RecommendationEntry> BuildRecommendations(List<QuizService.CategoryScoreSummary> topicPerformance)
+        {
+            var recommendations = new List<RecommendationEntry>();
+            if (topicPerformance == null || topicPerformance.Count == 0) return recommendations;
+
+            var weakest = topicPerformance.OrderBy(c => c.AvgScorePercent).First();
+            recommendations.Add(new RecommendationEntry(
+                $"Focus on {CapitalizeCategory(weakest.Category)}",
+                $"Average score is {Mathf.RoundToInt(weakest.AvgScorePercent)}% - consider adding more practice questions in this topic."));
+
+            return recommendations;
+        }
+
+        private static string FormatDelta(float deltaPercent)
+        {
+            string sign = deltaPercent >= 0 ? "+" : "";
+            return $"{sign}{Mathf.RoundToInt(deltaPercent)}%";
+        }
+
+        private static string CapitalizeCategory(string category)
+        {
+            if (string.IsNullOrEmpty(category)) return category;
+            return char.ToUpperInvariant(category[0]) + category.Substring(1);
         }
 
         // ---------------- Tabs ----------------

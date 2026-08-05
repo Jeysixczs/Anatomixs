@@ -1090,7 +1090,7 @@ namespace Anatomia3D.UI
             // which re-checks fresh in case the deadline passed or another attempt was
             // used since this tab loaded - it shows the blocking message there if so,
             // rather than trusting this now-stale card state.
-            UIManager.Instance.ShowStudentQuizGameplay(quiz.QuizId);
+            UIManager.Instance.ShowStudentQuizGameplay(_classroomId, quiz.QuizId);
         }
 
         // ---------------- Responsive layout ----------------

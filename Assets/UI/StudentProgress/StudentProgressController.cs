@@ -132,6 +132,7 @@ namespace Anatomia3D.UI
             ShowWeeklyTab();
 
             PopulateLevelProgress();
+            PopulateProgressExtras();
         }
 
         private void OnDisable()
@@ -273,6 +274,41 @@ namespace Anatomia3D.UI
                 if (_pointsValueLabel != null) _pointsValueLabel.text = student.TotalPoints.ToString();
 
                 BuildLevelRoadmap(settings.Levels, progress.level, student.TotalPoints);
+            });
+        }
+
+        /// <summary>Fills in the parts PopulateLevelProgress() above leaves alone: average
+        /// score, badges-earned count, the weekly bar chart and the per-category breakdown.
+        /// All come from QuizService.FetchProgressData(), which already aggregates the
+        /// student's quizAttempts for exactly this purpose.</summary>
+        private void PopulateProgressExtras()
+        {
+            if (QuizService.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
+                    "leaving avg score, badges, weekly chart and category breakdown as placeholders.");
+                return;
+            }
+
+            QuizService.Instance.FetchProgressData((success, result) =>
+            {
+                if (!success || result == null) return;
+
+                if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(result.AvgScorePercent)}%";
+                if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
+
+                SetWeeklyPoints(result.WeeklyPoints);
+
+                result.CategoryBreakdown.TryGetValue("skeletal", out var skeletal);
+                result.CategoryBreakdown.TryGetValue("muscular", out var muscular);
+                result.CategoryBreakdown.TryGetValue("nervous", out var nervous);
+                result.CategoryBreakdown.TryGetValue("cardiovascular", out var cardiovascular);
+
+                SetCategoryProgress(
+                    skeletal.quizzes, skeletal.percent01,
+                    muscular.quizzes, muscular.percent01,
+                    nervous.quizzes, nervous.percent01,
+                    cardiovascular.quizzes, cardiovascular.percent01);
             });
         }
 
