@@ -1,0 +1,1141 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!29 &1
+OcclusionCullingSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_OcclusionBakeSettings:
+    smallestOccluder: 5
+    smallestHole: 0.25
+    backfaceThreshold: 100
+  m_SceneGUID: 00000000000000000000000000000000
+  m_OcclusionCullingData: {fileID: 0}
+--- !u!104 &2
+RenderSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 10
+  m_Fog: 0
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.01
+  m_LinearFogStart: 0
+  m_LinearFogEnd: 300
+  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientIntensity: 1
+  m_AmbientMode: 0
+  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
+  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_HaloStrength: 0.5
+  m_FlareStrength: 1
+  m_FlareFadeSpeed: 3
+  m_HaloTexture: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
+  m_DefaultReflectionMode: 0
+  m_DefaultReflectionResolution: 128
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 1
+  m_CustomReflection: {fileID: 0}
+  m_Sun: {fileID: 0}
+  m_UseRadianceAmbientProbe: 0
+--- !u!157 &3
+LightmapSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
+  m_GISettings:
+    serializedVersion: 2
+    m_BounceScale: 1
+    m_IndirectOutputScale: 1
+    m_AlbedoBoost: 1
+    m_EnvironmentLightingMode: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 0
+  m_LightmapEditorSettings:
+    serializedVersion: 12
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_AtlasSize: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 1
+    m_CompAOExponentDirect: 0
+    m_ExtractAmbientOcclusion: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_ReflectionCompression: 2
+    m_MixedBakeMode: 2
+    m_BakeBackend: 2
+    m_PVRSampling: 1
+    m_PVRDirectSampleCount: 32
+    m_PVRSampleCount: 512
+    m_PVRBounces: 2
+    m_PVREnvironmentSampleCount: 256
+    m_PVREnvironmentReferencePointCount: 2048
+    m_PVRFilteringMode: 1
+    m_PVRDenoiserTypeDirect: 1
+    m_PVRDenoiserTypeIndirect: 1
+    m_PVRDenoiserTypeAO: 1
+    m_PVRFilterTypeDirect: 0
+    m_PVRFilterTypeIndirect: 0
+    m_PVRFilterTypeAO: 0
+    m_PVREnvironmentMIS: 1
+    m_PVRCulling: 1
+    m_PVRFilteringGaussRadiusDirect: 1
+    m_PVRFilteringGaussRadiusIndirect: 1
+    m_PVRFilteringGaussRadiusAO: 1
+    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
+    m_PVRFilteringAtrousPositionSigmaIndirect: 2
+    m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
+  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightingSettings: {fileID: 0}
+--- !u!196 &4
+NavMeshSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_BuildSettings:
+    serializedVersion: 3
+    agentTypeID: 0
+    agentRadius: 0.5
+    agentHeight: 2
+    agentSlope: 45
+    agentClimb: 0.4
+    ledgeDropHeight: 0
+    maxJumpAcrossDistance: 0
+    minRegionArea: 2
+    manualCellSize: 0
+    cellSize: 0.16666667
+    manualTileSize: 0
+    tileSize: 256
+    buildHeightMesh: 0
+    maxJobWorkers: 0
+    preserveTilesOutsideBounds: 0
+    debug:
+      m_Flags: 0
+  m_NavMeshData: {fileID: 0}
+--- !u!1 &638344618
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 638344621}
+  - component: {fileID: 638344620}
+  - component: {fileID: 638344619}
+  - component: {fileID: 638344622}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &638344619
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638344618}
+  m_Enabled: 1
+--- !u!20 &638344620
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638344618}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: -1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &638344621
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638344618}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &638344622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638344618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!1 &715374716
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 715374718}
+  - component: {fileID: 715374717}
+  - component: {fileID: 715374719}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &715374717
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715374716}
+  m_Enabled: 1
+  serializedVersion: 12
+  m_Type: 1
+  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize2D: {x: 0.5, y: 0.5}
+  m_Shadows:
+    m_Type: 2
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
+--- !u!4 &715374718
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715374716}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &715374719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715374716}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
+--- !u!1 &1051780004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1051780006}
+  - component: {fileID: 1051780008}
+  - component: {fileID: 1051780005}
+  - component: {fileID: 1051780007}
+  - component: {fileID: 1051780009}
+  - component: {fileID: 1051780010}
+  - component: {fileID: 1051780012}
+  - component: {fileID: 1051780011}
+  - component: {fileID: 1051780013}
+  - component: {fileID: 1051780015}
+  - component: {fileID: 1051780016}
+  - component: {fileID: 1051780017}
+  - component: {fileID: 1051780018}
+  - component: {fileID: 1051780019}
+  - component: {fileID: 1051780020}
+  - component: {fileID: 1051780022}
+  - component: {fileID: 1051780021}
+  - component: {fileID: 1051780023}
+  - component: {fileID: 1051780026}
+  - component: {fileID: 1051780025}
+  - component: {fileID: 1051780027}
+  - component: {fileID: 1051780028}
+  - component: {fileID: 1051780029}
+  - component: {fileID: 1051780030}
+  - component: {fileID: 1051780031}
+  - component: {fileID: 1051780032}
+  - component: {fileID: 1051780033}
+  - component: {fileID: 1051780035}
+  - component: {fileID: 1051780034}
+  - component: {fileID: 1051780036}
+  - component: {fileID: 1051780037}
+  - component: {fileID: 1051780039}
+  - component: {fileID: 1051780038}
+  - component: {fileID: 1051780040}
+  - component: {fileID: 1051780042}
+  - component: {fileID: 1051780041}
+  - component: {fileID: 1051780043}
+  - component: {fileID: 1051780044}
+  - component: {fileID: 1051780045}
+  - component: {fileID: 1051780046}
+  - component: {fileID: 1051780047}
+  m_Layer: 5
+  m_Name: UIDocument
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1051780005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: f77e51c6d550e054a8985fe7e5744b2c, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: aec854b0a4405c64ea2de05cbc9f667f, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &1051780006
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1051780007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f567639c91cb05942866e1461e3303b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Student.StudentLoginController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 340
+  compactHeightThreshold: 700
+  landscapeHeightThreshold: 550
+  ultraCompactWidthThreshold: 620
+--- !u!114 &1051780008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a3e300f079850a4a8f9e1d60de7aa09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIManager
+  studentLoginScreen: {fileID: 9197481963319205126, guid: aec854b0a4405c64ea2de05cbc9f667f, type: 3}
+  createAccountScreen: {fileID: 9197481963319205126, guid: 6ca993b230e31414ab0fe5a0cc8571e1, type: 3}
+  forgotPasswordScreen: {fileID: 9197481963319205126, guid: 15bbf079407fb8641b5eb7708ae20d1a, type: 3}
+  studentDashboardScreen: {fileID: 9197481963319205126, guid: 161409483230e814eb68c52de103d8ff, type: 3}
+  studentExplore3dScreen: {fileID: 9197481963319205126, guid: e81f8e8965f069e4488de36fbfd626db, type: 3}
+  studentAchivementScreen: {fileID: 9197481963319205126, guid: fa42bb56e3eb3764ebb4580c743bf2ae, type: 3}
+  studentProfileScreen: {fileID: 9197481963319205126, guid: 390fc6f8573df2a4685d4eeb8f00ba9d, type: 3}
+  studentClassroomScreen: {fileID: 9197481963319205126, guid: aec2a91a4c1fef74d87866d95e62910b, type: 3}
+  studentQuizSelectionScreen: {fileID: 9197481963319205126, guid: 83e939716f66ed143b86d87ac01673ac, type: 3}
+  studentQuizGameplayScreen: {fileID: 9197481963319205126, guid: d82b69fcc8b33314ea2cd01f9425e407, type: 3}
+  studentProgressScreen: {fileID: 9197481963319205126, guid: 4f75a612e149db9428da5748333c5200, type: 3}
+  studentQuizResultScreen: {fileID: 9197481963319205126, guid: 6ce67b8faabb61c4e927dbb33245d76f, type: 3}
+  studentClassroomHubScreen: {fileID: 9197481963319205126, guid: f4987262301f4da4b8e24e5618bda6f5, type: 3}
+  studentClassroomDetailScreen: {fileID: 9197481963319205126, guid: f53898a946aa6534d8409b9d126dea6f, type: 3}
+  studentEditProfileScreen: {fileID: 9197481963319205126, guid: 9b21b4bb4c2f7094486cc3ef85b7a1fc, type: 3}
+  studentNotificationsScreen: {fileID: 9197481963319205126, guid: 587153e4cb082d8428b4e722b7e34043, type: 3}
+  studentQuizResult: {fileID: 9197481963319205126, guid: 6ce67b8faabb61c4e927dbb33245d76f, type: 3}
+  adminLoginScreen: {fileID: 9197481963319205126, guid: 30ebdd51fe56c87449a640a60af93193, type: 3}
+  adminForgotPasswordScreen: {fileID: 9197481963319205126, guid: 0e2efacf6943cd64faf74aaf39850e76, type: 3}
+  adminCreateAccountScreen: {fileID: 9197481963319205126, guid: 2c6b5000b6988df4ea207abb503e6afa, type: 3}
+  adminDashboardScreen: {fileID: 9197481963319205126, guid: b16bb18a13949a14a8522a6e00dc4cd3, type: 3}
+  adminCreateClassroomScreen: {fileID: 9197481963319205126, guid: 8ff38be2187c26e49b571935f4ff4c7b, type: 3}
+  adminClassroomCreatedScreen: {fileID: 9197481963319205126, guid: 3aa9656ad57dafc4b8113e784caaf377, type: 3}
+  adminGamificationSettingsScreen: {fileID: 9197481963319205126, guid: 00467010f5625364f934b863463d9709, type: 3}
+  adminQuizManagementScreen: {fileID: 9197481963319205126, guid: d6fe16a3d67f7b14bbe59bb1e7f524bc, type: 3}
+  adminAnalyticsReportsScreen: {fileID: 9197481963319205126, guid: 3a41111bf7b161d4c85a03abee8da6ec, type: 3}
+  adminClassroomDetailScreen: {fileID: 9197481963319205126, guid: 81cd90436ae3d914e886f3f0b72195c6, type: 3}
+  adminProfileScreen: {fileID: 9197481963319205126, guid: a986c6d2909501b4aa68d1d84b2c0fc0, type: 3}
+  adminEditProfileScreen: {fileID: 9197481963319205126, guid: b38baf6cb5d2ddf4c952653fadad4e05, type: 3}
+  adminAboutAnatomiaScreen: {fileID: 9197481963319205126, guid: f3f7d4a237dd92c4cbf8934f1339fa3c, type: 3}
+  aboutAnatomiaScreen: {fileID: 9197481963319205126, guid: 9c6499bb7dece614abf64115582e508a, type: 3}
+--- !u!114 &1051780009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f78e26b60330f94587e796ee0c521da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.DashboardController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c964823872f1934d80f1c559107f3e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.SafeAreaApplier
+  targetElementName: screen-root
+  applyTop: 1
+  applyBottom: 1
+  applyLeft: 1
+  applyRight: 1
+--- !u!114 &1051780011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 482f271b68bf0f0408d5db4cd2563cb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.ForgotPasswordController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+  compactHeightThreshold: 700
+  landscapeHeightThreshold: 550
+  ultraCompactWidthThreshold: 620
+--- !u!114 &1051780012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68b12b88682357f408c79537a2305521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.CreateAccountController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+  minimumPasswordLength: 8
+--- !u!114 &1051780013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e74aa31c961e94f909f95a153505e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentClassroomController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+  minCodeLength: 6
+  maxCodeLength: 8
+--- !u!114 &1051780015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d11132ad7dd010246becb8a0ecc4a538, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StudentExplore3dController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  diagonalGradient: 1
+  gradientTextureResolution: 64
+--- !u!114 &1051780016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16668cbbf3878e64ba896a9b2eb3b8f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentAchievementsController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3cd062d72806a24ca96f8f7160b0ff8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentQuizSelectionController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 388859fc07f593d4891e2446fcffff4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentQuizResultController
+  greatScoreThreshold: 80
+  goodScoreThreshold: 50
+  lowGradientStart: {r: 0.949, g: 0.325, b: 0.078, a: 1}
+  lowGradientEnd: {r: 0.863, g: 0.078, b: 0.078, a: 1}
+  midGradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
+  midGradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
+  highGradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  highGradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 398d3ffb2ca034246915dbdcaedc1c1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentProgressController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+  chartMaxValue: 220
+--- !u!114 &1051780020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58241946734aa0b44a51ededf8200a2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminLoginController
+  gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
+  gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
+  backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
+  backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7be333f68f69c01458ba704ebfc3d304, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminForgotPasswordController
+  gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
+  gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
+  backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
+  backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
+  compactWidthThreshold: 900
+  compactHeightThreshold: 700
+  landscapeHeightThreshold: 550
+  ultraCompactWidthThreshold: 620
+--- !u!114 &1051780022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475ce2d37cad1fd46b66da4933b6db6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminCreateAccountController
+  gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
+  gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
+  backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
+  backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
+  compactWidthThreshold: 900
+  minimumPasswordLength: 8
+--- !u!114 &1051780023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 417c77e2b7a85014dac44587f146998d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminDashboardController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5d2dc9e042cc4f4bad23e71e26250af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminClassroomCreatedController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  backgroundStart: {r: 0.906, g: 0.973, b: 0.949, a: 1}
+  backgroundEnd: {r: 0.918, g: 0.949, b: 0.984, a: 1}
+  codeBoxStart: {r: 0.827, g: 0.937, b: 0.878, a: 1}
+  codeBoxEnd: {r: 0.827, g: 0.878, b: 0.965, a: 1}
+  compactWidthThreshold: 900
+  copyConfirmationSeconds: 1.5
+--- !u!114 &1051780026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 784f9fd4083b79447b66a9c35c457c68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminCreateClassroomController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 546eb990c9634c04eb638f092b97535b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminGamificationSettingsController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  previewBackgroundStart: {r: 0.906, g: 0.973, b: 0.949, a: 1}
+  previewBackgroundEnd: {r: 0.918, g: 0.949, b: 0.984, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1857a2f2016d6224f8441f256825af85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminQuizManagementController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eab584194dbdbb241bd12e0693ea65a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminAnalyticsReportsController
+  compactWidthThreshold: 900
+--- !u!114 &1051780030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669986577b206d74a8ba38dcb04f8d98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminClassroomDetailController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b82d93eeebc0af4f949a740bef1d170, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentClassroomHubController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+  useMockDataUntilWired: 1
+--- !u!114 &1051780032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7133c48cdc6baa4e8b0423f4d498566, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentClassroomDetailController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61e0f8b3260232e42946ecd6eb850743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminProfileController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2232b34da002f847a2be4e34416b1df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentEditProfileController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+  minPasswordLength: 6
+--- !u!114 &1051780035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: accaab054b08e264e88b4c88617626fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminEditProfileController
+  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
+  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
+  compactWidthThreshold: 900
+  minPasswordLength: 6
+--- !u!114 &1051780036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35b81a6a449186d4488c74e3daefc8d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentNotificationsController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dc96f1b77443ae4d9db3349ef32f6cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AboutAnatomiaController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  appName: ANATOMIA
+  appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
+  appVersion: 1.0.0
+  appDescription: ANATOMIA is a gamified mobile application that makes learning human
+    anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
+    it transforms traditional anatomy lessons into a fun and immersive learning experience
+    for students, with tools that let teachers create classrooms and track progress.
+  developerNames:
+  - Abuyan, Christian D.
+  - Acopio, Jorge Matthew M.
+  - Alvaro, John Carl F.
+  - Aquino, John Carlo D.
+  compactWidthThreshold: 900
+--- !u!114 &1051780038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8148568d65ac7e489bac8c7a778b80a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.PlayerSessionManager
+  emailConfirmationPollIntervalSeconds: 3
+--- !u!114 &1051780039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bedc5c2482c12bb48aed754a0645ad65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.FirebaseBootstrap
+  googleWebClientId: 1076492717353-n8cc5aovcgevrh2g3i1ts2gl25bki36k.apps.googleusercontent.com
+--- !u!114 &1051780040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8927c38690756b94a993467cfe5b0987, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminAuthService
+  emailConfirmationPollIntervalSeconds: 3
+--- !u!114 &1051780041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ea5576073060804d80b836bc821f493, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.ClassroomService
+--- !u!114 &1051780042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544074b560841b840b6d47e8f2b3b0ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminClassroomService
+--- !u!114 &1051780043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f200c67013cfe9a4b82037a719e670d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.QuizService
+--- !u!114 &1051780044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899062d770d399d4eb225bece29517df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AdminGamificationService
+--- !u!114 &1051780045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe6ef15050a46ce4a98642386e1a3980, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentProfileController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b48a64a721645744e91d0ddb46b7db9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Quiz.StudentQuizGameplayController
+  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
+--- !u!114 &1051780047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c818bee5821a4764f905e674eac6e0e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AboutAnatomiaAdminController
+  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
+  appName: ANATOMIA
+  appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
+  appVersion: 1.0.0
+  appDescription: ANATOMIA is a gamified mobile application that makes learning human
+    anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
+    it transforms traditional anatomy lessons into a fun and immersive learning experience
+    for students, with tools that let teachers create classrooms and track progress.
+  developerNames:
+  - Abuyan, Christian D.
+  - Acopio, Jorge Matthew M.
+  - Alvaro, John Carl F.
+  - Aquino, John Carlo Ds.
+  compactWidthThreshold: 900
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 638344621}
+  - {fileID: 715374718}
+  - {fileID: 1051780006}

@@ -173,6 +173,7 @@ namespace Anatomia3D.UI
         // Classroom picker - lets the teacher pick which classroom this report covers
         // (AdminAnalyticsReportsController shows one classroom at a time, unlike
         // AdminClassroomDetailController which is already scoped to a classroomId).
+        // Lives in #filters-row, immediately to the left of the date filter button.
         private DropdownField _classroomPicker;
         private List<AdminClassroomService.ClassroomRecord> _classrooms = new List<AdminClassroomService.ClassroomRecord>();
         private string _selectedClassroomId;
@@ -234,6 +235,13 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+
+            // The screen's whole UXML tree gets re-instantiated on the next OnEnable
+            // (QueryElements() re-queries "screen-root" from scratch), so the old
+            // filters-row - and the picker we inserted into it - goes away with it.
+            // Clear this so BuildClassroomPicker() rebuilds against the new tree
+            // instead of skipping itself because _classroomPicker is still non-null.
+            _classroomPicker = null;
         }
 
         private void UnregisterCallbacks()
@@ -408,22 +416,26 @@ namespace Anatomia3D.UI
             });
         }
 
-        /// <summary>Creates the classroom DropdownField the first time this runs and inserts it
-        /// into the header actions row (there's no dedicated element for it in the .uxml), then
-        /// keeps its choices in sync with _classrooms on every subsequent call.</summary>
+        /// <summary>Creates the classroom picker the first time this runs and inserts it into
+        /// #filters-row, just before the date filter button (there's no dedicated element for
+        /// it in the .uxml), then keeps its choices in sync with _classrooms on every
+        /// subsequent call. Styled with the same .dropdown-field look used in
+        /// AdminQuizManagement, rather than a bespoke pill.</summary>
         private void BuildClassroomPicker()
         {
             if (_screenRoot == null) return;
 
             if (_classroomPicker == null)
             {
-                var headerActions = _screenRoot.Q<VisualElement>("header-actions");
-                if (headerActions == null) return;
+                var filtersRow = _screenRoot.Q<VisualElement>("filters-row");
+                if (filtersRow == null) return;
 
                 _classroomPicker = new DropdownField();
+                _classroomPicker.AddToClassList("dropdown-field");
                 _classroomPicker.AddToClassList("classroom-picker-dropdown");
                 _classroomPicker.RegisterValueChangedCallback(OnClassroomPickerChanged);
-                headerActions.Insert(0, _classroomPicker);
+
+                filtersRow.Insert(0, _classroomPicker);
             }
 
             _classroomPicker.choices = _classrooms.Select(c => c.Name).ToList();
@@ -436,9 +448,14 @@ namespace Anatomia3D.UI
 
         private void OnClassroomPickerChanged(ChangeEvent<string> evt)
         {
-            var match = _classrooms.FirstOrDefault(c => c.Name == evt.newValue);
-            if (match == null) return;
+            // Match by index rather than by Name - two classrooms can share a
+            // display name (e.g. two sections both called "Grade 10"), and
+            // matching on the string would silently resolve analytics to the
+            // wrong classroom.
+            int index = _classroomPicker.index;
+            if (index < 0 || index >= _classrooms.Count) return;
 
+            var match = _classrooms[index];
             _selectedClassroomId = match.ClassroomId;
             LoadAnalyticsFor(_selectedClassroomId);
         }
