@@ -131,6 +131,27 @@ namespace Anatomia3D.Backend
         // Admin: quiz authoring
         // ==================================================================
 
+        /// <summary>Server-side mirror of the same rule AdminQuizManagementController enforces
+        /// live in the UI (RevalidateDeadlineDate) - re-checked here so a stale client, a
+        /// modified request, or any future caller of CreateQuiz/UpdateQuizSettings can never
+        /// persist a deadline that's already in the past. Truncates to minute precision so
+        /// the currently-selected minute isn't rejected just because a few seconds elapsed
+        /// in transit.</summary>
+        public const string PastDeadlineErrorMessage = "The selected date and time must be later than the current date and time.";
+
+        private static bool IsDeadlineInPast(bool isDeadlineEnabled, DateTime? deadlineUtc)
+        {
+            if (!isDeadlineEnabled || !deadlineUtc.HasValue) return false;
+
+            var deadline = DateTime.SpecifyKind(deadlineUtc.Value, DateTimeKind.Utc);
+            var nowTruncated = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day,
+                DateTime.UtcNow.Hour, DateTime.UtcNow.Minute, 0, DateTimeKind.Utc);
+            var deadlineTruncated = new DateTime(deadline.Year, deadline.Month, deadline.Day,
+                deadline.Hour, deadline.Minute, 0, DateTimeKind.Utc);
+
+            return deadlineTruncated < nowTruncated;
+        }
+
         /// <summary>Call from AdminQuizManagementController.OnCreateQuizSubmitClicked().</summary>
         public void CreateQuiz(
             string title,
@@ -146,6 +167,12 @@ namespace Anatomia3D.Backend
         {
             var admin = AdminAuthService.Instance.CurrentAdmin;
             if (admin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+
+            if (IsDeadlineInPast(isDeadlineEnabled, deadlineUtc))
+            {
+                onComplete?.Invoke(false, PastDeadlineErrorMessage, null);
+                return;
+            }
 
             var quizRef = Db.Collection("quizzes").Document(); // auto id
 
@@ -210,6 +237,12 @@ namespace Anatomia3D.Backend
             int passingScorePercent,
             Action<bool, string, QuizRecord> onComplete)
         {
+            if (IsDeadlineInPast(isDeadlineEnabled, deadlineUtc))
+            {
+                onComplete?.Invoke(false, PastDeadlineErrorMessage, null);
+                return;
+            }
+
             var quizRef = Db.Collection("quizzes").Document(quizId);
 
             var update = new Dictionary<string, object>
