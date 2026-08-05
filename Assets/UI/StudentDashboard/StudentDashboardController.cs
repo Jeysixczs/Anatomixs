@@ -167,8 +167,7 @@ namespace Anatomia3D.UI
         /// (e.g. right after finishing a quiz).</summary>
         private void PopulateDashboard()
         {
-            var student = PlayerSessionManager.Instance?.CurrentStudent;
-            if (student == null)
+            if (PlayerSessionManager.Instance?.CurrentStudent == null)
             {
                 Debug.LogWarning("[StudentDashboardController] No signed-in student found - " +
                     "showing the dashboard with placeholder data. Was this screen opened without " +
@@ -176,27 +175,33 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            if (AdminGamificationService.Instance == null)
+            PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
             {
-                Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
-                    "falling back to raw points/quiz stats without level-progress math.");
-                SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
-                return;
-            }
+                var student = PlayerSessionManager.Instance.CurrentStudent; // re-read AFTER refresh
+                if (student == null) return;
 
-            AdminGamificationService.Instance.FetchSettings(settings =>
-            {
-                var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
+                if (AdminGamificationService.Instance == null)
+                {
+                    Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
+                        "falling back to raw points/quiz stats without level-progress math.");
+                    SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
+                    return;
+                }
 
-                SetStudentData(
-                    studentName: student.FullName,
-                    currentLevel: progress.level,
-                    nextLevel: progress.nextLevel,
-                    levelProgress01: progress.progress01,
-                    pointsToNextLevel: progress.pointsToNext,
-                    quizzesCompleted: student.QuizzesCompleted,
-                    totalPoints: student.TotalPoints
-                );
+                AdminGamificationService.Instance.FetchSettings(settings =>
+                {
+                    var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
+
+                    SetStudentData(
+                        studentName: student.FullName,
+                        currentLevel: progress.level,
+                        nextLevel: progress.nextLevel,
+                        levelProgress01: progress.progress01,
+                        pointsToNextLevel: progress.pointsToNext,
+                        quizzesCompleted: student.QuizzesCompleted,
+                        totalPoints: student.TotalPoints
+                    );
+                });
             });
         }
 

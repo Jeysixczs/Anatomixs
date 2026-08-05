@@ -48,6 +48,9 @@ namespace Anatomia3D.UI.Quiz
         private Label _questionTextLabel;
         private VisualElement _answerContainer;
         private Button _actionButton;
+        private VisualElement _blockedOverlay;
+        private Label _blockedMessageLabel;
+        private Button _blockedBackButton;
 
         // --- state ---
         private QuizService.QuizRecord _quiz;
@@ -61,6 +64,10 @@ namespace Anatomia3D.UI.Quiz
         // MultipleIdentification -> HashSet<string>
         // Enumeration -> string[]
         private readonly Dictionary<int, object> _answers = new Dictionary<int, object>();
+
+        // Guards against multiple rapid clicks (or a click racing the auto-submit
+        // timer) firing SubmitQuizAttempt() more than once for the same attempt.
+        private bool _submitInFlight;
 
         private Texture2D _headerGradientTexture;
         private Texture2D _buttonGradientTexture;
@@ -148,6 +155,7 @@ namespace Anatomia3D.UI.Quiz
         {
             _closeButton?.UnregisterCallback<ClickEvent>(OnCloseClicked);
             _actionButton?.UnregisterCallback<ClickEvent>(OnActionButtonClicked);
+            _blockedBackButton?.UnregisterCallback<ClickEvent>(OnBlockedBackClicked);
             _quizRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootResized);
         }
 
@@ -180,6 +188,9 @@ namespace Anatomia3D.UI.Quiz
             _questionTextLabel = _root.Q<Label>("question-text-label");
             _answerContainer = _root.Q<VisualElement>("answer-container");
             _actionButton = _root.Q<Button>("action-button");
+            _blockedOverlay = _root.Q<VisualElement>("blocked-overlay");
+            _blockedMessageLabel = _root.Q<Label>("blocked-message-label");
+            _blockedBackButton = _root.Q<Button>("blocked-back-button");
         }
 
         private void WireEvents()
@@ -187,6 +198,15 @@ namespace Anatomia3D.UI.Quiz
             _quizRoot?.RegisterCallback<GeometryChangedEvent>(OnRootResized);
             _closeButton?.RegisterCallback<ClickEvent>(OnCloseClicked);
             _actionButton?.RegisterCallback<ClickEvent>(OnActionButtonClicked);
+            _blockedBackButton?.RegisterCallback<ClickEvent>(OnBlockedBackClicked);
+            _blockedOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnBlockedBackClicked(ClickEvent evt)
+        {
+            StopTimer();
+            OnCloseRequested?.Invoke();
+            UIManager.Instance.ShowStudentDashboard();
         }
 
         private void OnCloseClicked(ClickEvent evt)
@@ -232,15 +252,36 @@ namespace Anatomia3D.UI.Quiz
                 return;
             }
 
-            QuizService.Instance.FetchQuiz(quizId, (success, error, record) =>
-            {
-                if (!success)
-                {
-                    Debug.LogError($"[QuizGameplay] {error}");
-                    return;
-                }
+            // _blockedOverlay?.AddToClassList("hidden");
 
-                StartQuiz(record);
+            // Single choke point for the "Student Restrictions" checks - every entry point
+            // into gameplay (classroom detail's Start button, deep links, etc.) routes
+            // through LoadQuiz(), so enforcing the deadline/attempts check here means it
+            // can't be bypassed by skipping some other screen's pre-check.
+            QuizService.Instance.CheckAttemptEligibility(quizId, (checkOk, checkError, eligibility) =>
+            {
+                //if (!checkOk)
+                //{
+                //    ShowBlocked(checkError ?? "Could not check this quiz right now. Please try again.");
+                //    return;
+                //}
+
+                //if (!eligibility.CanStart)
+                //{
+                //    ShowBlocked(eligibility.BlockReason);
+                //    return;
+                //}
+
+                QuizService.Instance.FetchQuiz(quizId, (success, error, record) =>
+                {
+                    if (!success)
+                    {
+                        Debug.LogError($"[QuizGameplay] {error}");
+                        return;
+                    }
+
+                    StartQuiz(record);
+                });
             });
         }
 
@@ -249,13 +290,25 @@ namespace Anatomia3D.UI.Quiz
             _quiz = quiz;
             _currentIndex = 0;
             _answers.Clear();
+            _submitInFlight = false;
             _quizLabel.text = quiz.Title;
 
             RenderQuestion(_currentIndex);
 
-            // TimeLimitSeconds is for the whole quiz, not per question - the countdown
-            // runs continuously from the first question through submission.
-            StartTimer(quiz.TimeLimitSeconds > 0 ? quiz.TimeLimitSeconds : 600);
+            // TimeLimitMinutes is for the whole quiz, not per question - the countdown
+            // runs continuously from the first question through submission. HasTimeLimit
+            // == false means "No Time Limit" was picked in the admin form - skip the
+            // countdown entirely and show a static label instead.
+            if (quiz.HasTimeLimit)
+            {
+                int seconds = Mathf.Max(1, quiz.TimeLimitMinutes) * 60;
+                StartTimer(seconds);
+            }
+            else
+            {
+                StopTimer();
+                if (_timerLabel != null) _timerLabel.text = "No limit";
+            }
         }
 
         private void RenderQuestion(int index)
@@ -496,6 +549,17 @@ namespace Anatomia3D.UI.Quiz
 
         private void SubmitQuiz()
         {
+            // First click (or the auto-submit timer) wins - ignore any further
+            // clicks that land before SubmitQuizAttempt()'s callback comes back.
+            if (_submitInFlight) return;
+            _submitInFlight = true;
+
+            if (_actionButton != null)
+            {
+                _actionButton.SetEnabled(false);
+                _actionButton.AddToClassList("action-button--disabled");
+            }
+
             StopTimer();
 
             int correctCount = 0;
@@ -538,13 +602,26 @@ namespace Anatomia3D.UI.Quiz
                     if (!success)
                     {
                         Debug.LogError($"[QuizGameplay] {error}");
+
+                        // Submission failed (e.g. network hiccup) - let the student try
+                        // again instead of leaving the button permanently disabled.
+                        _submitInFlight = false;
+                        if (_actionButton != null)
+                        {
+                            _actionButton.SetEnabled(true);
+                            _actionButton.RemoveFromClassList("action-button--disabled");
+                        }
                         return;
                     }
 
                     OnQuizSubmitted?.Invoke(result);
 
-                    UIManager.Instance.ShowStudentQuizResult(
-                        quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp: 0);
+                    PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
+                    {
+                        UIManager.Instance.ShowStudentQuizResult(
+                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp: 0);
+                    });
+
                 });
         }
 
@@ -603,7 +680,7 @@ namespace Anatomia3D.UI.Quiz
         }
 
         // ---------------------------------------------------------------
-        // Timer (single countdown for the whole quiz, per QuizRecord.TimeLimitSeconds)
+        // Timer (single countdown for the whole quiz, per QuizRecord.TimeLimitMinutes)
         // ---------------------------------------------------------------
 
         private void StartTimer(int seconds)

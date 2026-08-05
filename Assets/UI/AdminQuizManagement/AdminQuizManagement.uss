@@ -346,6 +346,29 @@
     color: rgb(31, 36, 48);
 }
 
+.quiz-edit-button
+{
+    width: 92px;
+    height: 92px;
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    margin-left: 18px;
+    font-size: 26px;
+    color: rgb(90, 95, 112);
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+}
+
+.quiz-edit-button:hover
+{
+    background-color: rgba(31, 36, 48, 0.06);
+    border-radius: 24px;
+    color: rgb(31, 36, 48);
+}
+
 .quiz-delete-button
 {
     width: 92px;
@@ -655,6 +678,24 @@
     color: rgb(120, 123, 140);
     margin-top: 18px;
     -unity-text-align: middle-center;
+}
+
+.toggle-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.deadline-toggle
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.deadline-toggle > .unity-toggle__input
+{
+    margin-right: 12px;
 }
 
 .two-column-row

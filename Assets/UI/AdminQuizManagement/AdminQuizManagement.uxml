@@ -43,7 +43,7 @@
             <ui:VisualElement name="create-quiz-modal-card" class="modal-card">
                 <ui:VisualElement class="modal-header-row">
                     <ui:VisualElement class="modal-header-text-col">
-                        <ui:Label text="Create New Quiz" class="modal-title"/>
+                        <ui:Label name="create-quiz-modal-title" text="Create New Quiz" class="modal-title"/>
                         <ui:Label text="Add a new quiz to the system" class="modal-subtitle"/>
                     </ui:VisualElement>
                     <ui:Button name="create-quiz-close-button" text="✕" class="modal-close-button"/>
@@ -56,17 +56,34 @@
                 <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
                 <ui:VisualElement class="two-column-row">
                     <ui:VisualElement class="two-column-item two-column-item-left">
-                        <ui:Label text="Time Limit (seconds)" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-time-limit-field" value="600" class="text-field"/>
+                        <ui:Label text="Max Attempts" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-max-attempts-field" value="3" class="text-field"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="two-column-item two-column-item-right">
                         <ui:Label text="Passing Score (%)" class="field-label field-label-spaced"/>
                         <ui:TextField name="quiz-passing-score-field" value="70" class="text-field"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
+                <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
+                <ui:TextField name="quiz-time-limit-custom-field" value="10" class="text-field field-label-spaced hidden" tooltip="Custom time limit, in minutes"/>
+                <ui:VisualElement name="quiz-deadline-toggle-row" class="toggle-row field-label-spaced">
+                    <ui:Toggle name="quiz-deadline-enabled-toggle" label="Set a Deadline" class="deadline-toggle"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quiz-deadline-fields-row" class="two-column-row hidden">
+                    <ui:VisualElement class="two-column-item two-column-item-left">
+                        <ui:Label text="Deadline Date" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-deadline-date-field" class="text-field" tooltip="YYYY-MM-DD"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="two-column-item two-column-item-right">
+                        <ui:Label text="Deadline Time" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-deadline-time-field" class="text-field" tooltip="24-hour, HH:MM"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="quiz-deadline-error" text="" class="field-error hidden"/>
                 <ui:Label name="create-quiz-status-label" text="" class="status-label hidden"/>
                 <ui:Button name="create-quiz-submit-button" class="modal-submit-button">
-                    <ui:Label text="Create Quiz" class="modal-submit-label"/>
+                    <ui:Label name="create-quiz-submit-label" text="Create Quiz" class="modal-submit-label"/>
                 </ui:Button>
                 <ui:Button name="create-quiz-cancel-button" text="Cancel" class="modal-cancel-button"/>
             </ui:VisualElement>

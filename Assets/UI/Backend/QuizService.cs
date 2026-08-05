@@ -57,9 +57,32 @@ namespace Anatomia3D.Backend
             public string ClassroomId; // null/empty = available to everyone
             public string CreatedBy;
             public int PointsPossible;
-            public int TimeLimitSeconds;
             public int PassingScorePercent;
+
+            /// <summary>0 = unlimited attempts.</summary>
+            public int MaxAttempts;
+            public int TimeLimitMinutes;
+            /// <summary>False = timer is disabled entirely ("No Time Limit").</summary>
+            public bool HasTimeLimit;
+            /// <summary>Last moment a student may take the quiz. Only meaningful when IsDeadlineEnabled.</summary>
+            public DateTime? DeadlineUtc;
+            public bool IsDeadlineEnabled;
+
             public List<QuestionRecord> Questions = new List<QuestionRecord>();
+        }
+
+        /// <summary>Result of a pre-flight check run before letting a student start a quiz.</summary>
+        [Serializable]
+        public class AttemptEligibility
+        {
+            public bool CanStart;
+            /// <summary>User-facing message to show when CanStart is false.</summary>
+            public string BlockReason;
+            public int AttemptsUsed;
+            /// <summary>0 = unlimited.</summary>
+            public int MaxAttempts;
+            /// <summary>-1 = unlimited.</summary>
+            public int RemainingAttempts;
         }
 
         [Serializable]
@@ -112,7 +135,11 @@ namespace Anatomia3D.Backend
         public void CreateQuiz(
             string title,
             string category,
-            int timeLimitSeconds,
+            int maxAttempts,
+            int timeLimitMinutes,
+            bool hasTimeLimit,
+            bool isDeadlineEnabled,
+            DateTime? deadlineUtc,
             int passingScorePercent,
             string classroomId,
             Action<bool, string, QuizRecord> onComplete)
@@ -130,7 +157,11 @@ namespace Anatomia3D.Backend
                 { "classroomId", classroomId },
                 { "createdBy", admin.Uid },
                 { "pointsPossible", 0 },
-                { "timeLimitSeconds", timeLimitSeconds },
+                { "maxAttempts", maxAttempts },
+                { "timeLimitMinutes", timeLimitMinutes },
+                { "hasTimeLimit", hasTimeLimit },
+                { "isDeadlineEnabled", isDeadlineEnabled },
+                { "deadline", isDeadlineEnabled && deadlineUtc.HasValue ? (object)Timestamp.FromDateTime(DateTime.SpecifyKind(deadlineUtc.Value, DateTimeKind.Utc)) : null },
                 { "passingScorePercent", passingScorePercent },
                 { "questions", new List<object>() },
                 { "createdAt", Timestamp.GetCurrentTimestamp() }
@@ -153,9 +184,63 @@ namespace Anatomia3D.Backend
                     ClassroomId = classroomId,
                     CreatedBy = admin.Uid,
                     PointsPossible = 0,
-                    TimeLimitSeconds = timeLimitSeconds,
+                    MaxAttempts = maxAttempts,
+                    TimeLimitMinutes = timeLimitMinutes,
+                    HasTimeLimit = hasTimeLimit,
+                    IsDeadlineEnabled = isDeadlineEnabled,
+                    DeadlineUtc = isDeadlineEnabled ? deadlineUtc : null,
                     PassingScorePercent = passingScorePercent,
                     Questions = new List<QuestionRecord>()
+                });
+            });
+        }
+
+        /// <summary>Call from AdminQuizManagementController's "Edit Settings" modal (same fields as
+        /// CreateQuiz, minus classroomId which doesn't change after creation). Only touches the
+        /// settings fields - questions/pointsPossible are left alone.</summary>
+        public void UpdateQuizSettings(
+            string quizId,
+            string title,
+            string category,
+            int maxAttempts,
+            int timeLimitMinutes,
+            bool hasTimeLimit,
+            bool isDeadlineEnabled,
+            DateTime? deadlineUtc,
+            int passingScorePercent,
+            Action<bool, string, QuizRecord> onComplete)
+        {
+            var quizRef = Db.Collection("quizzes").Document(quizId);
+
+            var update = new Dictionary<string, object>
+            {
+                { "title", title },
+                { "category", category },
+                { "maxAttempts", maxAttempts },
+                { "timeLimitMinutes", timeLimitMinutes },
+                { "hasTimeLimit", hasTimeLimit },
+                { "isDeadlineEnabled", isDeadlineEnabled },
+                { "deadline", isDeadlineEnabled && deadlineUtc.HasValue ? (object)Timestamp.FromDateTime(DateTime.SpecifyKind(deadlineUtc.Value, DateTimeKind.Utc)) : null },
+                { "passingScorePercent", passingScorePercent }
+            };
+
+            quizRef.UpdateAsync(update).ContinueWithOnMainThread(updateTask =>
+            {
+                if (updateTask.IsCanceled || updateTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Could not update quiz settings. Please try again.", null);
+                    return;
+                }
+
+                quizRef.GetSnapshotAsync().ContinueWithOnMainThread(getTask =>
+                {
+                    if (getTask.IsCanceled || getTask.IsFaulted || !getTask.Result.Exists)
+                    {
+                        onComplete?.Invoke(false, "Saved, but could not reload the quiz.", null);
+                        return;
+                    }
+
+                    onComplete?.Invoke(true, null, ToQuizRecord(getTask.Result));
                 });
             });
         }
@@ -330,6 +415,43 @@ namespace Anatomia3D.Backend
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
 
+            // Re-check the deadline/attempts right before writing the result, in case either
+            // changed while the student was on the gameplay screen (CheckAttemptEligibility()
+            // is also run up-front by StudentQuizGameplayController.LoadQuiz(), which is what
+            // normally stops a student from getting this far in the first place).
+            CheckAttemptEligibility(quizId, (checkOk, checkError, eligibility) =>
+            {
+                if (checkOk && eligibility != null && !eligibility.CanStart)
+                {
+                    onComplete?.Invoke(false, eligibility.BlockReason, null);
+                    return;
+                }
+
+                int attemptNumber = (eligibility?.AttemptsUsed ?? 0) + 1;
+                int maxAttempts = eligibility?.MaxAttempts ?? 0;
+
+                SubmitQuizAttemptInternal(quizId, quizName, category, classroomId, correctCount, incorrectCount,
+                    pointsEarned, pointsPossible, bonusXp, attemptNumber, maxAttempts, onComplete);
+            });
+        }
+
+        private void SubmitQuizAttemptInternal(
+            string quizId,
+            string quizName,
+            string category,
+            string classroomId,
+            int correctCount,
+            int incorrectCount,
+            int pointsEarned,
+            int pointsPossible,
+            int bonusXp,
+            int attemptNumber,
+            int maxAttempts,
+            Action<bool, string, AttemptResult> onComplete)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+
             var attemptRef = Db.Collection("quizAttempts").Document();
             var studentRef = Db.Collection("students").Document(student.Uid);
             // classroomId identifies which teacher's gamificationSettings/{teacherId}
@@ -387,6 +509,10 @@ namespace Anatomia3D.Backend
                     { "pointsPossible", pointsPossible },
                     { "bonusXp", bonusXp },
                     { "percent", percent },
+                    { "status", "Completed" },
+                    { "score", percent },
+                    { "attemptCount", attemptNumber },
+                    { "remainingAttempts", maxAttempts > 0 ? Mathf.Max(0, maxAttempts - attemptNumber) : -1 },
                     { "completedAt", Timestamp.GetCurrentTimestamp() }
                 });
 
@@ -454,6 +580,131 @@ namespace Anatomia3D.Backend
         /// Fire-and-forget outside the main transaction - if this write fails the badge
         /// is still recorded on students/{uid}.badgesEarned, just without source detail.
         /// </summary>
+        // ==================================================================
+        // Student restrictions: deadline + max attempts
+        // ==================================================================
+
+        /// <summary>
+        /// Call before letting a student start a quiz - StudentQuizGameplayController.LoadQuiz()
+        /// is the canonical caller, since every entry point into gameplay routes through it.
+        /// Checks the quiz's deadline and the student's attempt count against maxAttempts.
+        /// If the deadline has already passed and the student never attempted the quiz, this
+        /// also fire-and-forgets a "Missed" quizAttempts doc (score 0) so it shows up in the
+        /// student's history and the teacher's records without requiring a scheduled job.
+        /// </summary>
+        public void CheckAttemptEligibility(string quizId, Action<bool, string, AttemptEligibility> onComplete)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+
+            Db.Collection("quizzes").Document(quizId).GetSnapshotAsync().ContinueWithOnMainThread(quizTask =>
+            {
+                if (quizTask.IsCanceled || quizTask.IsFaulted || !quizTask.Result.Exists)
+                {
+                    onComplete?.Invoke(false, "Could not load this quiz.", null);
+                    return;
+                }
+
+                var quiz = ToQuizRecord(quizTask.Result);
+
+                Db.Collection("quizAttempts")
+                    .WhereEqualTo("studentId", student.Uid)
+                    .WhereEqualTo("quizId", quizId)
+                    .GetSnapshotAsync()
+                    .ContinueWithOnMainThread(attemptsTask =>
+                    {
+                        if (attemptsTask.IsCanceled || attemptsTask.IsFaulted)
+                        {
+                            onComplete?.Invoke(false, "Could not check your quiz attempts.", null);
+                            return;
+                        }
+
+                        var docs = attemptsTask.Result.Documents;
+                        bool IsMissed(DocumentSnapshot d) => d.ContainsField("status") && d.GetValue<string>("status") == "Missed";
+
+                        int attemptsUsed = docs.Count(d => !IsMissed(d));
+                        bool alreadyRecordedMissed = docs.Any(IsMissed);
+
+                        bool deadlinePassed = quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
+                            && DateTime.UtcNow > quiz.DeadlineUtc.Value;
+
+                        int remaining = quiz.MaxAttempts > 0 ? Mathf.Max(0, quiz.MaxAttempts - attemptsUsed) : -1;
+
+                        if (deadlinePassed)
+                        {
+                            if (attemptsUsed == 0 && !alreadyRecordedMissed)
+                            {
+                                RecordMissedAttempt(quiz, student.Uid);
+                            }
+
+                            onComplete?.Invoke(true, null, new AttemptEligibility
+                            {
+                                CanStart = false,
+                                BlockReason = "The deadline for this quiz has passed. You can no longer take this quiz.",
+                                AttemptsUsed = attemptsUsed,
+                                MaxAttempts = quiz.MaxAttempts,
+                                RemainingAttempts = remaining
+                            });
+                            return;
+                        }
+
+                        if (quiz.MaxAttempts > 0 && attemptsUsed >= quiz.MaxAttempts)
+                        {
+                            onComplete?.Invoke(true, null, new AttemptEligibility
+                            {
+                                CanStart = false,
+                                BlockReason = "You have used all available attempts for this quiz.",
+                                AttemptsUsed = attemptsUsed,
+                                MaxAttempts = quiz.MaxAttempts,
+                                RemainingAttempts = 0
+                            });
+                            return;
+                        }
+
+                        onComplete?.Invoke(true, null, new AttemptEligibility
+                        {
+                            CanStart = true,
+                            BlockReason = null,
+                            AttemptsUsed = attemptsUsed,
+                            MaxAttempts = quiz.MaxAttempts,
+                            RemainingAttempts = remaining
+                        });
+                    });
+            });
+        }
+
+        /// <summary>Fire-and-forget: writes a `status: "Missed", score: 0` quizAttempts doc for a
+        /// student who never attempted the quiz before its deadline passed.</summary>
+        private void RecordMissedAttempt(QuizRecord quiz, string studentUid)
+        {
+            var attemptRef = Db.Collection("quizAttempts").Document();
+            attemptRef.SetAsync(new Dictionary<string, object>
+            {
+                { "studentId", studentUid },
+                { "quizId", quiz.QuizId },
+                { "quizName", quiz.Title },
+                { "category", quiz.Category },
+                { "classroomId", quiz.ClassroomId },
+                { "correctCount", 0 },
+                { "incorrectCount", 0 },
+                { "pointsEarned", 0 },
+                { "pointsPossible", quiz.PointsPossible },
+                { "bonusXp", 0 },
+                { "percent", 0f },
+                { "status", "Missed" },
+                { "score", 0 },
+                { "attemptCount", 0 },
+                { "remainingAttempts", quiz.MaxAttempts > 0 ? quiz.MaxAttempts : -1 },
+                { "completedAt", Timestamp.GetCurrentTimestamp() }
+            }).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogWarning("[QuizService] Could not record missed quiz attempt.");
+                }
+            });
+        }
+
         private void RecordBadgeAwards(string studentUid, List<string> badgeIds, string classroomId, string quizId, string quizName)
         {
             var badgeAwardsCol = Db.Collection("students").Document(studentUid).Collection("badgeAwards");
@@ -709,8 +960,18 @@ namespace Anatomia3D.Backend
                 ClassroomId = doc.ContainsField("classroomId") ? doc.GetValue<string>("classroomId") : null,
                 CreatedBy = doc.ContainsField("createdBy") ? doc.GetValue<string>("createdBy") : "",
                 PointsPossible = doc.ContainsField("pointsPossible") ? doc.GetValue<int>("pointsPossible") : 0,
-                TimeLimitSeconds = doc.ContainsField("timeLimitSeconds") ? doc.GetValue<int>("timeLimitSeconds") : 600,
-                PassingScorePercent = doc.ContainsField("passingScorePercent") ? doc.GetValue<int>("passingScorePercent") : 70
+                PassingScorePercent = doc.ContainsField("passingScorePercent") ? doc.GetValue<int>("passingScorePercent") : 70,
+                MaxAttempts = doc.ContainsField("maxAttempts") ? doc.GetValue<int>("maxAttempts") : 0,
+                // Falls back to the legacy timeLimitSeconds field (pre-dates the minutes-based
+                // config) for quizzes created before this feature existed.
+                TimeLimitMinutes = doc.ContainsField("timeLimitMinutes")
+                    ? doc.GetValue<int>("timeLimitMinutes")
+                    : (doc.ContainsField("timeLimitSeconds") ? Mathf.Max(1, doc.GetValue<int>("timeLimitSeconds") / 60) : 10),
+                HasTimeLimit = doc.ContainsField("hasTimeLimit") ? doc.GetValue<bool>("hasTimeLimit") : true,
+                IsDeadlineEnabled = doc.ContainsField("isDeadlineEnabled") ? doc.GetValue<bool>("isDeadlineEnabled") : false,
+                DeadlineUtc = doc.ContainsField("deadline") && doc.GetValue<object>("deadline") != null
+                    ? doc.GetValue<Timestamp>("deadline").ToDateTime()
+                    : (DateTime?)null
             };
 
             if (doc.ContainsField("questions"))

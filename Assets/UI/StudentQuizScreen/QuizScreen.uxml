@@ -33,5 +33,12 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Button name="action-button" text="Next Question" class="action-button"/>
+        <ui:VisualElement name="blocked-overlay" class="blocked-overlay hidden">
+            <ui:VisualElement name="blocked-card" class="blocked-card">
+                <ui:Label text="⛔" class="blocked-icon"/>
+                <ui:Label name="blocked-message-label" text="" class="blocked-message"/>
+                <ui:Button name="blocked-back-button" text="Back" class="blocked-back-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
