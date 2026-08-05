@@ -14,7 +14,7 @@ namespace Anatomia3D.UI
     ///
     /// The student-facing counterpart to AdminClassroomDetail, for ONE classroom
     /// (a student may belong to several - see StudentClassroomHub for the list
-    /// they pick from). Five tabs:
+    /// they pick from). Six tabs:
     ///  - Overview: classroom info + teacher-posted announcements (see
     ///    AdminClassroomDetailController's Announcements tab, which is where a
     ///    teacher creates the entries pushed into SetAnnouncements() here)
@@ -24,6 +24,9 @@ namespace Anatomia3D.UI
     ///  - Leaderboard: ranked by score, gated by the teacher's "Show to
     ///    Students" toggle (AdminClassroomDetailController.LeaderboardVisibleToStudents)
     ///  - Scores: this student's own completed-quiz history for this classroom
+    ///  - Badges: this classroom's teacher's configured badges (AdminGamificationService,
+    ///    per-teacher), each flagged earned/locked against this student's global
+    ///    points/earned-badges (see LoadBadges())
     ///
     /// UIManager.ShowStudentClassroomDetail(classroomId, classroomName, classroomCode)
     /// calls SetClassroomIdentity() right after showing this screen; follow that
@@ -64,11 +67,13 @@ namespace Anatomia3D.UI
         private Button _quizzesTabButton;
         private Button _leaderboardTabButton;
         private Button _scoresTabButton;
+        private Button _badgesTabButton;
         private VisualElement _overviewPanel;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
         private VisualElement _leaderboardPanel;
         private VisualElement _scoresPanel;
+        private VisualElement _badgesPanel;
 
         // Overview tab
         private Label _teacherValueLabel;
@@ -95,6 +100,10 @@ namespace Anatomia3D.UI
         // Scores tab
         private VisualElement _scoresEmptyState;
         private VisualElement _scoresList;
+
+        // Badges tab
+        private VisualElement _badgesEmptyState;
+        private VisualElement _badgesList;
 
         /// <summary>A single row in the Overview tab's Announcements section.</summary>
         public struct AnnouncementInfo
@@ -218,6 +227,27 @@ namespace Anatomia3D.UI
             }
         }
 
+        /// <summary>A single card in the Badges tab - this classroom's teacher's
+        /// configured badges (AdminGamificationService.BadgeEntry), each flagged
+        /// against this student's global earned-badges/points.</summary>
+        public struct BadgeInfo
+        {
+            public string BadgeId;
+            public string Name;
+            public string IconEmoji;
+            public int PointsRequired;
+            public bool Earned;
+
+            public BadgeInfo(string badgeId, string name, string iconEmoji, int pointsRequired, bool earned)
+            {
+                BadgeId = badgeId;
+                Name = name;
+                IconEmoji = iconEmoji;
+                PointsRequired = pointsRequired;
+                Earned = earned;
+            }
+        }
+
         // Cached state so it survives the UIManager's clear-and-rebuild screen transitions.
         private string _classroomId = "";
         private string _classroomName = "";
@@ -228,6 +258,8 @@ namespace Anatomia3D.UI
         private bool _leaderboardVisible;
         private readonly List<PerformerInfo> _lastLeaderboard = new();
         private readonly List<ScoreHistoryInfo> _lastScores = new();
+        private readonly List<BadgeInfo> _lastBadges = new();
+        private int _lastBadgePoints;
 
         private void OnEnable()
         {
@@ -275,6 +307,7 @@ namespace Anatomia3D.UI
             SetQuizzes(_lastQuizzes);
             SetLeaderboard(_leaderboardVisible, _lastLeaderboard);
             SetScores(_lastScores);
+            SetBadges(_lastBadgePoints, _lastBadges);
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
             // with a classroom already loaded - refresh from Firestore.
@@ -304,6 +337,7 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _leaderboardTabButton?.UnregisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.UnregisterCallback<ClickEvent>(OnScoresTabClicked);
+            _badgesTabButton?.UnregisterCallback<ClickEvent>(OnBadgesTabClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -334,11 +368,13 @@ namespace Anatomia3D.UI
             _quizzesTabButton = _screenRoot.Q<Button>("quizzes-tab-button");
             _leaderboardTabButton = _screenRoot.Q<Button>("leaderboard-tab-button");
             _scoresTabButton = _screenRoot.Q<Button>("scores-tab-button");
+            _badgesTabButton = _screenRoot.Q<Button>("badges-tab-button");
             _overviewPanel = _screenRoot.Q<VisualElement>("overview-panel");
             _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
             _quizzesPanel = _screenRoot.Q<VisualElement>("quizzes-panel");
             _leaderboardPanel = _screenRoot.Q<VisualElement>("leaderboard-panel");
             _scoresPanel = _screenRoot.Q<VisualElement>("scores-panel");
+            _badgesPanel = _screenRoot.Q<VisualElement>("badges-panel");
 
             _teacherValueLabel = _screenRoot.Q<Label>("teacher-value-label");
             _descriptionValueLabel = _screenRoot.Q<Label>("description-value-label");
@@ -361,7 +397,10 @@ namespace Anatomia3D.UI
             _scoresEmptyState = _screenRoot.Q<VisualElement>("scores-empty-state");
             _scoresList = _screenRoot.Q<VisualElement>("scores-list");
 
-            Debug.Log($"[StudentClassroomDetailController] Found tabs: {_overviewTabButton != null}/{_studentsTabButton != null}/{_quizzesTabButton != null}/{_leaderboardTabButton != null}/{_scoresTabButton != null}");
+            _badgesEmptyState = _screenRoot.Q<VisualElement>("badges-empty-state");
+            _badgesList = _screenRoot.Q<VisualElement>("badges-list");
+
+            Debug.Log($"[StudentClassroomDetailController] Found tabs: {_overviewTabButton != null}/{_studentsTabButton != null}/{_quizzesTabButton != null}/{_leaderboardTabButton != null}/{_scoresTabButton != null}/{_badgesTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -374,6 +413,7 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _leaderboardTabButton?.RegisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.RegisterCallback<ClickEvent>(OnScoresTabClicked);
+            _badgesTabButton?.RegisterCallback<ClickEvent>(OnBadgesTabClicked);
 
             if (_screenRoot != null)
             {
@@ -408,6 +448,7 @@ namespace Anatomia3D.UI
             SetQuizzes(new List<QuizCardInfo>());
             SetLeaderboard(false, new List<PerformerInfo>());
             SetScores(new List<ScoreHistoryInfo>());
+            SetBadges(0, new List<BadgeInfo>());
 
             LoadClassroomContent();
         }
@@ -506,6 +547,45 @@ namespace Anatomia3D.UI
                         s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
                         s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
                 });
+
+                LoadBadges(detail.TeacherId, IsStale);
+            });
+        }
+
+        /// <summary>
+        /// Loads this classroom's teacher's badge config (AdminGamificationService,
+        /// per-teacher) and flags each badge as earned/locked against this student's
+        /// global points/earned-badges (PlayerSessionManager.CurrentStudent) - badges
+        /// are defined per teacher but always evaluated against the student's total
+        /// points across every classroom, same as ComputeNewlyEarnedBadges/
+        /// ComputeLevelProgress elsewhere in the app.
+        /// </summary>
+        private void LoadBadges(string teacherId, Func<bool> isStale)
+        {
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+            if (student == null || AdminGamificationService.Instance == null)
+            {
+                if (!isStale()) SetBadges(0, new List<BadgeInfo>());
+                return;
+            }
+
+            AdminGamificationService.Instance.FetchSettingsForTeacher(teacherId, settings =>
+            {
+                if (isStale()) return;
+
+                var earnedIds = new HashSet<string>(student.BadgesEarned ?? new List<string>());
+
+                var badges = (settings?.Badges ?? new List<AdminGamificationService.BadgeEntry>())
+                    .OrderBy(b => b.PointsRequired)
+                    .Select(b => new BadgeInfo(
+                        b.BadgeId,
+                        b.Name,
+                        b.IconEmoji,
+                        b.PointsRequired,
+                        earnedIds.Contains(b.BadgeId) || student.TotalPoints >= b.PointsRequired))
+                    .ToList();
+
+                SetBadges(student.TotalPoints, badges);
             });
         }
 
@@ -708,6 +788,28 @@ namespace Anatomia3D.UI
             foreach (var score in _lastScores)
             {
                 _scoresList.Add(BuildScoreCard(score));
+            }
+        }
+
+        /// <summary>Push this classroom's teacher-configured badges into the Badges tab
+        /// (empty state if the teacher hasn't set any up, or the list is null).</summary>
+        public void SetBadges(int currentPoints, List<BadgeInfo> badges)
+        {
+            _lastBadgePoints = currentPoints;
+            _lastBadges.Clear();
+            if (badges != null) _lastBadges.AddRange(badges);
+
+            bool hasBadges = _lastBadges.Count > 0;
+            _badgesEmptyState?.EnableInClassList("hidden", hasBadges);
+            _badgesList?.EnableInClassList("hidden", !hasBadges);
+
+            if (_badgesList == null) return;
+            _badgesList.Clear();
+            if (!hasBadges) return;
+
+            foreach (var badge in _lastBadges)
+            {
+                _badgesList.Add(BuildBadgeCard(badge, currentPoints));
             }
         }
 
@@ -997,6 +1099,91 @@ namespace Anatomia3D.UI
             return card;
         }
 
+        private VisualElement BuildBadgeCard(BadgeInfo badge, int currentPoints)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("badge-card");
+            if (!badge.Earned) card.AddToClassList("badge-card-locked");
+
+            var iconBox = new VisualElement();
+            iconBox.AddToClassList("badge-icon-box");
+            iconBox.AddToClassList(badge.Earned ? "badge-icon-gold" : "badge-icon-locked");
+
+            if (badge.Earned)
+            {
+                var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
+                emojiLabel.AddToClassList("badge-icon-emoji");
+                iconBox.Add(emojiLabel);
+            }
+            else
+            {
+                var lockIcon = new VisualElement();
+                lockIcon.AddToClassList("badge-lock-icon");
+                iconBox.Add(lockIcon);
+            }
+
+            var info = new VisualElement();
+            info.AddToClassList("badge-info");
+
+            var titleLabel = new Label(badge.Name);
+            titleLabel.AddToClassList("badge-title");
+            if (!badge.Earned) titleLabel.AddToClassList("badge-title-locked");
+            info.Add(titleLabel);
+
+            var statusLabel = new Label(badge.Earned ? "Unlocked!" : $"Earn {badge.PointsRequired:N0} points to unlock");
+            statusLabel.AddToClassList("badge-status");
+            statusLabel.AddToClassList(badge.Earned ? "badge-status-unlocked" : "badge-status-locked");
+            info.Add(statusLabel);
+
+            var progressRow = new VisualElement();
+            progressRow.AddToClassList("badge-progress-row");
+
+            var track = new VisualElement();
+            track.AddToClassList("progress-track");
+
+            float pct = badge.Earned
+                ? 1f
+                : (badge.PointsRequired > 0 ? Mathf.Clamp01((float)currentPoints / badge.PointsRequired) : 0f);
+
+            var fill = new VisualElement();
+            fill.AddToClassList("progress-fill");
+            fill.AddToClassList(badge.Earned ? "progress-fill-complete" : "progress-fill-locked");
+            fill.style.width = new Length(pct * 100f, LengthUnit.Percent);
+            track.Add(fill);
+            progressRow.Add(track);
+
+            if (badge.Earned)
+            {
+                var completeLabel = new Label("\u2713 Completed");
+                completeLabel.AddToClassList("progress-label");
+                completeLabel.AddToClassList("progress-label-complete");
+                progressRow.Add(completeLabel);
+            }
+
+            info.Add(progressRow);
+
+            if (!badge.Earned)
+            {
+                var footerRow = new VisualElement();
+                footerRow.AddToClassList("badge-progress-footer-row");
+
+                var countLabel = new Label($"{Mathf.Min(currentPoints, badge.PointsRequired):N0} / {badge.PointsRequired:N0}");
+                countLabel.AddToClassList("progress-footer-label");
+
+                var percentLabel = new Label($"{Mathf.RoundToInt(pct * 100f)}%");
+                percentLabel.AddToClassList("progress-footer-label");
+                percentLabel.AddToClassList("progress-footer-label-right");
+
+                footerRow.Add(countLabel);
+                footerRow.Add(percentLabel);
+                info.Add(footerRow);
+            }
+
+            card.Add(iconBox);
+            card.Add(info);
+            return card;
+        }
+
         private static string GetInitials(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName)) return "?";
@@ -1046,12 +1233,14 @@ namespace Anatomia3D.UI
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();
         private void OnLeaderboardTabClicked(ClickEvent evt) => ShowLeaderboardTab();
         private void OnScoresTabClicked(ClickEvent evt) => ShowScoresTab();
+        private void OnBadgesTabClicked(ClickEvent evt) => ShowBadgesTab();
 
         private void ShowOverviewTab() => SetActiveTab(_overviewTabButton, _overviewPanel, "Overview");
         private void ShowStudentsTab() => SetActiveTab(_studentsTabButton, _studentsPanel, "Students");
         private void ShowQuizzesTab() => SetActiveTab(_quizzesTabButton, _quizzesPanel, "Available Quizzes");
         private void ShowLeaderboardTab() => SetActiveTab(_leaderboardTabButton, _leaderboardPanel, "Leaderboard");
         private void ShowScoresTab() => SetActiveTab(_scoresTabButton, _scoresPanel, "Scores");
+        private void ShowBadgesTab() => SetActiveTab(_badgesTabButton, _badgesPanel, "Badges");
 
         private void SetActiveTab(Button activeButton, VisualElement activePanel, string tabName)
         {
@@ -1062,6 +1251,7 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.RemoveFromClassList("tab-button-active");
             _leaderboardTabButton?.RemoveFromClassList("tab-button-active");
             _scoresTabButton?.RemoveFromClassList("tab-button-active");
+            _badgesTabButton?.RemoveFromClassList("tab-button-active");
             activeButton?.AddToClassList("tab-button-active");
 
             _overviewPanel?.AddToClassList("hidden");
@@ -1069,6 +1259,7 @@ namespace Anatomia3D.UI
             _quizzesPanel?.AddToClassList("hidden");
             _leaderboardPanel?.AddToClassList("hidden");
             _scoresPanel?.AddToClassList("hidden");
+            _badgesPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
         }
 

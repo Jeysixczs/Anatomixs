@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Anatomia3D.UI;
 using Firebase;
 using Firebase.Auth;
@@ -30,6 +31,13 @@ namespace Anatomia3D.Backend
             public int Level;
             public int TotalPoints;
             public int QuizzesCompleted;
+            /// <summary>Badge ids this student has earned, mirrored from the
+            /// `badgesEarned` array on students/{uid}. Matched against
+            /// AdminGamificationService.BadgeEntry.BadgeId to know which of a
+            /// teacher's configured badges to render as unlocked (see
+            /// StudentAchievementsController / StudentClassroomDetailController's
+            /// Badges tab).</summary>
+            public List<string> BadgesEarned = new List<string>();
             // Email/EmailVerified are NOT stored in Firestore - they're always
             // mirrored straight from Firebase Auth (Auth.CurrentUser) whenever
             // this profile is built, so there's exactly one source of truth
@@ -203,7 +211,8 @@ namespace Anatomia3D.Backend
                 EmailVerified = Auth.CurrentUser?.IsEmailVerified ?? false,
                 Level = 1,
                 TotalPoints = 0,
-                QuizzesCompleted = 0
+                QuizzesCompleted = 0,
+                BadgesEarned = new List<string>()
             };
 
             var batch = Db.StartBatch();
@@ -292,7 +301,8 @@ namespace Anatomia3D.Backend
                     EmailVerified = createTask.Result.User.IsEmailVerified,
                     Level = 1,
                     TotalPoints = 0,
-                    QuizzesCompleted = 0
+                    QuizzesCompleted = 0,
+                    BadgesEarned = new List<string>()
                 };
 
                 var batch = Db.StartBatch();
@@ -662,7 +672,10 @@ namespace Anatomia3D.Backend
                     EmailVerified = authUser?.IsEmailVerified ?? false,
                     Level = snap.ContainsField("level") ? snap.GetValue<int>("level") : 1,
                     TotalPoints = snap.ContainsField("totalPoints") ? snap.GetValue<int>("totalPoints") : 0,
-                    QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0
+                    QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0,
+                    BadgesEarned = snap.ContainsField("badgesEarned")
+                        ? new List<string>(snap.GetValue<List<string>>("badgesEarned"))
+                        : new List<string>()
                 };
 
                 onComplete?.Invoke(true, profile, null);

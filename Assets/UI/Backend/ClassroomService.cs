@@ -102,6 +102,13 @@ namespace Anatomia3D.Backend
             public string Name;
             public string Code;
             public string TeacherName;
+
+            /// <summary>Owning teacher's uid, e.g. to look up that teacher's
+            /// AdminGamificationService badge/points config (badges are configured
+            /// per-teacher and apply across all of that teacher's classrooms) - see
+            /// StudentAchievementsController.LoadData().</summary>
+            public string TeacherId;
+
             public int StudentCount;
 
             /// <summary>When true, StudentClassroomHubController should render this classroom
@@ -139,6 +146,7 @@ namespace Anatomia3D.Backend
                                 Name = doc.GetValue<string>("name"),
                                 Code = doc.GetValue<string>("code"),
                                 TeacherName = doc.GetValue<string>("teacherName"),
+                                TeacherId = doc.ContainsField("teacherId") ? doc.GetValue<string>("teacherId") : null,
                                 StudentCount = doc.ContainsField("studentCount") ? doc.GetValue<int>("studentCount") : 0,
                                 IsArchived = doc.ContainsField("isArchived") && doc.GetValue<bool>("isArchived")
                             });

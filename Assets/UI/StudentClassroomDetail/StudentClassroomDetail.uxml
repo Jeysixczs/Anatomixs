@@ -45,6 +45,7 @@
                     <ui:VisualElement name="tab-switcher-row-2" class="tab-switcher-row tab-switcher-row-2">
                         <ui:Button name="leaderboard-tab-button" text="Leaderboard" class="tab-button"/>
                         <ui:Button name="scores-tab-button" text="Scores" class="tab-button"/>
+                        <ui:Button name="badges-tab-button" text="Badges" class="tab-button"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="overview-panel" class="tab-panel">
@@ -119,6 +120,16 @@
                         <ui:Label text="Quizzes you complete in this classroom will show up here." class="empty-subtitle"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="scores-list" class="scores-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="badges-panel" class="tab-panel hidden">
+                    <ui:Label text="Badges" class="section-title"/>
+                    <ui:Label text="Badges configured by your teacher for this classroom" class="section-subtitle"/>
+                    <ui:VisualElement name="badges-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-history-gray"/>
+                        <ui:Label text="No badges configured yet" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t set up any badges for this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="badges-list" class="badge-list hidden"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
