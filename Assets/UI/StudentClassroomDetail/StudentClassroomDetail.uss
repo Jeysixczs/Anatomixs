@@ -1111,6 +1111,176 @@
     color: rgb(150, 155, 168);
 }
 
+/* ---------- Badges ----------
+   Mirrors the badge-card markup/classes used on StudentAchievements
+   (same class names) - StudentClassroomDetailController.BuildBadgeCard()
+   and StudentAchievementsController.BuildBadgeCard() both build against
+   this same set, so a badge looks the same whether it's shown here (one
+   teacher's config, per classroom) or on the student's overall
+   Achievements screen. */
+
+.badge-list
+{
+    flex-direction: column;
+}
+
+.badge-card
+{
+    flex-direction: row;
+    align-items: flex-start;
+    background-color: white;
+    border-radius: 28px;
+    padding: 40px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.badge-card-locked
+{
+    background-color: rgb(248, 249, 251);
+}
+
+.badge-icon-box
+{
+    width: 110px;
+    height: 110px;
+    border-radius: 28px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 28px;
+    flex-shrink: 0;
+}
+
+.badge-icon-gold
+{
+    background-color: rgb(254, 240, 138);
+}
+
+.badge-icon-locked
+{
+    background-color: rgb(232, 234, 240);
+}
+
+.badge-icon-emoji
+{
+    font-size: 54px;
+    -unity-text-align: middle-center;
+}
+
+.badge-lock-icon
+{
+    width: 42px;
+    height: 42px;
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(150, 155, 168);
+}
+
+.badge-info
+{
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.badge-title
+{
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.badge-title-locked
+{
+    color: rgb(150, 155, 168);
+}
+
+.badge-status
+{
+    font-size: 30px;
+    margin-top: 6px;
+    margin-bottom: 20px;
+    white-space: normal;
+}
+
+.badge-status-unlocked
+{
+    -unity-font-style: bold;
+    color: rgb(21, 128, 61);
+}
+
+.badge-status-locked
+{
+    color: rgb(150, 155, 168);
+}
+
+.badge-progress-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.progress-track
+{
+    flex-grow: 1;
+    height: 16px;
+    background-color: rgb(232, 234, 240);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-right: 16px;
+}
+
+.progress-fill
+{
+    height: 100%;
+    border-radius: 8px;
+}
+
+.progress-fill-complete
+{
+    background-color: rgb(34, 197, 94);
+}
+
+.progress-fill-locked
+{
+    background-color: rgb(234, 179, 8);
+}
+
+.progress-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    flex-shrink: 0;
+}
+
+.progress-label-complete
+{
+    color: rgb(21, 128, 61);
+}
+
+.badge-progress-footer-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.progress-footer-label
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+}
+
+.progress-footer-label-right
+{
+    -unity-font-style: bold;
+    color: rgb(90, 95, 110);
+}
+
 /* =========================================================
    Compact Layout (toggled by C# based on panel width)
    ========================================================= */
@@ -1190,4 +1360,45 @@
 {
     font-size: 16px;
     padding: 5px 10px;
+}
+
+.compact .badge-card
+{
+    padding: 26px;
+    border-radius: 22px;
+}
+
+.compact .badge-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    margin-right: 18px;
+}
+
+.compact .badge-icon-emoji
+{
+    font-size: 36px;
+}
+
+.compact .badge-title
+{
+    font-size: 26px;
+}
+
+.compact .badge-status
+{
+    font-size: 19px;
+    margin-bottom: 12px;
+}
+
+.compact .progress-track
+{
+    height: 11px;
+}
+
+.compact .progress-label,
+.compact .progress-footer-label
+{
+    font-size: 17px;
 }
