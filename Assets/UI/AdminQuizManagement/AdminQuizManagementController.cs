@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Anatomia3D.Backend;
 using UnityEngine;
@@ -84,10 +86,32 @@ namespace Anatomia3D.UI
             public string QuizId = "";
             public string Title;
             public string Category;
-            public int TimeLimitSeconds;
             public int PassingScorePercent;
+
+            /// <summary>0 = unlimited attempts.</summary>
+            public int MaxAttempts;
+            public int TimeLimitMinutes;
+            public bool HasTimeLimit;
+            public bool IsDeadlineEnabled;
+            public DateTime? DeadlineUtc;
+
             public List<QuestionData> Questions = new List<QuestionData>();
             public bool IsExpanded;
+        }
+
+        // Preset minute choices shown in the Time Limit dropdown, plus "Custom" and "No Time Limit".
+        private const string TimeLimitCustomChoice = "Custom";
+        private const string TimeLimitNoLimitChoice = "No Time Limit";
+        private static readonly List<int> TimeLimitPresetMinutes = new List<int> { 1, 5, 10, 15, 20, 30, 45, 60 };
+        private static readonly List<string> TimeLimitDisplayChoices = BuildTimeLimitChoices();
+
+        private static List<string> BuildTimeLimitChoices()
+        {
+            var choices = new List<string>();
+            foreach (var m in TimeLimitPresetMinutes) choices.Add($"{m} minute{(m == 1 ? "" : "s")}");
+            choices.Add(TimeLimitCustomChoice);
+            choices.Add(TimeLimitNoLimitChoice);
+            return choices;
         }
 
         [Header("Gradient colors (matches AdminDashboard: green -> blue)")]
@@ -118,18 +142,31 @@ namespace Anatomia3D.UI
         private Button _createFirstQuizButton;
         private VisualElement _quizzesList;
 
-        // Create Quiz modal
+        // Create/Edit Quiz modal (same modal is reused for both - see _editingQuiz)
         private VisualElement _createQuizModalOverlay;
+        private Label _createQuizModalTitleLabel;
         private Button _createQuizCloseButton;
         private Button _createQuizCancelButton;
         private Button _createQuizSubmitButton;
+        private Label _createQuizSubmitLabel;
         private TextField _quizTitleField;
         private Label _quizTitleError;
         private TextField _quizCategoryField;
         private Label _quizCategoryError;
-        private TextField _quizTimeLimitField;
+        private TextField _quizMaxAttemptsField;
+        private DropdownField _quizTimeLimitDropdown;
+        private TextField _quizTimeLimitCustomField;
         private TextField _quizPassingScoreField;
+        private Toggle _quizDeadlineEnabledToggle;
+        private TextField _quizDeadlineDateField;
+        private TextField _quizDeadlineTimeField;
+        private VisualElement _quizDeadlineFieldsRow;
+        private Label _quizDeadlineError;
         private Label _createQuizStatusLabel;
+
+        /// <summary>Null while the modal is in "create" mode; set to the quiz being edited
+        /// while the modal is in "edit settings" mode.</summary>
+        private QuizData _editingQuiz;
 
         // Add Question modal
         private VisualElement _addQuestionModalOverlay;
@@ -220,6 +257,8 @@ namespace Anatomia3D.UI
             _createQuizCloseButton?.UnregisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizCancelButton?.UnregisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.UnregisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
+            _quizTimeLimitDropdown?.UnregisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _quizDeadlineEnabledToggle?.UnregisterCallback<ChangeEvent<bool>>(OnDeadlineEnabledChanged);
 
             _addQuestionCloseButton?.UnregisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionCancelButton?.UnregisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
@@ -252,16 +291,31 @@ namespace Anatomia3D.UI
             _quizzesList = _screenRoot.Q<VisualElement>("quizzes-list");
 
             _createQuizModalOverlay = _screenRoot.Q<VisualElement>("create-quiz-modal-overlay");
+            _createQuizModalTitleLabel = _screenRoot.Q<Label>("create-quiz-modal-title");
             _createQuizCloseButton = _screenRoot.Q<Button>("create-quiz-close-button");
             _createQuizCancelButton = _screenRoot.Q<Button>("create-quiz-cancel-button");
             _createQuizSubmitButton = _screenRoot.Q<Button>("create-quiz-submit-button");
+            _createQuizSubmitLabel = _screenRoot.Q<Label>("create-quiz-submit-label");
             _quizTitleField = _screenRoot.Q<TextField>("quiz-title-field");
             _quizTitleError = _screenRoot.Q<Label>("quiz-title-error");
             _quizCategoryField = _screenRoot.Q<TextField>("quiz-category-field");
             _quizCategoryError = _screenRoot.Q<Label>("quiz-category-error");
-            _quizTimeLimitField = _screenRoot.Q<TextField>("quiz-time-limit-field");
+            _quizMaxAttemptsField = _screenRoot.Q<TextField>("quiz-max-attempts-field");
+            _quizTimeLimitDropdown = _screenRoot.Q<DropdownField>("quiz-time-limit-dropdown");
+            _quizTimeLimitCustomField = _screenRoot.Q<TextField>("quiz-time-limit-custom-field");
             _quizPassingScoreField = _screenRoot.Q<TextField>("quiz-passing-score-field");
+            _quizDeadlineEnabledToggle = _screenRoot.Q<Toggle>("quiz-deadline-enabled-toggle");
+            _quizDeadlineFieldsRow = _screenRoot.Q<VisualElement>("quiz-deadline-fields-row");
+            _quizDeadlineDateField = _screenRoot.Q<TextField>("quiz-deadline-date-field");
+            _quizDeadlineTimeField = _screenRoot.Q<TextField>("quiz-deadline-time-field");
+            _quizDeadlineError = _screenRoot.Q<Label>("quiz-deadline-error");
             _createQuizStatusLabel = _screenRoot.Q<Label>("create-quiz-status-label");
+
+            if (_quizTimeLimitDropdown != null)
+            {
+                _quizTimeLimitDropdown.choices = TimeLimitDisplayChoices;
+                _quizTimeLimitDropdown.SetValueWithoutNotify("10 minutes");
+            }
 
             _addQuestionModalOverlay = _screenRoot.Q<VisualElement>("add-question-modal-overlay");
             _addQuestionCloseButton = _screenRoot.Q<Button>("add-question-close-button");
@@ -305,6 +359,8 @@ namespace Anatomia3D.UI
             _createQuizCloseButton?.RegisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizCancelButton?.RegisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.RegisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
+            _quizTimeLimitDropdown?.RegisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _quizDeadlineEnabledToggle?.RegisterCallback<ChangeEvent<bool>>(OnDeadlineEnabledChanged);
 
             _addQuestionCloseButton?.RegisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionCancelButton?.RegisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
@@ -401,11 +457,15 @@ namespace Anatomia3D.UI
             var expandButton = new Button(() => OnToggleQuizExpanded(quiz)) { text = quiz.IsExpanded ? "\u25B4" : "\u25BE" };
             expandButton.AddToClassList("quiz-expand-button");
 
+            var editButton = new Button(() => OnEditQuizClicked(quiz)) { text = "\u270E" };
+            editButton.AddToClassList("quiz-edit-button");
+
             var deleteButton = new Button(() => OnDeleteQuizClicked(quiz)) { text = "\U0001F5D1" };
             deleteButton.AddToClassList("quiz-delete-button");
             deleteButton.Q<Label>()?.AddToClassList("quiz-delete-icon");
 
             actionsRow.Add(expandButton);
+            actionsRow.Add(editButton);
             actionsRow.Add(deleteButton);
 
             topRow.Add(titleLabel);
@@ -418,11 +478,20 @@ namespace Anatomia3D.UI
 
             var metaRow = new VisualElement();
             metaRow.AddToClassList("quiz-meta-row");
-            int minutes = Mathf.Max(0, quiz.TimeLimitSeconds / 60);
             AddMetaEntry(metaRow, $"{quiz.Questions.Count} questions", false);
-            AddMetaEntry(metaRow, $"{minutes} min", true);
+            AddMetaEntry(metaRow, quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} min" : "No time limit", true);
             AddMetaEntry(metaRow, $"{quiz.PassingScorePercent}% passing", true);
             card.Add(metaRow);
+
+            // Teacher-view settings row: max attempts / time limit / deadline, per the
+            // "Teacher View" requirement - these mirror what's editable in the modal.
+            var settingsRow = new VisualElement();
+            settingsRow.AddToClassList("quiz-meta-row");
+            AddMetaEntry(settingsRow, quiz.MaxAttempts > 0 ? $"Max attempts: {quiz.MaxAttempts}" : "Unlimited attempts", false);
+            AddMetaEntry(settingsRow, quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
+                ? $"Deadline: {quiz.DeadlineUtc.Value.ToLocalTime():MMM d, yyyy h:mm tt}"
+                : "No deadline", true);
+            card.Add(settingsRow);
 
             if (quiz.IsExpanded)
             {
@@ -586,26 +655,123 @@ namespace Anatomia3D.UI
             });
         }
 
-        // ---------------- Create Quiz modal ----------------
+        // ---------------- Create / Edit Quiz modal ----------------
 
-        private void OnNewQuizClicked(ClickEvent evt) => OpenCreateQuizModal();
+        private void OnNewQuizClicked(ClickEvent evt)
+        {
+            _editingQuiz = null;
+            OpenCreateQuizModal();
+        }
+
+        private void OnEditQuizClicked(QuizData quiz)
+        {
+            _editingQuiz = quiz;
+            OpenCreateQuizModal();
+        }
 
         private void OpenCreateQuizModal()
         {
-            if (_quizTitleField != null) _quizTitleField.value = string.Empty;
-            if (_quizCategoryField != null) _quizCategoryField.value = string.Empty;
-            if (_quizTimeLimitField != null) _quizTimeLimitField.value = "600";
-            if (_quizPassingScoreField != null) _quizPassingScoreField.value = "70";
+            bool editing = _editingQuiz != null;
+
+            if (_createQuizModalTitleLabel != null) _createQuizModalTitleLabel.text = editing ? "Edit Quiz Settings" : "Create New Quiz";
+            if (_createQuizSubmitLabel != null) _createQuizSubmitLabel.text = editing ? "Save Changes" : "Create Quiz";
+
+            if (_quizTitleField != null) _quizTitleField.value = editing ? _editingQuiz.Title : string.Empty;
+            if (_quizCategoryField != null) _quizCategoryField.value = editing ? _editingQuiz.Category : string.Empty;
+            if (_quizMaxAttemptsField != null) _quizMaxAttemptsField.value = editing && _editingQuiz.MaxAttempts > 0 ? _editingQuiz.MaxAttempts.ToString() : "3";
+            if (_quizPassingScoreField != null) _quizPassingScoreField.value = editing ? _editingQuiz.PassingScorePercent.ToString() : "70";
+
+            SetTimeLimitFields(editing ? _editingQuiz.HasTimeLimit : true, editing ? _editingQuiz.TimeLimitMinutes : 10);
+
+            bool deadlineEnabled = editing && _editingQuiz.IsDeadlineEnabled && _editingQuiz.DeadlineUtc.HasValue;
+            if (_quizDeadlineEnabledToggle != null) _quizDeadlineEnabledToggle.SetValueWithoutNotify(deadlineEnabled);
+            if (deadlineEnabled)
+            {
+                var local = _editingQuiz.DeadlineUtc.Value.ToLocalTime();
+                if (_quizDeadlineDateField != null) _quizDeadlineDateField.value = local.ToString("yyyy-MM-dd");
+                if (_quizDeadlineTimeField != null) _quizDeadlineTimeField.value = local.ToString("HH:mm");
+            }
+            else
+            {
+                if (_quizDeadlineDateField != null) _quizDeadlineDateField.value = string.Empty;
+                if (_quizDeadlineTimeField != null) _quizDeadlineTimeField.value = string.Empty;
+            }
+            _quizDeadlineFieldsRow?.EnableInClassList("hidden", !deadlineEnabled);
+
             ClearError(_quizTitleError);
             ClearError(_quizCategoryError);
+            ClearError(_quizDeadlineError);
             SetStatus(_createQuizStatusLabel, string.Empty);
 
             _createQuizModalOverlay?.RemoveFromClassList("hidden");
         }
 
+        /// <summary>Sets the Time Limit dropdown + its custom-minutes field from a
+        /// (hasTimeLimit, minutes) pair - shared by OpenCreateQuizModal and the dropdown's
+        /// own change handler.</summary>
+        private void SetTimeLimitFields(bool hasTimeLimit, int minutes)
+        {
+            if (!hasTimeLimit)
+            {
+                _quizTimeLimitDropdown?.SetValueWithoutNotify(TimeLimitNoLimitChoice);
+                _quizTimeLimitCustomField?.EnableInClassList("hidden", true);
+                return;
+            }
+
+            if (TimeLimitPresetMinutes.Contains(minutes))
+            {
+                _quizTimeLimitDropdown?.SetValueWithoutNotify($"{minutes} minute{(minutes == 1 ? "" : "s")}");
+                _quizTimeLimitCustomField?.EnableInClassList("hidden", true);
+            }
+            else
+            {
+                _quizTimeLimitDropdown?.SetValueWithoutNotify(TimeLimitCustomChoice);
+                if (_quizTimeLimitCustomField != null)
+                {
+                    _quizTimeLimitCustomField.value = minutes.ToString();
+                    _quizTimeLimitCustomField.EnableInClassList("hidden", false);
+                }
+            }
+        }
+
+        private void OnTimeLimitChoiceChanged(ChangeEvent<string> evt)
+        {
+            bool isCustom = evt.newValue == TimeLimitCustomChoice;
+            _quizTimeLimitCustomField?.EnableInClassList("hidden", !isCustom);
+            if (isCustom && _quizTimeLimitCustomField != null && string.IsNullOrEmpty(_quizTimeLimitCustomField.value))
+            {
+                _quizTimeLimitCustomField.value = "10";
+            }
+        }
+
+        private void OnDeadlineEnabledChanged(ChangeEvent<bool> evt)
+        {
+            _quizDeadlineFieldsRow?.EnableInClassList("hidden", !evt.newValue);
+        }
+
+        /// <summary>Reads the Time Limit dropdown + custom field into (hasTimeLimit, minutes).</summary>
+        private (bool hasTimeLimit, int minutes) ReadTimeLimit()
+        {
+            string choice = _quizTimeLimitDropdown != null ? _quizTimeLimitDropdown.value : "10 minutes";
+
+            if (choice == TimeLimitNoLimitChoice) return (false, 0);
+
+            if (choice == TimeLimitCustomChoice)
+            {
+                int custom = ParseIntOrDefault(_quizTimeLimitCustomField, 10);
+                return (true, Mathf.Max(1, custom));
+            }
+
+            // "N minute(s)" preset - pull the leading number back out.
+            var digits = new string(choice.TakeWhile(char.IsDigit).ToArray());
+            int.TryParse(digits, out int minutes);
+            return (true, minutes > 0 ? minutes : 10);
+        }
+
         private void CloseCreateQuizModal()
         {
             _createQuizModalOverlay?.AddToClassList("hidden");
+            _editingQuiz = null;
         }
 
         private void OnCreateQuizCancelClicked(ClickEvent evt) => CloseCreateQuizModal();
@@ -637,36 +803,90 @@ namespace Anatomia3D.UI
                 ClearError(_quizCategoryError);
             }
 
+            bool deadlineEnabled = _quizDeadlineEnabledToggle?.value ?? false;
+            DateTime? deadlineUtc = null;
+
+            if (deadlineEnabled)
+            {
+                string datePart = _quizDeadlineDateField?.value?.Trim();
+                string timePart = _quizDeadlineTimeField?.value?.Trim();
+                string combined = $"{datePart} {timePart}".Trim();
+
+                if (string.IsNullOrEmpty(datePart) || string.IsNullOrEmpty(timePart) ||
+                    !DateTime.TryParse(combined, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedLocal))
+                {
+                    SetError(_quizDeadlineError, "Enter a valid deadline date (YYYY-MM-DD) and time (HH:MM)");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizDeadlineError);
+                    deadlineUtc = DateTime.SpecifyKind(parsedLocal, DateTimeKind.Local).ToUniversalTime();
+                }
+            }
+            else
+            {
+                ClearError(_quizDeadlineError);
+            }
+
             if (!valid)
             {
                 SetStatus(_createQuizStatusLabel, "Please fix the highlighted fields.");
                 return;
             }
 
-            int timeLimit = ParseIntOrDefault(_quizTimeLimitField, 600);
+            int maxAttempts = Mathf.Max(0, ParseIntOrDefault(_quizMaxAttemptsField, 3));
+            var (hasTimeLimit, timeLimitMinutes) = ReadTimeLimit();
             int passingScore = ParseIntOrDefault(_quizPassingScoreField, 70);
 
-            SetStatus(_createQuizStatusLabel, "Creating quiz...");
             _createQuizSubmitButton?.SetEnabled(false);
+
+            if (_editingQuiz != null)
+            {
+                var quizBeingEdited = _editingQuiz;
+                SetStatus(_createQuizStatusLabel, "Saving changes...");
+
+                QuizService.Instance.UpdateQuizSettings(
+                    quizBeingEdited.QuizId, title, category, maxAttempts, timeLimitMinutes, hasTimeLimit,
+                    deadlineEnabled, deadlineUtc, passingScore, (ok, error, record) =>
+                    {
+                        _createQuizSubmitButton?.SetEnabled(true);
+                        if (!ok)
+                        {
+                            SetStatus(_createQuizStatusLabel, error ?? "Could not save changes. Please try again.");
+                            return;
+                        }
+
+                        ApplyQuizSettingsFromRecord(quizBeingEdited, record);
+                        RefreshQuizzesUI();
+                        RefreshStats();
+                        CloseCreateQuizModal();
+                    });
+                return;
+            }
+
+            SetStatus(_createQuizStatusLabel, "Creating quiz...");
 
             // classroomId is null - quizzes created here go into the shared
             // quiz bank (available to every classroom). Assign a specific
             // classroom from AdminClassroomDetailController if needed.
 
-            QuizService.Instance.CreateQuiz(title, category, timeLimit, passingScore, null, (ok, error, record) =>
-            {
-                _createQuizSubmitButton?.SetEnabled(true);
-                if (!ok)
+            QuizService.Instance.CreateQuiz(
+                title, category, maxAttempts, timeLimitMinutes, hasTimeLimit,
+                deadlineEnabled, deadlineUtc, passingScore, null, (ok, error, record) =>
                 {
-                    SetStatus(_createQuizStatusLabel, error ?? "Could not create quiz. Please try again.");
-                    return;
-                }
-                var newQuiz = ToQuizData(record);
-                _currentQuizzes.Add(newQuiz);
-                RefreshQuizzesUI();
-                RefreshStats();
-                CloseCreateQuizModal();
-            });
+                    _createQuizSubmitButton?.SetEnabled(true);
+                    if (!ok)
+                    {
+                        SetStatus(_createQuizStatusLabel, error ?? "Could not create quiz. Please try again.");
+                        return;
+                    }
+                    var newQuiz = ToQuizData(record);
+                    _currentQuizzes.Add(newQuiz);
+                    RefreshQuizzesUI();
+                    RefreshStats();
+                    CloseCreateQuizModal();
+                });
         }
 
         // ---------------- Add Question modal ----------------
@@ -843,13 +1063,32 @@ namespace Anatomia3D.UI
                 QuizId = record.QuizId,
                 Title = record.Title,
                 Category = record.Category,
-                TimeLimitSeconds = record.TimeLimitSeconds,
                 PassingScorePercent = record.PassingScorePercent,
+                MaxAttempts = record.MaxAttempts,
+                TimeLimitMinutes = record.TimeLimitMinutes,
+                HasTimeLimit = record.HasTimeLimit,
+                IsDeadlineEnabled = record.IsDeadlineEnabled,
+                DeadlineUtc = record.DeadlineUtc,
             };
 
             foreach (var q in record.Questions) quiz.Questions.Add(ToQuestionData(q));
 
             return quiz;
+        }
+
+        /// <summary>After UpdateQuizSettings() succeeds, copy the authoritative settings back
+        /// onto the same QuizData instance so IsExpanded/Questions survive (mirrors
+        /// ApplyQuestionsFromRecord's approach for question edits).</summary>
+        private static void ApplyQuizSettingsFromRecord(QuizData quiz, QuizService.QuizRecord record)
+        {
+            quiz.Title = record.Title;
+            quiz.Category = record.Category;
+            quiz.PassingScorePercent = record.PassingScorePercent;
+            quiz.MaxAttempts = record.MaxAttempts;
+            quiz.TimeLimitMinutes = record.TimeLimitMinutes;
+            quiz.HasTimeLimit = record.HasTimeLimit;
+            quiz.IsDeadlineEnabled = record.IsDeadlineEnabled;
+            quiz.DeadlineUtc = record.DeadlineUtc;
         }
 
         private static QuestionData ToQuestionData(QuizService.QuestionRecord record)

@@ -594,7 +594,12 @@
     flex-shrink: 0;
 }
 
-/* ---------- Quizzes ---------- */
+/* ---------- Quizzes: List (populated state, rows built in C#) ---------- */
+
+.quizzes-list
+{
+    flex-direction: column;
+}
 
 .quiz-row
 {

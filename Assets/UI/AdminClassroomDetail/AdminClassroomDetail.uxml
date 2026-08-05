@@ -62,27 +62,15 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="quizzes-panel" class="tab-panel hidden">
-                    <ui:VisualElement name="quizzes-card" class="panel-card">
+                    <ui:VisualElement name="quizzes-empty-state" class="panel-card empty-state hidden">
+                        <ui:VisualElement class="empty-icon icon-users-gray"/>
+                        <ui:Label text="No quizzes yet" class="empty-title"/>
+                        <ui:Label text="Create a quiz from the dashboard to publish it to this classroom" class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-card" class="panel-card hidden">
                         <ui:Label text="Published Quizzes" class="panel-card-title"/>
                         <ui:Label text="Select which quizzes are available to this classroom." class="panel-card-subtitle"/>
-                        <ui:VisualElement name="quiz-row-1" class="quiz-row">
-                            <ui:VisualElement class="quiz-row-text">
-                                <ui:Label name="quiz-title-1" text="Skeletal System Basics" class="quiz-row-title"/>
-                                <ui:Label name="quiz-subject-1" text="Skeletal System" class="quiz-row-subject"/>
-                            </ui:VisualElement>
-                            <ui:Button name="quiz-toggle-1" class="toggle-switch toggle-on">
-                                <ui:VisualElement class="toggle-knob"/>
-                            </ui:Button>
-                        </ui:VisualElement>
-                        <ui:VisualElement name="quiz-row-2" class="quiz-row quiz-row-last">
-                            <ui:VisualElement class="quiz-row-text">
-                                <ui:Label name="quiz-title-2" text="Muscular System Advanced" class="quiz-row-title"/>
-                                <ui:Label name="quiz-subject-2" text="Muscular System" class="quiz-row-subject"/>
-                            </ui:VisualElement>
-                            <ui:Button name="quiz-toggle-2" class="toggle-switch">
-                                <ui:VisualElement class="toggle-knob"/>
-                            </ui:Button>
-                        </ui:VisualElement>
+                        <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="analytics-panel" class="tab-panel hidden">

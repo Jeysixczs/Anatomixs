@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.Backend;
@@ -123,6 +124,16 @@ namespace Anatomia3D.UI
             }
         }
 
+        /// <summary>Why the Start Quiz button on a card should be disabled, per this
+        /// student's QuizService.CheckAttemptEligibility result for that quiz. None
+        /// means the button is a normal, clickable "Start Quiz".</summary>
+        public enum QuizStartBlock
+        {
+            None,
+            DeadlineExpired,
+            NoAttemptsLeft
+        }
+
         /// <summary>A single card in the Available Quizzes tab.</summary>
         public struct QuizCardInfo
         {
@@ -131,20 +142,35 @@ namespace Anatomia3D.UI
             public string Subject;
             public int Questions;
             public int TimeMinutes;
+            public bool HasTimeLimit;
+            /// <summary>0 = unlimited.</summary>
+            public int MaxAttempts;
+            public bool IsDeadlineEnabled;
+            public DateTime? DeadlineUtc;
             public int Points;
             public string Difficulty;
             public bool IsAvailable;
+            /// <summary>Per-student restriction state for the Start button - see
+            /// QuizStartBlock. Always None until LoadQuizStartEligibility() resolves.</summary>
+            public QuizStartBlock StartBlock;
 
-            public QuizCardInfo(string quizId, string title, string subject, int questions, int timeMinutes, int points, string difficulty, bool isAvailable)
+            public QuizCardInfo(string quizId, string title, string subject, int questions, int timeMinutes,
+                bool hasTimeLimit, int maxAttempts, bool isDeadlineEnabled, DateTime? deadlineUtc,
+                int points, string difficulty, bool isAvailable, QuizStartBlock startBlock = QuizStartBlock.None)
             {
                 QuizId = quizId;
                 Title = title;
                 Subject = subject;
                 Questions = questions;
                 TimeMinutes = timeMinutes;
+                HasTimeLimit = hasTimeLimit;
+                MaxAttempts = maxAttempts;
+                IsDeadlineEnabled = isDeadlineEnabled;
+                DeadlineUtc = deadlineUtc;
                 Points = points;
                 Difficulty = difficulty;
                 IsAvailable = isAvailable;
+                StartBlock = startBlock;
             }
         }
 
@@ -432,10 +458,7 @@ namespace Anatomia3D.UI
                 {
                     if (IsStale()) return;
 
-                    var cards = quizzes.ConvertAll(q => new QuizCardInfo(
-                        q.QuizId, q.Title, q.Category, q.QuestionCount, Mathf.CeilToInt(q.TimeLimitSeconds / 60f),
-                        q.TotalPoints, Capitalize(q.Difficulty), true));
-                    SetQuizzes(cards);
+                    LoadQuizStartEligibility(quizzes, IsStale);
                 });
 
                 ClassroomService.Instance.FetchClassroomRoster(requestedClassroomId, roster =>
@@ -493,6 +516,70 @@ namespace Anatomia3D.UI
             int minutes = totalSeconds / 60;
             int seconds = totalSeconds % 60;
             return minutes > 0 ? $"{minutes}m {seconds}s" : $"{seconds}s";
+        }
+
+        /// <summary>
+        /// Resolves this student's Start-button state for every published quiz before
+        /// the Available Quizzes tab is populated. Runs QuizService.CheckAttemptEligibility
+        /// per quiz (deadline + attempts-used, same check StudentQuizGameplayController.LoadQuiz
+        /// re-runs as the real enforcement point when Start is actually tapped) so the button
+        /// can already show "Deadline Expired" / "No More Attempts" and be disabled up front,
+        /// instead of only failing after the student taps it.
+        /// </summary>
+        private void LoadQuizStartEligibility(List<ClassroomService.QuizSummary> quizzes, Func<bool> isStale)
+        {
+            if (quizzes == null || quizzes.Count == 0)
+            {
+                if (!isStale()) SetQuizzes(new List<QuizCardInfo>());
+                return;
+            }
+
+            if (QuizService.Instance == null)
+            {
+                // Backend not ready yet - fall back to a normal, unblocked Start button
+                // rather than leaving the tab empty; LoadQuiz() still guards entry either way.
+                if (!isStale()) SetQuizzes(quizzes.ConvertAll(q => ToQuizCardInfo(q, QuizStartBlock.None)));
+                return;
+            }
+
+            var cards = new QuizCardInfo[quizzes.Count];
+            int remaining = quizzes.Count;
+
+            for (int i = 0; i < quizzes.Count; i++)
+            {
+                var q = quizzes[i];
+                int index = i;
+
+                QuizService.Instance.CheckAttemptEligibility(q.QuizId, (checkOk, checkError, eligibility) =>
+                {
+                    var block = QuizStartBlock.None;
+                    if (checkOk && eligibility != null && !eligibility.CanStart)
+                    {
+                        // Mirrors CheckAttemptEligibility's own priority (deadline checked
+                        // before attempts), so the reason shown here always matches what
+                        // LoadQuiz()'s re-check would report if the button were clickable.
+                        bool deadlinePassed = q.IsDeadlineEnabled && q.DeadlineUtc.HasValue
+                            && DateTime.UtcNow > q.DeadlineUtc.Value;
+                        block = deadlinePassed ? QuizStartBlock.DeadlineExpired : QuizStartBlock.NoAttemptsLeft;
+                    }
+
+                    cards[index] = ToQuizCardInfo(q, block);
+
+                    remaining--;
+                    if (remaining == 0 && !isStale())
+                    {
+                        SetQuizzes(cards.ToList());
+                    }
+                });
+            }
+        }
+
+        private static QuizCardInfo ToQuizCardInfo(ClassroomService.QuizSummary q, QuizStartBlock startBlock)
+        {
+            return new QuizCardInfo(
+                q.QuizId, q.Title, q.Category, q.QuestionCount, q.TimeLimitMinutes, q.HasTimeLimit,
+                q.MaxAttempts, q.IsDeadlineEnabled, q.DeadlineUtc,
+                q.TotalPoints, Capitalize(q.Difficulty), true, startBlock);
         }
 
         /// <summary>Push the two glass header stat cards.</summary>
@@ -678,50 +765,93 @@ namespace Anatomia3D.UI
             card.AddToClassList("quiz-card");
             if (!quiz.IsAvailable) card.AddToClassList("quiz-card-locked");
 
-            var topRow = new VisualElement();
-            topRow.AddToClassList("quiz-card-top-row");
-            var titleLabel = new Label(quiz.Title);
-            titleLabel.AddToClassList("quiz-card-title");
+            // Eyebrow row: subject tag on the left, availability pill on the right -
+            // read before the title so the card sorts/scans by subject at a glance.
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("quiz-card-header-row");
+
+            var subjectTag = new Label(quiz.Subject);
+            subjectTag.AddToClassList("quiz-subject-tag");
+            if (!quiz.IsAvailable) subjectTag.AddToClassList("quiz-subject-tag-locked");
+
             var statusPill = new Label(quiz.IsAvailable ? "Available" : "Locked");
             statusPill.AddToClassList("quiz-status-pill");
             if (!quiz.IsAvailable) statusPill.AddToClassList("quiz-status-pill-locked");
-            topRow.Add(titleLabel);
-            topRow.Add(statusPill);
-            card.Add(topRow);
 
-            var subjectLabel = new Label(quiz.Subject);
-            subjectLabel.AddToClassList("quiz-card-subject");
-            card.Add(subjectLabel);
+            headerRow.Add(subjectTag);
+            headerRow.Add(statusPill);
+            card.Add(headerRow);
 
-            var metaGrid = new VisualElement();
-            metaGrid.AddToClassList("quiz-meta-grid");
+            var titleLabel = new Label(quiz.Title);
+            titleLabel.AddToClassList("quiz-card-title");
+            card.Add(titleLabel);
 
-            var leftColumn = new VisualElement();
-            leftColumn.AddToClassList("quiz-meta-column");
-            leftColumn.Add(BuildMetaRow("Questions:", quiz.Questions.ToString()));
-            leftColumn.Add(BuildMetaRow("Points:", quiz.Points.ToString()));
+            // A single wrapping row of stat chips replaces the old 3-row key/value
+            // grid - same info (questions, points, time, difficulty, attempts,
+            // deadline) but scannable in one glance instead of six lines.
+            var metaChips = new VisualElement();
+            metaChips.AddToClassList("quiz-meta-chips");
 
-            var rightColumn = new VisualElement();
-            rightColumn.AddToClassList("quiz-meta-column");
-            rightColumn.Add(BuildMetaRow("Time:", $"{quiz.TimeMinutes} mins"));
-            rightColumn.Add(BuildMetaRow("Difficulty:", quiz.Difficulty));
+            metaChips.Add(BuildMetaChip(quiz.Questions == 1 ? "1 Question" : $"{quiz.Questions} Questions"));
+            metaChips.Add(BuildMetaChip($"{quiz.Points} pts"));
+            metaChips.Add(BuildMetaChip(quiz.HasTimeLimit ? $"{quiz.TimeMinutes} mins" : "No time limit"));
+            metaChips.Add(BuildMetaChip(quiz.MaxAttempts > 0
+                ? (quiz.MaxAttempts == 1 ? "1 attempt" : $"{quiz.MaxAttempts} attempts")
+                : "Unlimited attempts"));
 
-            metaGrid.Add(leftColumn);
-            metaGrid.Add(rightColumn);
-            card.Add(metaGrid);
+            if (quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue)
+            {
+                metaChips.Add(BuildMetaChip($"Due {quiz.DeadlineUtc.Value.ToLocalTime():MMM d, h:mm tt}"));
+            }
+
+            if (!string.IsNullOrEmpty(quiz.Difficulty))
+            {
+                var difficultyChip = BuildMetaChip(quiz.Difficulty);
+                difficultyChip.AddToClassList(GetDifficultyChipClass(quiz.Difficulty));
+                metaChips.Add(difficultyChip);
+            }
+
+            card.Add(metaChips);
 
             var bottomRow = new VisualElement();
             bottomRow.AddToClassList("quiz-card-bottom-row");
 
             if (quiz.IsAvailable)
             {
-                var startButton = new Button(() => OnStartQuizClicked(quiz));
+                bool blocked = quiz.StartBlock != QuizStartBlock.None;
+
+                var startButton = new Button(blocked ? (Action)null : () => OnStartQuizClicked(quiz));
                 startButton.AddToClassList("quiz-start-button");
+
                 var playIcon = new VisualElement();
                 playIcon.AddToClassList("quiz-start-play-icon");
-                var startLabel = new Label("Start Quiz");
                 startButton.Add(playIcon);
-                startButton.Add(startLabel);
+
+                string startLabelText;
+                switch (quiz.StartBlock)
+                {
+                    case QuizStartBlock.DeadlineExpired:
+                        startLabelText = "Deadline Expired";
+                        break;
+                    case QuizStartBlock.NoAttemptsLeft:
+                        startLabelText = "No More Attempts";
+                        break;
+                    default:
+                        startLabelText = "Start Quiz";
+                        break;
+                }
+                startButton.Add(new Label(startLabelText));
+
+                if (blocked)
+                {
+                    // Grayed-out and non-interactive - no popup/dialog, the button itself
+                    // is the message. SetEnabled(false) both blocks clicks (belt-and-suspenders
+                    // alongside the null click handler above) and applies Unity's built-in
+                    // :disabled USS pseudo-class; quiz-start-button-disabled covers the look.
+                    startButton.SetEnabled(false);
+                    startButton.AddToClassList("quiz-start-button-disabled");
+                }
+
                 bottomRow.Add(startButton);
             }
             else
@@ -735,17 +865,25 @@ namespace Anatomia3D.UI
             return card;
         }
 
-        private VisualElement BuildMetaRow(string key, string value)
+        private VisualElement BuildMetaChip(string text)
         {
-            var row = new VisualElement();
-            row.AddToClassList("quiz-meta-row");
-            var keyLabel = new Label(key);
-            keyLabel.AddToClassList("quiz-meta-key");
-            var valueLabel = new Label(value);
-            valueLabel.AddToClassList("quiz-meta-value");
-            row.Add(keyLabel);
-            row.Add(valueLabel);
-            return row;
+            var chip = new Label(text);
+            chip.AddToClassList("quiz-meta-chip");
+            return chip;
+        }
+
+        /// <summary>Maps a free-text difficulty (Easy/Medium/Hard, as set in the admin
+        /// form) to a color-coded chip variant. Anything else falls back to the
+        /// neutral chip style rather than guessing.</summary>
+        private static string GetDifficultyChipClass(string difficulty)
+        {
+            switch (difficulty.Trim().ToLowerInvariant())
+            {
+                case "easy": return "quiz-chip-easy";
+                case "medium": return "quiz-chip-medium";
+                case "hard": return "quiz-chip-hard";
+                default: return "quiz-chip-neutral";
+            }
         }
 
         private VisualElement BuildPerformerRow(int rank, PerformerInfo performer)
@@ -944,6 +1082,14 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            // BuildQuizCard() already disables Start (and relabels it "Deadline Expired" /
+            // "No More Attempts") once QuizStartBlock != None, so this handler only ever
+            // fires for a quiz this student was eligible for at load time. The real
+            // enforcement point remains the gameplay screen itself
+            // (StudentQuizGameplayController.LoadQuiz -> QuizService.CheckAttemptEligibility),
+            // which re-checks fresh in case the deadline passed or another attempt was
+            // used since this tab loaded - it shows the blocking message there if so,
+            // rather than trusting this now-stale card state.
             UIManager.Instance.ShowStudentQuizGameplay(quiz.QuizId);
         }
 

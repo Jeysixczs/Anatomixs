@@ -106,7 +106,8 @@ namespace Anatomia3D.Backend
 
             /// <summary>When true, StudentClassroomHubController should render this classroom
             /// with an "Archived" badge and treat its card as non-interactive (locked) rather
-            /// than routing into StudentClassroomDetailController - entry is blocked there too
+            /// than routing into StudentClassroomDetailController - entry is 
+            /// there too
             /// (see ClassroomDetailRecord.IsArchived below) but the hub should avoid the
             /// navigation entirely so the student never sees an empty flash before the block.</summary>
             public bool IsArchived;
@@ -418,7 +419,12 @@ namespace Anatomia3D.Backend
             public string Title;
             public string Category;
             public int QuestionCount;
-            public int TimeLimitSeconds;
+            public int TimeLimitMinutes;
+            public bool HasTimeLimit;
+            /// <summary>0 = unlimited.</summary>
+            public int MaxAttempts;
+            public bool IsDeadlineEnabled;
+            public DateTime? DeadlineUtc;
             public int TotalPoints;
             public string Difficulty; // hardest difficulty among the quiz's questions
         }
@@ -497,7 +503,15 @@ namespace Anatomia3D.Backend
                 Title = doc.ContainsField("title") ? doc.GetValue<string>("title") : "Untitled Quiz",
                 Category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "",
                 QuestionCount = questions.Count,
-                TimeLimitSeconds = doc.ContainsField("timeLimitSeconds") ? doc.GetValue<int>("timeLimitSeconds") : 0,
+                TimeLimitMinutes = doc.ContainsField("timeLimitMinutes")
+                    ? doc.GetValue<int>("timeLimitMinutes")
+                    : (doc.ContainsField("timeLimitSeconds") ? Mathf.Max(1, doc.GetValue<int>("timeLimitSeconds") / 60) : 10),
+                HasTimeLimit = doc.ContainsField("hasTimeLimit") ? doc.GetValue<bool>("hasTimeLimit") : true,
+                MaxAttempts = doc.ContainsField("maxAttempts") ? doc.GetValue<int>("maxAttempts") : 0,
+                IsDeadlineEnabled = doc.ContainsField("isDeadlineEnabled") ? doc.GetValue<bool>("isDeadlineEnabled") : false,
+                DeadlineUtc = doc.ContainsField("deadline") && doc.GetValue<object>("deadline") != null
+                    ? doc.GetValue<Timestamp>("deadline").ToDateTime()
+                    : (DateTime?)null,
                 TotalPoints = totalPoints,
                 Difficulty = difficulty
             };

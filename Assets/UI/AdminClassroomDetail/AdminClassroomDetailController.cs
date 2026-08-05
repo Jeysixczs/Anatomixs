@@ -19,9 +19,11 @@ namespace Anatomia3D.UI
     ///    header at runtime
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
     ///  - Exposes SetClassroomData() / SetAnalyticsOverview() /
-    ///    SetLeaderboard() / SetStudents() / SetQuizPublished() /
-    ///    SetAnnouncements() / GetAnnouncements() so admin/session code can
-    ///    push real values in instead of the mock data
+    ///    SetLeaderboard() / SetStudents() / SetAnnouncements() /
+    ///    GetAnnouncements() so admin/session code can push real values in
+    ///    instead of the mock data. The Quizzes tab's rows are built
+    ///    entirely at runtime (see LoadQuizzesTab()) so there's no fixed-slot
+    ///    setter for it anymore.
     ///
     /// The "Leaderboard" card in the Analytics tab (with its "Show to Students"
     /// toggle) is the full, live-ranked leaderboard - not a preview that links
@@ -39,10 +41,11 @@ namespace Anatomia3D.UI
     /// side, just call ClassroomService.FetchAnnouncements() directly) so it
     /// shows up on their Overview tab.
     ///
-    /// Quiz publishing (OnQuizToggle1/2Clicked), leaderboard visibility
-    /// (OnShowToStudentsToggleClicked) and the roster/analytics rollups
-    /// (Students + Analytics tabs) are likewise backed by AdminClassroomService -
-    /// see LoadClassroomContent() / LoadQuizzesTab().
+    /// Quiz publishing (OnQuizToggleClicked, one per dynamically-built row),
+    /// leaderboard visibility (OnShowToStudentsToggleClicked) and the
+    /// roster/analytics rollups (Students + Analytics tabs) are likewise
+    /// backed by AdminClassroomService - see LoadClassroomContent() /
+    /// LoadQuizzesTab().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminClassroomDetailController : MonoBehaviour
@@ -102,22 +105,23 @@ namespace Anatomia3D.UI
         private Button _copyClassroomCodeButton;
 
         // Quizzes tab
-        private VisualElement _quizRow1;
-        private VisualElement _quizRow2;
-        private Label _quizTitle1Label;
-        private Label _quizSubject1Label;
-        private Label _quizTitle2Label;
-        private Label _quizSubject2Label;
-        private Button _quizToggle1;
-        private Button _quizToggle2;
-        public bool Quiz1Published { get; private set; } = true;
-        public bool Quiz2Published { get; private set; } = false;
+        private VisualElement _quizzesEmptyState;
+        private VisualElement _quizzesCard;
+        private VisualElement _quizzesList;
 
-        // The two quiz-row slots in the uxml are static (quiz-toggle-1/2), so we bind
-        // them to the admin's first two quizzes from QuizService.FetchMyQuizzes() at
-        // runtime rather than to fixed quiz ids.
-        private string _quiz1Id = "";
-        private string _quiz2Id = "";
+        /// <summary>One dynamically-built row in the Quizzes tab, bound to a specific quiz id
+        /// rather than a fixed uxml slot - see LoadQuizzesTab() / BuildQuizRow().</summary>
+        private class QuizRow
+        {
+            public string QuizId;
+            public Button ToggleButton;
+            public bool Published;
+        }
+
+        // Rebuilt from scratch by LoadQuizzesTab() every time the admin's quiz library
+        // (QuizService.FetchMyQuizzes()) is (re)loaded, so there's one row per quiz - not
+        // just the first two.
+        private readonly List<QuizRow> _quizRows = new();
         private List<string> _publishedQuizIds = new List<string>();
 
         // Analytics tab
@@ -221,8 +225,6 @@ namespace Anatomia3D.UI
                 if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
                 if (_classroomCodeLabel != null) _classroomCodeLabel.text = _classroomCode;
             }
-            SetQuizPublished(1, Quiz1Published);
-            SetQuizPublished(2, Quiz2Published);
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
             SetArchived(IsArchived);
             _archiveDialogOverlay?.AddToClassList("hidden");
@@ -260,9 +262,6 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.UnregisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.UnregisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
-
-            _quizToggle1?.UnregisterCallback<ClickEvent>(OnQuizToggle1Clicked);
-            _quizToggle2?.UnregisterCallback<ClickEvent>(OnQuizToggle2Clicked);
 
             _showToStudentsToggle?.UnregisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
@@ -313,14 +312,9 @@ namespace Anatomia3D.UI
             _studentsList = _screenRoot.Q<VisualElement>("students-list");
             _copyClassroomCodeButton = _screenRoot.Q<Button>("copy-classroom-code-button");
 
-            _quizRow1 = _screenRoot.Q<VisualElement>("quiz-row-1");
-            _quizRow2 = _screenRoot.Q<VisualElement>("quiz-row-2");
-            _quizTitle1Label = _screenRoot.Q<Label>("quiz-title-1");
-            _quizSubject1Label = _screenRoot.Q<Label>("quiz-subject-1");
-            _quizTitle2Label = _screenRoot.Q<Label>("quiz-title-2");
-            _quizSubject2Label = _screenRoot.Q<Label>("quiz-subject-2");
-            _quizToggle1 = _screenRoot.Q<Button>("quiz-toggle-1");
-            _quizToggle2 = _screenRoot.Q<Button>("quiz-toggle-2");
+            _quizzesEmptyState = _screenRoot.Q<VisualElement>("quizzes-empty-state");
+            _quizzesCard = _screenRoot.Q<VisualElement>("quizzes-card");
+            _quizzesList = _screenRoot.Q<VisualElement>("quizzes-list");
 
             _totalPointsValueLabel = _screenRoot.Q<Label>("total-points-value-label");
             _totalQuizzesValueLabel = _screenRoot.Q<Label>("total-quizzes-value-label");
@@ -354,9 +348,6 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.RegisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
-
-            _quizToggle1?.RegisterCallback<ClickEvent>(OnQuizToggle1Clicked);
-            _quizToggle2?.RegisterCallback<ClickEvent>(OnQuizToggle2Clicked);
 
             _showToStudentsToggle?.RegisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
@@ -450,9 +441,12 @@ namespace Anatomia3D.UI
             });
         }
 
-        /// <summary>Binds the uxml's two static quiz-row slots to the admin's first two
-        /// quizzes from QuizService, hiding a slot if the admin hasn't created that many
-        /// quizzes yet.</summary>
+        /// <summary>Rebuilds the Quizzes tab's list from scratch with one row per quiz in
+        /// the admin's full quiz library (QuizService.FetchMyQuizzes()) - not just the
+        /// first two - showing the empty state instead if they haven't created any yet.
+        /// Each row's toggle reflects (and writes back to) this classroom's
+        /// publishedQuizIds via AdminClassroomService.SetQuizPublished(); see
+        /// BuildQuizRow() / OnQuizToggleClicked().</summary>
         private void LoadQuizzesTab()
         {
             if (QuizService.Instance == null)
@@ -463,29 +457,21 @@ namespace Anatomia3D.UI
 
             QuizService.Instance.FetchMyQuizzes(records =>
             {
-                _quiz1Id = records.Count > 0 ? records[0].QuizId : "";
-                _quiz2Id = records.Count > 1 ? records[1].QuizId : "";
+                _quizRows.Clear();
+                _quizzesList?.Clear();
 
-                bool hasQuiz1 = !string.IsNullOrEmpty(_quiz1Id);
-                bool hasQuiz2 = !string.IsNullOrEmpty(_quiz2Id);
+                bool hasQuizzes = records != null && records.Count > 0;
+                _quizzesEmptyState?.EnableInClassList("hidden", hasQuizzes);
+                _quizzesCard?.EnableInClassList("hidden", !hasQuizzes);
 
-                _quizRow1?.EnableInClassList("hidden", !hasQuiz1);
-                _quizRow2?.EnableInClassList("hidden", !hasQuiz2);
+                if (!hasQuizzes || _quizzesList == null) return;
 
-                if (hasQuiz1)
+                for (int i = 0; i < records.Count; i++)
                 {
-                    if (_quizTitle1Label != null) _quizTitle1Label.text = records[0].Title;
-                    if (_quizSubject1Label != null) _quizSubject1Label.text = records[0].Category;
+                    var record = records[i];
+                    bool published = !string.IsNullOrEmpty(record.QuizId) && _publishedQuizIds.Contains(record.QuizId);
+                    _quizzesList.Add(BuildQuizRow(record.QuizId, record.Title, record.Category, published, i == records.Count - 1));
                 }
-
-                if (hasQuiz2)
-                {
-                    if (_quizTitle2Label != null) _quizTitle2Label.text = records[1].Title;
-                    if (_quizSubject2Label != null) _quizSubject2Label.text = records[1].Category;
-                }
-
-                SetQuizPublished(1, hasQuiz1 && _publishedQuizIds.Contains(_quiz1Id));
-                SetQuizPublished(2, hasQuiz2 && _publishedQuizIds.Contains(_quiz2Id));
             });
         }
 
@@ -543,16 +529,12 @@ namespace Anatomia3D.UI
             }
         }
 
-        /// <summary>Set whether a given quiz (1 or 2, matching the mock's two rows) is published to this classroom.</summary>
-        public void SetQuizPublished(int quizNumber, bool published)
+        /// <summary>Sets a single quiz row's published state (and its toggle's visual state).</summary>
+        private void SetQuizRowPublished(QuizRow row, bool published)
         {
-            Button toggle = quizNumber == 1 ? _quizToggle1 : _quizToggle2;
-            if (toggle == null) return;
-
-            toggle.EnableInClassList("toggle-on", published);
-
-            if (quizNumber == 1) Quiz1Published = published;
-            else Quiz2Published = published;
+            if (row == null) return;
+            row.Published = published;
+            row.ToggleButton?.EnableInClassList("toggle-on", published);
         }
 
         // ---------------- Button handlers ----------------
@@ -610,32 +592,29 @@ namespace Anatomia3D.UI
             activePanel?.RemoveFromClassList("hidden");
         }
 
-        private void OnQuizToggle1Clicked(ClickEvent evt) => ToggleQuizPublished(1, _quiz1Id);
-        private void OnQuizToggle2Clicked(ClickEvent evt) => ToggleQuizPublished(2, _quiz2Id);
-
-        private void ToggleQuizPublished(int quizNumber, string quizId)
+        private void OnQuizToggleClicked(QuizRow row)
         {
-            if (string.IsNullOrEmpty(quizId) || string.IsNullOrEmpty(_classroomId)) return;
+            if (row == null || string.IsNullOrEmpty(row.QuizId) || string.IsNullOrEmpty(_classroomId)) return;
 
-            bool wasPublished = quizNumber == 1 ? Quiz1Published : Quiz2Published;
+            bool wasPublished = row.Published;
             bool newState = !wasPublished;
 
             // Optimistic UI update; roll back on failure.
-            SetQuizPublished(quizNumber, newState);
+            SetQuizRowPublished(row, newState);
 
-            AdminClassroomService.Instance.SetQuizPublished(_classroomId, quizId, newState, (success, error) =>
+            AdminClassroomService.Instance.SetQuizPublished(_classroomId, row.QuizId, newState, (success, error) =>
             {
                 if (success)
                 {
-                    if (newState) { if (!_publishedQuizIds.Contains(quizId)) _publishedQuizIds.Add(quizId); }
-                    else _publishedQuizIds.Remove(quizId);
+                    if (newState) { if (!_publishedQuizIds.Contains(row.QuizId)) _publishedQuizIds.Add(row.QuizId); }
+                    else _publishedQuizIds.Remove(row.QuizId);
 
-                    Debug.Log($"[AdminClassroomDetailController] Quiz {quizNumber} ({quizId}) published: {newState}");
+                    Debug.Log($"[AdminClassroomDetailController] Quiz {row.QuizId} published: {newState}");
                     return;
                 }
 
-                Debug.LogWarning($"[AdminClassroomDetailController] Could not update quiz {quizNumber} publish state: {error}");
-                SetQuizPublished(quizNumber, wasPublished); // roll back
+                Debug.LogWarning($"[AdminClassroomDetailController] Could not update quiz {row.QuizId} publish state: {error}");
+                SetQuizRowPublished(row, wasPublished); // roll back
             });
         }
 
@@ -935,6 +914,42 @@ namespace Anatomia3D.UI
             row.Add(avatar);
             row.Add(info);
             row.Add(pointsLabel);
+            return row;
+        }
+
+        private VisualElement BuildQuizRow(string quizId, string title, string category, bool published, bool isLast)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("quiz-row");
+            if (isLast) row.AddToClassList("quiz-row-last");
+
+            var textContainer = new VisualElement();
+            textContainer.AddToClassList("quiz-row-text");
+
+            var titleLabel = new Label(title);
+            titleLabel.AddToClassList("quiz-row-title");
+
+            var subjectLabel = new Label(category);
+            subjectLabel.AddToClassList("quiz-row-subject");
+
+            textContainer.Add(titleLabel);
+            textContainer.Add(subjectLabel);
+
+            var quizRow = new QuizRow { QuizId = quizId, Published = published };
+
+            var toggle = new Button(() => OnQuizToggleClicked(quizRow));
+            toggle.AddToClassList("toggle-switch");
+            toggle.EnableInClassList("toggle-on", published);
+
+            var knob = new VisualElement();
+            knob.AddToClassList("toggle-knob");
+            toggle.Add(knob);
+
+            quizRow.ToggleButton = toggle;
+            _quizRows.Add(quizRow);
+
+            row.Add(textContainer);
+            row.Add(toggle);
             return row;
         }
 
