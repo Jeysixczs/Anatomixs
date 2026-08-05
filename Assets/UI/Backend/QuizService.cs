@@ -85,6 +85,26 @@ namespace Anatomia3D.Backend
             public int RemainingAttempts;
         }
 
+        /// <summary>One question's outcome within a single attempt. Pass a list of these into
+        /// SubmitQuizAttempt so FetchClassroomReportData can build the "Common Incorrect
+        /// Answers" list on the Mistakes tab. Build this list in your gameplay screen's
+        /// submit handler (StudentQuizGameplayController) from whatever per-question
+        /// right/wrong tracking it already does while scoring correctCount/incorrectCount -
+        /// this class doesn't exist anywhere yet, so that call site needs a small update to
+        /// pass it through.</summary>
+        [Serializable]
+        public class QuestionAttemptResult
+        {
+            public string QuestionText;
+            public bool WasCorrect;
+
+            public QuestionAttemptResult(string questionText, bool wasCorrect)
+            {
+                QuestionText = questionText;
+                WasCorrect = wasCorrect;
+            }
+        }
+
         [Serializable]
         public class AttemptResult
         {
@@ -443,7 +463,10 @@ namespace Anatomia3D.Backend
             int pointsEarned,
             int pointsPossible,
             int bonusXp,
-            Action<bool, string, AttemptResult> onComplete)
+            Action<bool, string, AttemptResult> onComplete,
+            int passingScorePercent = 70,
+            List<QuestionAttemptResult> questionResults = null,
+            int timeSpentSeconds = 0)
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
@@ -464,7 +487,8 @@ namespace Anatomia3D.Backend
                 int maxAttempts = eligibility?.MaxAttempts ?? 0;
 
                 SubmitQuizAttemptInternal(quizId, quizName, category, classroomId, correctCount, incorrectCount,
-                    pointsEarned, pointsPossible, bonusXp, attemptNumber, maxAttempts, onComplete);
+                    pointsEarned, pointsPossible, bonusXp, attemptNumber, maxAttempts, onComplete,
+                    passingScorePercent, questionResults, timeSpentSeconds);
             });
         }
 
@@ -480,7 +504,10 @@ namespace Anatomia3D.Backend
             int bonusXp,
             int attemptNumber,
             int maxAttempts,
-            Action<bool, string, AttemptResult> onComplete)
+            Action<bool, string, AttemptResult> onComplete,
+            int passingScorePercent = 70,
+            List<QuestionAttemptResult> questionResults = null,
+            int timeSpentSeconds = 0)
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
@@ -529,25 +556,51 @@ namespace Anatomia3D.Backend
                 var levelInfo = AdminGamificationService.ComputeLevelProgress(settings, newTotalPoints);
                 var newBadgeIds = AdminGamificationService.ComputeNewlyEarnedBadges(settings, newTotalPoints, existingBadges);
 
-                transaction.Set(attemptRef, new Dictionary<string, object>
+                var attemptData = new Dictionary<string, object>
                 {
                     { "studentId", student.Uid },
                     { "quizId", quizId },
                     { "quizName", quizName },
+                    // Duplicated under "quizTitle"/"scoreCorrect"/"scoreTotal"/"timeSpentSeconds" -
+                    // that's what ClassroomService.FetchMyScores (Student Classroom Detail's
+                    // Scores tab) reads. Keep both sets in sync if either changes; the
+                    // quizName/correctCount/incorrectCount originals are still read by
+                    // QuizService's own FetchClassroomReportData / FetchProgressData / etc.
+                    { "quizTitle", quizName },
                     { "category", category },
                     { "classroomId", classroomId },
                     { "correctCount", correctCount },
                     { "incorrectCount", incorrectCount },
+                    { "scoreCorrect", correctCount },
+                    { "scoreTotal", correctCount + incorrectCount },
+                    { "timeSpentSeconds", timeSpentSeconds },
                     { "pointsEarned", pointsEarned },
                     { "pointsPossible", pointsPossible },
                     { "bonusXp", bonusXp },
                     { "percent", percent },
+                    { "passed", percent >= passingScorePercent },
                     { "status", "Completed" },
                     { "score", percent },
                     { "attemptCount", attemptNumber },
                     { "remainingAttempts", maxAttempts > 0 ? Mathf.Max(0, maxAttempts - attemptNumber) : -1 },
                     { "completedAt", Timestamp.GetCurrentTimestamp() }
-                });
+                };
+
+                // Per-question right/wrong breakdown, used by FetchClassroomReportData to
+                // build the "Common Incorrect Answers" list on the admin Mistakes tab.
+                // Optional - omitted entirely for callers that haven't been updated to pass it.
+                if (questionResults != null && questionResults.Count > 0)
+                {
+                    attemptData["questionResults"] = questionResults
+                        .Select(q => (object)new Dictionary<string, object>
+                        {
+                            { "questionText", q.QuestionText },
+                            { "correct", q.WasCorrect }
+                        })
+                        .ToList();
+                }
+
+                transaction.Set(attemptRef, attemptData);
 
                 var studentUpdate = new Dictionary<string, object>
                 {
@@ -716,10 +769,14 @@ namespace Anatomia3D.Backend
                 { "studentId", studentUid },
                 { "quizId", quiz.QuizId },
                 { "quizName", quiz.Title },
+                { "quizTitle", quiz.Title },
                 { "category", quiz.Category },
                 { "classroomId", quiz.ClassroomId },
                 { "correctCount", 0 },
                 { "incorrectCount", 0 },
+                { "scoreCorrect", 0 },
+                { "scoreTotal", quiz.Questions?.Count ?? 0 },
+                { "timeSpentSeconds", 0 },
                 { "pointsEarned", 0 },
                 { "pointsPossible", quiz.PointsPossible },
                 { "bonusXp", 0 },
@@ -889,6 +946,244 @@ namespace Anatomia3D.Backend
                     onComplete?.Invoke(true, result);
                 });
             });
+        }
+
+        // ==================================================================
+        // Admin: classroom-scoped analytics report (AdminAnalyticsReportsController)
+        // ==================================================================
+
+        [Serializable]
+        public class QuizScoreSummary
+        {
+            public string QuizId;
+            public string QuizTitle;
+            public float AvgScorePercent;
+        }
+
+        [Serializable]
+        public class CategoryScoreSummary
+        {
+            public string Category;
+            public float AvgScorePercent;
+        }
+
+        /// <summary>One row in the "Common Incorrect Answers" list - a question text plus how
+        /// many times it was answered wrong across this classroom's attempts. Only populated
+        /// from attempts whose submitter passed a questionResults list into SubmitQuizAttempt
+        /// (see that method's doc comment) - attempts submitted before that data existed just
+        /// don't contribute any mistake rows.</summary>
+        [Serializable]
+        public class MistakeSummary
+        {
+            public string QuestionText;
+            public string Category;
+            public int ErrorCount;
+        }
+
+        [Serializable]
+        public class ClassroomReportData
+        {
+            public List<QuizScoreSummary> ScoreTrend = new List<QuizScoreSummary>();
+            public List<CategoryScoreSummary> TopicPerformance = new List<CategoryScoreSummary>();
+            public List<MistakeSummary> TopMistakes = new List<MistakeSummary>();
+        }
+
+        /// <summary>Call for the Performance and Mistakes tabs of AdminAnalyticsReportsController.
+        /// Reads every quizAttempts doc for the given classroom once and buckets it three ways:
+        /// by quiz (Score Trend), by category (Topic Performance), and by question text, counting
+        /// only wrong answers (Common Incorrect Answers, top 10).</summary>
+        public void FetchClassroomReportData(string classroomId, Action<ClassroomReportData> onComplete)
+        {
+            var result = new ClassroomReportData();
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(result); return; }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    var byQuiz = new Dictionary<string, (string title, List<float> percents)>();
+                    var byCategory = new Dictionary<string, List<float>>();
+                    var mistakeCounts = new Dictionary<string, (string category, int count)>();
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        string quizId = doc.ContainsField("quizId") ? doc.GetValue<string>("quizId") : "";
+                        string quizName = doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "Quiz";
+                        string category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "";
+                        float percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f;
+
+                        if (!string.IsNullOrEmpty(quizId))
+                        {
+                            if (!byQuiz.TryGetValue(quizId, out var quizEntry))
+                            {
+                                quizEntry = (quizName, new List<float>());
+                            }
+                            quizEntry.percents.Add(percent);
+                            byQuiz[quizId] = quizEntry;
+                        }
+
+                        if (!string.IsNullOrEmpty(category))
+                        {
+                            if (!byCategory.TryGetValue(category, out var percents))
+                            {
+                                percents = new List<float>();
+                            }
+                            percents.Add(percent);
+                            byCategory[category] = percents;
+                        }
+
+                        if (doc.ContainsField("questionResults"))
+                        {
+                            var raw = doc.GetValue<List<object>>("questionResults");
+                            foreach (var item in raw)
+                            {
+                                if (item is Dictionary<string, object> map)
+                                {
+                                    bool correct = map.TryGetValue("correct", out var correctVal) && Convert.ToBoolean(correctVal);
+                                    if (correct) continue;
+
+                                    string questionText = map.TryGetValue("questionText", out var qt) ? qt.ToString() : "";
+                                    if (string.IsNullOrEmpty(questionText)) continue;
+
+                                    if (!mistakeCounts.TryGetValue(questionText, out var mistake))
+                                    {
+                                        mistake = (category, 0);
+                                    }
+                                    mistakeCounts[questionText] = (mistake.category, mistake.count + 1);
+                                }
+                            }
+                        }
+                    }
+
+                    foreach (var kvp in byQuiz)
+                    {
+                        result.ScoreTrend.Add(new QuizScoreSummary
+                        {
+                            QuizId = kvp.Key,
+                            QuizTitle = kvp.Value.title,
+                            AvgScorePercent = kvp.Value.percents.Count > 0 ? kvp.Value.percents.Average() : 0f
+                        });
+                    }
+
+                    foreach (var kvp in byCategory)
+                    {
+                        result.TopicPerformance.Add(new CategoryScoreSummary
+                        {
+                            Category = kvp.Key,
+                            AvgScorePercent = kvp.Value.Count > 0 ? kvp.Value.Average() : 0f
+                        });
+                    }
+
+                    result.TopMistakes = mistakeCounts
+                        .Select(kvp => new MistakeSummary
+                        {
+                            QuestionText = kvp.Key,
+                            Category = kvp.Value.category,
+                            ErrorCount = kvp.Value.count
+                        })
+                        .OrderByDescending(m => m.ErrorCount)
+                        .Take(10)
+                        .ToList();
+
+                    onComplete?.Invoke(result);
+                });
+        }
+
+        /// <summary>Call for the four overview stat cards on AdminAnalyticsReportsController.
+        /// Buckets this classroom's quizAttempts into "this calendar month" vs "last calendar
+        /// month" (both in UTC) and reports each stat plus its month-over-month delta - a
+        /// previous-month value of 0 reports +100% if this month has activity, 0% otherwise.</summary>
+        [Serializable]
+        public class OverviewStats
+        {
+            public int ActiveUsers;
+            public float ActiveUsersDeltaPercent;
+            public float AvgScorePercent;
+            public float AvgScoreDeltaPercent;
+            public int QuizzesDone;
+            public float QuizzesDoneDeltaPercent;
+            public float CompletionPercent;
+            public float CompletionDeltaPercent;
+        }
+
+        public void FetchClassroomOverviewStats(string classroomId, Action<OverviewStats> onComplete)
+        {
+            var result = new OverviewStats();
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(result); return; }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    var now = DateTime.UtcNow;
+                    var thisMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                    var lastMonthStart = thisMonthStart.AddMonths(-1);
+
+                    var thisMonth = new List<DocumentSnapshot>();
+                    var lastMonth = new List<DocumentSnapshot>();
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        var completedAt = doc.ContainsField("completedAt")
+                            ? doc.GetValue<Timestamp>("completedAt").ToDateTime()
+                            : now;
+
+                        if (completedAt >= thisMonthStart) thisMonth.Add(doc);
+                        else if (completedAt >= lastMonthStart) lastMonth.Add(doc);
+                    }
+
+                    int activeThisMonth = CountDistinctStudents(thisMonth);
+                    int activeLastMonth = CountDistinctStudents(lastMonth);
+
+                    result.ActiveUsers = activeThisMonth;
+                    result.QuizzesDone = thisMonth.Count;
+                    result.AvgScorePercent = AveragePercent(thisMonth);
+                    result.CompletionPercent = CompletionRate(thisMonth);
+
+                    float lastAvgScore = AveragePercent(lastMonth);
+                    float lastCompletion = CompletionRate(lastMonth);
+
+                    result.ActiveUsersDeltaPercent = PercentDelta(activeThisMonth, activeLastMonth);
+                    result.QuizzesDoneDeltaPercent = PercentDelta(result.QuizzesDone, lastMonth.Count);
+                    result.AvgScoreDeltaPercent = result.AvgScorePercent - lastAvgScore;
+                    result.CompletionDeltaPercent = result.CompletionPercent - lastCompletion;
+
+                    onComplete?.Invoke(result);
+                });
+        }
+
+        private static int CountDistinctStudents(List<DocumentSnapshot> docs)
+        {
+            return docs
+                .Where(d => d.ContainsField("studentId"))
+                .Select(d => d.GetValue<string>("studentId"))
+                .Distinct()
+                .Count();
+        }
+
+        private static float AveragePercent(List<DocumentSnapshot> docs)
+        {
+            if (docs.Count == 0) return 0f;
+            return docs.Average(d => d.ContainsField("percent") ? Convert.ToSingle(d.GetValue<double>("percent")) : 0f);
+        }
+
+        private static float CompletionRate(List<DocumentSnapshot> docs)
+        {
+            if (docs.Count == 0) return 0f;
+            int passed = docs.Count(d => d.ContainsField("passed") && d.GetValue<bool>("passed"));
+            return (passed / (float)docs.Count) * 100f;
+        }
+
+        private static float PercentDelta(int current, int previous)
+        {
+            if (previous == 0) return current > 0 ? 100f : 0f;
+            return ((current - previous) / (float)previous) * 100f;
         }
 
         // ==================================================================

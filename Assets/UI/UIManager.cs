@@ -212,11 +212,16 @@ namespace Anatomia3D.UI
             ShowScreen(studentQuizSelectionScreen, _studentQuizSelectionController);
         }
 
-        public void ShowStudentQuizGameplay(string quizId)
+        /// <param name="classroomId">The classroom this quiz was launched from (e.g. Student
+        /// Classroom Detail's Available Quizzes tab). Threaded through to
+        /// StudentQuizGameplayController so it can attach the correct classroomId to the
+        /// quizAttempts doc on submit - pass null/empty for entry points with no classroom
+        /// context.</param>
+        public void ShowStudentQuizGameplay(string classroomId, string quizId)
         {
             ShowScreen(studentQuizGameplayScreen, _studentQuizGameplayController, () =>
             {
-                _studentQuizGameplayController?.LoadQuiz(quizId);
+                _studentQuizGameplayController?.LoadQuiz(classroomId, quizId);
             });
         }
 

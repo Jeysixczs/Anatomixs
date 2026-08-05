@@ -553,7 +553,19 @@ namespace Anatomia3D.Backend
                 .ContinueWithOnMainThread(task =>
                 {
                     var results = new List<ScoreRecord>();
-                    if (!task.IsCanceled && !task.IsFaulted)
+                    if (task.IsFaulted)
+                    {
+                        // Most likely cause: Firestore needs a composite index for this
+                        // query (classroomId == , studentId == , orderBy completedAt desc).
+                        // Without one this call fails silently from the UI's point of view -
+                        // the Scores tab just shows "No quiz attempts yet" forever. Check the
+                        // Firebase console (Firestore -> Indexes) or the exception logged
+                        // below for a direct "create index" link.
+                        Debug.LogError($"[ClassroomService] FetchMyScores failed - likely a missing " +
+                            $"Firestore composite index (classroomId + studentId + completedAt). " +
+                            $"Exception: {task.Exception}");
+                    }
+                    else if (!task.IsCanceled)
                     {
                         int attemptNumber = task.Result.Documents.Count();
                         foreach (var doc in task.Result.Documents)

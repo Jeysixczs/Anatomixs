@@ -58,6 +58,7 @@ namespace Anatomia3D.Backend
         {
             public string StudentId;
             public string Name;
+            public int Level;
             public int Points;
             public int QuizzesCompleted;
             public float AvgScorePercent;
@@ -433,6 +434,7 @@ namespace Anatomia3D.Backend
                         {
                             StudentId = doc.Id,
                             Name = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "Student",
+                            Level = doc.ContainsField("level") ? doc.GetValue<int>("level") : 1,
                             Points = doc.ContainsField("points") ? doc.GetValue<int>("points") : 0,
                             QuizzesCompleted = doc.ContainsField("quizzesCompleted") ? doc.GetValue<int>("quizzesCompleted") : 0,
                             AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f

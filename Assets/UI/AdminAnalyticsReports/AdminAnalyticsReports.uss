@@ -98,6 +98,35 @@
     flex-shrink: 0;
 }
 
+/* Inserted at runtime by AdminAnalyticsReportsController.BuildClassroomPicker() -
+   there's no element for it in this .uxml, so it's styled here to match the
+   export-button pills next to it. */
+.classroom-picker-dropdown
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    border-width: 1px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 18px;
+    padding: 0 8px;
+    margin: 0;
+    margin-right: 14px;
+    min-width: 180px;
+}
+
+.classroom-picker-dropdown .unity-base-field__label
+{
+    display: none;
+}
+
+.classroom-picker-dropdown > .unity-base-popup-field__text
+{
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
 .export-button
 {
     flex-direction: row;
