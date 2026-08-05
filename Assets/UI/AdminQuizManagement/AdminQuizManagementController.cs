@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Anatomia3D.Backend;
 using UnityEngine;
@@ -68,6 +67,56 @@ namespace Anatomia3D.UI
 
         private static readonly List<string> DifficultyDisplayChoices = new List<string> { "Easy", "Medium", "Hard" };
 
+        // Deadline date/time dropdowns (UI Toolkit runtime has no DateTimePicker - that's
+        // UnityEditor.UIElements only - so the deadline picker is built from plain dropdowns).
+        private static readonly List<string> DeadlineMonthDisplayChoices = new List<string>
+        {
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
+        private static readonly List<string> DeadlineHourDisplayChoices = BuildTwoDigitChoices(1, 12);
+        private static readonly List<string> DeadlineMinuteDisplayChoices = BuildTwoDigitChoices(0, 59, 1);
+        private static readonly List<string> DeadlineAmPmDisplayChoices = new List<string> { "AM", "PM" };
+
+        /// <summary>24-hour (0-23) -> (12-hour display "01".."12", "AM"/"PM").</summary>
+        private static (string hour12, string amPm) ToDeadlineHour12(int hour24)
+        {
+            int h = hour24 % 12;
+            if (h == 0) h = 12;
+            return (h.ToString("00"), hour24 < 12 ? "AM" : "PM");
+        }
+
+        /// <summary>12-hour display + AM/PM -> 24-hour (0-23). Returns 0 if hour12 fails to parse.</summary>
+        private static int FromDeadlineHour12(int hour12, string amPm)
+        {
+            int h = hour12 % 12; // 12 -> 0
+            if (amPm == "PM") h += 12;
+            return h;
+        }
+
+        private static List<string> BuildTwoDigitChoices(int min, int max, int step = 1)
+        {
+            var choices = new List<string>();
+            for (int i = min; i <= max; i += step) choices.Add(i.ToString("00"));
+            return choices;
+        }
+
+        private static List<string> BuildDayChoices(int daysInMonth)
+        {
+            var choices = new List<string>();
+            for (int d = 1; d <= daysInMonth; d++) choices.Add(d.ToString());
+            return choices;
+        }
+
+        /// <summary>Years shown in the deadline Year dropdown: this year through +5.</summary>
+        private static List<string> BuildDeadlineYearChoices()
+        {
+            var choices = new List<string>();
+            int start = DateTime.Now.Year;
+            for (int y = start; y <= start + 5; y++) choices.Add(y.ToString());
+            return choices;
+        }
+
         /// <summary>Plain data for a single question belonging to a quiz.</summary>
         public class QuestionData
         {
@@ -98,6 +147,10 @@ namespace Anatomia3D.UI
             public List<QuestionData> Questions = new List<QuestionData>();
             public bool IsExpanded;
         }
+
+        /// <summary>Shared wording with QuizService's own server-side check, so the UI's
+        /// live/pre-submit message matches whatever the backend would reject with.</summary>
+        public const string PastDeadlineErrorMessage = "The selected date and time must be later than the current date and time.";
 
         // Preset minute choices shown in the Time Limit dropdown, plus "Custom" and "No Time Limit".
         private const string TimeLimitCustomChoice = "Custom";
@@ -158,11 +211,20 @@ namespace Anatomia3D.UI
         private TextField _quizTimeLimitCustomField;
         private TextField _quizPassingScoreField;
         private Toggle _quizDeadlineEnabledToggle;
-        private TextField _quizDeadlineDateField;
-        private TextField _quizDeadlineTimeField;
+        private DropdownField _quizDeadlineMonthDropdown;
+        private DropdownField _quizDeadlineDayDropdown;
+        private DropdownField _quizDeadlineYearDropdown;
+        private DropdownField _quizDeadlineHourDropdown;
+        private DropdownField _quizDeadlineMinuteDropdown;
+        private DropdownField _quizDeadlineAmPmDropdown;
         private VisualElement _quizDeadlineFieldsRow;
         private Label _quizDeadlineError;
         private Label _createQuizStatusLabel;
+
+        /// <summary>True whenever the deadline toggle is on and the currently-selected
+        /// date/time is in the past - kept up to date live as the dropdowns change, and
+        /// used to disable the submit button until the user picks a valid date/time.</summary>
+        private bool _deadlineDateIsInPast;
 
         /// <summary>Null while the modal is in "create" mode; set to the quiz being edited
         /// while the modal is in "edit settings" mode.</summary>
@@ -259,6 +321,12 @@ namespace Anatomia3D.UI
             _createQuizSubmitButton?.UnregisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.UnregisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
             _quizDeadlineEnabledToggle?.UnregisterCallback<ChangeEvent<bool>>(OnDeadlineEnabledChanged);
+            _quizDeadlineMonthDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineMonthOrYearChanged);
+            _quizDeadlineYearDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineMonthOrYearChanged);
+            _quizDeadlineDayDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineHourDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineMinuteDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineAmPmDropdown?.UnregisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
 
             _addQuestionCloseButton?.UnregisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionCancelButton?.UnregisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
@@ -266,6 +334,7 @@ namespace Anatomia3D.UI
             _questionTypeDropdown?.UnregisterCallback<ChangeEvent<string>>(OnQuestionTypeChanged);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
         }
 
         private void QueryElements()
@@ -277,6 +346,8 @@ namespace Anatomia3D.UI
                 Debug.LogWarning("[AdminQuizManagementController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
+
+            PropagateStyleSheetsToPanelRoot();
 
             _header = _screenRoot.Q<VisualElement>("header");
             _backButton = _screenRoot.Q<Button>("back-button");
@@ -306,8 +377,12 @@ namespace Anatomia3D.UI
             _quizPassingScoreField = _screenRoot.Q<TextField>("quiz-passing-score-field");
             _quizDeadlineEnabledToggle = _screenRoot.Q<Toggle>("quiz-deadline-enabled-toggle");
             _quizDeadlineFieldsRow = _screenRoot.Q<VisualElement>("quiz-deadline-fields-row");
-            _quizDeadlineDateField = _screenRoot.Q<TextField>("quiz-deadline-date-field");
-            _quizDeadlineTimeField = _screenRoot.Q<TextField>("quiz-deadline-time-field");
+            _quizDeadlineMonthDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-month-dropdown");
+            _quizDeadlineDayDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-day-dropdown");
+            _quizDeadlineYearDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-year-dropdown");
+            _quizDeadlineHourDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-hour-dropdown");
+            _quizDeadlineMinuteDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-minute-dropdown");
+            _quizDeadlineAmPmDropdown = _screenRoot.Q<DropdownField>("quiz-deadline-ampm-dropdown");
             _quizDeadlineError = _screenRoot.Q<Label>("quiz-deadline-error");
             _createQuizStatusLabel = _screenRoot.Q<Label>("create-quiz-status-label");
 
@@ -315,6 +390,37 @@ namespace Anatomia3D.UI
             {
                 _quizTimeLimitDropdown.choices = TimeLimitDisplayChoices;
                 _quizTimeLimitDropdown.SetValueWithoutNotify("10 minutes");
+            }
+
+            var now = DateTime.Now;
+            if (_quizDeadlineMonthDropdown != null)
+            {
+                _quizDeadlineMonthDropdown.choices = DeadlineMonthDisplayChoices;
+                _quizDeadlineMonthDropdown.SetValueWithoutNotify(DeadlineMonthDisplayChoices[now.Month - 1]);
+            }
+            if (_quizDeadlineYearDropdown != null)
+            {
+                _quizDeadlineYearDropdown.choices = BuildDeadlineYearChoices();
+                _quizDeadlineYearDropdown.SetValueWithoutNotify(now.Year.ToString());
+            }
+            RefreshDeadlineDayChoices(now.Day);
+            var (nowHour12, nowAmPm) = ToDeadlineHour12(now.Hour);
+            if (_quizDeadlineHourDropdown != null)
+            {
+                _quizDeadlineHourDropdown.choices = DeadlineHourDisplayChoices;
+                _quizDeadlineHourDropdown.SetValueWithoutNotify(nowHour12);
+            }
+            if (_quizDeadlineMinuteDropdown != null)
+            {
+                _quizDeadlineMinuteDropdown.choices = DeadlineMinuteDisplayChoices;
+                // snap to nearest 5-minute preset
+                int snapped = (int)(Math.Round(now.Minute / 5.0) * 5) % 60;
+                _quizDeadlineMinuteDropdown.SetValueWithoutNotify(snapped.ToString("00"));
+            }
+            if (_quizDeadlineAmPmDropdown != null)
+            {
+                _quizDeadlineAmPmDropdown.choices = DeadlineAmPmDisplayChoices;
+                _quizDeadlineAmPmDropdown.SetValueWithoutNotify(nowAmPm);
             }
 
             _addQuestionModalOverlay = _screenRoot.Q<VisualElement>("add-question-modal-overlay");
@@ -350,6 +456,64 @@ namespace Anatomia3D.UI
             Debug.Log($"[AdminQuizManagementController] Found quizzes list: {_quizzesList != null}, question type dropdown: {_questionTypeDropdown != null}");
         }
 
+        /// <summary>Dropdown choice popups (GenericDropdownMenu) attach themselves directly to
+        /// VisualElement.panel.visualTree - the panel's TRUE root - not to _root
+        /// (UIDocument.rootVisualElement). In this app _root is itself just a child of
+        /// panel.visualTree (this project uses one shared UIDocument on UIManager for every
+        /// screen), which makes the popup a SIBLING of _root, not a descendant of it. Copying
+        /// stylesheets onto _root therefore never reaches the popup - .unity-base-dropdown__
+        /// container-outer etc. stay unstyled (default Unity look, no max-height clipping).
+        /// panel.visualTree is the correct, actual common ancestor of both, so that's the
+        /// target that makes the cascade reach the popup.</summary>
+        private void PropagateStyleSheetsToPanelRoot()
+        {
+            if (_screenRoot == null) return;
+
+            var panelRoot = _screenRoot.panel?.visualTree;
+            if (panelRoot == null)
+            {
+                Debug.Log("[AdminQuizManagementController] PropagateStyleSheetsToPanelRoot: panel not attached yet, waiting for AttachToPanelEvent");
+                _screenRoot.RegisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+                return;
+            }
+
+            CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        private void OnScreenRootAttachedToPanel(AttachToPanelEvent evt)
+        {
+            _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+            var panelRoot = _screenRoot.panel?.visualTree;
+            Debug.Log($"[AdminQuizManagementController] OnScreenRootAttachedToPanel fired, panelRoot found: {panelRoot != null}");
+            if (panelRoot != null) CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        /// <summary>The &lt;Style src&gt; tag in this screen's UXML attaches its stylesheet to
+        /// the TemplateContainer Unity creates when cloning the tree - an ANCESTOR of
+        /// "screen-root", not screen-root itself - so screen-root.styleSheets is empty even
+        /// though the cascade still works normally for its own descendants. Walk up from
+        /// screen-root to panelRoot (exclusive) collecting stylesheets from every node along
+        /// that chain, so whichever ancestor actually holds the sheet gets found.</summary>
+        private void CopyAncestorStyleSheetsOnto(VisualElement panelRoot)
+        {
+            int copied = 0;
+            var current = _screenRoot;
+            while (current != null && current != panelRoot)
+            {
+                for (int i = 0; i < current.styleSheets.count; i++)
+                {
+                    var sheet = current.styleSheets[i];
+                    if (sheet != null && !panelRoot.styleSheets.Contains(sheet))
+                    {
+                        panelRoot.styleSheets.Add(sheet);
+                        copied++;
+                    }
+                }
+                current = current.parent;
+            }
+            Debug.Log($"[AdminQuizManagementController] CopyAncestorStyleSheetsOnto: copied {copied} new stylesheet(s) onto panelRoot (now has {panelRoot.styleSheets.count} total)");
+        }
+
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
@@ -361,6 +525,12 @@ namespace Anatomia3D.UI
             _createQuizSubmitButton?.RegisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.RegisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
             _quizDeadlineEnabledToggle?.RegisterCallback<ChangeEvent<bool>>(OnDeadlineEnabledChanged);
+            _quizDeadlineMonthDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineMonthOrYearChanged);
+            _quizDeadlineYearDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineMonthOrYearChanged);
+            _quizDeadlineDayDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineHourDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineMinuteDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
+            _quizDeadlineAmPmDropdown?.RegisterCallback<ChangeEvent<string>>(OnDeadlineFieldChanged);
 
             _addQuestionCloseButton?.RegisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionCancelButton?.RegisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
@@ -442,62 +612,86 @@ namespace Anatomia3D.UI
 
         private VisualElement BuildQuizCard(QuizData quiz)
         {
+            // Faux-shadow wrapper: USS has no box-shadow, so .quiz-card-shadow is a
+            // second element offset behind .quiz-card (see USS comments). Neither
+            // participates in click handling, so this doesn't change behavior.
+            var wrapper = new VisualElement();
+            wrapper.AddToClassList("quiz-card-wrapper");
+
+            var shadow = new VisualElement();
+            shadow.AddToClassList("quiz-card-shadow");
+            wrapper.Add(shadow);
+
             var card = new VisualElement();
             card.AddToClassList("quiz-card");
+            wrapper.Add(card);
 
-            var topRow = new VisualElement();
-            topRow.AddToClassList("quiz-card-top-row");
+            // ---- Header: title/category on the left, actions clustered top-right ----
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("quiz-card-header");
+
+            var headerMain = new VisualElement();
+            headerMain.AddToClassList("quiz-card-header-main");
 
             var titleLabel = new Label(quiz.Title);
             titleLabel.AddToClassList("quiz-title-label");
+            headerMain.Add(titleLabel);
+
+            var categoryLabel = new Label(quiz.Category);
+            categoryLabel.AddToClassList("quiz-category-label");
+            headerMain.Add(categoryLabel);
+
+            headerRow.Add(headerMain);
 
             var actionsRow = new VisualElement();
             actionsRow.AddToClassList("quiz-header-actions");
 
             var expandButton = new Button(() => OnToggleQuizExpanded(quiz)) { text = quiz.IsExpanded ? "\u25B4" : "\u25BE" };
+            expandButton.AddToClassList("quiz-icon-button");
             expandButton.AddToClassList("quiz-expand-button");
 
             var editButton = new Button(() => OnEditQuizClicked(quiz)) { text = "\u270E" };
+            editButton.AddToClassList("quiz-icon-button");
             editButton.AddToClassList("quiz-edit-button");
 
             var deleteButton = new Button(() => OnDeleteQuizClicked(quiz)) { text = "\U0001F5D1" };
+            deleteButton.AddToClassList("quiz-icon-button");
             deleteButton.AddToClassList("quiz-delete-button");
             deleteButton.Q<Label>()?.AddToClassList("quiz-delete-icon");
 
             actionsRow.Add(expandButton);
             actionsRow.Add(editButton);
             actionsRow.Add(deleteButton);
+            headerRow.Add(actionsRow);
 
-            topRow.Add(titleLabel);
-            topRow.Add(actionsRow);
-            card.Add(topRow);
+            card.Add(headerRow);
 
-            var categoryLabel = new Label(quiz.Category);
-            categoryLabel.AddToClassList("quiz-category-label");
-            card.Add(categoryLabel);
-
-            var metaRow = new VisualElement();
-            metaRow.AddToClassList("quiz-meta-row");
-            AddMetaEntry(metaRow, $"{quiz.Questions.Count} questions", false);
-            AddMetaEntry(metaRow, quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} min" : "No time limit", true);
-            AddMetaEntry(metaRow, $"{quiz.PassingScorePercent}% passing", true);
-            card.Add(metaRow);
-
-            // Teacher-view settings row: max attempts / time limit / deadline, per the
-            // "Teacher View" requirement - these mirror what's editable in the modal.
-            var settingsRow = new VisualElement();
-            settingsRow.AddToClassList("quiz-meta-row");
-            AddMetaEntry(settingsRow, quiz.MaxAttempts > 0 ? $"Max attempts: {quiz.MaxAttempts}" : "Unlimited attempts", false);
-            AddMetaEntry(settingsRow, quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
+            // ---- Metadata chips: questions / time limit / passing score / max
+            // attempts / deadline, each with an icon - same values and fallback
+            // wording as before, just grouped into chips instead of two dotted rows.
+            var chipsRow = new VisualElement();
+            chipsRow.AddToClassList("quiz-meta-chips");
+            AddMetaChip(chipsRow, "\U0001F4CB", $"{quiz.Questions.Count} questions");
+            AddMetaChip(chipsRow, "\U0001F550", quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} min" : "No time limit");
+            AddMetaChip(chipsRow, "\U0001F3AF", $"{quiz.PassingScorePercent}% passing");
+            AddMetaChip(chipsRow, "\U0001F501", quiz.MaxAttempts > 0 ? $"Max attempts: {quiz.MaxAttempts}" : "Unlimited attempts");
+            AddMetaChip(chipsRow, "\U0001F4C5", quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
                 ? $"Deadline: {quiz.DeadlineUtc.Value.ToLocalTime():MMM d, yyyy h:mm tt}"
-                : "No deadline", true);
-            card.Add(settingsRow);
+                : "No deadline");
+            card.Add(chipsRow);
 
             if (quiz.IsExpanded)
             {
+                var expandContent = new VisualElement();
+                expandContent.AddToClassList("quiz-expand-content");
+                // Starts faded/shifted, then drops the class a frame later so the
+                // transition in USS plays - a lightweight "enter" animation since
+                // UI Toolkit can't transition height:auto for a true expand/collapse.
+                expandContent.AddToClassList("quiz-expand-content--enter");
+
                 var divider = new VisualElement();
                 divider.AddToClassList("quiz-divider");
-                card.Add(divider);
+                expandContent.Add(divider);
 
                 var questionsHeaderRow = new VisualElement();
                 questionsHeaderRow.AddToClassList("questions-header-row");
@@ -516,13 +710,13 @@ namespace Anatomia3D.UI
 
                 questionsHeaderRow.Add(questionsTitle);
                 questionsHeaderRow.Add(addQuestionButton);
-                card.Add(questionsHeaderRow);
+                expandContent.Add(questionsHeaderRow);
 
                 if (quiz.Questions.Count == 0)
                 {
                     var emptyLabel = new Label("No questions yet");
                     emptyLabel.AddToClassList("questions-empty-label");
-                    card.Add(emptyLabel);
+                    expandContent.Add(emptyLabel);
                 }
                 else
                 {
@@ -534,37 +728,49 @@ namespace Anatomia3D.UI
                         questionsList.Add(BuildQuestionRow(quiz, quiz.Questions[i], i + 1));
                     }
 
-                    card.Add(questionsList);
+                    expandContent.Add(questionsList);
                 }
+
+                card.Add(expandContent);
+
+                expandContent.schedule.Execute(() =>
+                {
+                    expandContent.RemoveFromClassList("quiz-expand-content--enter");
+                }).ExecuteLater(1);
             }
 
-            return card;
+            return wrapper;
         }
 
-        private void AddMetaEntry(VisualElement metaRow, string text, bool withLeadingDot)
+        private void AddMetaChip(VisualElement chipsRow, string icon, string text)
         {
-            if (withLeadingDot)
-            {
-                var dot = new Label("\u2022");
-                dot.AddToClassList("quiz-meta-dot");
-                metaRow.Add(dot);
-            }
+            var chip = new VisualElement();
+            chip.AddToClassList("quiz-meta-chip");
 
-            var label = new Label(text);
-            label.AddToClassList("quiz-meta-text");
-            metaRow.Add(label);
+            var iconLabel = new Label(icon);
+            iconLabel.AddToClassList("quiz-meta-chip-icon");
+            chip.Add(iconLabel);
+
+            var textLabel = new Label(text);
+            textLabel.AddToClassList("quiz-meta-chip-text");
+            chip.Add(textLabel);
+
+            chipsRow.Add(chip);
         }
 
         private VisualElement BuildQuestionRow(QuizData quiz, QuestionData question, int index)
         {
             var row = new VisualElement();
-            row.AddToClassList("question-row");
+            row.AddToClassList("question-card");
 
             var topRow = new VisualElement();
-            topRow.AddToClassList("question-row-top");
+            topRow.AddToClassList("question-card-top");
 
             var indexBadge = new Label($"Q{index}");
             indexBadge.AddToClassList("question-index-badge");
+
+            var badgesGroup = new VisualElement();
+            badgesGroup.AddToClassList("question-badges-group");
 
             var difficultyBadge = new VisualElement();
             difficultyBadge.AddToClassList("question-difficulty-badge");
@@ -579,13 +785,15 @@ namespace Anatomia3D.UI
             typeLabel.AddToClassList("question-type-label");
             typeBadge.Add(typeLabel);
 
+            badgesGroup.Add(difficultyBadge);
+            badgesGroup.Add(typeBadge);
+
             var deleteButton = new Button(() => OnDeleteQuestionClicked(quiz, question)) { text = "\U0001F5D1" };
             deleteButton.AddToClassList("question-delete-button");
             deleteButton.Q<Label>()?.AddToClassList("question-delete-icon");
 
             topRow.Add(indexBadge);
-            topRow.Add(difficultyBadge);
-            topRow.Add(typeBadge);
+            topRow.Add(badgesGroup);
             topRow.Add(deleteButton);
             row.Add(topRow);
 
@@ -593,9 +801,17 @@ namespace Anatomia3D.UI
             questionTextLabel.AddToClassList("question-text-label");
             row.Add(questionTextLabel);
 
+            var footerRow = new VisualElement();
+            footerRow.AddToClassList("question-footer-row");
+
+            var pointsChip = new VisualElement();
+            pointsChip.AddToClassList("question-points-chip");
             var pointsLabel = new Label($"{question.Points} points");
             pointsLabel.AddToClassList("question-points-label");
-            row.Add(pointsLabel);
+            pointsChip.Add(pointsLabel);
+            footerRow.Add(pointsChip);
+
+            row.Add(footerRow);
 
             return row;
         }
@@ -685,23 +901,42 @@ namespace Anatomia3D.UI
 
             bool deadlineEnabled = editing && _editingQuiz.IsDeadlineEnabled && _editingQuiz.DeadlineUtc.HasValue;
             if (_quizDeadlineEnabledToggle != null) _quizDeadlineEnabledToggle.SetValueWithoutNotify(deadlineEnabled);
-            if (deadlineEnabled)
+
+            // Whether or not the toggle is on, the dropdowns always hold a valid selection
+            // (defaulting to "now") - deadlineEnabled just controls whether the row is shown.
+            var deadlineLocal = deadlineEnabled ? _editingQuiz.DeadlineUtc.Value.ToLocalTime() : DateTime.Now;
+            if (_quizDeadlineMonthDropdown != null) _quizDeadlineMonthDropdown.SetValueWithoutNotify(DeadlineMonthDisplayChoices[deadlineLocal.Month - 1]);
+            if (_quizDeadlineYearDropdown != null)
             {
-                var local = _editingQuiz.DeadlineUtc.Value.ToLocalTime();
-                if (_quizDeadlineDateField != null) _quizDeadlineDateField.value = local.ToString("yyyy-MM-dd");
-                if (_quizDeadlineTimeField != null) _quizDeadlineTimeField.value = local.ToString("HH:mm");
+                if (!_quizDeadlineYearDropdown.choices.Contains(deadlineLocal.Year.ToString()))
+                {
+                    // Editing a quiz whose deadline is further out than the default +5 year
+                    // window - extend the choices so it can still be shown/selected.
+                    var years = new List<string>(_quizDeadlineYearDropdown.choices) { deadlineLocal.Year.ToString() };
+                    _quizDeadlineYearDropdown.choices = years;
+                }
+                _quizDeadlineYearDropdown.SetValueWithoutNotify(deadlineLocal.Year.ToString());
             }
-            else
+            RefreshDeadlineDayChoices(deadlineLocal.Day);
+            var (hour12, amPm) = ToDeadlineHour12(deadlineLocal.Hour);
+            if (_quizDeadlineHourDropdown != null) _quizDeadlineHourDropdown.SetValueWithoutNotify(hour12);
+            if (_quizDeadlineAmPmDropdown != null) _quizDeadlineAmPmDropdown.SetValueWithoutNotify(amPm);
+            if (_quizDeadlineMinuteDropdown != null)
             {
-                if (_quizDeadlineDateField != null) _quizDeadlineDateField.value = string.Empty;
-                if (_quizDeadlineTimeField != null) _quizDeadlineTimeField.value = string.Empty;
+                int snapped = (int)(Math.Round(deadlineLocal.Minute / 5.0) * 5) % 60;
+                _quizDeadlineMinuteDropdown.SetValueWithoutNotify(snapped.ToString("00"));
             }
+
             _quizDeadlineFieldsRow?.EnableInClassList("hidden", !deadlineEnabled);
 
             ClearError(_quizTitleError);
             ClearError(_quizCategoryError);
-            ClearError(_quizDeadlineError);
             SetStatus(_createQuizStatusLabel, string.Empty);
+
+            // Re-enables the submit button (in case a previous open of this modal left it
+            // disabled) and re-checks the freshly-populated date/time fields above.
+            _createQuizSubmitButton?.SetEnabled(true);
+            RevalidateDeadlineDate();
 
             _createQuizModalOverlay?.RemoveFromClassList("hidden");
         }
@@ -747,6 +982,94 @@ namespace Anatomia3D.UI
         private void OnDeadlineEnabledChanged(ChangeEvent<bool> evt)
         {
             _quizDeadlineFieldsRow?.EnableInClassList("hidden", !evt.newValue);
+            RevalidateDeadlineDate();
+        }
+
+        private void OnDeadlineMonthOrYearChanged(ChangeEvent<string> evt)
+        {
+            // Keep the currently-selected day if it's still valid for the new month/year
+            // (e.g. Jan 31 -> Feb clamps to Feb 28/29), otherwise clamp to the new max.
+            int.TryParse(_quizDeadlineDayDropdown?.value, out int currentDay);
+            RefreshDeadlineDayChoices(currentDay > 0 ? currentDay : 1);
+            RevalidateDeadlineDate();
+        }
+
+        /// <summary>Fires for the day/hour/minute/AM-PM dropdowns, which (unlike month/year)
+        /// don't need to rebuild any other dropdown's choices - just re-check the date.</summary>
+        private void OnDeadlineFieldChanged(ChangeEvent<string> evt) => RevalidateDeadlineDate();
+
+        /// <summary>Reads the deadline dropdowns into a local DateTime. Returns false (and no
+        /// value) if the toggle is off or a selection is missing/unparseable - callers decide
+        /// what that should mean for validity in their own context.</summary>
+        private bool TryReadSelectedDeadlineLocal(out DateTime deadlineLocal)
+        {
+            deadlineLocal = default;
+
+            int monthIndex = DeadlineMonthDisplayChoices.IndexOf(_quizDeadlineMonthDropdown?.value);
+            bool haveMonth = monthIndex >= 0;
+            bool haveDay = int.TryParse(_quizDeadlineDayDropdown?.value, out int day);
+            bool haveYear = int.TryParse(_quizDeadlineYearDropdown?.value, out int year);
+            bool haveHour = int.TryParse(_quizDeadlineHourDropdown?.value, out int hour12);
+            bool haveMinute = int.TryParse(_quizDeadlineMinuteDropdown?.value, out int minute);
+            string amPm = _quizDeadlineAmPmDropdown?.value;
+            bool haveAmPm = amPm == "AM" || amPm == "PM";
+
+            if (!(haveMonth && haveDay && haveYear && haveHour && haveMinute && haveAmPm))
+            {
+                return false;
+            }
+
+            int hour24 = FromDeadlineHour12(hour12, amPm);
+            deadlineLocal = new DateTime(year, monthIndex + 1, day, hour24, minute, 0, DateTimeKind.Local);
+            return true;
+        }
+
+        /// <summary>Truncates to minute precision so "now" (which includes seconds) doesn't
+        /// make the current minute look like it's already in the past - the dropdowns only
+        /// let the admin pick a minute, so that's the granularity we validate against.</summary>
+        private static DateTime TruncateToMinute(DateTime dt) =>
+            new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0, dt.Kind);
+
+        /// <summary>Live re-check of the deadline fields, called on every relevant dropdown/
+        /// toggle change. Shows/clears the deadline error and enables/disables the submit
+        /// button accordingly, so an admin can never submit a deadline that's already past.</summary>
+        private void RevalidateDeadlineDate()
+        {
+            bool deadlineEnabled = _quizDeadlineEnabledToggle?.value ?? false;
+
+            _deadlineDateIsInPast = deadlineEnabled
+                && TryReadSelectedDeadlineLocal(out DateTime deadlineLocal)
+                && TruncateToMinute(deadlineLocal) < TruncateToMinute(DateTime.Now);
+
+            if (_deadlineDateIsInPast)
+            {
+                SetError(_quizDeadlineError, PastDeadlineErrorMessage);
+            }
+            else
+            {
+                ClearError(_quizDeadlineError);
+            }
+
+            _createQuizSubmitButton?.SetEnabled(!_deadlineDateIsInPast);
+        }
+
+        /// <summary>Rebuilds the Day dropdown's choices for the currently-selected month/year
+        /// (handles 28/29/30/31-day months and leap years), keeping preferredDay selected
+        /// when it still fits, otherwise clamping to the last valid day.</summary>
+        private void RefreshDeadlineDayChoices(int preferredDay)
+        {
+            if (_quizDeadlineDayDropdown == null) return;
+
+            int monthIndex = DeadlineMonthDisplayChoices.IndexOf(_quizDeadlineMonthDropdown?.value);
+            int month = monthIndex >= 0 ? monthIndex + 1 : DateTime.Now.Month;
+            int.TryParse(_quizDeadlineYearDropdown?.value, out int year);
+            if (year <= 0) year = DateTime.Now.Year;
+
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            _quizDeadlineDayDropdown.choices = BuildDayChoices(daysInMonth);
+
+            int day = Mathf.Clamp(preferredDay, 1, daysInMonth);
+            _quizDeadlineDayDropdown.SetValueWithoutNotify(day.ToString());
         }
 
         /// <summary>Reads the Time Limit dropdown + custom field into (hasTimeLimit, minutes).</summary>
@@ -808,20 +1131,26 @@ namespace Anatomia3D.UI
 
             if (deadlineEnabled)
             {
-                string datePart = _quizDeadlineDateField?.value?.Trim();
-                string timePart = _quizDeadlineTimeField?.value?.Trim();
-                string combined = $"{datePart} {timePart}".Trim();
-
-                if (string.IsNullOrEmpty(datePart) || string.IsNullOrEmpty(timePart) ||
-                    !DateTime.TryParse(combined, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedLocal))
+                // Dropdowns can't hold malformed input, but guard against an unqueried
+                // element (null) or an unpopulated selection just in case.
+                if (!TryReadSelectedDeadlineLocal(out DateTime parsedLocal))
                 {
-                    SetError(_quizDeadlineError, "Enter a valid deadline date (YYYY-MM-DD) and time (HH:MM)");
+                    SetError(_quizDeadlineError, "Please choose a deadline date and time");
+                    valid = false;
+                }
+                else if (TruncateToMinute(parsedLocal) < TruncateToMinute(DateTime.Now))
+                {
+                    // Belt-and-suspenders: RevalidateDeadlineDate() already keeps the submit
+                    // button disabled while the selection is in the past, but re-check here
+                    // too in case the button was re-enabled between checks (e.g. programmatic
+                    // SetEnabled calls elsewhere) so a stale/past deadline can never be saved.
+                    SetError(_quizDeadlineError, PastDeadlineErrorMessage);
                     valid = false;
                 }
                 else
                 {
                     ClearError(_quizDeadlineError);
-                    deadlineUtc = DateTime.SpecifyKind(parsedLocal, DateTimeKind.Local).ToUniversalTime();
+                    deadlineUtc = parsedLocal.ToUniversalTime();
                 }
             }
             else

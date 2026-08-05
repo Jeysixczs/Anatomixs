@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
                 <ui:VisualElement name="header" class="header">
                     <ui:VisualElement name="header-top-row" class="header-top-row">
@@ -70,14 +70,18 @@
                 <ui:VisualElement name="quiz-deadline-toggle-row" class="toggle-row field-label-spaced">
                     <ui:Toggle name="quiz-deadline-enabled-toggle" label="Set a Deadline" class="deadline-toggle"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="quiz-deadline-fields-row" class="two-column-row hidden">
-                    <ui:VisualElement class="two-column-item two-column-item-left">
-                        <ui:Label text="Deadline Date" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-deadline-date-field" class="text-field" tooltip="YYYY-MM-DD"/>
+                <ui:VisualElement name="quiz-deadline-fields-row" class="hidden">
+                    <ui:Label text="Deadline Date" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="three-column-row">
+                        <ui:DropdownField name="quiz-deadline-month-dropdown" class="dropdown-field three-column-item three-column-item-left"/>
+                        <ui:DropdownField name="quiz-deadline-day-dropdown" class="dropdown-field three-column-item three-column-item-mid"/>
+                        <ui:DropdownField name="quiz-deadline-year-dropdown" class="dropdown-field three-column-item three-column-item-right"/>
                     </ui:VisualElement>
-                    <ui:VisualElement class="two-column-item two-column-item-right">
-                        <ui:Label text="Deadline Time" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-deadline-time-field" class="text-field" tooltip="24-hour, HH:MM"/>
+                    <ui:Label text="Deadline Time" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="three-column-row">
+                        <ui:DropdownField name="quiz-deadline-hour-dropdown" class="dropdown-field three-column-item three-column-item-left" tooltip="Hour"/>
+                        <ui:DropdownField name="quiz-deadline-minute-dropdown" class="dropdown-field three-column-item three-column-item-mid" tooltip="Minute"/>
+                        <ui:DropdownField name="quiz-deadline-ampm-dropdown" class="dropdown-field three-column-item three-column-item-right" tooltip="AM/PM"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Label name="quiz-deadline-error" text="" class="field-error hidden"/>
