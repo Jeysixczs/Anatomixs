@@ -168,13 +168,17 @@ namespace Anatomia3D.UI
 
         // ---------------- Data loading ----------------
 
-        /// <summary>Pulls the signed-in student's profile from PlayerSessionManager and the
-        /// level thresholds from AdminGamificationService, then feeds SetStudentData().
-        /// Call whenever the dashboard is shown so it reflects the latest points/quiz count
-        /// (e.g. right after finishing a quiz).</summary>
+        /// <summary>Pulls the signed-in student's profile from PlayerSessionManager's
+        /// cache and the level thresholds from AdminGamificationService, then feeds
+        /// SetStudentData(). Call whenever the dashboard is shown. No longer forces a
+        /// students/{uid} re-fetch on every open - PlayerSessionManager.CurrentStudent
+        /// is kept current as soon as anything actually changes it (see
+        /// PlayerSessionManager.ApplyQuizAttemptResult, called right after a quiz
+        /// attempt is submitted), so the cached copy is already accurate here.</summary>
         private void PopulateDashboard()
         {
-            if (PlayerSessionManager.Instance?.CurrentStudent == null)
+            var student = PlayerSessionManager.Instance?.CurrentStudent;
+            if (student == null)
             {
                 Debug.LogWarning("[StudentDashboardController] No signed-in student found - " +
                     "showing the dashboard with placeholder data. Was this screen opened without " +
@@ -182,33 +186,27 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
+            if (AdminGamificationService.Instance == null)
             {
-                var student = PlayerSessionManager.Instance.CurrentStudent; // re-read AFTER refresh
-                if (student == null) return;
+                Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
+                    "falling back to raw points/quiz stats without level-progress math.");
+                SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
+                return;
+            }
 
-                if (AdminGamificationService.Instance == null)
-                {
-                    Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
-                        "falling back to raw points/quiz stats without level-progress math.");
-                    SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
-                    return;
-                }
+            AdminGamificationService.Instance.FetchSettings(settings =>
+            {
+                var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
 
-                AdminGamificationService.Instance.FetchSettings(settings =>
-                {
-                    var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
-
-                    SetStudentData(
-                        studentName: student.FullName,
-                        currentLevel: progress.level,
-                        nextLevel: progress.nextLevel,
-                        levelProgress01: progress.progress01,
-                        pointsToNextLevel: progress.pointsToNext,
-                        quizzesCompleted: student.QuizzesCompleted,
-                        totalPoints: student.TotalPoints
-                    );
-                });
+                SetStudentData(
+                    studentName: student.FullName,
+                    currentLevel: progress.level,
+                    nextLevel: progress.nextLevel,
+                    levelProgress01: progress.progress01,
+                    pointsToNextLevel: progress.pointsToNext,
+                    quizzesCompleted: student.QuizzesCompleted,
+                    totalPoints: student.TotalPoints
+                );
             });
         }
 

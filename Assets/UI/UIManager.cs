@@ -449,5 +449,15 @@ namespace Anatomia3D.UI
             }
         }
 
+        /// <summary>Call after this student's classroom enrollment changes (e.g. right
+        /// after StudentClassroomController.OnJoinResult's join succeeds) so
+        /// StudentClassroomHub re-fetches instead of showing a stale "My Classrooms"
+        /// list next time it's opened. See StudentClassroomHubController.
+        /// InvalidateClassrooms().</summary>
+        public void InvalidateStudentClassroomHub()
+        {
+            _studentClassroomHubController?.InvalidateClassrooms();
+        }
+
     }
 }

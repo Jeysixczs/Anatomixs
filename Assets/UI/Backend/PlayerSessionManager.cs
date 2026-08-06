@@ -627,12 +627,12 @@ namespace Anatomia3D.Backend
         // ---------------- Refresh ----------------
 
         /// <summary>Re-fetches `students/{uid}` and replaces CurrentStudent with the
-        /// result. Gameplay code (QuizService.SubmitQuizAttempt) writes updated
-        /// level/totalPoints/quizzesCompleted straight to Firestore but doesn't
-        /// touch this cached copy, so without calling this, screens reading
-        /// CurrentStudent (e.g. StudentProfileController) can keep showing
-        /// pre-quiz numbers for the rest of the session. Call when showing any
-        /// screen that needs current stats.</summary>
+        /// result. Screens should NOT call this just to open - CurrentStudent is
+        /// kept in sync locally by ApplyQuizAttemptResult() (see below) and by
+        /// WriteFullName(), covering every write path that currently touches the
+        /// student doc, at zero extra reads. Keep this around as a manual/
+        /// catch-all resync (e.g. a pull-to-refresh gesture, or recovering from a
+        /// teacher-side edit made out of band) rather than an OnEnable habit.</summary>
         public void RefreshCurrentStudent(Action<bool> onComplete = null)
         {
             if (CurrentStudent == null) { onComplete?.Invoke(false); return; }
@@ -642,6 +642,35 @@ namespace Anatomia3D.Backend
                 if (ok) CurrentStudent = profile;
                 onComplete?.Invoke(ok);
             });
+        }
+
+        /// <summary>Patches CurrentStudent in place with the outcome of a just-submitted
+        /// quiz attempt, instead of re-fetching students/{uid}. Call this from
+        /// QuizService.SubmitQuizAttemptInternal right after its transaction commits -
+        /// every field it writes (totalPoints, level, quizzesCompleted, badgesEarned)
+        /// is already known at that point, so there's nothing left to read from
+        /// Firestore. No-ops if nobody's signed in or the attempt belonged to a
+        /// different uid than the one currently cached (shouldn't happen in practice,
+        /// since SubmitQuizAttempt always reads CurrentStudent.Uid itself, but this
+        /// keeps a stale/late callback from corrupting a newer session's cache).</summary>
+        public void ApplyQuizAttemptResult(string studentUid, int newTotalPoints, int newLevel, List<string> newlyEarnedBadgeIds)
+        {
+            if (CurrentStudent == null || CurrentStudent.Uid != studentUid) return;
+
+            CurrentStudent.TotalPoints = newTotalPoints;
+            CurrentStudent.Level = newLevel;
+            CurrentStudent.QuizzesCompleted += 1;
+
+            if (newlyEarnedBadgeIds != null && newlyEarnedBadgeIds.Count > 0)
+            {
+                foreach (var badgeId in newlyEarnedBadgeIds)
+                {
+                    if (!CurrentStudent.BadgesEarned.Contains(badgeId))
+                    {
+                        CurrentStudent.BadgesEarned.Add(badgeId);
+                    }
+                }
+            }
         }
 
         // ---------------- Helpers ----------------
