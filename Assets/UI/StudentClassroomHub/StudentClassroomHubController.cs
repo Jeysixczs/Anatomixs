@@ -94,6 +94,13 @@ namespace Anatomia3D.UI
         private List<ClassroomSummary> _currentClassrooms = new List<ClassroomSummary>();
         private bool _realDataReceived;
 
+        // Last values pushed through SetHeaderStats() - RefreshClassroomsUI() only
+        // repaints the classroom list, so OnEnable needs these to restore the three
+        // glass stat cards + subtitle too when it's skipping a fresh fetch.
+        private int _lastClassroomCount;
+        private int _lastTotalClassmates;
+        private int _lastQuizzesAvailable;
+
         private void OnEnable()
         {
             Debug.Log("[StudentClassroomHubController] OnEnable called");
@@ -133,7 +140,17 @@ namespace Anatomia3D.UI
             UpdateResponsiveLayout();
 
             RefreshClassroomsUI();
-            LoadClassroomsFromBackend();
+            SetHeaderStats(_lastClassroomCount, _lastTotalClassmates, _lastQuizzesAvailable);
+
+            // First time this screen opens this session -> fetch. After that,
+            // RefreshClassroomsUI()/SetHeaderStats() above already repainted from
+            // cache, so a re-enable (e.g. switching tabs elsewhere and coming back)
+            // doesn't need another Firestore read. Same pattern as
+            // StudentAchievementsController.
+            if (!_realDataReceived)
+            {
+                LoadClassroomsFromBackend();
+            }
         }
 
         // ---------------- Loading real data ----------------
@@ -268,6 +285,10 @@ namespace Anatomia3D.UI
         /// <summary>Push real values into the three glass stat cards + header subtitle in the header.</summary>
         public void SetHeaderStats(int classroomCount, int totalClassmates, int quizzesAvailable)
         {
+            _lastClassroomCount = classroomCount;
+            _lastTotalClassmates = totalClassmates;
+            _lastQuizzesAvailable = quizzesAvailable;
+
             if (_headerSubtitleLabel != null)
                 _headerSubtitleLabel.text = $"You're enrolled in {classroomCount} classroom{(classroomCount == 1 ? "" : "s")}";
 
@@ -282,6 +303,18 @@ namespace Anatomia3D.UI
             _currentClassrooms = classrooms ?? new List<ClassroomSummary>();
             _realDataReceived = true;
             RefreshClassroomsUI();
+        }
+
+        /// <summary>Call after something changes which classrooms this student is
+        /// enrolled in (e.g. StudentClassroomController.OnJoinResult right after a
+        /// successful join) so the NEXT time this screen opens, OnEnable's
+        /// first-load check in RefreshClassroomsUI()/LoadClassroomsFromBackend()
+        /// doesn't skip the fetch and show a stale list missing the new
+        /// classroom. Cheap no-op if the screen is currently visible - the next
+        /// OnEnable already has to fully re-init anyway.</summary>
+        public void InvalidateClassrooms()
+        {
+            _realDataReceived = false;
         }
 
         // ---------------- My Classrooms ----------------

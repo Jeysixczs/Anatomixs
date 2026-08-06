@@ -180,11 +180,12 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Loads PlayerSessionManager.CurrentStudent into the header
-        /// summary card and stat row. Paints the cached copy immediately (so the
-        /// screen isn't blank while waiting on a network call), then re-fetches
-        /// from Firestore in case gameplay elsewhere (a completed quiz) changed
-        /// level/points/quizzesCompleted since login.</summary>
+        /// <summary>Loads PlayerSessionManager.CurrentStudent into the header summary
+        /// card and stat row. Reads straight from the cache - no Firestore call here
+        /// anymore. Gameplay/profile/classroom code keeps CurrentStudent in sync at
+        /// the point each of those actually changes the student doc (see
+        /// PlayerSessionManager.ApplyQuizAttemptResult and .WriteFullName), so by the
+        /// time this screen opens the cached copy is already accurate.</summary>
         public void RefreshFromBackend()
         {
             var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
@@ -195,11 +196,6 @@ namespace Anatomia3D.UI
             }
 
             ApplyStudent(student);
-
-            PlayerSessionManager.Instance.RefreshCurrentStudent(success =>
-            {
-                if (success) ApplyStudent(PlayerSessionManager.Instance.CurrentStudent);
-            });
         }
 
         private void ApplyStudent(PlayerSessionManager.StudentProfile student)

@@ -250,6 +250,13 @@ namespace Anatomia3D.UI
 
         // Cached state so it survives the UIManager's clear-and-rebuild screen transitions.
         private string _classroomId = "";
+        /// <summary>The classroomId LoadClassroomContent() last kicked off a fetch for.
+        /// This screen is reused across classrooms (see SetClassroomIdentity), so
+        /// "loaded once" has to be tracked per-id rather than as a single session
+        /// flag - re-entering the SAME classroom (OnEnable firing without a fresh
+        /// SetClassroomIdentity call) can skip the refetch, but navigating to a
+        /// DIFFERENT classroom always needs one.</summary>
+        private string _lastLoadedClassroomId = "";
         private string _classroomName = "";
         private string _instructorName = "";
         private readonly List<AnnouncementInfo> _lastAnnouncements = new();
@@ -309,9 +316,16 @@ namespace Anatomia3D.UI
             SetScores(_lastScores);
             SetBadges(_lastBadgePoints, _lastBadges);
 
-            // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
-            // with a classroom already loaded - refresh from Firestore.
-            if (!string.IsNullOrEmpty(_classroomId)) LoadClassroomContent();
+            // Screen was re-enabled (e.g. switching tabs elsewhere and coming back).
+            // Only refetch if this is a DIFFERENT classroom than what's currently
+            // loaded - SetClassroomIdentity() already forces a fresh load whenever
+            // the student actually navigates into a classroom (same or different),
+            // so this only catches the "re-enabled with nothing new to show" case,
+            // which the cache repaint above already handled.
+            if (!string.IsNullOrEmpty(_classroomId) && _classroomId != _lastLoadedClassroomId)
+            {
+                LoadClassroomContent();
+            }
         }
 
         private void OnDisable()
@@ -480,6 +494,8 @@ namespace Anatomia3D.UI
             // screen for the classroom they're now viewing (announcements included).
             string requestedClassroomId = _classroomId;
             bool IsStale() => requestedClassroomId != _classroomId;
+
+            _lastLoadedClassroomId = requestedClassroomId;
 
             ClassroomService.Instance.FetchClassroomDetail(requestedClassroomId, detail =>
             {

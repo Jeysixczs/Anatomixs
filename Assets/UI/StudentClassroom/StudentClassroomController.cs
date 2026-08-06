@@ -195,6 +195,13 @@ namespace Anatomia3D.UI
             {
                 Debug.Log("[StudentClassroomController] Join classroom succeeded");
                 SetStatus("Successfully joined classroom!");
+
+                // Hub's "My Classrooms" list only fetches once per screen instance
+                // (see StudentClassroomHubController.OnEnable) - without this, a
+                // newly-joined classroom wouldn't show up there until something
+                // else forces a reload.
+                UIManager.Instance.InvalidateStudentClassroomHub();
+
                 // Navigate to the dashboard or classroom view
                 UIManager.Instance.ShowStudentDashboard();
             }
