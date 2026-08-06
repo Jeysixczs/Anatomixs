@@ -648,5 +648,78 @@ namespace Anatomia3D.Backend
                 onComplete?.Invoke(!task.IsCanceled && !task.IsFaulted);
             });
         }
+
+        // ---------------- Recent classroom joins (StudentDashboardController) ----------------
+
+        [Serializable]
+        public class ClassroomJoinRecord
+        {
+            public string ClassroomId;
+            public string ClassroomName;
+            public Timestamp JoinedAt;
+        }
+
+        /// <summary>Call when showing StudentDashboardController's Recent Activity card.
+        /// `joinedAt` is only ever written on the classroom's own `members/{uid}` doc
+        /// (see JoinClassroom() above) - there's no top-level collection to query it
+        /// from directly - so this reads every classroom the student belongs to (same
+        /// query FetchMyClassrooms/FetchNotifications already use) and then reads each
+        /// one's `members/{uid}` doc for the timestamp. Same fan-out shape as
+        /// FetchNotifications' per-classroom announcements read; cost is bounded by
+        /// how many classrooms the student is in, not by how much history exists.</summary>
+        public void FetchRecentJoins(Action<List<ClassroomJoinRecord>> onComplete, int maxItems = 8)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(new List<ClassroomJoinRecord>()); return; }
+
+            Db.Collection("classrooms")
+                .WhereArrayContains("memberIds", student.Uid)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(classroomsTask =>
+                {
+                    if (classroomsTask.IsCanceled || classroomsTask.IsFaulted || classroomsTask.Result.Count == 0)
+                    {
+                        onComplete?.Invoke(new List<ClassroomJoinRecord>());
+                        return;
+                    }
+
+                    var classroomDocs = classroomsTask.Result.Documents.ToList();
+                    var results = new List<ClassroomJoinRecord>();
+                    int remaining = classroomDocs.Count;
+
+                    foreach (var classroomDoc in classroomDocs)
+                    {
+                        string classroomId = classroomDoc.Id;
+                        string classroomName = classroomDoc.ContainsField("name") ? classroomDoc.GetValue<string>("name") : "Classroom";
+
+                        Db.Collection("classrooms").Document(classroomId).Collection("members").Document(student.Uid)
+                            .GetSnapshotAsync()
+                            .ContinueWithOnMainThread(memberTask =>
+                            {
+                                if (!memberTask.IsCanceled && !memberTask.IsFaulted
+                                    && memberTask.Result.Exists && memberTask.Result.ContainsField("joinedAt"))
+                                {
+                                    results.Add(new ClassroomJoinRecord
+                                    {
+                                        ClassroomId = classroomId,
+                                        ClassroomName = classroomName,
+                                        JoinedAt = memberTask.Result.GetValue<Timestamp>("joinedAt")
+                                    });
+                                }
+
+                                remaining--;
+                                if (remaining == 0)
+                                {
+                                    results.Sort((a, b) => b.JoinedAt.ToDateTime().CompareTo(a.JoinedAt.ToDateTime()));
+                                    if (results.Count > maxItems)
+                                    {
+                                        results.RemoveRange(maxItems, results.Count - maxItems);
+                                    }
+                                    onComplete?.Invoke(results);
+                                }
+                            });
+                    }
+                });
+        }
     }
 }
