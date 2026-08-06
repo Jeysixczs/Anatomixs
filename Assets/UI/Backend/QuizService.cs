@@ -861,6 +861,142 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        // ---------------- Recent activity (StudentDashboardController) ----------------
+
+        public enum ActivityType
+        {
+            QuizCompleted,
+            BadgeEarned
+        }
+
+        /// <summary>One row for StudentDashboardController's Recent Activity card.</summary>
+        [Serializable]
+        public class ActivityRecord
+        {
+            public ActivityType Type;
+            public string Title;
+            /// <summary>Points to show as "+N"; 0 means don't render a points label
+            /// (badge awards don't carry their own point value - the points that
+            /// unlocked them were already shown on the quiz-completed entry).</summary>
+            public int PointsDelta;
+            public Timestamp OccurredAt;
+        }
+
+        /// <summary>Call when showing StudentDashboardController's Recent Activity card.
+        /// Merges this student's most recent completed quiz attempts (`quizAttempts`,
+        /// filtered to `studentId == uid`) with their most recent badge awards
+        /// (`students/{uid}/badgeAwards`), sorts newest-first, and trims to
+        /// maxItems. Unlike ClassroomService.FetchNotifications, no per-classroom
+        /// fan-out is needed here - both source collections are already directly
+        /// queryable by this student's uid, so this is always exactly 2 reads
+        /// regardless of how many classrooms the student is in.</summary>
+        public void FetchRecentActivity(Action<List<ActivityRecord>> onComplete, int maxItems = 8)
+        {
+            var student = PlayerSessionManager.Instance.CurrentStudent;
+            if (student == null) { onComplete?.Invoke(new List<ActivityRecord>()); return; }
+
+            var results = new List<ActivityRecord>();
+            int pending = 2;
+
+            void OnPartComplete()
+            {
+                pending--;
+                if (pending > 0) return;
+
+                results.Sort((a, b) => b.OccurredAt.ToDateTime().CompareTo(a.OccurredAt.ToDateTime()));
+                if (results.Count > maxItems)
+                {
+                    results.RemoveRange(maxItems, results.Count - maxItems);
+                }
+                onComplete?.Invoke(results);
+            }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("studentId", student.Uid)
+                .OrderByDescending("completedAt")
+                .Limit(maxItems)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        // Most likely cause: Firestore needs a composite index for this
+                        // query (studentId + completedAt) - same situation as
+                        // FetchMyScores above. Check the Firebase console (Firestore ->
+                        // Indexes) or the exception below for a direct "create index" link.
+                        Debug.LogError($"[QuizService] FetchRecentActivity (quizAttempts) failed - " +
+                            $"likely a missing Firestore composite index (studentId + completedAt). " +
+                            $"Exception: {task.Exception}");
+                    }
+                    else if (!task.IsCanceled)
+                    {
+                        foreach (var doc in task.Result.Documents)
+                        {
+                            // Skip auto-recorded "Missed" docs (see RecordMissedAttempt) -
+                            // those aren't something the student did, so they don't belong
+                            // in an activity feed of the student's own actions.
+                            bool isMissed = doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed";
+                            if (isMissed) continue;
+
+                            string quizName = doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "a quiz";
+                            int pointsEarned = doc.ContainsField("pointsEarned") ? doc.GetValue<int>("pointsEarned") : 0;
+                            int bonusXp = doc.ContainsField("bonusXp") ? doc.GetValue<int>("bonusXp") : 0;
+
+                            results.Add(new ActivityRecord
+                            {
+                                Type = ActivityType.QuizCompleted,
+                                Title = $"Completed '{quizName}' Quiz",
+                                PointsDelta = pointsEarned + bonusXp,
+                                OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
+                            });
+                        }
+                    }
+                    OnPartComplete();
+                });
+
+            Db.Collection("students").Document(student.Uid).Collection("badgeAwards")
+                .OrderByDescending("earnedAt")
+                .Limit(maxItems)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (!task.IsCanceled && !task.IsFaulted)
+                    {
+                        foreach (var doc in task.Result.Documents)
+                        {
+                            results.Add(new ActivityRecord
+                            {
+                                Type = ActivityType.BadgeEarned,
+                                Title = $"Earned '{FormatBadgeName(doc.Id)}' Badge",
+                                PointsDelta = 0,
+                                OccurredAt = doc.ContainsField("earnedAt") ? doc.GetValue<Timestamp>("earnedAt") : Timestamp.GetCurrentTimestamp()
+                            });
+                        }
+                    }
+                    OnPartComplete();
+                });
+        }
+
+        /// <summary>Turns a badge doc id (e.g. "quiz-master", from AdminGamificationService's
+        /// default badges - see BadgeEntry/MakeBadgeId) into a display-friendly title
+        /// ("Quiz Master") without an extra read of the teacher's gamificationSettings
+        /// doc. Good enough for the dashboard preview; a screen that needs the exact
+        /// configured badge name/icon should resolve it via AdminGamificationService
+        /// like StudentAchievementsController already does.</summary>
+        private static string FormatBadgeName(string badgeId)
+        {
+            if (string.IsNullOrEmpty(badgeId)) return "New";
+
+            var parts = badgeId.Split('-');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i].Length > 0)
+                {
+                    parts[i] = char.ToUpperInvariant(parts[i][0]) + parts[i].Substring(1);
+                }
+            }
+            return string.Join(" ", parts);
+        }
 
         /// <summary>Call when showing StudentQuizSelectionController - feeds SetQuizStats() directly.</summary>
         public void FetchQuizStats(string quizId, Action<bool, string, int, int, float> onComplete)
