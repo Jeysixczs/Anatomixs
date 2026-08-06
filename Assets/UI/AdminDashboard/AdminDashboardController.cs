@@ -108,6 +108,12 @@ namespace Anatomia3D.UI
         private List<ClassroomSummary> _currentClassrooms = new List<ClassroomSummary>();
         private List<ActivityEntry> _currentActivity = new List<ActivityEntry>();
 
+        private bool _realDataReceived;
+        private string _lastTeacherName = "";
+        private int _lastClassroomCount;
+        private int _lastStudentCount;
+        private float _lastAvgScorePercent;
+
         private void OnEnable()
         {
             Debug.Log("[AdminDashboardController] OnEnable called");
@@ -146,10 +152,21 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
+            SetHeaderData(_lastTeacherName);
+            SetDashboardStats(_lastClassroomCount, _lastStudentCount, _lastAvgScorePercent);
             RefreshClassroomsUI();
             RefreshRecentActivityUI();
 
-            LoadDashboardData();
+            // First time this screen opens this session -> fetch. After that, the
+            // cache repaints above already cover it, so a re-enable (e.g. switching
+            // tabs elsewhere and coming back) doesn't need another Firestore read.
+            // InvalidateClassrooms() resets this after an admin creates a classroom
+            // elsewhere, so the next open picks up the change. Same pattern as
+            // StudentClassroomHubController.
+            if (!_realDataReceived)
+            {
+                LoadDashboardData();
+            }
         }
 
         private void OnDisable()
@@ -233,12 +250,17 @@ namespace Anatomia3D.UI
         /// <summary>Push the signed-in teacher's name into the header subtitle.</summary>
         public void SetHeaderData(string teacherName)
         {
+            _lastTeacherName = teacherName ?? "";
             if (_headerSubtitleLabel != null) _headerSubtitleLabel.text = $"Welcome back, {teacherName}";
         }
 
         /// <summary>Push real values into the three glass stat cards in the header.</summary>
         public void SetDashboardStats(int classroomCount, int studentCount, float avgScorePercent)
         {
+            _lastClassroomCount = classroomCount;
+            _lastStudentCount = studentCount;
+            _lastAvgScorePercent = avgScorePercent;
+
             if (_classroomsCountLabel != null) _classroomsCountLabel.text = classroomCount.ToString("N0");
             if (_studentsCountLabel != null) _studentsCountLabel.text = studentCount.ToString("N0");
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
@@ -299,6 +321,7 @@ namespace Anatomia3D.UI
                     }
                 }
 
+                _realDataReceived = true;
                 SetClassrooms(summaries);
 
                 // No quiz/analytics service exists yet to source a real average
@@ -306,6 +329,16 @@ namespace Anatomia3D.UI
                 // this out once that backend exists.
                 SetDashboardStats(summaries.Count, totalStudents, 0f);
             });
+        }
+
+        /// <summary>Call after something changes which classrooms this admin has
+        /// (e.g. AdminCreateClassroomController.OnCreateResult right after a
+        /// successful create) so the NEXT time this screen opens, OnEnable's
+        /// first-load check doesn't skip the fetch and show a stale list/stats
+        /// missing the new classroom.</summary>
+        public void InvalidateClassrooms()
+        {
+            _realDataReceived = false;
         }
 
         // ---------------- My Classrooms ----------------

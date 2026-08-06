@@ -171,6 +171,16 @@ namespace Anatomia3D.UI
             new LevelData(8, "Legend", 2800),
         };
 
+        private bool _realDataReceived;
+
+        // Last values pushed through SetPointsConfiguration() - the text fields
+        // above get destroyed and re-queried fresh every OnEnable (UI is rebuilt
+        // each time), so without this a re-enable that skips LoadSettings() would
+        // show blank/default fields instead of what was actually loaded/saved.
+        private int _lastEasyPoints = 10;
+        private int _lastMediumPoints = 20;
+        private int _lastHardPoints = 30;
+
         private void OnEnable()
         {
             Debug.Log("[AdminGamificationSettingsController] OnEnable called");
@@ -212,10 +222,22 @@ namespace Anatomia3D.UI
             RefreshBadgesUI();
             RefreshLevelsUI();
             RefreshPreview();
+            SetPointsConfiguration(_lastEasyPoints, _lastMediumPoints, _lastHardPoints);
 
             CloseAddBadgeModal();
 
-            LoadSettings();
+            // First time this screen opens this session -> fetch. Badges are
+            // already patched locally on add/remove (see OnAddBadgeSubmitClicked
+            // / the remove handler), and levels are fixed/read-only from this
+            // screen (see LoadSettings' doc comment), so a re-enable (e.g.
+            // switching tabs elsewhere and coming back) can just repaint from
+            // cache via RefreshBadgesUI()/RefreshLevelsUI()/RefreshPreview()
+            // above instead of re-fetching. Same pattern as
+            // StudentAchievementsController.
+            if (!_realDataReceived)
+            {
+                LoadSettings();
+            }
         }
 
         /// <summary>
@@ -237,6 +259,8 @@ namespace Anatomia3D.UI
 
             AdminGamificationService.Instance.FetchSettings(settings =>
             {
+                _realDataReceived = true;
+
                 SetPointsConfiguration(settings.EasyPoints, settings.MediumPoints, settings.HardPoints);
 
                 var badges = settings.Badges.ConvertAll(b => new BadgeData(b.Name, b.PointsRequired, b.IconEmoji, b.BadgeId));
@@ -348,6 +372,10 @@ namespace Anatomia3D.UI
         /// <summary>Push existing points configuration values in (e.g. loaded from backend).</summary>
         public void SetPointsConfiguration(int easyPoints, int mediumPoints, int hardPoints)
         {
+            _lastEasyPoints = easyPoints;
+            _lastMediumPoints = mediumPoints;
+            _lastHardPoints = hardPoints;
+
             if (_easyPointsField != null) _easyPointsField.SetValueWithoutNotify(easyPoints.ToString());
             if (_mediumPointsField != null) _mediumPointsField.SetValueWithoutNotify(mediumPoints.ToString());
             if (_hardPointsField != null) _hardPointsField.SetValueWithoutNotify(hardPoints.ToString());
@@ -622,7 +650,17 @@ namespace Anatomia3D.UI
 
             // Note: no levels argument - levels are global & fixed and are never
             // written from this screen (see AdminGamificationService.SaveSettings).
-            AdminGamificationService.Instance.SaveSettings(easyPoints, mediumPoints, hardPoints, badgeEntries, OnSaveSettingsResult);
+            AdminGamificationService.Instance.SaveSettings(easyPoints, mediumPoints, hardPoints, badgeEntries, (success, error) =>
+            {
+                if (success)
+                {
+                    _lastEasyPoints = easyPoints;
+                    _lastMediumPoints = mediumPoints;
+                    _lastHardPoints = hardPoints;
+                }
+
+                OnSaveSettingsResult(success, error);
+            });
         }
 
         private void OnSaveSettingsResult(bool success, string error)
