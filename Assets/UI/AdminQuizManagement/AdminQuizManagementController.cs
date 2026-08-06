@@ -20,14 +20,24 @@ namespace Anatomia3D.UI
     ///    with a delete (trash) button, and - when expanded - its question
     ///    list with an "Add Question" button
     ///  - "New Quiz" opens a modal (title/category/time limit/passing score)
-    ///  - "Add Question" opens a modal (question text, question type dropdown,
-    ///    the 4 option fields shown for Multiple Choice AND Multiple
-    ///    Identification (distractors like "keyboard" need somewhere to live),
-    ///    correct answer, difficulty dropdown, points). Correct Answer is a
-    ///    single text field for every type - Enumeration and Multiple
-    ///    Identification expect a comma-separated list there (see
-    ///    UpdateCorrectAnswerHint), True/False expects literally "True" or
-    ///    "False".
+    ///  - "Add Question" opens a modal whose fields swap based on the selected
+    ///    question type, so the teacher only ever sees what's relevant and never
+    ///    retypes an answer they already typed:
+    ///      - Multiple Choice: 4 option fields (A-D) + a single-select radio
+    ///        picker for the correct one.
+    ///      - True or False: a dropdown, no typing.
+    ///      - Identification: the plain question/correct-answer text fields.
+    ///      - Enumeration: answers added one at a time via "+ Add Answer".
+    ///      - Multiple Identification: the same 4 option fields as Multiple
+    ///        Choice, but with checkboxes (one or more correct).
+    ///      - Image-Based: an anatomy System -> Structure dropdown pair with a
+    ///        live preview; the question text and correct answer are derived
+    ///        from the selection rather than typed.
+    ///    Whatever the teacher picks is still funneled into the same
+    ///    `correct-answer-field`/`option-N-field` data fields before saving
+    ///    (see OnAddQuestionSubmitClicked), which is what QuizService actually
+    ///    persists - Enumeration and Multiple Identification store it there as
+    ///    a comma-separated list, True/False as literally "True"/"False".
     ///  - Each question row shows its Q# / difficulty / type badges, matching
     ///    the mock, with its own delete button
     ///  - Applies the green->blue gradient at runtime to the header, "New
@@ -235,6 +245,7 @@ namespace Anatomia3D.UI
         private Button _addQuestionCloseButton;
         private Button _addQuestionCancelButton;
         private Button _addQuestionSubmitButton;
+        private Label _questionTextLabel;
         private TextField _questionTextField;
         private Label _questionTextError;
         private DropdownField _questionTypeDropdown;
@@ -245,9 +256,66 @@ namespace Anatomia3D.UI
         private TextField _option4Field;
         private TextField _correctAnswerField;
         private Label _correctAnswerError;
+        private VisualElement _identificationContainer;
         private DropdownField _difficultyDropdown;
         private TextField _questionPointsField;
         private Label _addQuestionStatusLabel;
+
+        // Multiple Choice: single correct answer via A/B/C/D radio toggles
+        private VisualElement _mcCorrectAnswerContainer;
+        private Toggle _mcCorrectAToggle;
+        private Toggle _mcCorrectBToggle;
+        private Toggle _mcCorrectCToggle;
+        private Toggle _mcCorrectDToggle;
+        private Label _mcCorrectAnswerError;
+        private List<Toggle> _mcCorrectToggles;
+
+        // Multiple Identification: one or more correct answers via A/B/C/D checkboxes
+        private VisualElement _miCorrectAnswerContainer;
+        private Toggle _miCorrectAToggle;
+        private Toggle _miCorrectBToggle;
+        private Toggle _miCorrectCToggle;
+        private Toggle _miCorrectDToggle;
+        private Label _miCorrectAnswerError;
+
+        // True or False: dropdown instead of typing "True"/"False"
+        private VisualElement _trueFalseContainer;
+        private DropdownField _trueFalseAnswerDropdown;
+
+        // Enumeration: answers added one at a time
+        private VisualElement _enumerationContainer;
+        private VisualElement _enumerationAnswersList;
+        private Button _enumerationAddAnswerButton;
+        private Label _enumerationAnswerError;
+        private readonly List<TextField> _enumerationAnswerFields = new List<TextField>();
+
+        // Image-Based: anatomy system -> structure, with a live preview.
+        // Structure is no longer picked via an in-modal chip list - the teacher
+        // taps "View 3D Model" and picks the structure on a dedicated 3D viewer
+        // screen instead (not implemented yet, see OnImageBasedView3DButtonClicked).
+        private VisualElement _imageBasedContainer;
+        private DropdownField _imageBasedSystemDropdown;
+        private Button _imageBasedView3DButton;
+        private VisualElement _imageBasedPreview;
+        private Label _imageBasedPreviewLabel;
+        private string _imageBasedSelectedStructure;
+
+        private static readonly Dictionary<string, List<string>> AnatomySystemStructures = new Dictionary<string, List<string>>
+        {
+            { "Skeletal", new List<string> { "Femur", "Tibia", "Fibula", "Humerus", "Radius", "Ulna", "Skull", "Pelvis", "Scapula", "Sternum" } },
+            { "Muscular", new List<string> { "Biceps Brachii", "Triceps Brachii", "Deltoid", "Quadriceps", "Hamstrings", "Gastrocnemius", "Trapezius", "Rectus Abdominis" } },
+            { "Circulatory", new List<string> { "Heart", "Aorta", "Pulmonary Artery", "Superior Vena Cava", "Inferior Vena Cava", "Carotid Artery" } },
+            { "Respiratory", new List<string> { "Lungs", "Trachea", "Diaphragm", "Bronchi", "Larynx", "Pharynx" } },
+        };
+        private static readonly List<string> AnatomySystemDisplayChoices = new List<string>(AnatomySystemStructures.Keys);
+
+        private static readonly Dictionary<string, string> AnatomySystemNoun = new Dictionary<string, string>
+        {
+            { "Skeletal", "bone" },
+            { "Muscular", "muscle" },
+            { "Circulatory", "structure" },
+            { "Respiratory", "structure" },
+        };
 
         private QuizData _quizPendingQuestion; // which quiz "Add Question" is currently targeting
 
@@ -332,6 +400,18 @@ namespace Anatomia3D.UI
             _addQuestionCancelButton?.UnregisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionSubmitButton?.UnregisterCallback<ClickEvent>(OnAddQuestionSubmitClicked);
             _questionTypeDropdown?.UnregisterCallback<ChangeEvent<string>>(OnQuestionTypeChanged);
+
+            if (_mcCorrectToggles != null)
+            {
+                foreach (var toggle in _mcCorrectToggles)
+                {
+                    toggle?.UnregisterCallback<ChangeEvent<bool>>(OnMcCorrectToggleChanged);
+                }
+            }
+
+            _imageBasedSystemDropdown?.UnregisterCallback<ChangeEvent<string>>(OnImageBasedSystemChanged);
+            _imageBasedView3DButton?.UnregisterCallback<ClickEvent>(OnImageBasedView3DButtonClicked);
+            _enumerationAddAnswerButton?.UnregisterCallback<ClickEvent>(OnEnumerationAddAnswerClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
             _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
@@ -427,6 +507,7 @@ namespace Anatomia3D.UI
             _addQuestionCloseButton = _screenRoot.Q<Button>("add-question-close-button");
             _addQuestionCancelButton = _screenRoot.Q<Button>("add-question-cancel-button");
             _addQuestionSubmitButton = _screenRoot.Q<Button>("add-question-submit-button");
+            _questionTextLabel = _screenRoot.Q<Label>("question-text-label");
             _questionTextField = _screenRoot.Q<TextField>("question-text-field");
             _questionTextError = _screenRoot.Q<Label>("question-text-error");
             _questionTypeDropdown = _screenRoot.Q<DropdownField>("question-type-dropdown");
@@ -437,9 +518,50 @@ namespace Anatomia3D.UI
             _option4Field = _screenRoot.Q<TextField>("option-4-field");
             _correctAnswerField = _screenRoot.Q<TextField>("correct-answer-field");
             _correctAnswerError = _screenRoot.Q<Label>("correct-answer-error");
+            _identificationContainer = _screenRoot.Q<VisualElement>("identification-container");
             _difficultyDropdown = _screenRoot.Q<DropdownField>("difficulty-dropdown");
             _questionPointsField = _screenRoot.Q<TextField>("question-points-field");
             _addQuestionStatusLabel = _screenRoot.Q<Label>("add-question-status-label");
+
+            _mcCorrectAnswerContainer = _screenRoot.Q<VisualElement>("mc-correct-answer-container");
+            _mcCorrectAToggle = _screenRoot.Q<Toggle>("mc-correct-a-toggle");
+            _mcCorrectBToggle = _screenRoot.Q<Toggle>("mc-correct-b-toggle");
+            _mcCorrectCToggle = _screenRoot.Q<Toggle>("mc-correct-c-toggle");
+            _mcCorrectDToggle = _screenRoot.Q<Toggle>("mc-correct-d-toggle");
+            _mcCorrectAnswerError = _screenRoot.Q<Label>("mc-correct-answer-error");
+            _mcCorrectToggles = new List<Toggle> { _mcCorrectAToggle, _mcCorrectBToggle, _mcCorrectCToggle, _mcCorrectDToggle };
+
+            _miCorrectAnswerContainer = _screenRoot.Q<VisualElement>("mi-correct-answer-container");
+            _miCorrectAToggle = _screenRoot.Q<Toggle>("mi-correct-a-toggle");
+            _miCorrectBToggle = _screenRoot.Q<Toggle>("mi-correct-b-toggle");
+            _miCorrectCToggle = _screenRoot.Q<Toggle>("mi-correct-c-toggle");
+            _miCorrectDToggle = _screenRoot.Q<Toggle>("mi-correct-d-toggle");
+            _miCorrectAnswerError = _screenRoot.Q<Label>("mi-correct-answer-error");
+
+            _trueFalseContainer = _screenRoot.Q<VisualElement>("true-false-container");
+            _trueFalseAnswerDropdown = _screenRoot.Q<DropdownField>("true-false-answer-dropdown");
+            if (_trueFalseAnswerDropdown != null)
+            {
+                _trueFalseAnswerDropdown.choices = new List<string> { "True", "False" };
+                _trueFalseAnswerDropdown.SetValueWithoutNotify("True");
+            }
+
+            _enumerationContainer = _screenRoot.Q<VisualElement>("enumeration-container");
+            _enumerationAnswersList = _screenRoot.Q<VisualElement>("enumeration-answers-list");
+            _enumerationAddAnswerButton = _screenRoot.Q<Button>("enumeration-add-answer-button");
+            _enumerationAnswerError = _screenRoot.Q<Label>("enumeration-answer-error");
+
+            _imageBasedContainer = _screenRoot.Q<VisualElement>("image-based-container");
+            _imageBasedSystemDropdown = _screenRoot.Q<DropdownField>("image-based-system-dropdown");
+            _imageBasedView3DButton = _screenRoot.Q<Button>("image-based-view-3d-button");
+            _imageBasedPreview = _screenRoot.Q<VisualElement>("image-based-preview");
+            _imageBasedPreviewLabel = _screenRoot.Q<Label>("image-based-preview-label");
+            if (_imageBasedSystemDropdown != null)
+            {
+                _imageBasedSystemDropdown.choices = AnatomySystemDisplayChoices;
+                _imageBasedSystemDropdown.SetValueWithoutNotify(AnatomySystemDisplayChoices[0]);
+            }
+            RefreshImageBasedStructureChoices(AnatomySystemDisplayChoices[0]);
 
             if (_questionTypeDropdown != null)
             {
@@ -536,6 +658,18 @@ namespace Anatomia3D.UI
             _addQuestionCancelButton?.RegisterCallback<ClickEvent>(OnAddQuestionCancelClicked);
             _addQuestionSubmitButton?.RegisterCallback<ClickEvent>(OnAddQuestionSubmitClicked);
             _questionTypeDropdown?.RegisterCallback<ChangeEvent<string>>(OnQuestionTypeChanged);
+
+            if (_mcCorrectToggles != null)
+            {
+                foreach (var toggle in _mcCorrectToggles)
+                {
+                    toggle?.RegisterCallback<ChangeEvent<bool>>(OnMcCorrectToggleChanged);
+                }
+            }
+
+            _imageBasedSystemDropdown?.RegisterCallback<ChangeEvent<string>>(OnImageBasedSystemChanged);
+            _imageBasedView3DButton?.RegisterCallback<ClickEvent>(OnImageBasedView3DButtonClicked);
+            _enumerationAddAnswerButton?.RegisterCallback<ClickEvent>(OnEnumerationAddAnswerClicked);
 
             if (_screenRoot != null)
             {
@@ -1238,11 +1372,37 @@ namespace Anatomia3D.UI
             if (_difficultyDropdown != null) _difficultyDropdown.SetValueWithoutNotify("Medium");
             if (_questionPointsField != null) _questionPointsField.value = "10";
 
+            foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
+            {
+                MarkFieldInvalid(optionField, false);
+            }
+            MarkFieldInvalid(_correctAnswerField, false);
+
+            if (_mcCorrectToggles != null)
+            {
+                foreach (var toggle in _mcCorrectToggles) toggle?.SetValueWithoutNotify(false);
+            }
+            foreach (var toggle in new[] { _miCorrectAToggle, _miCorrectBToggle, _miCorrectCToggle, _miCorrectDToggle })
+            {
+                toggle?.SetValueWithoutNotify(false);
+            }
+            _trueFalseAnswerDropdown?.SetValueWithoutNotify("True");
+
+            ResetEnumerationAnswers();
+
+            if (_imageBasedSystemDropdown != null)
+            {
+                _imageBasedSystemDropdown.SetValueWithoutNotify(AnatomySystemDisplayChoices[0]);
+            }
+            RefreshImageBasedStructureChoices(AnatomySystemDisplayChoices[0]);
+
             ClearError(_questionTextError);
             ClearError(_correctAnswerError);
+            ClearError(_mcCorrectAnswerError);
+            ClearError(_miCorrectAnswerError);
+            ClearError(_enumerationAnswerError);
             SetStatus(_addQuestionStatusLabel, string.Empty);
             UpdateOptionsVisibility(QuestionTypeDisplayChoices[0]);
-            UpdateCorrectAnswerHint(QuestionTypeDisplayChoices[0]);
 
             _addQuestionModalOverlay?.RemoveFromClassList("hidden");
         }
@@ -1258,31 +1418,182 @@ namespace Anatomia3D.UI
         private void OnQuestionTypeChanged(ChangeEvent<string> evt)
         {
             UpdateOptionsVisibility(evt.newValue);
-            UpdateCorrectAnswerHint(evt.newValue);
         }
 
+        /// <summary>Shows only the fields relevant to the selected question type - the
+        /// options list is shared by Multiple Choice and Multiple Identification, each
+        /// type gets its own correct-answer control, and the free-text Correct Answer
+        /// field (Identification) is the only type that still asks the teacher to type
+        /// the answer out.</summary>
         private void UpdateOptionsVisibility(string displayType)
         {
-            // Multiple Identification also needs the 4 option fields - that's where
-            // its distractors (e.g. "keyboard" alongside "Skin"/"Hair"/"Nails") live.
-            // Enumeration doesn't use them - it's free-text blanks on the student side.
-            bool showOptions = displayType == "Multiple Choice" || displayType == "Multiple Identification";
+            bool isMultipleChoice = displayType == "Multiple Choice";
+            bool isTrueFalse = displayType == "True or False";
+            bool isIdentification = displayType == "Identification";
+            bool isEnumeration = displayType == "Enumeration";
+            bool isMultipleIdentification = displayType == "Multiple Identification";
+            bool isImageBased = displayType == "Image Based";
+
+            bool showOptions = isMultipleChoice || isMultipleIdentification;
+            bool showQuestionText = !isImageBased;
+
             _optionsContainer?.EnableInClassList("hidden", !showOptions);
+            _mcCorrectAnswerContainer?.EnableInClassList("hidden", !isMultipleChoice);
+            _miCorrectAnswerContainer?.EnableInClassList("hidden", !isMultipleIdentification);
+            _trueFalseContainer?.EnableInClassList("hidden", !isTrueFalse);
+            _enumerationContainer?.EnableInClassList("hidden", !isEnumeration);
+            _imageBasedContainer?.EnableInClassList("hidden", !isImageBased);
+            _identificationContainer?.EnableInClassList("hidden", !isIdentification);
+
+            // Image-Based questions are generated from the System/Structure picked below,
+            // so the free-typed question prompt isn't needed for that type.
+            _questionTextLabel?.EnableInClassList("hidden", !showQuestionText);
+            _questionTextField?.EnableInClassList("hidden", !showQuestionText);
+            if (!showQuestionText) ClearError(_questionTextError);
+            else _questionTextError?.EnableInClassList("hidden", string.IsNullOrEmpty(_questionTextError?.text));
         }
 
-        /// <summary>Correct Answer is a single TextField for every question type, so this
-        /// swaps its placeholder to spell out the expected format per type.</summary>
-        private void UpdateCorrectAnswerHint(string displayType)
+        private void OnMcCorrectToggleChanged(ChangeEvent<bool> evt)
         {
-            if (_correctAnswerField == null) return;
+            if (!evt.newValue || _mcCorrectToggles == null) return;
 
-            _correctAnswerField.textEdition.placeholder = displayType switch
+            var target = evt.target as Toggle;
+            foreach (var toggle in _mcCorrectToggles)
             {
-                "True or False" => "True or False",
-                "Enumeration" => "Comma-separated, e.g. Epithelial, Connective, Muscle, Nervous",
-                "Multiple Identification" => "Comma-separated, must match option text exactly, e.g. Skin, Hair, Nails",
-                _ => "",
-            };
+                if (toggle != null && toggle != target) toggle.SetValueWithoutNotify(false);
+            }
+            ClearError(_mcCorrectAnswerError);
+        }
+
+        private int GetMcSelectedIndex()
+        {
+            if (_mcCorrectToggles == null) return -1;
+            for (int i = 0; i < _mcCorrectToggles.Count; i++)
+            {
+                if (_mcCorrectToggles[i] != null && _mcCorrectToggles[i].value) return i;
+            }
+            return -1;
+        }
+
+        private List<int> GetMiSelectedIndices()
+        {
+            var indices = new List<int>();
+            var toggles = new[] { _miCorrectAToggle, _miCorrectBToggle, _miCorrectCToggle, _miCorrectDToggle };
+            for (int i = 0; i < toggles.Length; i++)
+            {
+                if (toggles[i] != null && toggles[i].value) indices.Add(i);
+            }
+            return indices;
+        }
+
+        // ---------------- Enumeration: dynamic answer fields ----------------
+
+        private void OnEnumerationAddAnswerClicked(ClickEvent evt) => AddEnumerationAnswerRow(string.Empty);
+
+        private void ResetEnumerationAnswers()
+        {
+            _enumerationAnswersList?.Clear();
+            _enumerationAnswerFields.Clear();
+            AddEnumerationAnswerRow(string.Empty);
+            AddEnumerationAnswerRow(string.Empty);
+        }
+
+        private void AddEnumerationAnswerRow(string value)
+        {
+            if (_enumerationAnswersList == null) return;
+
+            var row = new VisualElement();
+            row.AddToClassList("enumeration-answer-row");
+
+            var badge = new Label();
+            badge.AddToClassList("enumeration-answer-index-badge");
+
+            var field = new TextField { value = value };
+            field.AddToClassList("text-field");
+            field.AddToClassList("enumeration-answer-field");
+
+            var removeButton = new Button(() => RemoveEnumerationAnswerRow(row)) { text = "✕" };
+            removeButton.AddToClassList("enumeration-answer-remove-button");
+
+            row.Add(badge);
+            row.Add(field);
+            row.Add(removeButton);
+
+            _enumerationAnswersList.Add(row);
+            _enumerationAnswerFields.Add(field);
+            RenumberEnumerationRows();
+        }
+
+        private void RemoveEnumerationAnswerRow(VisualElement row)
+        {
+            if (_enumerationAnswersList == null || row == null) return;
+
+            int index = _enumerationAnswersList.IndexOf(row);
+            if (index < 0 || _enumerationAnswerFields.Count <= 1) return; // always keep at least one field
+
+            _enumerationAnswersList.Remove(row);
+            _enumerationAnswerFields.RemoveAt(index);
+            RenumberEnumerationRows();
+        }
+
+        private void RenumberEnumerationRows()
+        {
+            if (_enumerationAnswersList == null) return;
+            int i = 1;
+            foreach (var row in _enumerationAnswersList.Children())
+            {
+                var badge = row.Q<Label>(className: "enumeration-answer-index-badge");
+                if (badge != null) badge.text = $"{i}";
+                i++;
+            }
+        }
+
+        // ---------------- Image-Based: anatomy system/structure/preview ----------------
+
+        private void OnImageBasedSystemChanged(ChangeEvent<string> evt) => RefreshImageBasedStructureChoices(evt.newValue);
+
+        /// <summary>Picks a default structure for the chosen system so CorrectAnswer/
+        /// preview keep working with no explicit picker in this modal. The teacher's
+        /// real pick will come from the 3D viewer screen once it exists - see
+        /// OnImageBasedView3DButtonClicked.</summary>
+        private void RefreshImageBasedStructureChoices(string system)
+        {
+            var structures = AnatomySystemStructures.TryGetValue(system ?? string.Empty, out var list)
+                ? list
+                : AnatomySystemStructures[AnatomySystemDisplayChoices[0]];
+
+            SelectImageBasedStructure(structures.Count > 0 ? structures[0] : null);
+        }
+
+        private void SelectImageBasedStructure(string structure)
+        {
+            _imageBasedSelectedStructure = structure;
+            UpdateImageBasedPreview();
+        }
+
+        /// <summary>Placeholder preview - swap in a real anatomy render/texture per
+        /// structure once those assets are wired up; for now this keeps the teacher's
+        /// selection visibly confirmed.</summary>
+        private void UpdateImageBasedPreview()
+        {
+            if (_imageBasedPreviewLabel == null) return;
+            _imageBasedPreviewLabel.text = string.IsNullOrEmpty(_imageBasedSelectedStructure) ? "Select a structure" : _imageBasedSelectedStructure;
+        }
+
+        /// <summary>"View 3D Model" button - meant to push a dedicated 3D anatomy
+        /// viewer screen where the teacher rotates the model and taps the structure
+        /// to mark as the correct answer. That screen doesn't exist yet, so this is
+        /// just a stub for now.</summary>
+        private void OnImageBasedView3DButtonClicked(ClickEvent evt)
+        {
+            // TODO: implement the 3D model viewer/picker screen, then navigate to it
+            // and have it report the chosen structure back via SelectImageBasedStructure.
+            // Something like:
+            // UIManager.Instance.ShowScreen(ScreenId.ImageBasedStructurePicker, new ImageBasedStructurePickerArgs
+            // {
+            //     System = _imageBasedSystemDropdown != null ? _imageBasedSystemDropdown.value : AnatomySystemDisplayChoices[0],
+            //     OnStructurePicked = SelectImageBasedStructure,
+            // });
         }
 
         private void OnAddQuestionSubmitClicked(ClickEvent evt)
@@ -1293,12 +1604,15 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            string questionText = _questionTextField?.value?.Trim();
-            string correctAnswer = _correctAnswerField?.value?.Trim();
+            string displayType = _questionTypeDropdown != null ? _questionTypeDropdown.value : QuestionTypeDisplayChoices[0];
+            string typeSlug = QuestionTypeDisplayToSlug.TryGetValue(displayType ?? string.Empty, out var slug) ? slug : TypeMultipleChoice;
 
             bool valid = true;
+            string questionText = _questionTextField?.value?.Trim();
 
-            if (string.IsNullOrEmpty(questionText))
+            // Image-Based questions don't require the teacher to type a question -
+            // one is generated below from the selected system/structure.
+            if (typeSlug != TypeImageBased && string.IsNullOrEmpty(questionText))
             {
                 SetError(_questionTextError, "Please enter the question");
                 valid = false;
@@ -1308,14 +1622,116 @@ namespace Anatomia3D.UI
                 ClearError(_questionTextError);
             }
 
-            if (string.IsNullOrEmpty(correctAnswer))
+            var options = new List<string>();
+            string correctAnswer = string.Empty;
+
+            switch (typeSlug)
             {
-                SetError(_correctAnswerError, "Please enter the correct answer");
-                valid = false;
-            }
-            else
-            {
-                ClearError(_correctAnswerError);
+                case TypeMultipleChoice:
+                {
+                    foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
+                    {
+                        string option = optionField?.value?.Trim() ?? string.Empty;
+                        options.Add(option);
+                        bool empty = string.IsNullOrEmpty(option);
+                        MarkFieldInvalid(optionField, empty);
+                        if (empty) valid = false;
+                    }
+
+                    int selected = GetMcSelectedIndex();
+                    if (selected < 0)
+                    {
+                        SetError(_mcCorrectAnswerError, "Please select the correct answer");
+                        valid = false;
+                    }
+                    else
+                    {
+                        ClearError(_mcCorrectAnswerError);
+                        correctAnswer = selected < options.Count ? options[selected] : string.Empty;
+                    }
+                    break;
+                }
+                case TypeMultipleIdentification:
+                {
+                    foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
+                    {
+                        string option = optionField?.value?.Trim() ?? string.Empty;
+                        options.Add(option);
+                        bool empty = string.IsNullOrEmpty(option);
+                        MarkFieldInvalid(optionField, empty);
+                        if (empty) valid = false;
+                    }
+
+                    var selectedIndices = GetMiSelectedIndices();
+                    if (selectedIndices.Count == 0)
+                    {
+                        SetError(_miCorrectAnswerError, "Please select at least one correct answer");
+                        valid = false;
+                    }
+                    else
+                    {
+                        ClearError(_miCorrectAnswerError);
+                        correctAnswer = string.Join(", ", selectedIndices.Where(i => i < options.Count).Select(i => options[i]));
+                    }
+                    break;
+                }
+                case TypeTrueFalse:
+                {
+                    correctAnswer = _trueFalseAnswerDropdown != null ? _trueFalseAnswerDropdown.value : "True";
+                    break;
+                }
+                case TypeEnumeration:
+                {
+                    var answers = _enumerationAnswerFields
+                        .Select(f => f?.value?.Trim() ?? string.Empty)
+                        .Where(a => !string.IsNullOrEmpty(a))
+                        .ToList();
+
+                    if (answers.Count == 0)
+                    {
+                        SetError(_enumerationAnswerError, "Please add at least one answer");
+                        valid = false;
+                    }
+                    else
+                    {
+                        ClearError(_enumerationAnswerError);
+                        correctAnswer = string.Join(", ", answers);
+                    }
+                    break;
+                }
+                case TypeImageBased:
+                {
+                    string system = _imageBasedSystemDropdown != null ? _imageBasedSystemDropdown.value : AnatomySystemDisplayChoices[0];
+                    string structure = _imageBasedSelectedStructure;
+
+                    if (string.IsNullOrEmpty(structure))
+                    {
+                        valid = false;
+                    }
+                    else
+                    {
+                        correctAnswer = structure;
+                        string noun = AnatomySystemNoun.TryGetValue(system ?? string.Empty, out var n) ? n : "structure";
+                        if (string.IsNullOrEmpty(questionText)) questionText = $"What is the name of the highlighted {noun}?";
+                    }
+                    break;
+                }
+                default: // Identification
+                {
+                    correctAnswer = _correctAnswerField?.value?.Trim() ?? string.Empty;
+                    bool empty = string.IsNullOrEmpty(correctAnswer);
+                    MarkFieldInvalid(_correctAnswerField, empty);
+                    if (empty)
+                    {
+                        SetError(_correctAnswerError, "Please enter the correct answer");
+                        valid = false;
+                    }
+                    else
+                    {
+                        ClearError(_correctAnswerError);
+                    }
+                    break;
+                }
             }
 
             if (!valid)
@@ -1324,8 +1740,10 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            string displayType = _questionTypeDropdown != null ? _questionTypeDropdown.value : QuestionTypeDisplayChoices[0];
-            string typeSlug = QuestionTypeDisplayToSlug.TryGetValue(displayType ?? string.Empty, out var slug) ? slug : TypeMultipleChoice;
+            // Every type above still lands in the same underlying data fields that
+            // QuizService persists - keep the (possibly hidden) correct-answer-field in
+            // sync so nothing downstream needs to know which control the teacher used.
+            if (_correctAnswerField != null) _correctAnswerField.value = correctAnswer;
 
             var question = new QuestionData
             {
@@ -1338,11 +1756,7 @@ namespace Anatomia3D.UI
 
             if (typeSlug == TypeMultipleChoice || typeSlug == TypeMultipleIdentification)
             {
-                foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
-                {
-                    string option = optionField?.value?.Trim();
-                    if (!string.IsNullOrEmpty(option)) question.Options.Add(option);
-                }
+                question.Options.AddRange(options);
             }
 
             var quiz = _quizPendingQuestion;
@@ -1464,6 +1878,13 @@ namespace Anatomia3D.UI
                 return value;
             }
             return fallback;
+        }
+
+        /// <summary>Toggles a red outline on a text field that failed validation
+        /// (empty answer choice, empty correct answer, etc).</summary>
+        private void MarkFieldInvalid(TextField field, bool invalid)
+        {
+            field?.EnableInClassList("field-invalid", invalid);
         }
 
         private void SetError(Label label, string message)
