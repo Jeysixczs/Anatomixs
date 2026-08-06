@@ -320,6 +320,7 @@ namespace Anatomia3D.UI
         private QuizData _quizPendingQuestion; // which quiz "Add Question" is currently targeting
 
         private readonly List<QuizData> _currentQuizzes = new List<QuizData>();
+        private bool _realDataReceived;
 
         private void OnEnable()
         {
@@ -363,7 +364,16 @@ namespace Anatomia3D.UI
             CloseCreateQuizModal();
             CloseAddQuestionModal();
 
-            LoadQuizzes();
+            // First time this screen opens this session -> fetch. Every mutation
+            // this screen makes (create/delete quiz, add question) already patches
+            // _currentQuizzes in place, so a re-enable (e.g. switching tabs
+            // elsewhere and coming back) can just repaint from it via
+            // RefreshQuizzesUI()/RefreshStats() above instead of re-fetching. Same
+            // pattern as StudentAchievementsController.
+            if (!_realDataReceived)
+            {
+                LoadQuizzes();
+            }
         }
 
         private void OnDisable()
@@ -692,6 +702,7 @@ namespace Anatomia3D.UI
                 _currentQuizzes.Clear();
                 foreach (var record in records) _currentQuizzes.Add(ToQuizData(record));
 
+                _realDataReceived = true;
                 RefreshQuizzesUI();
                 RefreshStats();
             });

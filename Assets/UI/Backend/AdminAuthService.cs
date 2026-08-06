@@ -601,12 +601,14 @@ namespace Anatomia3D.Backend
         // ---------------- Refresh ----------------
 
         /// <summary>Re-fetches `admins/{uid}` and replaces CurrentAdmin with the
-        /// result, so classroomCount/quizzesCreated reflect anything changed
-        /// elsewhere this session (a classroom created/deleted, a quiz
-        /// published/deleted). Note this does NOT fix studentCount - see
-        /// AdminProfileController, which computes that separately since the
-        /// `admins/{uid}.studentCount` field itself is never incremented
-        /// anywhere and would just come back 0.</summary>
+        /// result. Screens should NOT call this just to open - classroomCount and
+        /// quizzesCreated are kept in sync locally by ApplyClassroomCreated() and
+        /// ApplyQuizzesCreatedDelta() (see below), called right where those
+        /// mutations actually happen, at zero extra reads. Keep this around as a
+        /// manual/catch-all resync rather than an OnEnable habit. Note this still
+        /// wouldn't fix studentCount even if called - see AdminProfileController,
+        /// which computes that separately since `admins/{uid}.studentCount` itself
+        /// is never incremented anywhere and would just come back 0.</summary>
         public void RefreshCurrentAdmin(Action<bool> onComplete = null)
         {
             if (CurrentAdmin == null) { onComplete?.Invoke(false); return; }
@@ -616,6 +618,26 @@ namespace Anatomia3D.Backend
                 if (ok) CurrentAdmin = profile;
                 onComplete?.Invoke(ok);
             });
+        }
+
+        /// <summary>Patches CurrentAdmin.ClassroomCount in place instead of
+        /// re-fetching admins/{uid}. Call right after
+        /// AdminClassroomService.CreateClassroom's transaction commits - it already
+        /// incremented admins/{uid}.classroomCount by 1, so there's nothing left to
+        /// read from Firestore.</summary>
+        public void ApplyClassroomCreated()
+        {
+            if (CurrentAdmin != null) CurrentAdmin.ClassroomCount += 1;
+        }
+
+        /// <summary>Patches CurrentAdmin.QuizzesCreated in place instead of
+        /// re-fetching admins/{uid}. Call right after QuizService.CreateQuiz
+        /// (delta: +1) or QuizService.DeleteQuiz (delta: -1) commits - both already
+        /// write admins/{uid}.quizzesCreated via FieldValue.Increment, so there's
+        /// nothing left to read from Firestore.</summary>
+        public void ApplyQuizzesCreatedDelta(int delta)
+        {
+            if (CurrentAdmin != null) CurrentAdmin.QuizzesCreated += delta;
         }
 
         // ---------------- Helpers ----------------

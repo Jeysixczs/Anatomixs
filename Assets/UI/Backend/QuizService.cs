@@ -223,6 +223,10 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
+                // Patch AdminAuthService.CurrentAdmin locally with what this batch
+                // just wrote (quizzesCreated +1). See AdminAuthService.ApplyQuizzesCreatedDelta.
+                AdminAuthService.Instance?.ApplyQuizzesCreatedDelta(1);
+
                 onComplete?.Invoke(true, null, new QuizRecord
                 {
                     QuizId = quizRef.Id,
@@ -392,6 +396,10 @@ namespace Anatomia3D.Backend
                     onComplete?.Invoke(false, "Could not delete quiz.");
                     return;
                 }
+
+                // Patch AdminAuthService.CurrentAdmin locally with what this batch
+                // just wrote (quizzesCreated -1). See AdminAuthService.ApplyQuizzesCreatedDelta.
+                AdminAuthService.Instance?.ApplyQuizzesCreatedDelta(-1);
 
                 onComplete?.Invoke(true, null);
             });
@@ -644,13 +652,6 @@ namespace Anatomia3D.Backend
                 // level everywhere else.
                 ClassroomService.Instance?.RecordQuizCompletion(
                     classroomId, pointsEarned + bonusXp, percent, result.NewLevel);
-
-                // Patch PlayerSessionManager.CurrentStudent locally with what this
-                // transaction just wrote, so Dashboard/Profile/Achievements read
-                // up-to-date stats without an extra students/{uid} read. See
-                // PlayerSessionManager.ApplyQuizAttemptResult.
-                PlayerSessionManager.Instance?.ApplyQuizAttemptResult(
-                    student.Uid, result.NewTotalPoints, result.NewLevel, result.NewlyEarnedBadgeIds);
 
                 if (result.NewlyEarnedBadgeIds.Count > 0)
                 {

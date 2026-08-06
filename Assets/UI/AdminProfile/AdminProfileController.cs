@@ -188,10 +188,13 @@ namespace Anatomia3D.UI
         private int _studentCount;
 
         /// <summary>Loads AdminAuthService.CurrentAdmin into the header summary
-        /// card and stat row, then (a) re-fetches the admin doc so
-        /// classroomCount/quizzesCreated reflect anything changed elsewhere this
-        /// session, and (b) sums studentCount live across this admin's classrooms
-        /// since the admin doc's own studentCount field is never kept in sync.</summary>
+        /// card and stat row, then sums studentCount live across this admin's
+        /// classrooms since the admin doc's own studentCount field is never kept
+        /// in sync. Doesn't re-fetch the admin doc itself anymore -
+        /// classroomCount/quizzesCreated are kept current locally as soon as a
+        /// classroom or quiz is actually created/deleted (see
+        /// AdminAuthService.ApplyClassroomCreated / ApplyQuizzesCreatedDelta), so
+        /// the cached copy is already accurate by the time this screen opens.</summary>
         public void RefreshFromBackend()
         {
             var admin = AdminAuthService.Instance != null ? AdminAuthService.Instance.CurrentAdmin : null;
@@ -202,11 +205,6 @@ namespace Anatomia3D.UI
             }
 
             ApplyAdminProfile(admin);
-
-            AdminAuthService.Instance.RefreshCurrentAdmin(success =>
-            {
-                if (success) ApplyAdminProfile(AdminAuthService.Instance.CurrentAdmin);
-            });
 
             if (AdminClassroomService.Instance != null)
             {

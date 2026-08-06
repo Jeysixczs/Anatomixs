@@ -168,6 +168,12 @@ namespace Anatomia3D.Backend
                     StudentCount = 0
                 };
 
+                // Patch AdminAuthService.CurrentAdmin locally with what this
+                // transaction just wrote (classroomCount +1), so AdminProfile reads
+                // up-to-date stats without an extra admins/{uid} read. See
+                // AdminAuthService.ApplyClassroomCreated.
+                AdminAuthService.Instance?.ApplyClassroomCreated();
+
                 onComplete?.Invoke(true, null, record);
             });
         }
