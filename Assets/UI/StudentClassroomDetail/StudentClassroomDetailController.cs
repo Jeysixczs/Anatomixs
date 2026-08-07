@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.Backend;
+using Firebase.Firestore;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -108,12 +109,14 @@ namespace Anatomia3D.UI
         /// <summary>A single row in the Overview tab's Announcements section.</summary>
         public struct AnnouncementInfo
         {
+            public string AnnouncementId;
             public string Title;
             public string Body;
             public string DateText;
 
-            public AnnouncementInfo(string title, string body, string dateText)
+            public AnnouncementInfo(string announcementId, string title, string body, string dateText)
             {
+                AnnouncementId = announcementId;
                 Title = title;
                 Body = body;
                 DateText = dateText;
@@ -186,6 +189,7 @@ namespace Anatomia3D.UI
         /// <summary>A single ranked row in the Leaderboard tab.</summary>
         public struct PerformerInfo
         {
+            public string StudentId;
             public string Name;
             public int Level;
             public int QuizzesCompleted;
@@ -193,8 +197,9 @@ namespace Anatomia3D.UI
             public int Points;
             public bool IsCurrentStudent;
 
-            public PerformerInfo(string name, int level, int quizzesCompleted, float scorePercent, int points, bool isCurrentStudent = false)
+            public PerformerInfo(string studentId, string name, int level, int quizzesCompleted, float scorePercent, int points, bool isCurrentStudent = false)
             {
+                StudentId = studentId;
                 Name = name;
                 Level = level;
                 QuizzesCompleted = quizzesCompleted;
@@ -268,6 +273,39 @@ namespace Anatomia3D.UI
         private readonly List<BadgeInfo> _lastBadges = new();
         private int _lastBadgePoints;
 
+        // Live listeners for classroom info / announcements / available quizzes /
+        // leaderboard (roster). Started once per classroom in LoadClassroomContent(),
+        // stopped whenever the classroom changes or this screen is disabled - see
+        // StartClassroomListeners()/StopClassroomListeners(). Scores and Badges stay
+        // one-shot fetches (only this student's own actions can change them, and
+        // those already flow back through PlayerSessionManager.OnStudentProfileChanged
+        // elsewhere), so they're not part of this set.
+        private ListenerRegistration _classroomDetailListener;
+        private ListenerRegistration _announcementsListener;
+        private ListenerRegistration _rosterListener;
+        private ClassroomService.AvailableQuizzesListenerHandle _availableQuizzesHandle;
+
+        /// <summary>Latest value from the classroom-detail listener. The roster listener's
+        /// callback (leaderboard) needs LeaderboardVisible/TeacherName/Description, and
+        /// LoadQuizStartEligibility needs nothing from it directly - but both fire
+        /// independently of each other now that both are live, so each keeps its own
+        /// up-to-date copy instead of threading detail through a single call chain.</summary>
+        private ClassroomService.ClassroomDetailRecord _lastDetail;
+
+        /// <summary>Latest value from the roster listener, cached so OnClassroomDetailUpdated
+        /// can repaint the leaderboard/Classroom Info card the instant LeaderboardVisible (or
+        /// TeacherName/Description) changes, without waiting for the roster itself to
+        /// also change.</summary>
+        private List<ClassroomService.MemberStat> _lastRoster;
+
+        // Keyed row refs for diffed rendering of Announcements/Quizzes/Leaderboard -
+        // patches labels/classes in place instead of Clear()+rebuild on every snapshot,
+        // since a live listener fires far more often than the old one-shot fetch did
+        // (including the local echo of this device's own writes).
+        private readonly Dictionary<string, AnnouncementCardRefs> _announcementCardsById = new();
+        private readonly Dictionary<string, QuizCardRefs> _quizCardsById = new();
+        private readonly Dictionary<string, PerformerRowRefs> _performerRowsById = new();
+
         private void OnEnable()
         {
             Debug.Log("[StudentClassroomDetailController] OnEnable called");
@@ -331,12 +369,28 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            StopClassroomListeners();
 
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        private void StopClassroomListeners()
+        {
+            _classroomDetailListener?.Stop();
+            _classroomDetailListener = null;
+
+            _announcementsListener?.Stop();
+            _announcementsListener = null;
+
+            _rosterListener?.Stop();
+            _rosterListener = null;
+
+            _availableQuizzesHandle?.Stop();
+            _availableQuizzesHandle = null;
         }
 
         private void UnregisterCallbacks()
@@ -469,6 +523,11 @@ namespace Anatomia3D.UI
 
         // ---------------- Loading from ClassroomService ----------------
 
+        /// <summary>Classroom info, announcements, available quizzes, and the leaderboard
+        /// (via the roster) are all driven by live Firestore listeners started here - see
+        /// StartClassroomListeners(). Only Scores (this student's own quiz attempts) and
+        /// the initial Badges load stay as one-shot fetches below, since nothing but this
+        /// student's own actions can change either.</summary>
         private void LoadClassroomContent()
         {
             if (string.IsNullOrEmpty(_classroomId))
@@ -484,88 +543,139 @@ namespace Anatomia3D.UI
             }
 
             // This screen is reused across classrooms (see the OnEnable comment about
-            // surviving screen rebuilds), so if a student opens classroom A then
-            // quickly backs out and opens classroom B, an in-flight Firestore call
-            // for A can still resolve after _classroomId has moved on to B - Task
-            // completion order isn't guaranteed to match call order. Snapshot the id
-            // we're fetching FOR here, and every callback below checks it against
-            // the live _classroomId before touching the UI, so a late response for a
-            // classroom the student already left can never overwrite what's on
-            // screen for the classroom they're now viewing (announcements included).
+            // surviving screen rebuilds), so if a student opens classroom A then quickly
+            // backs out and opens classroom B, stop A's listeners before subscribing to
+            // B's - otherwise a late snapshot for A could still land after the student
+            // has moved on and overwrite what's on screen for B.
+            StopClassroomListeners();
+
             string requestedClassroomId = _classroomId;
-            bool IsStale() => requestedClassroomId != _classroomId;
-
             _lastLoadedClassroomId = requestedClassroomId;
+            _lastDetail = null;
+            _lastRoster = null;
 
-            ClassroomService.Instance.FetchClassroomDetail(requestedClassroomId, detail =>
+            StartClassroomListeners(requestedClassroomId);
+
+            ClassroomService.Instance.FetchMyScores(requestedClassroomId, scores =>
             {
-                if (IsStale() || detail == null) return;
+                if (requestedClassroomId != _lastLoadedClassroomId) return;
 
-                if (detail.IsArchived)
-                {
-                    ShowArchivedBlockedState();
-                    return;
-                }
-
-                HideArchivedBlockedState();
-
-                SetHeaderStats(detail.StudentCount, detail.PublishedQuizIds?.Count ?? 0);
-
-                ClassroomService.Instance.FetchAvailableQuizzes(requestedClassroomId, quizzes =>
-                {
-                    if (IsStale()) return;
-
-                    LoadQuizStartEligibility(quizzes, IsStale);
-                });
-
-                ClassroomService.Instance.FetchClassroomRoster(requestedClassroomId, roster =>
-                {
-                    if (IsStale()) return;
-
-                    var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
-
-                    SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
-
-                    var ranked = new List<ClassroomService.MemberStat>(roster);
-                    ranked.Sort((a, b) => b.Points != a.Points ? b.Points.CompareTo(a.Points) : b.QuizzesCompleted.CompareTo(a.QuizzesCompleted));
-
-                    SetLeaderboard(detail.LeaderboardVisible, ranked.ConvertAll(m => new PerformerInfo(
-                        m.Name, m.Level, m.QuizzesCompleted, m.AvgScorePercent, m.Points,
-                        student != null && m.StudentId == student.Uid)));
-
-                    int myPoints = 0;
-                    if (student != null)
-                    {
-                        var me = roster.Find(m => m.StudentId == student.Uid);
-                        if (me != null) myPoints = me.Points;
-                    }
-                    SetClassroomInfo(detail.TeacherName, detail.Description, myPoints);
-                });
-
-                // Announcements/Scores are only fetched once we know the classroom isn't
-                // archived - both are scoped to requestedClassroomId at the Firestore level
-                // (classrooms/{id}/announcements, this student's own quizAttempts), AND
-                // guarded against a stale/late response painting a previous classroom's
-                // data over this one.
-                ClassroomService.Instance.FetchAnnouncements(requestedClassroomId, announcements =>
-                {
-                    if (IsStale()) return;
-
-                    SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
-                        a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
-                });
-
-                ClassroomService.Instance.FetchMyScores(requestedClassroomId, scores =>
-                {
-                    if (IsStale()) return;
-
-                    SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
-                        s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
-                        s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
-                });
-
-                LoadBadges(detail.TeacherId, IsStale);
+                SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
+                    s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
+                    s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
             });
+        }
+
+        /// <summary>Starts the four live listeners for classroomId and wires their
+        /// callbacks. Each callback re-checks classroomId against _lastLoadedClassroomId
+        /// before touching the UI - StopClassroomListeners() should already prevent a
+        /// stopped listener from delivering another snapshot, but this is a cheap extra
+        /// guard against any snapshot already in flight the instant Stop() is called.</summary>
+        private void StartClassroomListeners(string classroomId)
+        {
+            _classroomDetailListener = ClassroomService.Instance.ListenToClassroomDetail(classroomId, detail =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+                OnClassroomDetailUpdated(classroomId, detail);
+            });
+
+            _announcementsListener = ClassroomService.Instance.ListenToAnnouncements(classroomId, announcements =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+
+                SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
+                    a.AnnouncementId, a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
+            });
+
+            _rosterListener = ClassroomService.Instance.ListenToClassroomRoster(classroomId, roster =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+                OnRosterUpdated(roster);
+            });
+
+            _availableQuizzesHandle = ClassroomService.Instance.ListenToAvailableQuizzes(classroomId, quizzes =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+                LoadQuizStartEligibility(quizzes, () => classroomId != _lastLoadedClassroomId);
+            });
+        }
+
+        /// <summary>Fires once immediately (from ListenToClassroomDetail's first snapshot)
+        /// and again any time the teacher edits this classroom. Drives the archived-block,
+        /// header stats, Overview "Classroom Info" card, and (since LeaderboardVisible
+        /// lives on this doc, not the roster) a leaderboard repaint against whatever
+        /// roster is already cached.</summary>
+        private void OnClassroomDetailUpdated(string classroomId, ClassroomService.ClassroomDetailRecord detail)
+        {
+            if (detail == null) return; // classroom deleted mid-session - leave last-known state on screen
+
+            bool teacherChanged = _lastDetail == null || _lastDetail.TeacherId != detail.TeacherId;
+            _lastDetail = detail;
+
+            if (detail.IsArchived)
+            {
+                ShowArchivedBlockedState();
+                return;
+            }
+
+            HideArchivedBlockedState();
+
+            SetHeaderStats(detail.StudentCount, detail.PublishedQuizIds?.Count ?? 0);
+            ApplyClassroomInfoFromCache();
+
+            if (_lastRoster != null) RenderLeaderboardFromRoster(detail.LeaderboardVisible, _lastRoster);
+
+            // TeacherId essentially never changes for an existing classroom, but guard
+            // anyway - badges are configured per-teacher, so a change would mean
+            // re-fetching a different teacher's config rather than just repainting.
+            if (teacherChanged)
+            {
+                LoadBadges(detail.TeacherId, () => classroomId != _lastLoadedClassroomId);
+            }
+        }
+
+        /// <summary>Fires once immediately (from ListenToClassroomRoster's first snapshot)
+        /// and again any time ANY member of this classroom completes a quiz. Drives the
+        /// Students tab (unsorted) and, combined with the cached LeaderboardVisible flag
+        /// from OnClassroomDetailUpdated, the Leaderboard tab (sorted by points).</summary>
+        private void OnRosterUpdated(List<ClassroomService.MemberStat> roster)
+        {
+            _lastRoster = roster;
+
+            SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
+            RenderLeaderboardFromRoster(_lastDetail?.LeaderboardVisible ?? false, roster);
+            ApplyClassroomInfoFromCache();
+        }
+
+        /// <summary>Pushes the Overview tab's "Classroom Info" card from whatever detail +
+        /// roster are currently cached. Called from both listeners' callbacks since
+        /// TeacherName/Description come from detail but "my points in this classroom"
+        /// comes from the roster - either one updating should repaint it.</summary>
+        private void ApplyClassroomInfoFromCache()
+        {
+            if (_lastDetail == null) return;
+
+            int myPoints = 0;
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+            if (student != null && _lastRoster != null)
+            {
+                var me = _lastRoster.Find(m => m.StudentId == student.Uid);
+                if (me != null) myPoints = me.Points;
+            }
+
+            SetClassroomInfo(_lastDetail.TeacherName, _lastDetail.Description, myPoints);
+        }
+
+        private void RenderLeaderboardFromRoster(bool visibleToStudents, List<ClassroomService.MemberStat> roster)
+        {
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+
+            var ranked = new List<ClassroomService.MemberStat>(roster);
+            ranked.Sort((a, b) => b.Points != a.Points ? b.Points.CompareTo(a.Points) : b.QuizzesCompleted.CompareTo(a.QuizzesCompleted));
+
+            SetLeaderboard(visibleToStudents, ranked.ConvertAll(m => new PerformerInfo(
+                m.StudentId, m.Name, m.Level, m.QuizzesCompleted, m.AvgScorePercent, m.Points,
+                student != null && m.StudentId == student.Uid)));
         }
 
         /// <summary>
@@ -709,12 +819,46 @@ namespace Anatomia3D.UI
             _announcementsList?.EnableInClassList("hidden", !hasData);
 
             if (_announcementsList == null) return;
-            _announcementsList.Clear();
-            if (!hasData) return;
 
-            foreach (var announcement in _lastAnnouncements)
+            // Diffed against _announcementCardsById instead of Clear()+rebuild - the live
+            // ListenToAnnouncements listener can fire this on every keystroke of a teacher
+            // editing an announcement, so a full rebuild here would churn every card in the
+            // list on every snapshot instead of just the one that actually changed.
+            var incomingIds = new HashSet<string>();
+
+            for (int i = 0; i < _lastAnnouncements.Count; i++)
             {
-                _announcementsList.Add(BuildAnnouncementCard(announcement));
+                var announcement = _lastAnnouncements[i];
+                incomingIds.Add(announcement.AnnouncementId);
+
+                if (_announcementCardsById.TryGetValue(announcement.AnnouncementId, out var refs))
+                {
+                    ApplyAnnouncementCardContent(refs, announcement);
+                }
+                else
+                {
+                    refs = BuildAnnouncementCard(announcement);
+                    _announcementCardsById[announcement.AnnouncementId] = refs;
+                }
+
+                if (_announcementsList.IndexOf(refs.Card) != i)
+                {
+                    _announcementsList.Insert(i, refs.Card);
+                }
+            }
+
+            List<string> staleIds = null;
+            foreach (var id in _announcementCardsById.Keys)
+            {
+                if (!incomingIds.Contains(id)) (staleIds ??= new List<string>()).Add(id);
+            }
+            if (staleIds != null)
+            {
+                foreach (var id in staleIds)
+                {
+                    _announcementCardsById[id].Card.RemoveFromHierarchy();
+                    _announcementCardsById.Remove(id);
+                }
             }
         }
 
@@ -751,12 +895,45 @@ namespace Anatomia3D.UI
             _quizzesList?.EnableInClassList("hidden", !hasQuizzes);
 
             if (_quizzesList == null) return;
-            _quizzesList.Clear();
-            if (!hasQuizzes) return;
 
-            foreach (var quiz in _lastQuizzes)
+            // Diffed against _quizCardsById - ListenToAvailableQuizzes fires this every
+            // time the published-quiz SET changes OR any published quiz's own content is
+            // edited, so most updates only actually touch one card.
+            var incomingIds = new HashSet<string>();
+
+            for (int i = 0; i < _lastQuizzes.Count; i++)
             {
-                _quizzesList.Add(BuildQuizCard(quiz));
+                var quiz = _lastQuizzes[i];
+                incomingIds.Add(quiz.QuizId);
+
+                if (_quizCardsById.TryGetValue(quiz.QuizId, out var refs))
+                {
+                    ApplyQuizCardContent(refs, quiz);
+                }
+                else
+                {
+                    refs = BuildQuizCard(quiz);
+                    _quizCardsById[quiz.QuizId] = refs;
+                }
+
+                if (_quizzesList.IndexOf(refs.Card) != i)
+                {
+                    _quizzesList.Insert(i, refs.Card);
+                }
+            }
+
+            List<string> staleIds = null;
+            foreach (var id in _quizCardsById.Keys)
+            {
+                if (!incomingIds.Contains(id)) (staleIds ??= new List<string>()).Add(id);
+            }
+            if (staleIds != null)
+            {
+                foreach (var id in staleIds)
+                {
+                    _quizCardsById[id].Card.RemoveFromHierarchy();
+                    _quizCardsById.Remove(id);
+                }
             }
         }
 
@@ -780,10 +957,45 @@ namespace Anatomia3D.UI
             _leaderboardEmptyState?.EnableInClassList("hidden", hasData);
             _leaderboardList.EnableInClassList("hidden", !hasData);
 
-            _leaderboardList.Clear();
+            // Diffed against _performerRowsById, keyed by StudentId - the roster listener
+            // behind this fires every time ANY classmate completes a quiz, so most updates
+            // only actually change one or two rows' rank/score, not the whole board.
+            var incomingIds = new HashSet<string>();
+
             for (int i = 0; i < _lastLeaderboard.Count; i++)
             {
-                _leaderboardList.Add(BuildPerformerRow(i + 1, _lastLeaderboard[i]));
+                int rank = i + 1;
+                var performer = _lastLeaderboard[i];
+                incomingIds.Add(performer.StudentId);
+
+                if (_performerRowsById.TryGetValue(performer.StudentId, out var refs))
+                {
+                    ApplyPerformerRowContent(refs, rank, performer);
+                }
+                else
+                {
+                    refs = BuildPerformerRow(rank, performer);
+                    _performerRowsById[performer.StudentId] = refs;
+                }
+
+                if (_leaderboardList.IndexOf(refs.Row) != i)
+                {
+                    _leaderboardList.Insert(i, refs.Row);
+                }
+            }
+
+            List<string> staleIds = null;
+            foreach (var id in _performerRowsById.Keys)
+            {
+                if (!incomingIds.Contains(id)) (staleIds ??= new List<string>()).Add(id);
+            }
+            if (staleIds != null)
+            {
+                foreach (var id in staleIds)
+                {
+                    _performerRowsById[id].Row.RemoveFromHierarchy();
+                    _performerRowsById.Remove(id);
+                }
             }
         }
 
@@ -831,26 +1043,62 @@ namespace Anatomia3D.UI
 
         // ---------------- Row builders (built at runtime - lists are dynamic) ----------------
 
-        private VisualElement BuildAnnouncementCard(AnnouncementInfo announcement)
+        /// <summary>Element refs for one already-built announcement card, keyed by
+        /// AnnouncementId in _announcementCardsById, so a later update can patch labels
+        /// in place instead of destroying and recreating the card.</summary>
+        private class AnnouncementCardRefs
+        {
+            public VisualElement Card;
+            public Label TitleLabel;
+            public Label DateLabel;
+            public Label BodyLabel;
+            public AnnouncementInfo LastInfo;
+            public bool HasLastPaint;
+        }
+
+        private AnnouncementCardRefs BuildAnnouncementCard(AnnouncementInfo announcement)
         {
             var card = new VisualElement();
             card.AddToClassList("announcement-card");
 
             var headerRow = new VisualElement();
             headerRow.AddToClassList("announcement-header-row");
-            var titleLabel = new Label(announcement.Title);
+            var titleLabel = new Label();
             titleLabel.AddToClassList("announcement-title-label");
-            var dateLabel = new Label(announcement.DateText);
+            var dateLabel = new Label();
             dateLabel.AddToClassList("announcement-date-label");
             headerRow.Add(titleLabel);
             headerRow.Add(dateLabel);
 
-            var bodyLabel = new Label(announcement.Body);
+            var bodyLabel = new Label();
             bodyLabel.AddToClassList("announcement-body-label");
 
             card.Add(headerRow);
             card.Add(bodyLabel);
-            return card;
+
+            var refs = new AnnouncementCardRefs
+            {
+                Card = card,
+                TitleLabel = titleLabel,
+                DateLabel = dateLabel,
+                BodyLabel = bodyLabel
+            };
+
+            ApplyAnnouncementCardContent(refs, announcement);
+            return refs;
+        }
+
+        private void ApplyAnnouncementCardContent(AnnouncementCardRefs refs, AnnouncementInfo announcement)
+        {
+            var last = refs.LastInfo;
+            bool isFirstPaint = !refs.HasLastPaint;
+
+            if (isFirstPaint || last.Title != announcement.Title) refs.TitleLabel.text = announcement.Title;
+            if (isFirstPaint || last.DateText != announcement.DateText) refs.DateLabel.text = announcement.DateText;
+            if (isFirstPaint || last.Body != announcement.Body) refs.BodyLabel.text = announcement.Body;
+
+            refs.LastInfo = announcement;
+            refs.HasLastPaint = true;
         }
 
         private VisualElement BuildPeerRow(PeerInfo peer, bool isLast)
@@ -877,9 +1125,39 @@ namespace Anatomia3D.UI
             return row;
         }
 
-        private VisualElement BuildQuizCard(QuizCardInfo quiz)
+        /// <summary>Element refs for one already-built quiz card, keyed by QuizId in
+        /// _quizCardsById. The card's content (chips row, start button vs locked badge)
+        /// has enough conditional structure that patching individual children isn't
+        /// worth it - instead ApplyQuizCardContent() only rebuilds the card's CHILDREN
+        /// (via ApplyQuizCardChildren, clear+rebuild) when the incoming QuizCardInfo
+        /// actually differs from the last paint. The Card VisualElement itself is never
+        /// recreated, so an unrelated quiz updating elsewhere in the list never touches
+        /// this one at all.</summary>
+        private class QuizCardRefs
+        {
+            public VisualElement Card;
+            public QuizCardInfo LastQuiz;
+            public bool HasLastPaint;
+        }
+
+        private QuizCardRefs BuildQuizCard(QuizCardInfo quiz)
         {
             var card = new VisualElement();
+            var refs = new QuizCardRefs { Card = card };
+            ApplyQuizCardContent(refs, quiz);
+            return refs;
+        }
+
+        private void ApplyQuizCardContent(QuizCardRefs refs, QuizCardInfo quiz)
+        {
+            if (refs.HasLastPaint && QuizCardInfoEquals(refs.LastQuiz, quiz))
+            {
+                return; // nothing about this quiz changed since the last snapshot
+            }
+
+            var card = refs.Card;
+            card.Clear();
+            card.ClearClassList();
             card.AddToClassList("quiz-card");
             if (!quiz.IsAvailable) card.AddToClassList("quiz-card-locked");
 
@@ -980,7 +1258,18 @@ namespace Anatomia3D.UI
             }
 
             card.Add(bottomRow);
-            return card;
+
+            refs.LastQuiz = quiz;
+            refs.HasLastPaint = true;
+        }
+
+        private static bool QuizCardInfoEquals(QuizCardInfo a, QuizCardInfo b)
+        {
+            return a.QuizId == b.QuizId && a.Title == b.Title && a.Subject == b.Subject
+                && a.Questions == b.Questions && a.TimeMinutes == b.TimeMinutes && a.HasTimeLimit == b.HasTimeLimit
+                && a.MaxAttempts == b.MaxAttempts && a.IsDeadlineEnabled == b.IsDeadlineEnabled
+                && a.DeadlineUtc == b.DeadlineUtc && a.Points == b.Points && a.Difficulty == b.Difficulty
+                && a.IsAvailable == b.IsAvailable && a.StartBlock == b.StartBlock;
         }
 
         private VisualElement BuildMetaChip(string text)
@@ -1004,9 +1293,38 @@ namespace Anatomia3D.UI
             }
         }
 
-        private VisualElement BuildPerformerRow(int rank, PerformerInfo performer)
+        /// <summary>Element refs for one already-built leaderboard row, keyed by StudentId
+        /// in _performerRowsById. Rank affects several classes (gold/silver/bronze) so,
+        /// like ApplyQuizCardContent, ApplyPerformerRowContent rebuilds the row's children
+        /// wholesale when rank or the performer's data changes rather than patching each
+        /// class individually - but the Row VisualElement itself stays stable, so a
+        /// classmate's row updating never touches anyone else's.</summary>
+        private class PerformerRowRefs
+        {
+            public VisualElement Row;
+            public int LastRank;
+            public PerformerInfo LastPerformer;
+            public bool HasLastPaint;
+        }
+
+        private PerformerRowRefs BuildPerformerRow(int rank, PerformerInfo performer)
         {
             var row = new VisualElement();
+            var refs = new PerformerRowRefs { Row = row };
+            ApplyPerformerRowContent(refs, rank, performer);
+            return refs;
+        }
+
+        private void ApplyPerformerRowContent(PerformerRowRefs refs, int rank, PerformerInfo performer)
+        {
+            if (refs.HasLastPaint && refs.LastRank == rank && PerformerInfoEquals(refs.LastPerformer, performer))
+            {
+                return; // neither this student's rank nor their stats changed since the last snapshot
+            }
+
+            var row = refs.Row;
+            row.Clear();
+            row.ClearClassList();
             row.AddToClassList("performer-row");
             if (rank == 1) row.AddToClassList("performer-row-gold");
             else if (rank == 2) row.AddToClassList("performer-row-silver");
@@ -1062,7 +1380,17 @@ namespace Anatomia3D.UI
             row.Add(avatar);
             row.Add(info);
             row.Add(scoreBlock);
-            return row;
+
+            refs.LastRank = rank;
+            refs.LastPerformer = performer;
+            refs.HasLastPaint = true;
+        }
+
+        private static bool PerformerInfoEquals(PerformerInfo a, PerformerInfo b)
+        {
+            return a.StudentId == b.StudentId && a.Name == b.Name && a.Level == b.Level
+                && a.QuizzesCompleted == b.QuizzesCompleted && Mathf.Approximately(a.ScorePercent, b.ScorePercent)
+                && a.Points == b.Points && a.IsCurrentStudent == b.IsCurrentStudent;
         }
 
         private VisualElement BuildScoreCard(ScoreHistoryInfo score)

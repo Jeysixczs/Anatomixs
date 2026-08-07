@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Firebase.Firestore;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -92,7 +94,35 @@ namespace Anatomia3D.UI
         [SerializeField] private bool useMockDataUntilWired = true;
 
         private List<ClassroomSummary> _currentClassrooms = new List<ClassroomSummary>();
-        private bool _realDataReceived;
+
+        /// <summary>Live query subscription started in OnEnable, stopped in OnDisable -
+        /// see ClassroomService.ListenToMyClassrooms. Replaces the old "fetch once per
+        /// session" flag: since the listener is bounded to this screen's visible
+        /// lifetime anyway, there's no separate cache-invalidation flag to manage
+        /// (StudentClassroomController.OnJoinResult's InvalidateStudentClassroomHub()
+        /// call is now a safe no-op, kept for source compatibility).</summary>
+        private ListenerRegistration _classroomsListener;
+
+        /// <summary>Element refs for one already-built classroom card, keyed by
+        /// classroomId, so a later update can patch labels in place instead of
+        /// destroying and recreating the card GameObject.</summary>
+        private class ClassroomCardRefs
+        {
+            public VisualElement Card;
+            public Label NameLabel;
+            public Label CodeLabel;
+            public Label TeacherLabel;
+            public Label StudentsLabel;
+            public Button ViewButton;
+            public ClassroomSummary LastSummary;
+
+            // Kept so ApplyCardContent can unregister the previous closure before
+            // wiring a new one, instead of stacking a new handler on every update.
+            public Action CachedButtonHandler;
+            public EventCallback<ClickEvent> CachedCardHandler;
+        }
+
+        private readonly Dictionary<string, ClassroomCardRefs> _classroomCardsById = new Dictionary<string, ClassroomCardRefs>();
 
         // Last values pushed through SetHeaderStats() - RefreshClassroomsUI() only
         // repaints the classroom list, so OnEnable needs these to restore the three
@@ -142,35 +172,35 @@ namespace Anatomia3D.UI
             RefreshClassroomsUI();
             SetHeaderStats(_lastClassroomCount, _lastTotalClassmates, _lastQuizzesAvailable);
 
-            // First time this screen opens this session -> fetch. After that,
-            // RefreshClassroomsUI()/SetHeaderStats() above already repainted from
-            // cache, so a re-enable (e.g. switching tabs elsewhere and coming back)
-            // doesn't need another Firestore read. Same pattern as
-            // StudentAchievementsController.
-            if (!_realDataReceived)
-            {
-                LoadClassroomsFromBackend();
-            }
+            StartClassroomsListener();
         }
 
         // ---------------- Loading real data ----------------
 
-        private void LoadClassroomsFromBackend()
+        private void StartClassroomsListener()
         {
+            StopClassroomsListener();
+
             bool sessionReady = PlayerSessionManager.Instance != null && PlayerSessionManager.Instance.IsLoggedIn;
 
             if (ClassroomService.Instance != null && sessionReady)
             {
-                ClassroomService.Instance.FetchMyClassrooms(OnClassroomsFetched);
+                _classroomsListener = ClassroomService.Instance.ListenToMyClassrooms(OnClassroomsFetched);
                 return;
             }
 
             Debug.LogWarning("[StudentClassroomHubController] ClassroomService not ready or no student signed in.");
 
-            if (useMockDataUntilWired && _currentClassrooms.Count == 0 && !_realDataReceived)
+            if (useMockDataUntilWired && _currentClassrooms.Count == 0)
             {
                 LoadMockClassroom();
             }
+        }
+
+        private void StopClassroomsListener()
+        {
+            _classroomsListener?.Stop();
+            _classroomsListener = null;
         }
 
         private void OnClassroomsFetched(List<ClassroomService.ClassroomRecord> records)
@@ -213,16 +243,12 @@ namespace Anatomia3D.UI
                     teacherName: "Dr. Smith",
                     studentCount: 4)
             });
-
-            // SetClassrooms() above flips _realDataReceived to true; reset it since
-            // this was mock data, so a later real SetClassrooms([]) call still shows
-            // the empty state instead of being mistaken for "no data yet".
-            _realDataReceived = false;
         }
 
         private void OnDisable()
         {
             UnregisterCallbacks();
+            StopClassroomsListener();
 
             if (_headerGradientTexture != null)
             {
@@ -282,43 +308,51 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Push real values into the three glass stat cards + header subtitle in the header.</summary>
+        /// <summary>Push real values into the three glass stat cards + header subtitle in the header.
+        /// Only actually writes a label whose text changed - Firestore listener callbacks fire on
+        /// every snapshot (including the local echo of this device's own writes), so most calls here
+        /// carry identical numbers to what's already on screen.</summary>
         public void SetHeaderStats(int classroomCount, int totalClassmates, int quizzesAvailable)
         {
             _lastClassroomCount = classroomCount;
             _lastTotalClassmates = totalClassmates;
             _lastQuizzesAvailable = quizzesAvailable;
 
-            if (_headerSubtitleLabel != null)
-                _headerSubtitleLabel.text = $"You're enrolled in {classroomCount} classroom{(classroomCount == 1 ? "" : "s")}";
+            SetLabelIfChanged(_headerSubtitleLabel, $"You're enrolled in {classroomCount} classroom{(classroomCount == 1 ? "" : "s")}");
+            SetLabelIfChanged(_classroomsCountLabel, classroomCount.ToString("N0"));
+            SetLabelIfChanged(_classmatesCountLabel, totalClassmates.ToString("N0"));
+            SetLabelIfChanged(_quizzesAvailableCountLabel, quizzesAvailable.ToString("N0"));
+        }
 
-            if (_classroomsCountLabel != null) _classroomsCountLabel.text = classroomCount.ToString("N0");
-            if (_classmatesCountLabel != null) _classmatesCountLabel.text = totalClassmates.ToString("N0");
-            if (_quizzesAvailableCountLabel != null) _quizzesAvailableCountLabel.text = quizzesAvailable.ToString("N0");
+        private static void SetLabelIfChanged(Label label, string text)
+        {
+            if (label == null || label.text == text) return;
+            label.text = text;
         }
 
         /// <summary>Push the student's enrolled classrooms into "My Classrooms". Pass an empty/null list to show the empty state.</summary>
         public void SetClassrooms(List<ClassroomSummary> classrooms)
         {
             _currentClassrooms = classrooms ?? new List<ClassroomSummary>();
-            _realDataReceived = true;
             RefreshClassroomsUI();
         }
 
-        /// <summary>Call after something changes which classrooms this student is
-        /// enrolled in (e.g. StudentClassroomController.OnJoinResult right after a
-        /// successful join) so the NEXT time this screen opens, OnEnable's
-        /// first-load check in RefreshClassroomsUI()/LoadClassroomsFromBackend()
-        /// doesn't skip the fetch and show a stale list missing the new
-        /// classroom. Cheap no-op if the screen is currently visible - the next
-        /// OnEnable already has to fully re-init anyway.</summary>
+        /// <summary>Kept for source compatibility with StudentClassroomController.OnJoinResult's
+        /// InvalidateStudentClassroomHub() call. No longer needs to do anything: the live listener
+        /// started in OnEnable (see ClassroomService.ListenToMyClassrooms) already reflects a new
+        /// join the moment Firestore's transaction commits, whether or not this screen happens to
+        /// be open at the time.</summary>
         public void InvalidateClassrooms()
         {
-            _realDataReceived = false;
         }
 
         // ---------------- My Classrooms ----------------
 
+        /// <summary>Diffs _currentClassrooms against the cards already on screen instead of
+        /// clearing and rebuilding the whole list: removed classrooms are torn down, unchanged
+        /// ones aren't touched at all, changed ones get their labels patched in place, and only
+        /// genuinely new ones get a freshly-built card. Keeps GameObject churn proportional to
+        /// what actually changed rather than to the size of the list.</summary>
         private void RefreshClassroomsUI()
         {
             bool hasClassrooms = _currentClassrooms != null && _currentClassrooms.Count > 0;
@@ -328,41 +362,79 @@ namespace Anatomia3D.UI
 
             if (_classroomsList == null) return;
 
-            _classroomsList.Clear();
+            var incomingIds = new HashSet<string>();
 
-            if (!hasClassrooms) return;
-
-            foreach (var classroom in _currentClassrooms)
+            if (hasClassrooms)
             {
-                _classroomsList.Add(BuildClassroomCard(classroom));
+                for (int i = 0; i < _currentClassrooms.Count; i++)
+                {
+                    var summary = _currentClassrooms[i];
+                    incomingIds.Add(summary.ClassroomId);
+
+                    if (_classroomCardsById.TryGetValue(summary.ClassroomId, out var refs))
+                    {
+                        UpdateClassroomCard(refs, summary);
+                    }
+                    else
+                    {
+                        refs = BuildClassroomCard(summary);
+                        _classroomCardsById[summary.ClassroomId] = refs;
+                    }
+
+                    // Keep list order in sync with _currentClassrooms - Insert() on an
+                    // already-parented element just moves it, so unaffected cards
+                    // elsewhere in the list aren't touched.
+                    if (_classroomsList.IndexOf(refs.Card) != i)
+                    {
+                        _classroomsList.Insert(i, refs.Card);
+                    }
+                }
+            }
+
+            // Remove cards for classrooms that are no longer in the list (e.g. the
+            // teacher removed this student, or - defensively - an id disappeared).
+            List<string> staleIds = null;
+            foreach (var id in _classroomCardsById.Keys)
+            {
+                if (!incomingIds.Contains(id))
+                {
+                    (staleIds ??= new List<string>()).Add(id);
+                }
+            }
+
+            if (staleIds != null)
+            {
+                foreach (var id in staleIds)
+                {
+                    _classroomCardsById[id].Card.RemoveFromHierarchy();
+                    _classroomCardsById.Remove(id);
+                }
             }
         }
 
-        private VisualElement BuildClassroomCard(ClassroomSummary classroom)
+        private ClassroomCardRefs BuildClassroomCard(ClassroomSummary classroom)
         {
             var card = new VisualElement();
             card.AddToClassList("classroom-card");
-            if (classroom.IsArchived) card.AddToClassList("classroom-card-archived");
 
             var topRow = new VisualElement();
             topRow.AddToClassList("classroom-card-top-row");
 
-            var nameLabel = new Label(classroom.Name);
+            var nameLabel = new Label();
             nameLabel.AddToClassList("classroom-name-label");
 
             var codeBadge = new VisualElement();
             codeBadge.AddToClassList("classroom-code-badge");
-            var codeLabel = new Label(classroom.Code);
+            var codeLabel = new Label();
             codeLabel.AddToClassList("classroom-code-badge-label");
             codeBadge.Add(codeLabel);
 
             topRow.Add(nameLabel);
             topRow.Add(codeBadge);
 
-
             card.Add(topRow);
 
-            var teacherLabel = new Label($"Taught by {classroom.TeacherName}");
+            var teacherLabel = new Label();
             teacherLabel.AddToClassList("classroom-teacher-label");
             card.Add(teacherLabel);
 
@@ -373,35 +445,85 @@ namespace Anatomia3D.UI
             studentsRow.AddToClassList("classroom-students-row");
             var studentsIcon = new VisualElement();
             studentsIcon.AddToClassList("classroom-students-icon");
-            var studentsLabel = new Label($"{classroom.StudentCount} student{(classroom.StudentCount == 1 ? "" : "s")}");
+            var studentsLabel = new Label();
             studentsLabel.AddToClassList("classroom-students-label");
             studentsRow.Add(studentsIcon);
             studentsRow.Add(studentsLabel);
 
-            var viewClassroomButton = new Button(() => OnViewClassroomClicked(classroom))
-            {
-                text = classroom.IsArchived ? "Archived" : "View Classroom"
-            };
+            var viewClassroomButton = new Button();
             viewClassroomButton.AddToClassList("view-classroom-button");
-            if (classroom.IsArchived)
-            {
-                viewClassroomButton.AddToClassList("view-classroom-button-disabled");
-                viewClassroomButton.SetEnabled(false);
-            }
 
             bottomRow.Add(studentsRow);
             bottomRow.Add(viewClassroomButton);
             card.Add(bottomRow);
 
-            // Locked cards don't route into StudentClassroomDetail at all - no whole-card
-            // tap, and the button above is disabled - so an archived classroom is fully
-            // non-interactive here rather than just visually marked.
-            if (!classroom.IsArchived)
+            var refs = new ClassroomCardRefs
             {
-                card.RegisterCallback<ClickEvent>(_ => OnViewClassroomClicked(classroom));
+                Card = card,
+                NameLabel = nameLabel,
+                CodeLabel = codeLabel,
+                TeacherLabel = teacherLabel,
+                StudentsLabel = studentsLabel,
+                ViewButton = viewClassroomButton
+            };
+
+            ApplyCardContent(refs, classroom);
+            return refs;
+        }
+
+        /// <summary>Patches an existing card's labels/handlers in place. Called both right
+        /// after a card is first built and on every later update - ApplyCardContent itself
+        /// only writes a field whose value actually changed.</summary>
+        private void UpdateClassroomCard(ClassroomCardRefs refs, ClassroomSummary classroom)
+        {
+            ApplyCardContent(refs, classroom);
+        }
+
+        private void ApplyCardContent(ClassroomCardRefs refs, ClassroomSummary classroom)
+        {
+            var last = refs.LastSummary;
+            bool isFirstPaint = string.IsNullOrEmpty(last.ClassroomId);
+
+            if (isFirstPaint || last.Name != classroom.Name)
+                SetLabelIfChanged(refs.NameLabel, classroom.Name);
+
+            if (isFirstPaint || last.Code != classroom.Code)
+                SetLabelIfChanged(refs.CodeLabel, classroom.Code);
+
+            if (isFirstPaint || last.TeacherName != classroom.TeacherName)
+                SetLabelIfChanged(refs.TeacherLabel, $"Taught by {classroom.TeacherName}");
+
+            if (isFirstPaint || last.StudentCount != classroom.StudentCount)
+                SetLabelIfChanged(refs.StudentsLabel, $"{classroom.StudentCount} student{(classroom.StudentCount == 1 ? "" : "s")}");
+
+            if (isFirstPaint || last.IsArchived != classroom.IsArchived)
+            {
+                refs.Card.EnableInClassList("classroom-card-archived", classroom.IsArchived);
+                refs.ViewButton.text = classroom.IsArchived ? "Archived" : "View Classroom";
+                refs.ViewButton.EnableInClassList("view-classroom-button-disabled", classroom.IsArchived);
+                refs.ViewButton.SetEnabled(!classroom.IsArchived);
+
+                // Click handlers capture `classroom` by value, so they need re-wiring
+                // whenever the summary they close over changes (archived state, or any
+                // other field a handler might reference later).
+                if (refs.CachedButtonHandler != null) refs.ViewButton.clicked -= refs.CachedButtonHandler;
+                if (refs.CachedCardHandler != null) refs.Card.UnregisterCallback(refs.CachedCardHandler);
+
+                refs.CachedButtonHandler = () => OnViewClassroomClicked(classroom);
+                refs.ViewButton.clicked += refs.CachedButtonHandler;
+
+                if (!classroom.IsArchived)
+                {
+                    refs.CachedCardHandler = _ => OnViewClassroomClicked(classroom);
+                    refs.Card.RegisterCallback<ClickEvent>(refs.CachedCardHandler);
+                }
+                else
+                {
+                    refs.CachedCardHandler = null;
+                }
             }
 
-            return card;
+            refs.LastSummary = classroom;
         }
 
         // ---------------- Button handlers ----------------

@@ -459,15 +459,5 @@ namespace Anatomia3D.UI
             _studentClassroomHubController?.InvalidateClassrooms();
         }
 
-        /// <summary>Call after this admin's classrooms change (e.g. right after
-        /// AdminCreateClassroomController.OnCreateResult's create succeeds) so
-        /// AdminDashboard re-fetches instead of showing a stale classroom
-        /// list/stats next time it's opened. See AdminDashboardController.
-        /// InvalidateClassrooms().</summary>
-        public void InvalidateAdminDashboardClassrooms()
-        {
-            _adminDashboardController?.InvalidateClassrooms();
-        }
-
     }
 }

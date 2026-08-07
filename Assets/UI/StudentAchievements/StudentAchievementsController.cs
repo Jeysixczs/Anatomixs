@@ -79,6 +79,17 @@ namespace Anatomia3D.UI
         private List<string> _lastTeacherIds = new();
         private bool _hasLoadedOnce;
 
+        // The merged, still-Firestore-sourced badge *definitions* (id/name/icon/points
+        // required), keyed by BadgeId - separate from _lastBadges (which also bakes in
+        // per-badge Earned, computed against the student's current points/badgesEarned).
+        // Kept around so a plain points/badge change (OnStudentProfileChanged) can
+        // recompute Earned/progress purely in memory instead of re-querying every
+        // teacher's gamificationSettings doc again.
+        private Dictionary<string, AdminGamificationService.BadgeEntry> _lastConfiguredBadges;
+
+        // Keyed row refs for diffed rendering - avoids Clear()+rebuild on every repaint.
+        private readonly Dictionary<string, BadgeCardRefs> _badgeCardsById = new();
+
         private void OnEnable()
         {
             Debug.Log("[StudentAchievementsController] OnEnable called");
@@ -119,14 +130,22 @@ namespace Anatomia3D.UI
 
             if (_hasLoadedOnce)
             {
-                // Re-apply cached state so the screen isn't briefly blank while a
-                // fresh load is in flight (same pattern as the other controllers).
+                // Re-apply cached state - no network call. Teacher-configured badge
+                // definitions (name/icon/points) rarely change and aren't worth a fresh
+                // read on every open; a points/badgesEarned change is instead caught
+                // live via OnStudentProfileChanged below and recomputed from
+                // _lastConfiguredBadges without touching Firestore at all.
                 RenderBadges();
-                LoadBadgesForTeachers(_lastTeacherIds);
             }
             else
             {
                 LoadData();
+            }
+
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+                PlayerSessionManager.Instance.OnStudentProfileChanged += OnStudentProfileChanged;
             }
         }
 
@@ -134,11 +153,25 @@ namespace Anatomia3D.UI
         {
             UnregisterCallbacks();
 
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+            }
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        /// <summary>A quiz submission can both add points and unlock a new badge - both
+        /// are reflected here purely from the already-cached badge definitions, no
+        /// Firestore read needed.</summary>
+        private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
+        {
+            if (!_hasLoadedOnce || _lastConfiguredBadges == null) return;
+            RenderMergedBadges(student, _lastConfiguredBadges);
         }
 
         private void UnregisterCallbacks()
@@ -294,6 +327,7 @@ namespace Anatomia3D.UI
 
             _hasLoadedOnce = true;
             _lastTotalPoints = student.TotalPoints;
+            _lastConfiguredBadges = configuredBadges;
 
             int earnedCount = badges.Count(b => b.Earned);
             SetSummaryData(student.TotalPoints, earnedCount, badges.Count);
@@ -334,7 +368,7 @@ namespace Anatomia3D.UI
         public void SetSummaryData(int totalPoints, int badgesEarned, int badgesTotal)
         {
             if (_totalPointsLabel != null) _totalPointsLabel.text = totalPoints.ToString("N0");
-            if (_badgesEarnedLabel != null) _badgesEarnedLabel.text = $"{badgesEarned} / {badgesTotal}";
+            if (_badgesEarnedLabel != null) _badgesEarnedLabel.text = $"{badgesEarned}";
         }
 
         /// <summary>Push the full badge list (any count, teacher-configured) into the
@@ -349,53 +383,96 @@ namespace Anatomia3D.UI
             RenderBadges();
         }
 
+        /// <summary>Element refs for one badge card, plus the (badge, currentPoints) pair
+        /// last painted into it - so a repaint can skip a field that hasn't changed and
+        /// skip rebuilding the optional footer row entirely when it wasn't touched.</summary>
+        private class BadgeCardRefs
+        {
+            public VisualElement Card;
+            public VisualElement IconBox;
+            public VisualElement IconContent; // emoji label or lock icon, swapped whole when Earned flips
+            public Label TitleLabel;
+            public Label StatusLabel;
+            public VisualElement ProgressFill;
+            public VisualElement ProgressRow;
+            public Label CompleteLabel;
+            public VisualElement FooterRow;
+            public Label FooterCountLabel;
+            public Label FooterPercentLabel;
+            public BadgeInfo LastBadge;
+            public int LastCurrentPoints;
+            public bool HasLastPaint;
+        }
+
+        /// <summary>Diffs _lastBadges against the cards already on screen (keyed by
+        /// BadgeId) instead of clearing and rebuilding all of them - unlocking a single
+        /// badge, or a points change that only moves one progress bar, now patches just
+        /// that one card.</summary>
         private void RenderBadges()
         {
             if (_badgeList == null) return;
 
-            _badgeList.Clear();
-            foreach (var badge in _lastBadges)
+            var incomingIds = new HashSet<string>();
+
+            for (int i = 0; i < _lastBadges.Count; i++)
             {
-                _badgeList.Add(BuildBadgeCard(badge, _lastTotalPoints));
+                var badge = _lastBadges[i];
+                incomingIds.Add(badge.BadgeId);
+
+                if (_badgeCardsById.TryGetValue(badge.BadgeId, out var refs))
+                {
+                    ApplyBadgeCardContent(refs, badge, _lastTotalPoints);
+                }
+                else
+                {
+                    refs = BuildBadgeCard(badge, _lastTotalPoints);
+                    _badgeCardsById[badge.BadgeId] = refs;
+                }
+
+                // Keep list order in sync with _lastBadges - Insert() on an
+                // already-parented element just moves it, so unaffected cards
+                // elsewhere in the list aren't touched.
+                if (_badgeList.IndexOf(refs.Card) != i)
+                {
+                    _badgeList.Insert(i, refs.Card);
+                }
+            }
+
+            List<string> staleIds = null;
+            foreach (var id in _badgeCardsById.Keys)
+            {
+                if (!incomingIds.Contains(id)) (staleIds ??= new List<string>()).Add(id);
+            }
+            if (staleIds != null)
+            {
+                foreach (var id in staleIds)
+                {
+                    _badgeCardsById[id].Card.RemoveFromHierarchy();
+                    _badgeCardsById.Remove(id);
+                }
             }
         }
 
         // ---------------- Card builder (built at runtime - badges are teacher-configured) ----------------
 
-        private VisualElement BuildBadgeCard(BadgeInfo badge, int currentPoints)
+        private BadgeCardRefs BuildBadgeCard(BadgeInfo badge, int currentPoints)
         {
             var card = new VisualElement();
             card.AddToClassList("badge-card");
-            if (!badge.Earned) card.AddToClassList("badge-card-locked");
 
             var iconBox = new VisualElement();
             iconBox.AddToClassList("badge-icon-box");
-            iconBox.AddToClassList(badge.Earned ? "badge-icon-gold" : "badge-icon-locked");
-
-            if (badge.Earned)
-            {
-                var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
-                emojiLabel.AddToClassList("badge-icon-emoji");
-                iconBox.Add(emojiLabel);
-            }
-            else
-            {
-                var lockIcon = new VisualElement();
-                lockIcon.AddToClassList("badge-lock-icon");
-                iconBox.Add(lockIcon);
-            }
+            card.Add(iconBox);
 
             var info = new VisualElement();
             info.AddToClassList("badge-info");
 
-            var titleLabel = new Label(badge.Name);
+            var titleLabel = new Label();
             titleLabel.AddToClassList("badge-title");
-            if (!badge.Earned) titleLabel.AddToClassList("badge-title-locked");
             info.Add(titleLabel);
 
-            var statusLabel = new Label(badge.Earned ? "Unlocked!" : $"Earn {badge.PointsRequired:N0} points to unlock");
+            var statusLabel = new Label();
             statusLabel.AddToClassList("badge-status");
-            statusLabel.AddToClassList(badge.Earned ? "badge-status-unlocked" : "badge-status-locked");
             info.Add(statusLabel);
 
             var progressRow = new VisualElement();
@@ -404,47 +481,134 @@ namespace Anatomia3D.UI
             var track = new VisualElement();
             track.AddToClassList("progress-track");
 
-            float pct = badge.Earned
-                ? 1f
-                : (badge.PointsRequired > 0 ? Mathf.Clamp01((float)currentPoints / badge.PointsRequired) : 0f);
-
             var fill = new VisualElement();
             fill.AddToClassList("progress-fill");
-            fill.AddToClassList(badge.Earned ? "progress-fill-complete" : "progress-fill-locked");
-            fill.style.width = new Length(pct * 100f, LengthUnit.Percent);
             track.Add(fill);
             progressRow.Add(track);
 
-            if (badge.Earned)
-            {
-                var completeLabel = new Label("\u2713 Completed");
-                completeLabel.AddToClassList("progress-label");
-                completeLabel.AddToClassList("progress-label-complete");
-                progressRow.Add(completeLabel);
-            }
-
             info.Add(progressRow);
+            card.Add(info);
 
-            if (!badge.Earned)
+            var refs = new BadgeCardRefs
             {
-                var footerRow = new VisualElement();
-                footerRow.AddToClassList("badge-progress-footer-row");
+                Card = card,
+                IconBox = iconBox,
+                TitleLabel = titleLabel,
+                StatusLabel = statusLabel,
+                ProgressFill = fill,
+                ProgressRow = progressRow
+            };
 
-                var countLabel = new Label($"{Mathf.Min(currentPoints, badge.PointsRequired):N0} / {badge.PointsRequired:N0}");
-                countLabel.AddToClassList("progress-footer-label");
+            ApplyBadgeCardContent(refs, badge, currentPoints);
+            return refs;
+        }
 
-                var percentLabel = new Label($"{Mathf.RoundToInt(pct * 100f)}%");
-                percentLabel.AddToClassList("progress-footer-label");
-                percentLabel.AddToClassList("progress-footer-label-right");
+        /// <summary>Patches an existing card in place, touching only what changed since
+        /// the last paint (or everything, on first paint).</summary>
+        private void ApplyBadgeCardContent(BadgeCardRefs refs, BadgeInfo badge, int currentPoints)
+        {
+            var last = refs.LastBadge;
+            bool isFirstPaint = !refs.HasLastPaint;
+            bool earnedChanged = isFirstPaint || last.Earned != badge.Earned;
 
-                footerRow.Add(countLabel);
-                footerRow.Add(percentLabel);
-                info.Add(footerRow);
+            float pct = badge.Earned
+                ? 1f
+                : (badge.PointsRequired > 0 ? Mathf.Clamp01((float)currentPoints / badge.PointsRequired) : 0f);
+            float lastPct = last.Earned
+                ? 1f
+                : (last.PointsRequired > 0 ? Mathf.Clamp01((float)refs.LastCurrentPoints / last.PointsRequired) : 0f);
+
+            if (earnedChanged)
+            {
+                refs.Card.EnableInClassList("badge-card-locked", !badge.Earned);
+
+                refs.IconBox.EnableInClassList("badge-icon-gold", badge.Earned);
+                refs.IconBox.EnableInClassList("badge-icon-locked", !badge.Earned);
+                refs.IconContent?.RemoveFromHierarchy();
+
+                if (badge.Earned)
+                {
+                    var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
+                    emojiLabel.AddToClassList("badge-icon-emoji");
+                    refs.IconBox.Add(emojiLabel);
+                    refs.IconContent = emojiLabel;
+                }
+                else
+                {
+                    var lockIcon = new VisualElement();
+                    lockIcon.AddToClassList("badge-lock-icon");
+                    refs.IconBox.Add(lockIcon);
+                    refs.IconContent = lockIcon;
+                }
+
+                refs.TitleLabel.EnableInClassList("badge-title-locked", !badge.Earned);
+
+                refs.StatusLabel.EnableInClassList("badge-status-unlocked", badge.Earned);
+                refs.StatusLabel.EnableInClassList("badge-status-locked", !badge.Earned);
+
+                refs.ProgressFill.EnableInClassList("progress-fill-complete", badge.Earned);
+                refs.ProgressFill.EnableInClassList("progress-fill-locked", !badge.Earned);
+
+                if (badge.Earned && refs.CompleteLabel == null)
+                {
+                    refs.CompleteLabel = new Label("\u2713 Completed");
+                    refs.CompleteLabel.AddToClassList("progress-label");
+                    refs.CompleteLabel.AddToClassList("progress-label-complete");
+                    refs.ProgressRow.Add(refs.CompleteLabel);
+                }
+                else if (!badge.Earned && refs.CompleteLabel != null)
+                {
+                    refs.CompleteLabel.RemoveFromHierarchy();
+                    refs.CompleteLabel = null;
+                }
+
+                if (!badge.Earned && refs.FooterRow == null)
+                {
+                    refs.FooterRow = new VisualElement();
+                    refs.FooterRow.AddToClassList("badge-progress-footer-row");
+
+                    refs.FooterCountLabel = new Label();
+                    refs.FooterCountLabel.AddToClassList("progress-footer-label");
+
+                    refs.FooterPercentLabel = new Label();
+                    refs.FooterPercentLabel.AddToClassList("progress-footer-label");
+                    refs.FooterPercentLabel.AddToClassList("progress-footer-label-right");
+
+                    refs.FooterRow.Add(refs.FooterCountLabel);
+                    refs.FooterRow.Add(refs.FooterPercentLabel);
+                    refs.ProgressRow.parent.Add(refs.FooterRow);
+                }
+                else if (badge.Earned && refs.FooterRow != null)
+                {
+                    refs.FooterRow.RemoveFromHierarchy();
+                    refs.FooterRow = null;
+                    refs.FooterCountLabel = null;
+                    refs.FooterPercentLabel = null;
+                }
             }
 
-            card.Add(iconBox);
-            card.Add(info);
-            return card;
+            if (isFirstPaint || last.Name != badge.Name) refs.TitleLabel.text = badge.Name;
+
+            if (earnedChanged || last.PointsRequired != badge.PointsRequired)
+            {
+                refs.StatusLabel.text = badge.Earned ? "Unlocked!" : $"Earn {badge.PointsRequired:N0} points to unlock";
+            }
+
+            if (earnedChanged || !Mathf.Approximately(pct, lastPct))
+            {
+                refs.ProgressFill.style.width = new Length(pct * 100f, LengthUnit.Percent);
+            }
+
+            if (!badge.Earned && refs.FooterCountLabel != null &&
+                (earnedChanged || last.PointsRequired != badge.PointsRequired || refs.LastCurrentPoints != currentPoints))
+            {
+                refs.FooterCountLabel.text = $"{Mathf.Min(currentPoints, badge.PointsRequired):N0} / {badge.PointsRequired:N0}";
+                refs.FooterPercentLabel.text = $"{Mathf.RoundToInt(pct * 100f)}%";
+            }
+
+            refs.LastBadge = badge;
+            refs.LastCurrentPoints = currentPoints;
+            refs.HasLastPaint = true;
         }
 
         // ---------------- Button handlers ----------------
