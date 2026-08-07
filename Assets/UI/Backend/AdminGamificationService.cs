@@ -78,6 +78,44 @@ namespace Anatomia3D.Backend
         /// synchronous fallback by QuizService if a fresh read isn't available.</summary>
         public GamificationSettings CurrentSettings { get; private set; }
 
+        /// <summary>Last value pushed to each teacherId's ListenToSettingsForTeacher()
+        /// subscribers, keyed by teacherId (empty string key = "no teacher" / levels-only).
+        /// Lets a screen paint instantly from cache in OnEnable, before the listener's
+        /// first callback arrives, instead of showing a blank state while waiting on
+        /// a network round trip.</summary>
+        private readonly Dictionary<string, GamificationSettings> _settingsCacheByTeacher = new Dictionary<string, GamificationSettings>();
+
+        /// <summary>Wraps the two listeners (per-teacher config doc + shared levels doc)
+        /// that back one ListenToSettingsForTeacher() subscription so callers only need
+        /// to hold and Stop() a single object, mirroring ListenerRegistration's shape.</summary>
+        public sealed class SettingsSubscription
+        {
+            private ListenerRegistration _configListener;
+            private ListenerRegistration _levelsListener;
+
+            internal SettingsSubscription(ListenerRegistration configListener, ListenerRegistration levelsListener)
+            {
+                _configListener = configListener;
+                _levelsListener = levelsListener;
+            }
+
+            public void Stop()
+            {
+                _configListener?.Stop();
+                _levelsListener?.Stop();
+                _configListener = null;
+                _levelsListener = null;
+            }
+        }
+
+        /// <summary>Cached settings for a given teacherId (or the "" key used when
+        /// teacherId is null/empty), if ListenToSettingsForTeacher has produced one yet.
+        /// Lets a caller paint synchronously in OnEnable before starting the listener.</summary>
+        public GamificationSettings TryGetCachedSettingsForTeacher(string teacherId)
+        {
+            return _settingsCacheByTeacher.TryGetValue(teacherId ?? "", out var cached) ? cached : null;
+        }
+
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
 
         /// <summary>Per-teacher points+badges doc. Public so QuizService can build the
@@ -153,6 +191,56 @@ namespace Anatomia3D.Backend
                 var levelsSnap = levelsTask.IsFaulted ? null : levelsTask.Result;
                 onComplete?.Invoke(ToSettings(configSnap, levelsSnap));
             });
+        }
+
+        /// <summary>
+        /// Live version of FetchSettingsForTeacher() - call once when a screen that
+        /// needs a teacher's points/badges/levels becomes visible (StudentDashboard,
+        /// StudentClassroomDetail, StudentAchievements, StudentProgress), keep the
+        /// returned SettingsSubscription and Stop() it in OnDisable. onChanged fires
+        /// once immediately with whatever's cached (or the current server values),
+        /// then again any time that teacher edits their points/badges via
+        /// AdminGamificationSettingsController.SaveSettings(), or the shared levels
+        /// doc changes - without the screen needing to be re-opened or re-fetch
+        /// anything itself. Safe to call with a null/empty teacherId (levels-only,
+        /// mirrors FetchSettingsForTeacher's own null-teacherId branch).</summary>
+        public SettingsSubscription ListenToSettingsForTeacher(string teacherId, Action<GamificationSettings> onChanged)
+        {
+            string cacheKey = teacherId ?? "";
+
+            DocumentSnapshot configSnap = null;
+            DocumentSnapshot levelsSnap = null;
+            bool configReady = string.IsNullOrEmpty(teacherId); // no teacherId -> nothing to wait on
+            bool levelsReady = false;
+
+            void Recompute()
+            {
+                if (!configReady || !levelsReady) return;
+
+                var settings = ToSettings(configSnap, levelsSnap);
+                _settingsCacheByTeacher[cacheKey] = settings;
+                onChanged?.Invoke(settings);
+            }
+
+            ListenerRegistration configListener = null;
+            if (!string.IsNullOrEmpty(teacherId))
+            {
+                configListener = ConfigRefFor(teacherId).Listen(snap =>
+                {
+                    configSnap = snap;
+                    configReady = true;
+                    Recompute();
+                });
+            }
+
+            var levelsListener = LevelsRef.Listen(snap =>
+            {
+                levelsSnap = snap;
+                levelsReady = true;
+                Recompute();
+            });
+
+            return new SettingsSubscription(configListener, levelsListener);
         }
 
         /// <summary>

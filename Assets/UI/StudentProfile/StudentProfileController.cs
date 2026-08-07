@@ -98,18 +98,37 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
+            // Paint whatever's already cached immediately (no network wait), then
+            // stay subscribed so a later change - local or from the real-time
+            // listener - repaints this screen without needing to be re-opened.
             RefreshFromBackend();
+
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+                PlayerSessionManager.Instance.OnStudentProfileChanged += OnStudentProfileChanged;
+            }
         }
 
         private void OnDisable()
         {
             UnregisterCallbacks();
 
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+            }
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
+        {
+            ApplyStudent(student);
         }
 
         private void UnregisterCallbacks()

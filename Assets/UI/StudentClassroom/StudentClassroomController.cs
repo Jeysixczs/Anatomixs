@@ -202,6 +202,13 @@ namespace Anatomia3D.UI
                 // else forces a reload.
                 UIManager.Instance.InvalidateStudentClassroomHub();
 
+                // Same idea for the dashboard's Recent Activity feed - a join isn't
+                // covered by PlayerSessionManager.OnStudentProfileChanged (points/level/
+                // badges don't change here), so it needs its own explicit invalidation
+                // or the "Joined 'X'" row wouldn't show up until some other event
+                // happened to trigger a refetch.
+                UIManager.Instance.GetComponent<StudentDashboardController>()?.MarkActivityDirty();
+
                 // Navigate to the dashboard or classroom view
                 UIManager.Instance.ShowStudentDashboard();
             }

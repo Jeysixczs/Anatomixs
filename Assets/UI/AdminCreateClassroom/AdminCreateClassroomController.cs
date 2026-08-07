@@ -195,12 +195,6 @@ namespace Anatomia3D.UI
                 // parameter (record.ClassroomId) - update its signature in UIManager.cs
                 // to match, so AdminClassroomCreatedController can forward it on to
                 // ShowAdminClassroomDetail().
-                // AdminDashboard's "My Classrooms" list/stats only fetch once per
-                // screen instance (see AdminDashboardController.OnEnable) - without
-                // this, a newly-created classroom wouldn't show up there until
-                // something else forces a reload.
-                UIManager.Instance.InvalidateAdminDashboardClassrooms();
-
                 UIManager.Instance.ShowAdminClassroomCreated(record.ClassroomId, record.Code, createdName, 0);
             }
             else

@@ -203,6 +203,37 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        /// <summary>Live version of FetchMyClassrooms() - call when showing
+        /// AdminDashboardController, keep the returned ListenerRegistration and
+        /// Stop() it in OnDisable. Unlike a one-shot fetch, onUpdate fires once
+        /// immediately with the current data (so the caller doesn't need both a
+        /// fetch AND a listener), then again every time this admin's classroom
+        /// docs change for ANY reason - including changes made from elsewhere,
+        /// like a student joining from their own device and incrementing
+        /// studentCount. That cross-device case is exactly what a one-shot fetch
+        /// can never catch, no matter when it's called - the classroom's own
+        /// document didn't change on this device, so there was nothing local to
+        /// invalidate. This is a live server-pushed subscription instead: stop it
+        /// when the screen isn't visible to avoid paying for updates nobody's
+        /// looking at.</summary>
+        public ListenerRegistration ListenToMyClassrooms(Action<List<ClassroomRecord>> onUpdate)
+        {
+            var admin = AdminAuthService.Instance?.CurrentAdmin;
+            if (admin == null) { onUpdate?.Invoke(new List<ClassroomRecord>()); return null; }
+
+            return Db.Collection("classrooms")
+                .WhereEqualTo("teacherId", admin.Uid)
+                .Listen(snapshot =>
+                {
+                    var results = new List<ClassroomRecord>();
+                    foreach (var doc in snapshot.Documents)
+                    {
+                        results.Add(ToRecord(doc));
+                    }
+                    onUpdate?.Invoke(results);
+                });
+        }
+
         /// <summary>Call when showing AdminClassroomDetailController for a specific classroom.</summary>
         public void FetchClassroomDetail(string classroomId, Action<ClassroomRecord> onComplete)
         {

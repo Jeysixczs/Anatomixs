@@ -567,6 +567,7 @@ namespace Anatomia3D.Backend
                 var attemptData = new Dictionary<string, object>
                 {
                     { "studentId", student.Uid },
+                    { "studentName", student.FullName },
                     { "quizId", quizId },
                     { "quizName", quizName },
                     // Duplicated under "quizTitle"/"scoreCorrect"/"scoreTotal"/"timeSpentSeconds" -
@@ -888,6 +889,51 @@ namespace Anatomia3D.Backend
             /// unlocked them were already shown on the quiz-completed entry).</summary>
             public int PointsDelta;
             public Timestamp OccurredAt;
+
+            // ---- Admin-side (AdminDashboardController) card fields ----
+            // Only populated for Type == QuizCompleted rows built by
+            // ListenToRecentActivityForAdmin / ToAdminActivityRecord - the
+            // student-facing FetchRecentActivity() above only ever sets Title/
+            // PointsDelta/OccurredAt and leaves these at their defaults, since
+            // that feed doesn't need a full card breakdown of the student's own
+            // attempt. AdminDashboardController reads these directly instead of
+            // re-parsing Title, so keep them in sync with the Firestore fields
+            // written in SubmitQuizAttemptInternal if either changes.
+            /// <summary>Firestore quizAttempts doc id - stable dedup/diff key for the
+            /// live-updating admin activity feed.</summary>
+            public string DocId;
+            public string StudentName;
+            public string QuizTitle;
+            public string ClassroomName;
+            public int ScoreCorrect;
+            public int ScoreTotal;
+            /// <summary>0-100.</summary>
+            public float ScorePercent;
+            /// <summary>"Completed" for a normal submission ("Missed" rows are filtered
+            /// out before this class is ever constructed - see ToAdminActivityRecord).</summary>
+            public string Status;
+        }
+
+        /// <summary>Handle returned by ListenToRecentActivityForAdmin. Fans out one
+        /// Firestore listener per classroom (same per-classroom query shape as
+        /// FetchRecentActivityForAdmin), so Stop() needs to tear all of them down
+        /// together. Keep this and call Stop() in OnDisable, the same way a plain
+        /// ListenerRegistration is handled elsewhere (e.g. AdminClassroomService.
+        /// ListenToMyClassrooms) - otherwise these keep streaming updates, and
+        /// billing you for reads, long after the dashboard is gone.</summary>
+        public class ActivityListenerHandle
+        {
+            private readonly List<ListenerRegistration> _registrations = new List<ListenerRegistration>();
+            internal void Add(ListenerRegistration registration)
+            {
+                if (registration != null) _registrations.Add(registration);
+            }
+
+            public void Stop()
+            {
+                foreach (var registration in _registrations) registration?.Stop();
+                _registrations.Clear();
+            }
         }
 
         /// <summary>Call when showing StudentDashboardController's Recent Activity card.
@@ -955,7 +1001,8 @@ namespace Anatomia3D.Backend
                                 Type = ActivityType.QuizCompleted,
                                 Title = $"Completed '{quizName}' Quiz",
                                 PointsDelta = pointsEarned + bonusXp,
-                                OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
+                                OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp(),
+                                DocId = doc.Id
                             });
                         }
                     }
@@ -977,12 +1024,202 @@ namespace Anatomia3D.Backend
                                 Type = ActivityType.BadgeEarned,
                                 Title = $"Earned '{FormatBadgeName(doc.Id)}' Badge",
                                 PointsDelta = 0,
-                                OccurredAt = doc.ContainsField("earnedAt") ? doc.GetValue<Timestamp>("earnedAt") : Timestamp.GetCurrentTimestamp()
+                                OccurredAt = doc.ContainsField("earnedAt") ? doc.GetValue<Timestamp>("earnedAt") : Timestamp.GetCurrentTimestamp(),
+                                DocId = doc.Id
                             });
                         }
                     }
                     OnPartComplete();
                 });
+        }
+
+        /// <summary>Call when showing AdminDashboardController's Recent Activity card.
+        /// Same idea as FetchRecentActivity() above but scoped to an admin's
+        /// classrooms instead of one student - fans out one `quizAttempts` query
+        /// per classroomId (same shape as ClassroomService.FetchRecentJoinsForClassrooms
+        /// and FetchNotifications' per-classroom fan-out), merges, sorts newest-first,
+        /// and trims to maxItems. Badge awards aren't included here - those are a
+        /// personal/per-student thing, not really "what happened in my classrooms".</summary>
+        public void FetchRecentActivityForAdmin(List<string> classroomIds, Action<List<ActivityRecord>> onComplete, int maxItems = 8)
+        {
+            if (classroomIds == null || classroomIds.Count == 0) { onComplete?.Invoke(new List<ActivityRecord>()); return; }
+
+            var results = new List<ActivityRecord>();
+            int pending = classroomIds.Count;
+
+            foreach (var classroomId in classroomIds)
+            {
+                Db.Collection("quizAttempts")
+                    .WhereEqualTo("classroomId", classroomId)
+                    .OrderByDescending("completedAt")
+                    .Limit(maxItems)
+                    .GetSnapshotAsync()
+                    .ContinueWithOnMainThread(task =>
+                    {
+                        if (task.IsFaulted)
+                        {
+                            // Most likely cause: Firestore needs a composite index for this
+                            // query (classroomId + completedAt) - check the Firebase console
+                            // (Firestore -> Indexes) or the exception below for a direct
+                            // "create index" link.
+                            Debug.LogError($"[QuizService] FetchRecentActivityForAdmin (quizAttempts) failed for " +
+                                $"classroom {classroomId} - likely a missing Firestore composite index " +
+                                $"(classroomId + completedAt). Exception: {task.Exception}");
+                        }
+                        else if (!task.IsCanceled)
+                        {
+                            foreach (var doc in task.Result.Documents)
+                            {
+                                // Skip auto-recorded "Missed" docs (see RecordMissedAttempt) -
+                                // those aren't something the student did, so they don't
+                                // belong in an activity feed.
+                                bool isMissed = doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed";
+                                if (isMissed) continue;
+
+                                string quizName = doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "a quiz";
+                                // Older attempt docs predate the studentName field added
+                                // above - falls back gracefully rather than showing blank.
+                                string studentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student";
+                                float percent = doc.ContainsField("percent") ? (float)doc.GetValue<double>("percent") : 0f;
+
+                                results.Add(new ActivityRecord
+                                {
+                                    Type = ActivityType.QuizCompleted,
+                                    Title = $"{studentName} completed '{quizName}' ({Mathf.RoundToInt(percent)}%)",
+                                    PointsDelta = 0,
+                                    OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
+                                });
+                            }
+                        }
+
+                        pending--;
+                        if (pending > 0) return;
+
+                        results.Sort((a, b) => b.OccurredAt.ToDateTime().CompareTo(a.OccurredAt.ToDateTime()));
+                        if (results.Count > maxItems)
+                        {
+                            results.RemoveRange(maxItems, results.Count - maxItems);
+                        }
+                        onComplete?.Invoke(results);
+                    });
+            }
+        }
+
+        /// <summary>Live version of FetchRecentActivityForAdmin() - call when showing
+        /// AdminDashboardController, keep the returned handle and Stop() it in
+        /// OnDisable (mirrors how AdminClassroomService.ListenToMyClassrooms /
+        /// its ListenerRegistration is handled). Fans out one real-time listener
+        /// per classroom - same query shape as the one-shot version, just
+        /// swapping GetSnapshotAsync() for Listen() - so this fires onUpdate
+        /// immediately with the current top items (same as a fetch), then again
+        /// the moment any of those classrooms' quizAttempts changes for ANY
+        /// reason, including a student submitting a quiz from their own device
+        /// right now. Each classroom's own last-known top-N list is cached and
+        /// re-merged/re-sorted/trimmed on every single update (from whichever
+        /// classroom changed), so onUpdate always receives one complete,
+        /// de-duplicated, newest-first list - the caller never has to reason
+        /// about which classroom triggered the update or stitch anything
+        /// together itself. That also makes reconnects/re-subscribes safe: a
+        /// fresh Listen() call always redelivers a full current snapshot first,
+        /// so nothing is ever double-counted even if the dashboard is closed and
+        /// reopened.</summary>
+        public ActivityListenerHandle ListenToRecentActivityForAdmin(
+            List<(string classroomId, string classroomName)> classrooms,
+            Action<List<ActivityRecord>> onUpdate,
+            int maxItemsPerClassroom = 8,
+            int maxItemsTotal = 8)
+        {
+            var handle = new ActivityListenerHandle();
+            if (classrooms == null || classrooms.Count == 0) { onUpdate?.Invoke(new List<ActivityRecord>()); return handle; }
+
+            // Latest known top-N rows per classroom, keyed by classroomId. Rebuilt
+            // wholesale from that classroom's own snapshot whenever it fires, then
+            // every classroom's cached rows are flattened/sorted/trimmed together
+            // below - this is what lets N independent per-classroom listeners
+            // behave like one merged feed without ever re-querying Firestore.
+            var latestByClassroom = new Dictionary<string, List<ActivityRecord>>();
+
+            void PushMerged()
+            {
+                var merged = latestByClassroom.Values
+                    .SelectMany(rows => rows)
+                    .OrderByDescending(r => r.OccurredAt.ToDateTime())
+                    .Take(maxItemsTotal)
+                    .ToList();
+                onUpdate?.Invoke(merged);
+            }
+
+            foreach (var (classroomId, classroomName) in classrooms)
+            {
+                if (string.IsNullOrEmpty(classroomId)) continue;
+
+                latestByClassroom[classroomId] = new List<ActivityRecord>();
+
+                var registration = Db.Collection("quizAttempts")
+                    .WhereEqualTo("classroomId", classroomId)
+                    .OrderByDescending("completedAt")
+                    .Limit(maxItemsPerClassroom)
+                    .Listen(snapshot =>
+                    {
+                        var rows = new List<ActivityRecord>();
+                        foreach (var doc in snapshot.Documents)
+                        {
+                            // Skip auto-recorded "Missed" docs (see RecordMissedAttempt) -
+                            // those aren't a submission, so they don't belong in an
+                            // activity feed of quizzes students actually finished.
+                            bool isMissed = doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed";
+                            if (isMissed) continue;
+
+                            rows.Add(ToAdminActivityRecord(doc, classroomName));
+                        }
+
+                        latestByClassroom[classroomId] = rows;
+                        PushMerged();
+                    });
+
+                handle.Add(registration);
+            }
+
+            return handle;
+        }
+
+        /// <summary>Builds one admin-facing ActivityRecord (student/quiz/classroom/score/
+        /// status card fields, not just the flattened Title string FetchRecentActivityForAdmin
+        /// builds) from a quizAttempts doc. Falls back to the legacy scoreCorrect/scoreTotal-less
+        /// correctCount/incorrectCount fields for attempts written before those were added
+        /// (see the "Duplicated under..." comment in SubmitQuizAttemptInternal).</summary>
+        private static ActivityRecord ToAdminActivityRecord(DocumentSnapshot doc, string classroomName)
+        {
+            string studentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student";
+            string quizTitle = doc.ContainsField("quizTitle")
+                ? doc.GetValue<string>("quizTitle")
+                : (doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "a quiz");
+
+            int scoreCorrect = doc.ContainsField("scoreCorrect")
+                ? doc.GetValue<int>("scoreCorrect")
+                : (doc.ContainsField("correctCount") ? doc.GetValue<int>("correctCount") : 0);
+            int scoreTotal = doc.ContainsField("scoreTotal")
+                ? doc.GetValue<int>("scoreTotal")
+                : scoreCorrect + (doc.ContainsField("incorrectCount") ? doc.GetValue<int>("incorrectCount") : 0);
+
+            float percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f;
+            string status = doc.ContainsField("status") ? doc.GetValue<string>("status") : "Completed";
+
+            return new ActivityRecord
+            {
+                Type = ActivityType.QuizCompleted,
+                DocId = doc.Id,
+                StudentName = studentName,
+                QuizTitle = quizTitle,
+                ClassroomName = string.IsNullOrEmpty(classroomName) ? "Classroom" : classroomName,
+                ScoreCorrect = scoreCorrect,
+                ScoreTotal = scoreTotal,
+                ScorePercent = percent,
+                Status = status,
+                Title = $"{studentName} completed '{quizTitle}' ({Mathf.RoundToInt(percent)}%)",
+                PointsDelta = 0,
+                OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
+            };
         }
 
         /// <summary>Turns a badge doc id (e.g. "quiz-master", from AdminGamificationService's

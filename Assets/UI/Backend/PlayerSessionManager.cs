@@ -69,14 +69,31 @@ namespace Anatomia3D.Backend
         /// any) is currently visible.</summary>
         public event Action OnEmailChangeConfirmed;
 
+        /// <summary>Fires whenever CurrentStudent's data actually changes - either
+        /// from a local optimistic patch (ApplyQuizAttemptResult, WriteFullName) or
+        /// from the real-time students/{uid} listener picking up an out-of-band
+        /// change (e.g. a teacher edit, or the same student signed in on another
+        /// device). Does NOT fire on every snapshot callback - only when the
+        /// incoming data differs from what's already cached, so a screen that's
+        /// subscribed won't redraw for no reason. Screens should subscribe in
+        /// OnEnable and unsubscribe in OnDisable rather than re-fetching on open.</summary>
+        public event Action<StudentProfile> OnStudentProfileChanged;
+
         private FirebaseAuth Auth => FirebaseBootstrap.Instance.Auth;
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
+
+        private ListenerRegistration _studentListener;
 
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            StopStudentListener();
         }
 
         // ---------------- Login ----------------
@@ -103,7 +120,7 @@ namespace Anatomia3D.Backend
                         return;
                     }
 
-                    CurrentStudent = profile;
+                    SetCurrentStudentAndListen(profile);
                     onComplete?.Invoke(true, null);
                 });
             });
@@ -189,7 +206,7 @@ namespace Anatomia3D.Backend
                             return;
                         }
 
-                        CurrentStudent = profile;
+                        SetCurrentStudentAndListen(profile);
                         onComplete?.Invoke(true, null);
                     });
                     return;
@@ -244,7 +261,7 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                CurrentStudent = profile;
+                SetCurrentStudentAndListen(profile);
                 onComplete?.Invoke(true, null);
             });
         }
@@ -332,7 +349,7 @@ namespace Anatomia3D.Backend
                         return;
                     }
 
-                    CurrentStudent = profile;
+                    SetCurrentStudentAndListen(profile);
                     onComplete?.Invoke(true, null);
                 });
             });
@@ -435,6 +452,7 @@ namespace Anatomia3D.Backend
                     if (CurrentStudent != null)
                     {
                         CurrentStudent.FullName = fullName;
+                        OnStudentProfileChanged?.Invoke(CurrentStudent);
                     }
                     onComplete?.Invoke(true, null);
                 });
@@ -618,6 +636,7 @@ namespace Anatomia3D.Backend
         public void LogoutStudent()
         {
             CancelInvoke(nameof(PollPendingEmailConfirmation));
+            StopStudentListener();
             Auth.SignOut();
             try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
@@ -637,9 +656,14 @@ namespace Anatomia3D.Backend
         {
             if (CurrentStudent == null) { onComplete?.Invoke(false); return; }
 
-            FetchStudentDoc(CurrentStudent.Uid, (ok, profile, error) =>
+            var uid = CurrentStudent.Uid;
+            FetchStudentDoc(uid, (ok, profile, error) =>
             {
-                if (ok) CurrentStudent = profile;
+                if (ok && CurrentStudent != null && CurrentStudent.Uid == uid && !StudentProfilesEqual(CurrentStudent, profile))
+                {
+                    CurrentStudent = profile;
+                    OnStudentProfileChanged?.Invoke(CurrentStudent);
+                }
                 onComplete?.Invoke(ok);
             });
         }
@@ -671,6 +695,10 @@ namespace Anatomia3D.Backend
                     }
                 }
             }
+
+            // Optimistic UI update - don't wait for the listener's server round-trip
+            // (or its local-write echo, which will match this already and no-op).
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
         }
 
         // ---------------- Helpers ----------------
@@ -691,24 +719,95 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                var snap = task.Result;
-                var authUser = Auth.CurrentUser;
-                var profile = new StudentProfile
-                {
-                    Uid = uid,
-                    FullName = snap.GetValue<string>("fullName"),
-                    Email = authUser?.Email,
-                    EmailVerified = authUser?.IsEmailVerified ?? false,
-                    Level = snap.ContainsField("level") ? snap.GetValue<int>("level") : 1,
-                    TotalPoints = snap.ContainsField("totalPoints") ? snap.GetValue<int>("totalPoints") : 0,
-                    QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0,
-                    BadgesEarned = snap.ContainsField("badgesEarned")
-                        ? new List<string>(snap.GetValue<List<string>>("badgesEarned"))
-                        : new List<string>()
-                };
-
-                onComplete?.Invoke(true, profile, null);
+                onComplete?.Invoke(true, BuildProfileFromSnapshot(uid, task.Result), null);
             });
+        }
+
+        /// <summary>Shared students/{uid} DocumentSnapshot -> StudentProfile mapping,
+        /// used by both the one-shot FetchStudentDoc (login) and the real-time
+        /// listener below, so the two never drift apart on field defaults.</summary>
+        private StudentProfile BuildProfileFromSnapshot(string uid, DocumentSnapshot snap)
+        {
+            var authUser = Auth.CurrentUser;
+            return new StudentProfile
+            {
+                Uid = uid,
+                FullName = snap.GetValue<string>("fullName"),
+                Email = authUser?.Email,
+                EmailVerified = authUser?.IsEmailVerified ?? false,
+                Level = snap.ContainsField("level") ? snap.GetValue<int>("level") : 1,
+                TotalPoints = snap.ContainsField("totalPoints") ? snap.GetValue<int>("totalPoints") : 0,
+                QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0,
+                BadgesEarned = snap.ContainsField("badgesEarned")
+                    ? new List<string>(snap.GetValue<List<string>>("badgesEarned"))
+                    : new List<string>()
+            };
+        }
+
+        // ---------------- Real-time sync ----------------
+
+        /// <summary>Sets CurrentStudent, fires OnStudentProfileChanged once (this is
+        /// always the *first* known-good copy for this session, so it's always a
+        /// real change), and attaches the live students/{uid} listener so any later
+        /// change - local or remote - flows through ApplyIncomingSnapshot instead of
+        /// requiring a screen to re-fetch.</summary>
+        private void SetCurrentStudentAndListen(StudentProfile profile)
+        {
+            CurrentStudent = profile;
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
+            StartStudentListener(profile.Uid);
+        }
+
+        private void StartStudentListener(string uid)
+        {
+            StopStudentListener();
+
+            _studentListener = Db.Collection("students").Document(uid)
+                .Listen(snapshot => ApplyIncomingSnapshot(uid, snapshot));
+        }
+
+        private void StopStudentListener()
+        {
+            _studentListener?.Stop();
+            _studentListener = null;
+        }
+
+        /// <summary>Callback for the live students/{uid} listener. Fires on every
+        /// server round-trip AND on the local optimistic echo of our own writes
+        /// (e.g. right after ApplyQuizAttemptResult patches CurrentStudent and the
+        /// underlying transaction commits) - both of those echoes carry data that
+        /// already matches the cache, so the equality check below is what keeps
+        /// this from re-pushing an identical profile and causing a redundant UI
+        /// redraw. Only a genuine change (a teacher edit, another device, or the
+        /// server confirming a value CurrentStudent didn't already have) reaches
+        /// subscribers.</summary>
+        private void ApplyIncomingSnapshot(string uid, DocumentSnapshot snapshot)
+        {
+            // Stale callback from a listener we've already torn down (e.g. the
+            // student logged out or logged into a different account) between the
+            // server call going out and this callback arriving.
+            if (CurrentStudent == null || CurrentStudent.Uid != uid) return;
+            if (!snapshot.Exists) return;
+
+            var incoming = BuildProfileFromSnapshot(uid, snapshot);
+            if (StudentProfilesEqual(CurrentStudent, incoming)) return;
+
+            CurrentStudent = incoming;
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
+        }
+
+        private static bool StudentProfilesEqual(StudentProfile a, StudentProfile b)
+        {
+            if (a.FullName != b.FullName) return false;
+            if (a.Level != b.Level) return false;
+            if (a.TotalPoints != b.TotalPoints) return false;
+            if (a.QuizzesCompleted != b.QuizzesCompleted) return false;
+            if (a.BadgesEarned.Count != b.BadgesEarned.Count) return false;
+            for (int i = 0; i < a.BadgesEarned.Count; i++)
+            {
+                if (a.BadgesEarned[i] != b.BadgesEarned[i]) return false;
+            }
+            return true;
         }
 
         private static string DescribeAuthError(AggregateException ex)
