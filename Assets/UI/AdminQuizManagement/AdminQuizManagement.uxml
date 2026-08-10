@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
                 <ui:VisualElement name="header" class="header">
                     <ui:VisualElement name="header-top-row" class="header-top-row">
@@ -43,7 +43,7 @@
             <ui:VisualElement name="create-quiz-modal-card" class="modal-card">
                 <ui:VisualElement class="modal-header-row">
                     <ui:VisualElement class="modal-header-text-col">
-                        <ui:Label text="Create New Quiz" class="modal-title"/>
+                        <ui:Label name="create-quiz-modal-title" text="Create New Quiz" class="modal-title"/>
                         <ui:Label text="Add a new quiz to the system" class="modal-subtitle"/>
                     </ui:VisualElement>
                     <ui:Button name="create-quiz-close-button" text="✕" class="modal-close-button"/>
@@ -56,17 +56,38 @@
                 <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
                 <ui:VisualElement class="two-column-row">
                     <ui:VisualElement class="two-column-item two-column-item-left">
-                        <ui:Label text="Time Limit (seconds)" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-time-limit-field" value="600" class="text-field"/>
+                        <ui:Label text="Max Attempts" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-max-attempts-field" value="3" class="text-field"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="two-column-item two-column-item-right">
                         <ui:Label text="Passing Score (%)" class="field-label field-label-spaced"/>
                         <ui:TextField name="quiz-passing-score-field" value="70" class="text-field"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
+                <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
+                <ui:TextField name="quiz-time-limit-custom-field" value="10" class="text-field field-label-spaced hidden" tooltip="Custom time limit, in minutes"/>
+                <ui:VisualElement name="quiz-deadline-toggle-row" class="toggle-row field-label-spaced">
+                    <ui:Toggle name="quiz-deadline-enabled-toggle" label="Set a Deadline" class="deadline-toggle"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quiz-deadline-fields-row" class="hidden">
+                    <ui:Label text="Deadline Date" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="three-column-row">
+                        <ui:DropdownField name="quiz-deadline-month-dropdown" class="dropdown-field three-column-item three-column-item-left"/>
+                        <ui:DropdownField name="quiz-deadline-day-dropdown" class="dropdown-field three-column-item three-column-item-mid"/>
+                        <ui:DropdownField name="quiz-deadline-year-dropdown" class="dropdown-field three-column-item three-column-item-right"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Deadline Time" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="three-column-row">
+                        <ui:DropdownField name="quiz-deadline-hour-dropdown" class="dropdown-field three-column-item three-column-item-left" tooltip="Hour"/>
+                        <ui:DropdownField name="quiz-deadline-minute-dropdown" class="dropdown-field three-column-item three-column-item-mid" tooltip="Minute"/>
+                        <ui:DropdownField name="quiz-deadline-ampm-dropdown" class="dropdown-field three-column-item three-column-item-right" tooltip="AM/PM"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="quiz-deadline-error" text="" class="field-error hidden"/>
                 <ui:Label name="create-quiz-status-label" text="" class="status-label hidden"/>
                 <ui:Button name="create-quiz-submit-button" class="modal-submit-button">
-                    <ui:Label text="Create Quiz" class="modal-submit-label"/>
+                    <ui:Label name="create-quiz-submit-label" text="Create Quiz" class="modal-submit-label"/>
                 </ui:Button>
                 <ui:Button name="create-quiz-cancel-button" text="Cancel" class="modal-cancel-button"/>
             </ui:VisualElement>
@@ -80,21 +101,125 @@
                     </ui:VisualElement>
                     <ui:Button name="add-question-close-button" text="✕" class="modal-close-button"/>
                 </ui:VisualElement>
-                <ui:Label text="Question" class="field-label field-label-spaced"/>
+                <ui:Label text="Question" name="question-text-label" class="field-label field-label-spaced"/>
                 <ui:TextField name="question-text-field" multiline="true" class="text-field text-area"/>
                 <ui:Label name="question-text-error" text="" class="field-error hidden"/>
                 <ui:Label text="Question Type" class="field-label field-label-spaced"/>
                 <ui:DropdownField name="question-type-dropdown" class="dropdown-field"/>
-                <ui:VisualElement name="options-container" class="options-container">
-                    <ui:Label text="Options" class="field-label field-label-spaced"/>
-                    <ui:TextField name="option-1-field" class="text-field option-field"/>
-                    <ui:TextField name="option-2-field" class="text-field option-field"/>
-                    <ui:TextField name="option-3-field" class="text-field option-field"/>
-                    <ui:TextField name="option-4-field" class="text-field option-field"/>
+
+                <!-- Multiple Choice / Multiple Identification: shared answer-choice fields (typed once, reused for the correct-answer picker below) -->
+                <ui:VisualElement name="options-container" class="options-container hidden">
+                    <ui:Label text="Answer Choices" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="option-row">
+                        <ui:Label text="A" class="option-letter-badge"/>
+                        <ui:TextField name="option-1-field" class="text-field option-field"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="option-row">
+                        <ui:Label text="B" class="option-letter-badge"/>
+                        <ui:TextField name="option-2-field" class="text-field option-field"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="option-row">
+                        <ui:Label text="C" class="option-letter-badge"/>
+                        <ui:TextField name="option-3-field" class="text-field option-field"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="option-row">
+                        <ui:Label text="D" class="option-letter-badge"/>
+                        <ui:TextField name="option-4-field" class="text-field option-field"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
-                <ui:TextField name="correct-answer-field" class="text-field"/>
-                <ui:Label name="correct-answer-error" text="" class="field-error hidden"/>
+
+                <!-- Multiple Choice: single correct answer via radio buttons (A/B/C/D) -->
+                <ui:VisualElement name="mc-correct-answer-container" class="correct-answer-container hidden">
+                    <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="correct-answer-choice-row">
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mc-correct-a-toggle" class="radio-toggle"/>
+                            <ui:Label text="A" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mc-correct-b-toggle" class="radio-toggle"/>
+                            <ui:Label text="B" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mc-correct-c-toggle" class="radio-toggle"/>
+                            <ui:Label text="C" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mc-correct-d-toggle" class="radio-toggle"/>
+                            <ui:Label text="D" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="mc-correct-answer-error" text="" class="field-error hidden"/>
+                </ui:VisualElement>
+
+                <!-- Multiple Identification: one or more correct answers via checkboxes (A/B/C/D) -->
+                <ui:VisualElement name="mi-correct-answer-container" class="correct-answer-container hidden">
+                    <ui:Label text="Correct Answer(s)" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="correct-answer-choice-row">
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mi-correct-a-toggle" class="checkbox-toggle"/>
+                            <ui:Label text="A" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mi-correct-b-toggle" class="checkbox-toggle"/>
+                            <ui:Label text="B" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mi-correct-c-toggle" class="checkbox-toggle"/>
+                            <ui:Label text="C" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice">
+                            <ui:Toggle name="mi-correct-d-toggle" class="checkbox-toggle"/>
+                            <ui:Label text="D" class="correct-answer-choice-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="mi-correct-answer-error" text="" class="field-error hidden"/>
+                </ui:VisualElement>
+
+                <!-- True or False: no typing, just pick from a dropdown -->
+                <ui:VisualElement name="true-false-container" class="hidden">
+                    <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
+                    <ui:DropdownField name="true-false-answer-dropdown" class="dropdown-field"/>
+                </ui:VisualElement>
+
+                <!-- Enumeration: answers added one at a time instead of one big textbox -->
+                <ui:VisualElement name="enumeration-container" class="hidden">
+                    <ui:Label text="Answers" class="field-label field-label-spaced"/>
+                    <ui:ScrollView name="enumeration-answers-list" class="enumeration-answers-list" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto"/>
+                    <ui:Button name="enumeration-add-answer-button" class="add-answer-button">
+                        <ui:Label text="+" class="add-answer-plus"/>
+                        <ui:Label text="Add Answer" class="add-answer-label"/>
+                    </ui:Button>
+                    <ui:Label name="enumeration-answer-error" text="" class="field-error hidden"/>
+                </ui:VisualElement>
+
+                <!-- Image-Based: anatomy system -> structure, with a live preview -->
+                <ui:VisualElement name="image-based-container" class="hidden">
+                    <ui:Label text="Anatomy System" class="field-label field-label-spaced"/>
+                    <ui:DropdownField name="image-based-system-dropdown" class="dropdown-field"/>
+                    <ui:Label text="Structure" class="field-label field-label-spaced"/>
+                    <!-- Structure picking moved out of this modal - opens a dedicated 3D
+                         model viewer screen instead of an in-modal chip list. That screen
+                         isn't implemented yet (see OnImageBasedView3DButtonClicked). -->
+                    <ui:Button name="image-based-view-3d-button" class="view-3d-model-button">
+                        <ui:Label text="⬡" class="view-3d-model-icon"/>
+                        <ui:Label text="View 3D Model" class="view-3d-model-label"/>
+                    </ui:Button>
+                    <ui:Label text="Preview" class="field-label field-label-spaced"/>
+                    <ui:VisualElement name="image-based-preview" class="image-based-preview">
+                        <ui:VisualElement name="image-based-preview-icon" class="image-based-preview-icon"/>
+                        <ui:Label name="image-based-preview-label" text="Select a structure" class="image-based-preview-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Identification: simple free-text correct answer (also doubles as the underlying
+                     data field for every other type - see AdminQuizManagementController) -->
+                <ui:VisualElement name="identification-container">
+                    <ui:Label text="Correct Answer" name="correct-answer-label" class="field-label field-label-spaced"/>
+                    <ui:TextField name="correct-answer-field" class="text-field"/>
+                    <ui:Label name="correct-answer-error" text="" class="field-error hidden"/>
+                </ui:VisualElement>
+
                 <ui:VisualElement class="two-column-row">
                     <ui:VisualElement class="two-column-item two-column-item-left">
                         <ui:Label text="Difficulty" class="field-label field-label-spaced"/>

@@ -1,0 +1,750 @@
+/* =========================================================
+   Anatomia 3D - Quiz Screen
+   Reference canvas: 1080 x 1920 (portrait)
+   Scale With Screen Size, match = 0.5
+   All sizes scaled 1.5x from the base design for larger elements.
+   Gradients are painted at runtime onto elements carrying
+   the "gradient-target" class (see QuizScreenController.cs)
+   ========================================================= */
+
+.quiz-root {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: rgb(234, 240, 241);
+}
+
+/* ---------------- HEADER ---------------- */
+
+.header {
+    /* background painted at runtime via generated gradient texture */
+    padding: 60px 48px 42px 48px;
+    border-bottom-left-radius: 48px;
+    border-bottom-right-radius: 48px;
+}
+
+.header-top-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 42px;
+}
+
+.icon-button {
+    width: 66px;
+    height: 66px;
+    border-radius: 33px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    -unity-text-align: middle-center;
+    padding: 0;
+}
+
+.icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.badges-row {
+    flex-direction: row;
+}
+
+.pill {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 27px;
+    padding: 12px 24px;
+    margin-left: 18px;
+}
+
+.pill-icon {
+    font-size: 24px;
+    margin-right: 9px;
+    color: rgb(255, 255, 255);
+}
+
+.pill-label {
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+}
+
+.progress-track {
+    height: 9px;
+    background-color: rgba(255, 255, 255, 0.35);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 21px;
+}
+
+.progress-fill {
+    height: 9px;
+    width: 16%;
+    background-color: rgb(17, 24, 39);
+    border-radius: 5px;
+}
+
+.question-counter {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+/* ---------------- CARD ---------------- */
+
+.body-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+.body-scroll > .unity-scroll-view__content-viewport {
+    overflow: hidden;
+}
+
+/* Unity's ScrollView stretches #unity-content-container to fill the viewport
+   by default, which - with only one short child (.card) - visually centers
+   it with dead gray space above and below, and reports a scrollable range
+   even though nothing actually needs to scroll. Forcing the container back
+   to its natural content height and top alignment fixes both: the card sits
+   directly under the header with no gap, and the view genuinely can't be
+   dragged until the question content is tall enough to overflow. */
+.body-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.body-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+    flex-grow: 0;
+    height: auto;
+    min-height: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.card {
+    background-color: rgb(255, 255, 255);
+    margin: 24px 36px 36px 36px;
+    padding: 42px 36px;
+    border-radius: 36px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.04);
+}
+
+.card-top-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 21px;
+}
+
+.type-label {
+    font-size: 21px;
+    -unity-font-style: bold;
+    color: rgb(59, 130, 246);
+    letter-spacing: 1.5px;
+}
+
+.quiz-label {
+    font-size: 21px;
+    color: rgb(148, 163, 184);
+}
+
+.question-text {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(17, 24, 39);
+    white-space: normal;
+    margin-bottom: 36px;
+}
+
+.answer-container {
+    flex-grow: 1;
+}
+
+.helper-text {
+    font-size: 22px;
+    color: rgb(107, 114, 128);
+    margin-bottom: 18px;
+}
+
+/* ---------------- OPTION ROWS (Multiple Choice / True-False) ---------------- */
+
+.option-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    border-width: 3px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 21px;
+    padding: 27px 30px;
+    margin-bottom: 21px;
+}
+
+.option-row:hover {
+    border-color: rgb(191, 219, 254);
+}
+
+.option-row--selected {
+    border-color: rgb(59, 130, 246);
+    background-color: rgb(239, 246, 255);
+}
+
+.radio-outer {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    border-width: 3px;
+    border-color: rgb(203, 213, 225);
+    align-items: center;
+    justify-content: center;
+    margin-right: 24px;
+}
+
+.option-row--selected .radio-outer {
+    border-color: rgb(59, 130, 246);
+}
+
+.radio-inner {
+    width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    background-color: rgb(17, 24, 39);
+    display: none;
+}
+
+.option-row--selected .radio-inner {
+    display: flex;
+}
+
+.option-label {
+    font-size: 27px;
+    color: rgb(30, 41, 59);
+}
+
+/* ---------------- CHECKBOX ROWS (Multiple Identification) ---------------- */
+
+.checkbox-outer {
+    width: 33px;
+    height: 33px;
+    border-radius: 9px;
+    border-width: 3px;
+    border-color: rgb(203, 213, 225);
+    background-color: rgb(255, 255, 255);
+    align-items: center;
+    justify-content: center;
+    margin-right: 24px;
+}
+
+.option-row--selected .checkbox-outer {
+    background-color: rgb(17, 24, 39);
+    border-color: rgb(17, 24, 39);
+}
+
+.checkbox-check {
+    color: rgb(255, 255, 255);
+    font-size: 21px;
+    -unity-font-style: bold;
+    display: none;
+}
+
+.option-row--selected .checkbox-check {
+    display: flex;
+}
+
+/* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
+
+.answer-text-field {
+    margin-bottom: 21px;
+}
+
+.answer-text-field > .unity-text-field__input {
+    background-color: rgb(243, 244, 246);
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 18px;
+    padding: 24px 27px;
+    font-size: 26px;
+    color: rgb(17, 24, 39);
+}
+
+.answer-text-field > .unity-text-field__input:focus {
+    border-color: rgb(59, 130, 246);
+}
+
+/* ---------------- IMAGE BASED ---------------- */
+
+.image-frame {
+    background-color: rgb(255, 255, 255);
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 21px;
+    align-items: center;
+    justify-content: center;
+    height: 390px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.quiz-image {
+    width: 100%;
+    height: 100%;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.arrow-marker {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ---------------- ACTION BUTTON ---------------- */
+
+.action-button {
+    /* background painted at runtime via generated gradient texture */
+    margin: 12px 36px 42px 36px;
+    height: 96px;
+    border-radius: 24px;
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.action-button--disabled {
+    opacity: 0.55;
+}
+
+/* ---------------- COMPACT BREAKPOINT (narrow / small devices) ---------------- */
+
+.compact .question-text {
+    font-size: 30px;
+}
+
+.compact .option-row {
+    padding: 21px 24px;
+}
+
+.compact .card {
+    padding: 30px 27px;
+    margin: 16px 24px 24px 24px;
+}
+
+.compact .action-button {
+    height: 84px;
+    margin: 9px 24px 30px 24px;
+}
+/* =========================================================
+   Anatomia 3D - Quiz Screen
+   Reference canvas: 1080 x 1920 (portrait)
+   Scale With Screen Size, match = 0.5
+   All sizes scaled 1.5x from the base design for larger elements.
+   Gradients are painted at runtime onto elements carrying
+   the "gradient-target" class (see QuizScreenController.cs)
+   ========================================================= */
+
+.quiz-root {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: rgb(234, 240, 241);
+}
+
+/* ---------------- HEADER ---------------- */
+
+.header {
+    /* background painted at runtime via generated gradient texture */
+    padding: 60px 48px 42px 48px;
+    border-bottom-left-radius: 48px;
+    border-bottom-right-radius: 48px;
+}
+
+.header-top-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 42px;
+}
+
+.icon-button {
+    width: 66px;
+    height: 66px;
+    border-radius: 33px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    -unity-text-align: middle-center;
+    padding: 0;
+}
+
+.icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.badges-row {
+    flex-direction: row;
+}
+
+.pill {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 27px;
+    padding: 12px 24px;
+    margin-left: 18px;
+}
+
+.pill-icon {
+    font-size: 24px;
+    margin-right: 9px;
+    color: rgb(255, 255, 255);
+}
+
+.pill-label {
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+}
+
+.progress-track {
+    height: 9px;
+    background-color: rgba(255, 255, 255, 0.35);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 21px;
+}
+
+.progress-fill {
+    height: 9px;
+    width: 16%;
+    background-color: rgb(17, 24, 39);
+    border-radius: 5px;
+}
+
+.question-counter {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+/* ---------------- CARD ---------------- */
+
+.card-wrapper {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    padding: 24px 36px 36px 36px;
+}
+
+.card {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    flex-direction: column;
+    background-color: rgb(255, 255, 255);
+    padding: 42px 36px;
+    border-radius: 36px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+/* Only the answer options scroll - the card itself (question text, type
+   label, etc.) stays fixed in place under the header. This ScrollView is
+   sized by min-height:0 + flex-grow:1 so it fills whatever room is left in
+   the card after the question text, and only becomes draggable once the
+   options genuinely overflow that space (touch-scroll-type=Clamped). */
+.answer-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.answer-scroll > .unity-scroll-view__content-viewport {
+    overflow: hidden;
+}
+
+/* Same fix as before: stop Unity's ScrollView from stretching/centering its
+   internal content-container - let it hug the answer rows and top-align them. */
+.answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+    flex-grow: 0;
+    height: auto;
+    min-height: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.card-top-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 21px;
+}
+
+.type-label {
+    font-size: 21px;
+    -unity-font-style: bold;
+    color: rgb(59, 130, 246);
+    letter-spacing: 1.5px;
+}
+
+.quiz-label {
+    font-size: 21px;
+    color: rgb(148, 163, 184);
+}
+
+.question-text {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(17, 24, 39);
+    white-space: normal;
+    margin-bottom: 36px;
+}
+
+.answer-container {
+    flex-grow: 1;
+}
+
+.helper-text {
+    font-size: 22px;
+    color: rgb(107, 114, 128);
+    margin-bottom: 18px;
+}
+
+/* ---------------- OPTION ROWS (Multiple Choice / True-False) ---------------- */
+
+.option-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    border-width: 3px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 21px;
+    padding: 27px 30px;
+    margin-bottom: 21px;
+}
+
+.option-row:hover {
+    border-color: rgb(191, 219, 254);
+}
+
+.option-row--selected {
+    border-color: rgb(59, 130, 246);
+    background-color: rgb(239, 246, 255);
+}
+
+.radio-outer {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    border-width: 3px;
+    border-color: rgb(203, 213, 225);
+    align-items: center;
+    justify-content: center;
+    margin-right: 24px;
+}
+
+.option-row--selected .radio-outer {
+    border-color: rgb(59, 130, 246);
+}
+
+.radio-inner {
+    width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    background-color: rgb(17, 24, 39);
+    display: none;
+}
+
+.option-row--selected .radio-inner {
+    display: flex;
+}
+
+.option-label {
+    font-size: 27px;
+    color: rgb(30, 41, 59);
+}
+
+/* ---------------- CHECKBOX ROWS (Multiple Identification) ---------------- */
+
+.checkbox-outer {
+    width: 33px;
+    height: 33px;
+    border-radius: 9px;
+    border-width: 3px;
+    border-color: rgb(203, 213, 225);
+    background-color: rgb(255, 255, 255);
+    align-items: center;
+    justify-content: center;
+    margin-right: 24px;
+}
+
+.option-row--selected .checkbox-outer {
+    background-color: rgb(17, 24, 39);
+    border-color: rgb(17, 24, 39);
+}
+
+.checkbox-check {
+    color: rgb(255, 255, 255);
+    font-size: 21px;
+    -unity-font-style: bold;
+    display: none;
+}
+
+.option-row--selected .checkbox-check {
+    display: flex;
+}
+
+/* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
+
+.answer-text-field {
+    margin-bottom: 21px;
+}
+
+.answer-text-field > .unity-text-field__input {
+    background-color: rgb(243, 244, 246);
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 18px;
+    padding: 24px 27px;
+    font-size: 26px;
+    color: rgb(17, 24, 39);
+}
+
+.answer-text-field > .unity-text-field__input:focus {
+    border-color: rgb(59, 130, 246);
+}
+
+/* ---------------- IMAGE BASED ---------------- */
+
+.image-frame {
+    background-color: rgb(255, 255, 255);
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    border-radius: 21px;
+    align-items: center;
+    justify-content: center;
+    height: 390px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.quiz-image {
+    width: 100%;
+    height: 100%;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.arrow-marker {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ---------------- ACTION BUTTON ---------------- */
+
+.action-button {
+    /* background painted at runtime via generated gradient texture */
+    margin: 12px 36px 42px 36px;
+    height: 96px;
+    border-radius: 24px;
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.action-button--disabled {
+    opacity: 0.55;
+}
+
+/* ---------------- UTILITY ---------------- */
+
+.hidden {
+    display: none;
+}
+
+/* ---------------- BLOCKED OVERLAY (deadline passed / attempts used up) ---------------- */
+
+.blocked-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 18, 28, 0.72);
+    justify-content: center;
+    align-items: center;
+    padding: 53px;
+}
+
+.blocked-card {
+    background-color: rgb(255, 255, 255);
+    border-radius: 32px;
+    padding: 54px 42px;
+    align-items: center;
+    max-width: 720px;
+}
+
+.blocked-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    -unity-text-align: middle-center;
+}
+
+.blocked-message {
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-bottom: 36px;
+}
+
+.blocked-back-button {
+    background-color: rgb(31, 36, 48);
+    margin: 0;
+    padding: 0 48px;
+    height: 90px;
+    border-radius: 24px;
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+/* ---------------- COMPACT BREAKPOINT (narrow / small devices) ---------------- */
+
+.compact .question-text {
+    font-size: 30px;
+}
+
+.compact .option-row {
+    padding: 21px 24px;
+}
+
+.compact .card-wrapper {
+    padding: 16px 24px 24px 24px;
+}
+
+.compact .card {
+    padding: 30px 27px;
+}
+
+.compact .action-button {
+    height: 84px;
+    margin: 9px 24px 30px 24px;
+}

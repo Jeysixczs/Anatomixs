@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Anatomia3D.Backend;
 
 namespace Anatomia3D.UI
 {
@@ -51,6 +53,9 @@ namespace Anatomia3D.UI
         private VisualElement _progressFill;
         private Label _pointsToNextLabel;
 
+        // Level roadmap (all configured levels + points required)
+        private VisualElement _levelRoadmapList;
+
         // Stats
         private Label _quizzesValueLabel;
         private Label _avgScoreValueLabel;
@@ -86,6 +91,15 @@ namespace Anatomia3D.UI
         private VisualElement _categoryCardiovascularFill;
         private Label _categoryCardiovascularPercent;
         private Label _categoryCardiovascularCount;
+
+        // Both PopulateLevelProgress() and PopulateProgressExtras() used to re-hit
+        // Firestore on every single OnEnable, even though this data only ever changes
+        // as a side effect of submitting a quiz (which already fires
+        // PlayerSessionManager.OnStudentProfileChanged). _hasLoadedOnce gates the
+        // network calls to "first open" + "an actual profile change", instead of
+        // "every time this screen becomes visible".
+        private bool _hasLoadedOnce;
+        private readonly Dictionary<int, LevelRoadmapRowRefs> _roadmapRowsByLevel = new Dictionary<int, LevelRoadmapRowRefs>();
 
         private void OnEnable()
         {
@@ -126,17 +140,48 @@ namespace Anatomia3D.UI
             UpdateResponsiveLayout();
 
             ShowWeeklyTab();
+
+            if (!_hasLoadedOnce)
+            {
+                PopulateLevelProgress();
+                PopulateProgressExtras();
+                _hasLoadedOnce = true;
+            }
+            // else: labels/roadmap already reflect the last-known values from when this
+            // screen (or OnStudentProfileChanged) last populated them - nothing to redo
+            // just because the student navigated back here.
+
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+                PlayerSessionManager.Instance.OnStudentProfileChanged += OnStudentProfileChanged;
+            }
         }
 
         private void OnDisable()
         {
             UnregisterCallbacks();
 
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+            }
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        /// <summary>A quiz submission is the only thing that moves points/quizzesCompleted/
+        /// badgesEarned, which is everything both PopulateLevelProgress() and
+        /// PopulateProgressExtras() depend on - so this is the one signal that actually
+        /// warrants a fresh read, instead of polling on every OnEnable.</summary>
+        private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
+        {
+            PopulateLevelProgress();
+            PopulateProgressExtras();
         }
 
         private void UnregisterCallbacks()
@@ -168,6 +213,8 @@ namespace Anatomia3D.UI
             _nextLevelTitleLabel = _screenRoot.Q<Label>("next-level-title-label");
             _progressFill = _screenRoot.Q<VisualElement>("progress-fill");
             _pointsToNextLabel = _screenRoot.Q<Label>("points-to-next-label");
+
+            _levelRoadmapList = _screenRoot.Q<VisualElement>("level-roadmap-list");
 
             _quizzesValueLabel = _screenRoot.Q<Label>("quizzes-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
@@ -213,6 +260,254 @@ namespace Anatomia3D.UI
             {
                 _screenRoot.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
             }
+        }
+
+        // ---------------- Data loading ----------------
+
+        /// <summary>Pulls the signed-in student's points from PlayerSessionManager and the
+        /// level thresholds from AdminGamificationService, updates the Level Progress card
+        /// (current/next level, progress bar, points-to-next) with real numbers, and rebuilds
+        /// the Level Roadmap list below it so the student can see the points required for
+        /// every level - not just the next one.
+        ///
+        /// Note: avg score, badges-earned count, the weekly chart and the category breakdown
+        /// aren't wired up here - PlayerSessionManager.StudentProfile doesn't track those yet
+        /// (no avgScorePercent/badgesEarned fields, no per-day or per-category rollups), so
+        /// those parts of the screen are left as-is. Call SetWeeklyPoints()/SetCategoryProgress()
+        /// /SetProgressData() directly once that data is available.</summary>
+        private void PopulateLevelProgress()
+        {
+            var student = PlayerSessionManager.Instance?.CurrentStudent;
+            if (student == null)
+            {
+                Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
+                    "leaving the Level Progress card and roadmap with placeholder data.");
+                return;
+            }
+
+            if (AdminGamificationService.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
+                    "can't compute level progress or build the roadmap.");
+                return;
+            }
+
+            AdminGamificationService.Instance.FetchSettings(settings =>
+            {
+                var progress = AdminGamificationService.ComputeLevelProgress(settings, student.TotalPoints);
+
+                if (_currentLevelLabel != null) _currentLevelLabel.text = $"Level {progress.level}";
+                if (_currentLevelTitleLabel != null) _currentLevelTitleLabel.text = progress.title;
+                if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {progress.nextLevel}";
+                if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = progress.nextTitle;
+                if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(progress.progress01) * 100f, LengthUnit.Percent);
+                if (_pointsToNextLabel != null)
+                {
+                    _pointsToNextLabel.text = progress.pointsToNext > 0
+                        ? $"{progress.pointsToNext} points to next level"
+                        : "You're at the top level!";
+                }
+
+                if (_quizzesValueLabel != null) _quizzesValueLabel.text = student.QuizzesCompleted.ToString();
+                if (_pointsValueLabel != null) _pointsValueLabel.text = student.TotalPoints.ToString();
+
+                BuildLevelRoadmap(settings.Levels, progress.level, student.TotalPoints);
+            });
+        }
+
+        /// <summary>Fills in the parts PopulateLevelProgress() above leaves alone: average
+        /// score, badges-earned count, the weekly bar chart and the per-category breakdown.
+        /// All come from QuizService.FetchProgressData(), which already aggregates the
+        /// student's quizAttempts for exactly this purpose.</summary>
+        private void PopulateProgressExtras()
+        {
+            if (QuizService.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
+                    "leaving avg score, badges, weekly chart and category breakdown as placeholders.");
+                return;
+            }
+
+            QuizService.Instance.FetchProgressData((success, result) =>
+            {
+                if (!success || result == null) return;
+
+                if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(result.AvgScorePercent)}%";
+                if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
+
+                SetWeeklyPoints(result.WeeklyPoints);
+
+                result.CategoryBreakdown.TryGetValue("skeletal", out var skeletal);
+                result.CategoryBreakdown.TryGetValue("muscular", out var muscular);
+                result.CategoryBreakdown.TryGetValue("nervous", out var nervous);
+                result.CategoryBreakdown.TryGetValue("cardiovascular", out var cardiovascular);
+
+                SetCategoryProgress(
+                    skeletal.quizzes, skeletal.percent01,
+                    muscular.quizzes, muscular.percent01,
+                    nervous.quizzes, nervous.percent01,
+                    cardiovascular.quizzes, cardiovascular.percent01);
+            });
+        }
+
+        /// <summary>Element refs for one roadmap row, plus what was last painted into it,
+        /// so a repaint (e.g. after a points change moves "Current" to the next level)
+        /// only touches the rows whose status actually changed.</summary>
+        private class LevelRoadmapRowRefs
+        {
+            public VisualElement Row;
+            public Label TitleLabel;
+            public Label PointsLabel;
+            public Label StatusLabel;
+            public AdminGamificationService.LevelEntry LastLevel;
+            public int LastCurrentLevelNumber;
+            public int LastTotalPoints;
+            public bool HasLastPaint;
+        }
+
+        /// <summary>Diffs the roadmap against the rows already on screen (keyed by
+        /// LevelNumber) instead of clearing and rebuilding every row on every points
+        /// change - typically only the row that just became "Current" (and the one that
+        /// stops being current) actually needs a repaint.</summary>
+        private void BuildLevelRoadmap(List<AdminGamificationService.LevelEntry> levels, int currentLevelNumber, int totalPoints)
+        {
+            if (_levelRoadmapList == null) return;
+
+            if (levels == null)
+            {
+                foreach (var refs in _roadmapRowsByLevel.Values) refs.Row.RemoveFromHierarchy();
+                _roadmapRowsByLevel.Clear();
+                return;
+            }
+
+            var ordered = new List<AdminGamificationService.LevelEntry>(levels);
+            ordered.Sort((a, b) => a.PointsRequired.CompareTo(b.PointsRequired));
+
+            var incomingLevels = new HashSet<int>();
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                var level = ordered[i];
+                incomingLevels.Add(level.LevelNumber);
+
+                if (_roadmapRowsByLevel.TryGetValue(level.LevelNumber, out var refs))
+                {
+                    ApplyLevelRoadmapRowContent(refs, level, currentLevelNumber, totalPoints);
+                }
+                else
+                {
+                    refs = BuildLevelRoadmapRow(level, currentLevelNumber, totalPoints);
+                    _roadmapRowsByLevel[level.LevelNumber] = refs;
+                }
+
+                if (_levelRoadmapList.IndexOf(refs.Row) != i)
+                {
+                    _levelRoadmapList.Insert(i, refs.Row);
+                }
+            }
+
+            List<int> staleLevels = null;
+            foreach (var levelNumber in _roadmapRowsByLevel.Keys)
+            {
+                if (!incomingLevels.Contains(levelNumber)) (staleLevels ??= new List<int>()).Add(levelNumber);
+            }
+            if (staleLevels != null)
+            {
+                foreach (var levelNumber in staleLevels)
+                {
+                    _roadmapRowsByLevel[levelNumber].Row.RemoveFromHierarchy();
+                    _roadmapRowsByLevel.Remove(levelNumber);
+                }
+            }
+        }
+
+        private LevelRoadmapRowRefs BuildLevelRoadmapRow(AdminGamificationService.LevelEntry level, int currentLevelNumber, int totalPoints)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("level-roadmap-item");
+
+            var badge = new VisualElement();
+            badge.AddToClassList("level-roadmap-badge");
+            var badgeNumber = new Label(level.LevelNumber.ToString());
+            badgeNumber.AddToClassList("level-roadmap-badge-number");
+            badge.Add(badgeNumber);
+
+            var textCol = new VisualElement();
+            textCol.AddToClassList("level-roadmap-text-col");
+            var titleLabel = new Label();
+            titleLabel.AddToClassList("level-roadmap-title");
+            var pointsLabel = new Label();
+            pointsLabel.AddToClassList("level-roadmap-points");
+            textCol.Add(titleLabel);
+            textCol.Add(pointsLabel);
+
+            var statusLabel = new Label();
+            statusLabel.AddToClassList("level-roadmap-status");
+
+            row.Add(badge);
+            row.Add(textCol);
+            row.Add(statusLabel);
+
+            var refs = new LevelRoadmapRowRefs
+            {
+                Row = row,
+                TitleLabel = titleLabel,
+                PointsLabel = pointsLabel,
+                StatusLabel = statusLabel
+            };
+
+            ApplyLevelRoadmapRowContent(refs, level, currentLevelNumber, totalPoints);
+            return refs;
+        }
+
+        /// <summary>Patches an existing roadmap row in place, only touching what changed
+        /// since the last paint (or everything, on first paint).</summary>
+        private void ApplyLevelRoadmapRowContent(LevelRoadmapRowRefs refs, AdminGamificationService.LevelEntry level, int currentLevelNumber, int totalPoints)
+        {
+            bool isFirstPaint = !refs.HasLastPaint;
+            var last = refs.LastLevel;
+
+            bool isCurrent = level.LevelNumber == currentLevelNumber;
+            bool isReached = !isCurrent && totalPoints >= level.PointsRequired;
+            bool isLocked = !isCurrent && !isReached;
+
+            bool wasCurrent = !isFirstPaint && last.LevelNumber == refs.LastCurrentLevelNumber;
+            bool wasReached = !isFirstPaint && !wasCurrent && refs.LastTotalPoints >= last.PointsRequired;
+            bool statusGroupChanged = isFirstPaint || isCurrent != wasCurrent || isReached != wasReached;
+
+            if (statusGroupChanged)
+            {
+                refs.Row.EnableInClassList("level-roadmap-item-current", isCurrent);
+                refs.Row.EnableInClassList("level-roadmap-item-completed", isReached);
+                refs.Row.EnableInClassList("level-roadmap-item-locked", isLocked);
+            }
+
+            if (isFirstPaint || last.LevelNumber != level.LevelNumber || last.Title != level.Title)
+            {
+                refs.TitleLabel.text = string.IsNullOrEmpty(level.Title)
+                    ? $"Level {level.LevelNumber}"
+                    : $"Level {level.LevelNumber} - {level.Title}";
+            }
+
+            if (isFirstPaint || last.PointsRequired != level.PointsRequired)
+            {
+                refs.PointsLabel.text = $"{level.PointsRequired:N0} points required";
+            }
+
+            string statusText;
+            if (isCurrent) statusText = "Current";
+            else if (isReached) statusText = "\u2713 Reached";
+            else statusText = $"{level.PointsRequired - totalPoints:N0} to unlock";
+
+            if (statusGroupChanged || refs.StatusLabel.text != statusText)
+            {
+                refs.StatusLabel.text = statusText;
+            }
+
+            refs.LastLevel = level;
+            refs.LastCurrentLevelNumber = currentLevelNumber;
+            refs.LastTotalPoints = totalPoints;
+            refs.HasLastPaint = true;
         }
 
         // ---------------- Public API ----------------

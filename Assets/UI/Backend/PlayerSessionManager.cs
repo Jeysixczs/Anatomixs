@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using Anatomia3D.UI;
 using Firebase;
 using Firebase.Auth;
 using Firebase.Extensions;
 using Firebase.Firestore;
+using Google;
 using UnityEngine;
 
 
@@ -25,17 +28,61 @@ namespace Anatomia3D.Backend
         {
             public string Uid;
             public string FullName;
-            public string Email;
             public int Level;
             public int TotalPoints;
             public int QuizzesCompleted;
+            /// <summary>Badge ids this student has earned, mirrored from the
+            /// `badgesEarned` array on students/{uid}. Matched against
+            /// AdminGamificationService.BadgeEntry.BadgeId to know which of a
+            /// teacher's configured badges to render as unlocked (see
+            /// StudentAchievementsController / StudentClassroomDetailController's
+            /// Badges tab).</summary>
+            public List<string> BadgesEarned = new List<string>();
+            // Email/EmailVerified are NOT stored in Firestore - they're always
+            // mirrored straight from Firebase Auth (Auth.CurrentUser) whenever
+            // this profile is built, so there's exactly one source of truth
+            // and no risk of the two disagreeing.
+            public string Email;
+            public bool EmailVerified;
         }
 
         public StudentProfile CurrentStudent { get; private set; }
         public bool IsLoggedIn => CurrentStudent != null;
 
+        /// <summary>The new address a verification link was just sent to, if
+        /// any - purely in-memory for this session, never written to
+        /// Firestore. Auth.CurrentUser.Email (and CurrentStudent.Email) only
+        /// becomes this once the student clicks the link; until then, UI can
+        /// show this to explain why the displayed email hasn't changed yet.
+        /// Null when there's no pending change.</summary>
+        public string PendingEmail { get; private set; }
+
+        [Header("Email confirmation polling")]
+        [Tooltip("How often to check Firebase for a pending email change having been confirmed via the link in the student's inbox.")]
+        [SerializeField] private float emailConfirmationPollIntervalSeconds = 3f;
+
+        /// <summary>Fires the moment a pending email change is confirmed (the
+        /// student clicked the link in their inbox) - right before this class
+        /// logs them out. Screens can subscribe if they want to show a
+        /// message first; nothing needs to subscribe for the logout itself to
+        /// happen, since that's handled here regardless of which screen (if
+        /// any) is currently visible.</summary>
+        public event Action OnEmailChangeConfirmed;
+
+        /// <summary>Fires whenever CurrentStudent's data actually changes - either
+        /// from a local optimistic patch (ApplyQuizAttemptResult, WriteFullName) or
+        /// from the real-time students/{uid} listener picking up an out-of-band
+        /// change (e.g. a teacher edit, or the same student signed in on another
+        /// device). Does NOT fire on every snapshot callback - only when the
+        /// incoming data differs from what's already cached, so a screen that's
+        /// subscribed won't redraw for no reason. Screens should subscribe in
+        /// OnEnable and unsubscribe in OnDisable rather than re-fetching on open.</summary>
+        public event Action<StudentProfile> OnStudentProfileChanged;
+
         private FirebaseAuth Auth => FirebaseBootstrap.Instance.Auth;
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
+
+        private ListenerRegistration _studentListener;
 
         private void Awake()
         {
@@ -44,11 +91,19 @@ namespace Anatomia3D.Backend
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnDestroy()
+        {
+            StopStudentListener();
+        }
+
         // ---------------- Login ----------------
 
         /// <summary>Call from StudentLoginController.OnSignInClicked() after validation passes.</summary>
         public void LoginStudent(string email, string password, Action<bool, string> onComplete)
         {
+            PendingEmail = null;
+            CancelInvoke(nameof(PollPendingEmailConfirmation));
+
             Auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
             {
                 if (task.IsCanceled || task.IsFaulted)
@@ -65,10 +120,180 @@ namespace Anatomia3D.Backend
                         return;
                     }
 
-                    CurrentStudent = profile;
+                    SetCurrentStudentAndListen(profile);
                     onComplete?.Invoke(true, null);
                 });
             });
+        }
+
+        // ---------------- Google sign-in ----------------
+
+        /// <summary>Call from StudentLoginController.OnGoogleClicked(). Signs the
+        /// student in with Google, and - like CreateStudentAccount - transparently
+        /// provisions the `users/{uid}` + `students/{uid}` docs the first time a given
+        /// Google account is used here. If that Google account is already registered
+        /// with a different role (e.g. as an admin), this fails rather than silently
+        /// double-provisioning it.</summary>
+        public void LoginWithGoogle(Action<bool, string> onComplete)
+        {
+            ConfigureGoogleSignIn();
+
+            // GoogleSignIn.SignIn() silently reuses a cached credential from a
+            // previous session if one exists, which is why the account chooser
+            // stops appearing after the first sign-in. Signing out immediately
+            // beforehand clears that cached credential (this is a local/plugin-side
+            // reset, not a network call) so the native picker is shown every time,
+            // letting the user pick a different Google account.
+            GoogleSignIn.DefaultInstance.SignOut();
+
+            GoogleSignIn.DefaultInstance.SignIn().ContinueWithOnMainThread(signInTask =>
+            {
+                if (signInTask.IsCanceled)
+                {
+                    onComplete?.Invoke(false, "Google sign-in was cancelled.");
+                    return;
+                }
+
+                if (signInTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, DescribeGoogleSignInError(signInTask.Exception));
+                    return;
+                }
+
+                Credential credential = GoogleAuthProvider.GetCredential(signInTask.Result.IdToken, null);
+                Auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(authTask =>
+                {
+                    if (authTask.IsCanceled || authTask.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, DescribeAuthError(authTask.Exception));
+                        return;
+                    }
+
+                    var user = authTask.Result;
+                    string displayName = string.IsNullOrEmpty(user.DisplayName) ? user.Email : user.DisplayName;
+                    ResolveGoogleStudent(user.UserId, displayName, user.Email, onComplete);
+                });
+            });
+
+        }
+
+        private void ResolveGoogleStudent(string uid, string displayName, string email, Action<bool, string> onComplete)
+        {
+            Db.Collection("users").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(userTask =>
+            {
+                if (userTask.IsCanceled || userTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Could not verify your account. Please try again.");
+                    return;
+                }
+
+                var userSnap = userTask.Result;
+                if (userSnap.Exists)
+                {
+                    string role = userSnap.ContainsField("role") ? userSnap.GetValue<string>("role") : null;
+                    if (role != "student")
+                    {
+                        Auth.SignOut();
+                        onComplete?.Invoke(false, "This Google account is already registered as an admin, not a student.");
+                        return;
+                    }
+
+                    FetchStudentDoc(uid, (ok, profile, error) =>
+                    {
+                        if (!ok)
+                        {
+                            onComplete?.Invoke(false, error ?? "Student profile not found.");
+                            return;
+                        }
+
+                        SetCurrentStudentAndListen(profile);
+                        onComplete?.Invoke(true, null);
+                    });
+                    return;
+                }
+
+                // First time this Google account has signed in here - provision the
+                // same docs CreateStudentAccount writes for a password-based signup.
+                ProvisionStudentProfile(uid, displayName, email, onComplete);
+            });
+        }
+
+        private void ProvisionStudentProfile(string uid, string fullName, string email, Action<bool, string> onComplete)
+        {
+            var profile = new StudentProfile
+            {
+                Uid = uid,
+                FullName = fullName,
+                Email = email,
+                EmailVerified = Auth.CurrentUser?.IsEmailVerified ?? false,
+                Level = 1,
+                TotalPoints = 0,
+                QuizzesCompleted = 0,
+                BadgesEarned = new List<string>()
+            };
+
+            var batch = Db.StartBatch();
+            // users/{uid} only needs `role` - it's read solely to route a
+            // Google sign-in to the right collection. Email lives only in
+            // Firebase Auth (never duplicated into Firestore), so there's
+            // nothing here that can ever fall out of sync with it.
+            batch.Set(Db.Collection("users").Document(uid), new
+            {
+                role = "student",
+                createdAt = Timestamp.GetCurrentTimestamp()
+            });
+            batch.Set(Db.Collection("students").Document(uid), new
+            {
+                fullName = fullName,
+                createdAt = Timestamp.GetCurrentTimestamp(),
+                level = 1,
+                totalPoints = 0,
+                quizzesCompleted = 0,
+                badgesEarned = new string[0],
+                enrolledClassroomIds = new string[0]
+            });
+
+            batch.CommitAsync().ContinueWithOnMainThread(writeTask =>
+            {
+                if (writeTask.IsCanceled || writeTask.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Signed in, but saving your profile failed. Please try again.");
+                    return;
+                }
+
+                SetCurrentStudentAndListen(profile);
+                onComplete?.Invoke(true, null);
+            });
+        }
+
+        private void ConfigureGoogleSignIn()
+        {
+            if (GoogleSignIn.Configuration != null) return;
+
+            GoogleSignIn.Configuration = new GoogleSignInConfiguration
+            {
+                WebClientId = FirebaseBootstrap.Instance.GoogleWebClientId,
+                RequestIdToken = true,
+                RequestEmail = true,
+                UseGameSignIn = false
+            };
+        }
+
+        private static string DescribeGoogleSignInError(AggregateException ex)
+        {
+            if (ex?.InnerException is GoogleSignIn.SignInException signInEx)
+            {
+                switch (signInEx.Status)
+                {
+                    case GoogleSignInStatusCode.Canceled:
+                        return "Google sign-in was cancelled.";
+                    case GoogleSignInStatusCode.NetworkError:
+                        return "Network error during Google sign-in. Check your connection.";
+                    default:
+                        return "Google sign-in failed. Please try again.";
+                }
+            }
+            return "Google sign-in failed. Please try again.";
         }
 
         // ---------------- Create account ----------------
@@ -90,22 +315,24 @@ namespace Anatomia3D.Backend
                     Uid = uid,
                     FullName = fullName,
                     Email = email,
+                    EmailVerified = createTask.Result.User.IsEmailVerified,
                     Level = 1,
                     TotalPoints = 0,
-                    QuizzesCompleted = 0
+                    QuizzesCompleted = 0,
+                    BadgesEarned = new List<string>()
                 };
 
                 var batch = Db.StartBatch();
+                // See ProvisionStudentProfile - users/{uid} only needs `role`;
+                // email lives only in Firebase Auth, never in Firestore.
                 batch.Set(Db.Collection("users").Document(uid), new
                 {
                     role = "student",
-                    email = email,
                     createdAt = Timestamp.GetCurrentTimestamp()
                 });
                 batch.Set(Db.Collection("students").Document(uid), new
                 {
                     fullName = fullName,
-                    email = email,
                     createdAt = Timestamp.GetCurrentTimestamp(),
                     level = 1,
                     totalPoints = 0,
@@ -122,7 +349,7 @@ namespace Anatomia3D.Backend
                         return;
                     }
 
-                    CurrentStudent = profile;
+                    SetCurrentStudentAndListen(profile);
                     onComplete?.Invoke(true, null);
                 });
             });
@@ -147,31 +374,88 @@ namespace Anatomia3D.Backend
 
         // ---------------- Profile updates ----------------
 
-        /// <summary>Call from StudentEditProfileController.OnSaveChangesClicked().</summary>
-        public void UpdateProfile(string fullName, string email, Action<bool, string> onComplete)
+        /// <summary>Call from StudentEditProfileController.OnSaveChangesClicked().
+        /// fullName always goes to Firestore. Email is never written to
+        /// Firestore - it lives only in Firebase Auth. If it changed, this
+        /// needs `currentPassword` to re-authenticate (Firebase Auth requires
+        /// a recent sign-in for email changes) and sends a verification link
+        /// to the new address; Auth.CurrentUser.Email (and therefore
+        /// CurrentStudent.Email) only updates once the student actually
+        /// clicks that link - see RefreshEmailVerificationStatus(). Once the
+        /// link is sent, this starts polling in the background (see
+        /// PollPendingEmailConfirmation) so the student gets logged out the
+        /// moment they confirm it, no matter which screen they're on.</summary>
+        public void UpdateProfile(string fullName, string email, string currentPassword, Action<bool, string> onComplete)
         {
-            if (Auth.CurrentUser == null) { onComplete?.Invoke(false, "Not signed in."); return; }
-            string uid = Auth.CurrentUser.UserId;
+            var user = Auth.CurrentUser;
+            if (user == null) { onComplete?.Invoke(false, "Not signed in."); return; }
+            string uid = user.UserId;
+            bool emailChanged = !string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase);
 
-            Db.Collection("students").Document(uid).UpdateAsync(new System.Collections.Generic.Dictionary<string, object>
+            if (!emailChanged)
             {
-                { "fullName", fullName },
-                { "email", email }
-            }).ContinueWithOnMainThread(task =>
+                WriteFullName(uid, fullName, onComplete);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(currentPassword))
             {
-                if (task.IsCanceled || task.IsFaulted)
+                onComplete?.Invoke(false, "Enter your current password to change your email.");
+                return;
+            }
+
+            var credential = EmailAuthProvider.GetCredential(user.Email, currentPassword);
+            user.ReauthenticateAsync(credential).ContinueWithOnMainThread(reauthTask =>
+            {
+                if (reauthTask.IsCanceled || reauthTask.IsFaulted)
                 {
-                    onComplete?.Invoke(false, "Could not save your profile.");
+                    onComplete?.Invoke(false, "Current password is incorrect.");
                     return;
                 }
 
-                if (CurrentStudent != null)
+                // Sends a confirmation link to the NEW address. Auth's own
+                // user.Email (and CurrentStudent.Email, which mirrors it)
+                // stays on the OLD address until the student clicks that
+                // link - there's no separate Firestore copy to write early.
+                user.SendEmailVerificationBeforeUpdatingEmailAsync(email).ContinueWithOnMainThread(updateTask =>
                 {
-                    CurrentStudent.FullName = fullName;
-                    CurrentStudent.Email = email;
-                }
-                onComplete?.Invoke(true, null);
+                    if (updateTask.IsCanceled || updateTask.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, DescribeAuthError(updateTask.Exception));
+                        return;
+                    }
+
+                    PendingEmail = email;
+                    StartPendingEmailPolling();
+                    WriteFullName(uid, fullName, onComplete);
+                });
             });
+        }
+
+        /// <summary>Writes fullName to students/{uid}. Uses a merge-Set rather
+        /// than Update: Update() throws if the doc doesn't exist in exactly
+        /// the expected shape, which can silently fail the write - a
+        /// merge-Set can't fail that way and self-heals odd/older docs.</summary>
+        private void WriteFullName(string uid, string fullName, Action<bool, string> onComplete)
+        {
+            Db.Collection("students").Document(uid).SetAsync(
+                new System.Collections.Generic.Dictionary<string, object> { { "fullName", fullName } },
+                SetOptions.MergeAll)
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save your profile.");
+                        return;
+                    }
+
+                    if (CurrentStudent != null)
+                    {
+                        CurrentStudent.FullName = fullName;
+                        OnStudentProfileChanged?.Invoke(CurrentStudent);
+                    }
+                    onComplete?.Invoke(true, null);
+                });
         }
 
         /// <summary>Call from StudentEditProfileController when changingPassword is true.</summary>
@@ -202,16 +486,229 @@ namespace Anatomia3D.Backend
             });
         }
 
+        // ---------------- Email verification ----------------
+
+        /// <summary>Whether Firebase Auth currently considers this student's
+        /// email verified. Reflects whatever was true as of the last sign-in or
+        /// RefreshEmailVerificationStatus() call - call that first if you need
+        /// this to be current (e.g. right after the student may have clicked
+        /// the link in another tab).</summary>
+        public bool IsEmailVerified => Auth.CurrentUser != null && Auth.CurrentUser.IsEmailVerified;
+
+        /// <summary>Call from StudentEditProfileController's "Verify Email"
+        /// button. Sends a verification link to the student's CURRENT email
+        /// address (not a pending new one - that flow is
+        /// SendEmailVerificationBeforeUpdatingEmailAsync inside UpdateProfile).
+        /// Surface to the student that an unverified account can't be
+        /// recovered if they lose access to it.</summary>
+        public void SendEmailVerification(Action<bool, string> onComplete)
+        {
+            var user = Auth.CurrentUser;
+            if (user == null) { onComplete?.Invoke(false, "Not signed in."); return; }
+
+            if (user.IsEmailVerified)
+            {
+                onComplete?.Invoke(true, null);
+                return;
+            }
+
+            user.SendEmailVerificationAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    onComplete?.Invoke(false, DescribeAuthError(task.Exception));
+                    return;
+                }
+
+                onComplete?.Invoke(true, null);
+            });
+        }
+
+        /// <summary>Re-fetches the current user from Firebase so IsEmailVerified
+        /// (and CurrentStudent.Email/EmailVerified, which mirror Auth) reflect
+        /// a link the student may have just clicked in their inbox - including
+        /// a completed email change, since Auth.CurrentUser.Email only flips
+        /// to the new address once that link is clicked. Call this when the
+        /// edit-profile screen becomes visible so nothing shows stale state
+        /// from earlier in the session.
+        ///
+        /// IMPORTANT: confirming a pending email change makes Firebase revoke
+        /// the session's existing token server-side (expected - it's a
+        /// security-sensitive change). So the very next ReloadAsync() after
+        /// the student clicks the link doesn't come back with the new email;
+        /// it FAILS with "the user's credential is no longer valid". While a
+        /// change is pending, that specific failure IS the confirmation
+        /// signal - see IsInvalidCredentialError below - not a reason to give
+        /// up and leave PendingEmail set forever.</summary>
+        public void RefreshEmailVerificationStatus(Action<bool> onComplete = null)
+        {
+            var user = Auth.CurrentUser;
+            if (user == null) { onComplete?.Invoke(false); return; }
+
+            user.ReloadAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] ReloadAsync failed (PendingEmail={PendingEmail}): {task.Exception}");
+
+                    if (PendingEmail != null && IsInvalidCredentialError(task.Exception))
+                    {
+                        Debug.Log("[PlayerSessionManager] Invalidated credential while an email change was pending - treating as confirmed.");
+                        PendingEmail = null;
+                    }
+
+                    onComplete?.Invoke(false);
+                    return;
+                }
+
+                bool verified = !task.IsCanceled && user.IsEmailVerified;
+
+                if (!task.IsCanceled && CurrentStudent != null)
+                {
+                    CurrentStudent.Email = user.Email;
+                    CurrentStudent.EmailVerified = verified;
+                }
+
+                if (!task.IsCanceled &&
+                    PendingEmail != null && string.Equals(user.Email, PendingEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    PendingEmail = null;
+                }
+
+                onComplete?.Invoke(verified);
+            });
+        }
+
+        /// <summary>True if the failure is Firebase revoking the session's
+        /// token (message text: "The user's credential is no longer valid.
+        /// The user must sign in again."), which is exactly what happens the
+        /// instant a pending email-change link gets confirmed. Matches on
+        /// message text rather than a specific AuthError enum member since
+        /// that's what's actually visible in the logs and is stable across
+        /// SDK versions; add an ErrorCode check too if you want a second,
+        /// more precise signal later.</summary>
+        private static bool IsInvalidCredentialError(AggregateException ex)
+        {
+            var fbEx = ex?.InnerException as FirebaseException;
+            if (fbEx == null) return false;
+
+            return fbEx.Message.IndexOf("no longer valid", StringComparison.OrdinalIgnoreCase) >= 0
+                || fbEx.Message.IndexOf("sign in again", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>Starts (or restarts) background polling for a pending
+        /// email change being confirmed. Lives on PlayerSessionManager - not
+        /// on any UI screen - specifically so it keeps running across screen
+        /// navigation (this GameObject is DontDestroyOnLoad and never gets
+        /// disabled the way a screen's controller does when the student taps
+        /// Back or the app swaps screens). CancelInvoke first avoids
+        /// double-scheduling if this somehow gets called twice.</summary>
+        private void StartPendingEmailPolling()
+        {
+            CancelInvoke(nameof(PollPendingEmailConfirmation));
+            InvokeRepeating(nameof(PollPendingEmailConfirmation), emailConfirmationPollIntervalSeconds, emailConfirmationPollIntervalSeconds);
+        }
+
+
+        private void PollPendingEmailConfirmation()
+        {
+            if (PendingEmail == null || Auth.CurrentUser == null)
+            {
+                CancelInvoke(nameof(PollPendingEmailConfirmation));
+                return;
+            }
+
+            RefreshEmailVerificationStatus(_ =>
+            {
+                if (PendingEmail == null)
+                {
+                    CancelInvoke(nameof(PollPendingEmailConfirmation));
+                    OnEmailChangeConfirmed?.Invoke();
+                    LogoutStudent();
+                    UIManager.Instance?.ShowStudentLogin();
+
+                }
+            });
+        }
+
         // ---------------- Logout ----------------
 
         public void LogoutStudent()
         {
+            CancelInvoke(nameof(PollPendingEmailConfirmation));
+            StopStudentListener();
             Auth.SignOut();
+            try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
+            PendingEmail = null;
+        }
+
+        // ---------------- Refresh ----------------
+
+        /// <summary>Re-fetches `students/{uid}` and replaces CurrentStudent with the
+        /// result. Screens should NOT call this just to open - CurrentStudent is
+        /// kept in sync locally by ApplyQuizAttemptResult() (see below) and by
+        /// WriteFullName(), covering every write path that currently touches the
+        /// student doc, at zero extra reads. Keep this around as a manual/
+        /// catch-all resync (e.g. a pull-to-refresh gesture, or recovering from a
+        /// teacher-side edit made out of band) rather than an OnEnable habit.</summary>
+        public void RefreshCurrentStudent(Action<bool> onComplete = null)
+        {
+            if (CurrentStudent == null) { onComplete?.Invoke(false); return; }
+
+            var uid = CurrentStudent.Uid;
+            FetchStudentDoc(uid, (ok, profile, error) =>
+            {
+                if (ok && CurrentStudent != null && CurrentStudent.Uid == uid && !StudentProfilesEqual(CurrentStudent, profile))
+                {
+                    CurrentStudent = profile;
+                    OnStudentProfileChanged?.Invoke(CurrentStudent);
+                }
+                onComplete?.Invoke(ok);
+            });
+        }
+
+        /// <summary>Patches CurrentStudent in place with the outcome of a just-submitted
+        /// quiz attempt, instead of re-fetching students/{uid}. Call this from
+        /// QuizService.SubmitQuizAttemptInternal right after its transaction commits -
+        /// every field it writes (totalPoints, level, quizzesCompleted, badgesEarned)
+        /// is already known at that point, so there's nothing left to read from
+        /// Firestore. No-ops if nobody's signed in or the attempt belonged to a
+        /// different uid than the one currently cached (shouldn't happen in practice,
+        /// since SubmitQuizAttempt always reads CurrentStudent.Uid itself, but this
+        /// keeps a stale/late callback from corrupting a newer session's cache).</summary>
+        public void ApplyQuizAttemptResult(string studentUid, int newTotalPoints, int newLevel, List<string> newlyEarnedBadgeIds)
+        {
+            if (CurrentStudent == null || CurrentStudent.Uid != studentUid) return;
+
+            CurrentStudent.TotalPoints = newTotalPoints;
+            CurrentStudent.Level = newLevel;
+            CurrentStudent.QuizzesCompleted += 1;
+
+            if (newlyEarnedBadgeIds != null && newlyEarnedBadgeIds.Count > 0)
+            {
+                foreach (var badgeId in newlyEarnedBadgeIds)
+                {
+                    if (!CurrentStudent.BadgesEarned.Contains(badgeId))
+                    {
+                        CurrentStudent.BadgesEarned.Add(badgeId);
+                    }
+                }
+            }
+
+            // Optimistic UI update - don't wait for the listener's server round-trip
+            // (or its local-write echo, which will match this already and no-op).
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
         }
 
         // ---------------- Helpers ----------------
 
+        /// <summary>Fetches students/{uid} for fullName/level/stats, then mirrors
+        /// Email/EmailVerified from Auth.CurrentUser rather than Firestore -
+        /// email is never stored there. Callers of this (LoginStudent,
+        /// ResolveGoogleStudent, RefreshCurrentStudent) all run after Auth
+        /// already has a signed-in user, so Auth.CurrentUser is always
+        /// available here.</summary>
         private void FetchStudentDoc(string uid, Action<bool, StudentProfile, string> onComplete)
         {
             Db.Collection("students").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(task =>
@@ -222,19 +719,95 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                var snap = task.Result;
-                var profile = new StudentProfile
-                {
-                    Uid = uid,
-                    FullName = snap.GetValue<string>("fullName"),
-                    Email = snap.GetValue<string>("email"),
-                    Level = snap.ContainsField("level") ? snap.GetValue<int>("level") : 1,
-                    TotalPoints = snap.ContainsField("totalPoints") ? snap.GetValue<int>("totalPoints") : 0,
-                    QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0
-                };
-
-                onComplete?.Invoke(true, profile, null);
+                onComplete?.Invoke(true, BuildProfileFromSnapshot(uid, task.Result), null);
             });
+        }
+
+        /// <summary>Shared students/{uid} DocumentSnapshot -> StudentProfile mapping,
+        /// used by both the one-shot FetchStudentDoc (login) and the real-time
+        /// listener below, so the two never drift apart on field defaults.</summary>
+        private StudentProfile BuildProfileFromSnapshot(string uid, DocumentSnapshot snap)
+        {
+            var authUser = Auth.CurrentUser;
+            return new StudentProfile
+            {
+                Uid = uid,
+                FullName = snap.GetValue<string>("fullName"),
+                Email = authUser?.Email,
+                EmailVerified = authUser?.IsEmailVerified ?? false,
+                Level = snap.ContainsField("level") ? snap.GetValue<int>("level") : 1,
+                TotalPoints = snap.ContainsField("totalPoints") ? snap.GetValue<int>("totalPoints") : 0,
+                QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0,
+                BadgesEarned = snap.ContainsField("badgesEarned")
+                    ? new List<string>(snap.GetValue<List<string>>("badgesEarned"))
+                    : new List<string>()
+            };
+        }
+
+        // ---------------- Real-time sync ----------------
+
+        /// <summary>Sets CurrentStudent, fires OnStudentProfileChanged once (this is
+        /// always the *first* known-good copy for this session, so it's always a
+        /// real change), and attaches the live students/{uid} listener so any later
+        /// change - local or remote - flows through ApplyIncomingSnapshot instead of
+        /// requiring a screen to re-fetch.</summary>
+        private void SetCurrentStudentAndListen(StudentProfile profile)
+        {
+            CurrentStudent = profile;
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
+            StartStudentListener(profile.Uid);
+        }
+
+        private void StartStudentListener(string uid)
+        {
+            StopStudentListener();
+
+            _studentListener = Db.Collection("students").Document(uid)
+                .Listen(snapshot => ApplyIncomingSnapshot(uid, snapshot));
+        }
+
+        private void StopStudentListener()
+        {
+            _studentListener?.Stop();
+            _studentListener = null;
+        }
+
+        /// <summary>Callback for the live students/{uid} listener. Fires on every
+        /// server round-trip AND on the local optimistic echo of our own writes
+        /// (e.g. right after ApplyQuizAttemptResult patches CurrentStudent and the
+        /// underlying transaction commits) - both of those echoes carry data that
+        /// already matches the cache, so the equality check below is what keeps
+        /// this from re-pushing an identical profile and causing a redundant UI
+        /// redraw. Only a genuine change (a teacher edit, another device, or the
+        /// server confirming a value CurrentStudent didn't already have) reaches
+        /// subscribers.</summary>
+        private void ApplyIncomingSnapshot(string uid, DocumentSnapshot snapshot)
+        {
+            // Stale callback from a listener we've already torn down (e.g. the
+            // student logged out or logged into a different account) between the
+            // server call going out and this callback arriving.
+            if (CurrentStudent == null || CurrentStudent.Uid != uid) return;
+            if (!snapshot.Exists) return;
+
+            var incoming = BuildProfileFromSnapshot(uid, snapshot);
+            if (StudentProfilesEqual(CurrentStudent, incoming)) return;
+
+            CurrentStudent = incoming;
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
+        }
+
+        private static bool StudentProfilesEqual(StudentProfile a, StudentProfile b)
+        {
+            if (a.FullName != b.FullName) return false;
+            if (a.Level != b.Level) return false;
+            if (a.TotalPoints != b.TotalPoints) return false;
+            if (a.QuizzesCompleted != b.QuizzesCompleted) return false;
+            if (a.BadgesEarned.Count != b.BadgesEarned.Count) return false;
+            for (int i = 0; i < a.BadgesEarned.Count; i++)
+            {
+                if (a.BadgesEarned[i] != b.BadgesEarned[i]) return false;
+            }
+            return true;
         }
 
         private static string DescribeAuthError(AggregateException ex)

@@ -8,22 +8,38 @@ using UnityEngine;
 namespace Anatomia3D.Backend
 {
     /// <summary>
-    /// Reads/writes the `gamificationSettings/config` singleton doc. This is
-    /// the "AdminGamificationService" referenced in
+    /// Reads/writes gamification config under the `gamificationSettings`
+    /// collection. This is the "AdminGamificationService" referenced in
     /// AdminGamificationSettingsController.OnSaveChangesClicked(), and it's
     /// also read by QuizService when a student finishes a quiz (to work out
     /// their new level / any newly-earned badges).
     ///
+    /// Points-per-difficulty and badges are PER TEACHER - each signed-in
+    /// admin has their own doc, so one teacher editing their badges/points
+    /// never affects any other teacher's classrooms. Levels remain global
+    /// and fixed across every teacher/classroom, in their own doc:
+    ///
+    /// gamificationSettings/{teacherId}   (teacherId = AdminAuthService.CurrentAdmin.Uid)
+    ///   pointsPerDifficulty: { easy: number, medium: number, hard: number }
+    ///   badges: map&lt;badgeId, { name: string, icon: string, pointsRequired: number }&gt;
+    ///
+    /// gamificationSettings/levels        (singleton - shared by everyone)
+    ///   levels: array&lt;{ level: number, title: string, pointsRequired: number }&gt;
+    ///
+    /// SaveSettings() below only ever writes to the caller's own
+    /// gamificationSettings/{teacherId} doc, and only ever writes
+    /// pointsPerDifficulty + badges. The levels doc has intentionally no
+    /// write path from the app - seed/change it directly in the Firebase
+    /// console (or a one-off admin script) if the progression path ever
+    /// needs to change, so every teacher/classroom always shares the exact
+    /// same level thresholds.
+    ///
     /// Schema note: FIRESTORE_SCHEMA.md described `levelThresholds` as a bare
     /// `array&lt;number&gt;` and `badgeDefinitions` as `{ name, description,
-    /// targetPoints }`. AdminGamificationSettingsController's actual UI needs
-    /// a title per level and an icon per badge (no description field), so the
-    /// doc shape here is slightly richer than that first draft:
-    ///
-    /// gamificationSettings/config
-    ///   pointsPerDifficulty: { easy: number, medium: number, hard: number }
-    ///   levels: array&lt;{ level: number, title: string, pointsRequired: number }&gt;
-    ///   badges: map&lt;badgeId, { name: string, icon: string, pointsRequired: number }&gt;
+    /// targetPoints }` on one shared doc. AdminGamificationSettingsController's
+    /// actual UI needs a title per level and an icon per badge (no
+    /// description field), and badges/points needed to be per-teacher rather
+    /// than shared, hence the split shown above.
     ///
     /// Attach to the same persistent GameObject as FirebaseBootstrap/UIManager.
     /// </summary>
@@ -62,8 +78,52 @@ namespace Anatomia3D.Backend
         /// synchronous fallback by QuizService if a fresh read isn't available.</summary>
         public GamificationSettings CurrentSettings { get; private set; }
 
+        /// <summary>Last value pushed to each teacherId's ListenToSettingsForTeacher()
+        /// subscribers, keyed by teacherId (empty string key = "no teacher" / levels-only).
+        /// Lets a screen paint instantly from cache in OnEnable, before the listener's
+        /// first callback arrives, instead of showing a blank state while waiting on
+        /// a network round trip.</summary>
+        private readonly Dictionary<string, GamificationSettings> _settingsCacheByTeacher = new Dictionary<string, GamificationSettings>();
+
+        /// <summary>Wraps the two listeners (per-teacher config doc + shared levels doc)
+        /// that back one ListenToSettingsForTeacher() subscription so callers only need
+        /// to hold and Stop() a single object, mirroring ListenerRegistration's shape.</summary>
+        public sealed class SettingsSubscription
+        {
+            private ListenerRegistration _configListener;
+            private ListenerRegistration _levelsListener;
+
+            internal SettingsSubscription(ListenerRegistration configListener, ListenerRegistration levelsListener)
+            {
+                _configListener = configListener;
+                _levelsListener = levelsListener;
+            }
+
+            public void Stop()
+            {
+                _configListener?.Stop();
+                _levelsListener?.Stop();
+                _configListener = null;
+                _levelsListener = null;
+            }
+        }
+
+        /// <summary>Cached settings for a given teacherId (or the "" key used when
+        /// teacherId is null/empty), if ListenToSettingsForTeacher has produced one yet.
+        /// Lets a caller paint synchronously in OnEnable before starting the listener.</summary>
+        public GamificationSettings TryGetCachedSettingsForTeacher(string teacherId)
+        {
+            return _settingsCacheByTeacher.TryGetValue(teacherId ?? "", out var cached) ? cached : null;
+        }
+
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
-        private DocumentReference ConfigRef => Db.Collection("gamificationSettings").Document("config");
+
+        /// <summary>Per-teacher points+badges doc. Public so QuizService can build the
+        /// same reference (e.g. inside a transaction) without duplicating the path.</summary>
+        public DocumentReference ConfigRefFor(string teacherId) => Db.Collection("gamificationSettings").Document(teacherId);
+
+        /// <summary>Global, app-read-only levels doc shared by every teacher/classroom.</summary>
+        public DocumentReference LevelsRef => Db.Collection("gamificationSettings").Document("levels");
 
         private void Awake()
         {
@@ -75,44 +135,130 @@ namespace Anatomia3D.Backend
         /// <summary>
         /// Call when showing AdminGamificationSettingsController - feeds
         /// SetPointsConfiguration() / SetBadges() / SetLevels() directly.
-        /// Returns built-in defaults (matching the controller's own mock data)
-        /// if the doc doesn't exist yet, so the screen never renders empty.
+        /// Reads the signed-in admin's own gamificationSettings/{teacherId}
+        /// doc plus the shared gamificationSettings/levels doc. Returns
+        /// built-in defaults (matching the controller's own mock data) if
+        /// this teacher hasn't saved anything yet, so the screen never
+        /// renders empty.
         /// </summary>
         public void FetchSettings(Action<GamificationSettings> onComplete)
         {
-            ConfigRef.GetSnapshotAsync().ContinueWithOnMainThread(task =>
+            var admin = AdminAuthService.Instance?.CurrentAdmin;
+            if (admin == null)
             {
-                if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
-                {
-                    CurrentSettings = DefaultSettings();
-                    onComplete?.Invoke(CurrentSettings);
-                    return;
-                }
+                CurrentSettings = DefaultSettings();
+                onComplete?.Invoke(CurrentSettings);
+                return;
+            }
 
-                CurrentSettings = ToSettings(task.Result);
+            var configTask = ConfigRefFor(admin.Uid).GetSnapshotAsync();
+            var levelsTask = LevelsRef.GetSnapshotAsync();
+
+            System.Threading.Tasks.Task.WhenAll(configTask, levelsTask).ContinueWithOnMainThread(_ =>
+            {
+                var configSnap = configTask.IsFaulted ? null : configTask.Result;
+                var levelsSnap = levelsTask.IsFaulted ? null : levelsTask.Result;
+
+                CurrentSettings = ToSettings(configSnap, levelsSnap);
                 onComplete?.Invoke(CurrentSettings);
             });
         }
 
-        /// <summary>Call from AdminGamificationSettingsController.OnSaveChangesClicked().</summary>
+        /// <summary>
+        /// Call from QuizService when a student submits a quiz, to score them against
+        /// the specific teacher's badges/points (resolved from the classroom's
+        /// teacherId) plus the shared global levels. Unlike FetchSettings(), this
+        /// doesn't touch CurrentSettings or require an admin to be signed in - it's
+        /// used from the student side.
+        /// </summary>
+        public void FetchSettingsForTeacher(string teacherId, Action<GamificationSettings> onComplete)
+        {
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                LevelsRef.GetSnapshotAsync().ContinueWithOnMainThread(task =>
+                {
+                    onComplete?.Invoke(ToSettings(null, task.IsFaulted ? null : task.Result));
+                });
+                return;
+            }
+
+            var configTask = ConfigRefFor(teacherId).GetSnapshotAsync();
+            var levelsTask = LevelsRef.GetSnapshotAsync();
+
+            System.Threading.Tasks.Task.WhenAll(configTask, levelsTask).ContinueWithOnMainThread(_ =>
+            {
+                var configSnap = configTask.IsFaulted ? null : configTask.Result;
+                var levelsSnap = levelsTask.IsFaulted ? null : levelsTask.Result;
+                onComplete?.Invoke(ToSettings(configSnap, levelsSnap));
+            });
+        }
+
+        /// <summary>
+        /// Live version of FetchSettingsForTeacher() - call once when a screen that
+        /// needs a teacher's points/badges/levels becomes visible (StudentDashboard,
+        /// StudentClassroomDetail, StudentAchievements, StudentProgress), keep the
+        /// returned SettingsSubscription and Stop() it in OnDisable. onChanged fires
+        /// once immediately with whatever's cached (or the current server values),
+        /// then again any time that teacher edits their points/badges via
+        /// AdminGamificationSettingsController.SaveSettings(), or the shared levels
+        /// doc changes - without the screen needing to be re-opened or re-fetch
+        /// anything itself. Safe to call with a null/empty teacherId (levels-only,
+        /// mirrors FetchSettingsForTeacher's own null-teacherId branch).</summary>
+        public SettingsSubscription ListenToSettingsForTeacher(string teacherId, Action<GamificationSettings> onChanged)
+        {
+            string cacheKey = teacherId ?? "";
+
+            DocumentSnapshot configSnap = null;
+            DocumentSnapshot levelsSnap = null;
+            bool configReady = string.IsNullOrEmpty(teacherId); // no teacherId -> nothing to wait on
+            bool levelsReady = false;
+
+            void Recompute()
+            {
+                if (!configReady || !levelsReady) return;
+
+                var settings = ToSettings(configSnap, levelsSnap);
+                _settingsCacheByTeacher[cacheKey] = settings;
+                onChanged?.Invoke(settings);
+            }
+
+            ListenerRegistration configListener = null;
+            if (!string.IsNullOrEmpty(teacherId))
+            {
+                configListener = ConfigRefFor(teacherId).Listen(snap =>
+                {
+                    configSnap = snap;
+                    configReady = true;
+                    Recompute();
+                });
+            }
+
+            var levelsListener = LevelsRef.Listen(snap =>
+            {
+                levelsSnap = snap;
+                levelsReady = true;
+                Recompute();
+            });
+
+            return new SettingsSubscription(configListener, levelsListener);
+        }
+
+        /// <summary>
+        /// Call from AdminGamificationSettingsController.OnSaveChangesClicked().
+        /// Writes only to the signed-in admin's own gamificationSettings/{teacherId}
+        /// doc - never touches any other teacher's config. Intentionally has no
+        /// `levels` parameter - see the class doc comment; levels live in a separate
+        /// shared doc this method never writes to.
+        /// </summary>
         public void SaveSettings(
             int easyPoints,
             int mediumPoints,
             int hardPoints,
-            List<LevelEntry> levels,
             List<BadgeEntry> badges,
             Action<bool, string> onComplete)
         {
-            var levelMaps = new List<object>();
-            foreach (var level in levels ?? new List<LevelEntry>())
-            {
-                levelMaps.Add(new Dictionary<string, object>
-                {
-                    { "level", level.LevelNumber },
-                    { "title", level.Title },
-                    { "pointsRequired", level.PointsRequired }
-                });
-            }
+            var admin = AdminAuthService.Instance?.CurrentAdmin;
+            if (admin == null) { onComplete?.Invoke(false, "Not signed in."); return; }
 
             var badgeMap = new Dictionary<string, object>();
             foreach (var badge in badges ?? new List<BadgeEntry>())
@@ -135,11 +281,10 @@ namespace Anatomia3D.Backend
                         { "hard", hardPoints }
                     }
                 },
-                { "levels", levelMaps },
                 { "badges", badgeMap }
             };
 
-            ConfigRef.SetAsync(data, SetOptions.MergeAll).ContinueWithOnMainThread(task =>
+            ConfigRefFor(admin.Uid).SetAsync(data, SetOptions.MergeAll).ContinueWithOnMainThread(task =>
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
@@ -152,7 +297,11 @@ namespace Anatomia3D.Backend
                     EasyPoints = easyPoints,
                     MediumPoints = mediumPoints,
                     HardPoints = hardPoints,
-                    Levels = levels ?? new List<LevelEntry>(),
+                    // Levels live in the separate shared doc and are never written by
+                    // this call - keep whatever was last fetched so callers reading
+                    // CurrentSettings right after a save still see the correct
+                    // (unchanged) global levels.
+                    Levels = CurrentSettings?.Levels ?? DefaultLevels(),
                     Badges = badges ?? new List<BadgeEntry>()
                 };
 
@@ -162,22 +311,45 @@ namespace Anatomia3D.Backend
 
         // ---------------- Helpers (also used by QuizService inside transactions) ----------------
 
-        /// <summary>Decode a `gamificationSettings/config` snapshot fetched elsewhere
-        /// (e.g. inside a QuizService transaction) without needing another round trip.</summary>
-        public static GamificationSettings ToSettings(DocumentSnapshot snap)
+        /// <summary>Decode a per-teacher gamificationSettings/{teacherId} snapshot
+        /// (points + badges) together with the shared gamificationSettings/levels
+        /// snapshot, fetched elsewhere (e.g. inside a QuizService transaction) without
+        /// needing another round trip. Either snapshot may be null/nonexistent - e.g.
+        /// a brand-new teacher with no config doc yet, or a caller (like
+        /// QuizService.FetchProgressData) that only cares about levels and passes
+        /// teacherConfigSnap as null.</summary>
+        public static GamificationSettings ToSettings(DocumentSnapshot teacherConfigSnap, DocumentSnapshot levelsSnap)
         {
             var settings = new GamificationSettings();
 
-            if (snap == null || !snap.Exists) return DefaultSettings();
-
-            if (snap.TryGetValue<Dictionary<string, object>>("pointsPerDifficulty", out var pointsMap))
+            if (teacherConfigSnap != null && teacherConfigSnap.Exists)
             {
-                settings.EasyPoints = ToInt(pointsMap, "easy", 10);
-                settings.MediumPoints = ToInt(pointsMap, "medium", 20);
-                settings.HardPoints = ToInt(pointsMap, "hard", 30);
+                if (teacherConfigSnap.TryGetValue<Dictionary<string, object>>("pointsPerDifficulty", out var pointsMap))
+                {
+                    settings.EasyPoints = ToInt(pointsMap, "easy", 10);
+                    settings.MediumPoints = ToInt(pointsMap, "medium", 20);
+                    settings.HardPoints = ToInt(pointsMap, "hard", 30);
+                }
+
+                if (teacherConfigSnap.TryGetValue<Dictionary<string, object>>("badges", out var badgesMap))
+                {
+                    foreach (var kvp in badgesMap)
+                    {
+                        if (kvp.Value is Dictionary<string, object> map)
+                        {
+                            settings.Badges.Add(new BadgeEntry
+                            {
+                                BadgeId = kvp.Key,
+                                Name = map.TryGetValue("name", out var n) ? n.ToString() : kvp.Key,
+                                IconEmoji = map.TryGetValue("icon", out var i) ? i.ToString() : "\U0001F3C6",
+                                PointsRequired = ToInt(map, "pointsRequired", 0)
+                            });
+                        }
+                    }
+                }
             }
 
-            if (snap.TryGetValue<List<object>>("levels", out var levelList))
+            if (levelsSnap != null && levelsSnap.Exists && levelsSnap.TryGetValue<List<object>>("levels", out var levelList))
             {
                 foreach (var raw in levelList)
                 {
@@ -194,25 +366,8 @@ namespace Anatomia3D.Backend
                 settings.Levels.Sort((a, b) => a.PointsRequired.CompareTo(b.PointsRequired));
             }
 
-            if (snap.TryGetValue<Dictionary<string, object>>("badges", out var badgesMap))
-            {
-                foreach (var kvp in badgesMap)
-                {
-                    if (kvp.Value is Dictionary<string, object> map)
-                    {
-                        settings.Badges.Add(new BadgeEntry
-                        {
-                            BadgeId = kvp.Key,
-                            Name = map.TryGetValue("name", out var n) ? n.ToString() : kvp.Key,
-                            IconEmoji = map.TryGetValue("icon", out var i) ? i.ToString() : "\U0001F3C6",
-                            PointsRequired = ToInt(map, "pointsRequired", 0)
-                        });
-                    }
-                }
-            }
-
-            if (settings.Levels.Count == 0) settings.Levels = DefaultSettings().Levels;
-            if (settings.Badges.Count == 0) settings.Badges = DefaultSettings().Badges;
+            if (settings.Levels.Count == 0) settings.Levels = DefaultLevels();
+            if (settings.Badges.Count == 0) settings.Badges = DefaultPointsAndBadges().Badges;
 
             return settings;
         }
@@ -234,24 +389,33 @@ namespace Anatomia3D.Backend
             return $"{slug}-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
         }
 
-        private static GamificationSettings DefaultSettings()
+        /// <summary>Built-in default level thresholds - used as a fallback wherever the
+        /// shared gamificationSettings/levels doc is missing or empty.</summary>
+        private static List<LevelEntry> DefaultLevels()
+        {
+            return new List<LevelEntry>
+            {
+                new LevelEntry { LevelNumber = 1, Title = "Novice", PointsRequired = 0 },
+                new LevelEntry { LevelNumber = 2, Title = "Learner", PointsRequired = 100 },
+                new LevelEntry { LevelNumber = 3, Title = "Student", PointsRequired = 300 },
+                new LevelEntry { LevelNumber = 4, Title = "Scholar", PointsRequired = 600 },
+                new LevelEntry { LevelNumber = 5, Title = "Expert", PointsRequired = 1000 },
+                new LevelEntry { LevelNumber = 6, Title = "Master", PointsRequired = 1500 },
+                new LevelEntry { LevelNumber = 7, Title = "Guru", PointsRequired = 2100 },
+                new LevelEntry { LevelNumber = 8, Title = "Legend", PointsRequired = 2800 },
+            };
+        }
+
+        /// <summary>Built-in default points-per-difficulty + badges - used as a fallback
+        /// wherever a given teacher's gamificationSettings/{teacherId} doc is missing or
+        /// empty (e.g. a brand-new teacher who hasn't opened the settings screen yet).</summary>
+        private static GamificationSettings DefaultPointsAndBadges()
         {
             return new GamificationSettings
             {
                 EasyPoints = 10,
                 MediumPoints = 20,
                 HardPoints = 30,
-                Levels = new List<LevelEntry>
-                {
-                    new LevelEntry { LevelNumber = 1, Title = "Novice", PointsRequired = 0 },
-                    new LevelEntry { LevelNumber = 2, Title = "Learner", PointsRequired = 100 },
-                    new LevelEntry { LevelNumber = 3, Title = "Student", PointsRequired = 300 },
-                    new LevelEntry { LevelNumber = 4, Title = "Scholar", PointsRequired = 600 },
-                    new LevelEntry { LevelNumber = 5, Title = "Expert", PointsRequired = 1000 },
-                    new LevelEntry { LevelNumber = 6, Title = "Master", PointsRequired = 1500 },
-                    new LevelEntry { LevelNumber = 7, Title = "Guru", PointsRequired = 2100 },
-                    new LevelEntry { LevelNumber = 8, Title = "Legend", PointsRequired = 2800 },
-                },
                 Badges = new List<BadgeEntry>
                 {
                     new BadgeEntry { BadgeId = "beginner", Name = "Beginner", IconEmoji = "\U0001F31F", PointsRequired = 100 },
@@ -262,12 +426,22 @@ namespace Anatomia3D.Backend
             };
         }
 
+        /// <summary>Combined built-in defaults (points + badges + levels) - used when
+        /// there's no admin signed in / nothing to look up at all, so the settings
+        /// screen still has something sensible to render.</summary>
+        private static GamificationSettings DefaultSettings()
+        {
+            var defaults = DefaultPointsAndBadges();
+            defaults.Levels = DefaultLevels();
+            return defaults;
+        }
+
         /// <summary>Given a total points value, returns (levelNumber, title, nextLevelNumber,
         /// nextTitle, progress01, pointsToNext) for StudentProgressController.SetProgressData().</summary>
         public static (int level, string title, int nextLevel, string nextTitle, float progress01, int pointsToNext)
             ComputeLevelProgress(GamificationSettings settings, int totalPoints)
         {
-            var levels = (settings?.Levels != null && settings.Levels.Count > 0) ? settings.Levels : DefaultSettings().Levels;
+            var levels = (settings?.Levels != null && settings.Levels.Count > 0) ? settings.Levels : DefaultLevels();
             var ordered = levels.OrderBy(l => l.PointsRequired).ToList();
 
             LevelEntry current = ordered[0];

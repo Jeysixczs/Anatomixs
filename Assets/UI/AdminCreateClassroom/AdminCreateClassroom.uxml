@@ -1,8 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminCreateClassroom/AdminCreateClassroom.uss"/>
+    <Style src="project://database/Assets/UI/AdminCreateClassroom/AdminCreateClassroom.uss?fileID=7433441132597879392&amp;guid=b77a2e587dd9dac45b2ec98a16a9e487&amp;type=3#AdminCreateClassroom"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-
-        <!-- ===================== HEADER ===================== -->
         <ui:VisualElement name="header" class="header">
             <ui:VisualElement name="header-top-row" class="header-top-row">
                 <ui:Button name="back-button" class="back-button">
@@ -14,53 +12,43 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- ===================== SCROLLABLE CONTENT ===================== -->
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-
                 <ui:VisualElement name="form-card" class="form-card">
                     <ui:Label text="Classroom Details" class="form-card-title"/>
                     <ui:Label text="Enter information about your new classroom" class="form-card-subtitle"/>
-
-                    <ui:Label text="Classroom Name *" class="field-label"/>
+                    <ui:Label text="Classroom Code *" class="field-label"/>
                     <ui:TextField name="classroom-name-field" class="text-field"/>
                     <ui:Label name="classroom-name-error" text="" class="field-error hidden"/>
-
-                    <ui:Label text="Description (Optional)" class="field-label field-label-spaced"/>
-                    <ui:TextField name="classroom-description-field" class="text-field text-area" multiline="true"/>
-
-                    <!-- Info box -->
+                    <ui:Label text="Classroom Name" class="field-label field-label-spaced"/>
+                    <ui:TextField name="classroom-description-field" multiline="true" class="text-field text-area"/>
                     <ui:VisualElement name="info-box" class="info-box">
                         <ui:Label text="What happens next?" class="info-box-title"/>
                         <ui:VisualElement name="info-bullet-list" class="info-bullet-list">
                             <ui:VisualElement class="info-bullet-item">
-                                <ui:Label text="&#8226;" class="info-bullet-dot"/>
+                                <ui:Label text="•" class="info-bullet-dot"/>
                                 <ui:Label text="A unique classroom code will be generated" class="info-bullet-text"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="info-bullet-item">
-                                <ui:Label text="&#8226;" class="info-bullet-dot"/>
+                                <ui:Label text="•" class="info-bullet-dot"/>
                                 <ui:Label text="Share the code with your students" class="info-bullet-text"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="info-bullet-item">
-                                <ui:Label text="&#8226;" class="info-bullet-dot"/>
+                                <ui:Label text="•" class="info-bullet-dot"/>
                                 <ui:Label text="Students can join using the code" class="info-bullet-text"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="info-bullet-item">
-                                <ui:Label text="&#8226;" class="info-bullet-dot"/>
+                                <ui:Label text="•" class="info-bullet-dot"/>
                                 <ui:Label text="Track their progress in real-time" class="info-bullet-text"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
-
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
-
                     <ui:Button name="create-classroom-button" class="create-classroom-button">
                         <ui:VisualElement name="create-classroom-icon" class="create-classroom-icon"/>
                         <ui:Label text="Create Classroom" class="create-classroom-label"/>
                     </ui:Button>
                 </ui:VisualElement>
-
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

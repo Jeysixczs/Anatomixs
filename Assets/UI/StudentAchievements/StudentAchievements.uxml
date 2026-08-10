@@ -33,88 +33,12 @@
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
 
                 <ui:VisualElement name="badge-list" class="badge-list">
-
-                    <!-- Beginner - unlocked -->
-                    <ui:VisualElement name="badge-beginner" class="badge-card">
-                        <ui:VisualElement class="badge-icon-box badge-icon-gold">
-                            <ui:Label text="&#11088;" class="badge-icon-emoji"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="badge-info">
-                            <ui:Label text="Beginner" class="badge-title"/>
-                            <ui:Label text="Unlocked!" class="badge-status badge-status-unlocked"/>
-                            <ui:VisualElement class="badge-progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill progress-fill-complete" style="width: 100%;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="&#10003; Completed" class="progress-label progress-label-complete"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-
-                    <!-- Quiz Master - unlocked -->
-                    <ui:VisualElement name="badge-quiz-master" class="badge-card">
-                        <ui:VisualElement class="badge-icon-box badge-icon-gold">
-                            <ui:Label text="&#127942;" class="badge-icon-emoji"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="badge-info">
-                            <ui:Label text="Quiz Master" class="badge-title"/>
-                            <ui:Label text="Unlocked!" class="badge-status badge-status-unlocked"/>
-                            <ui:VisualElement class="badge-progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill progress-fill-complete" style="width: 100%;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="&#10003; Completed" class="progress-label progress-label-complete"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-
-                    <!-- Anatomist - unlocked -->
-                    <ui:VisualElement name="badge-anatomist" class="badge-card">
-                        <ui:VisualElement class="badge-icon-box badge-icon-gold">
-                            <ui:Label text="&#129504;" class="badge-icon-emoji"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="badge-info">
-                            <ui:Label text="Anatomist" class="badge-title"/>
-                            <ui:Label text="Unlocked!" class="badge-status badge-status-unlocked"/>
-                            <ui:VisualElement class="badge-progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill progress-fill-complete" style="width: 100%;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="&#10003; Completed" class="progress-label progress-label-complete"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-
-                    <!-- Expert - locked -->
-                    <ui:VisualElement name="badge-expert" class="badge-card badge-card-locked">
-                        <ui:VisualElement class="badge-icon-box badge-icon-locked">
-                            <ui:VisualElement class="badge-lock-icon"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="badge-info">
-                            <ui:Label text="Expert" class="badge-title badge-title-locked"/>
-                            <ui:Label text="Earn 2,000 points to unlock" class="badge-status badge-status-locked"/>
-                            <ui:VisualElement class="badge-progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement name="expert-progress-fill" class="progress-fill progress-fill-locked" style="width: 63%;"/>
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="badge-progress-footer-row">
-                                <ui:Label name="expert-progress-count-label" text="1250 / 2000" class="progress-footer-label"/>
-                                <ui:Label name="expert-progress-percent-label" text="63%" class="progress-footer-label progress-footer-label-right"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-
+                    <!-- Populated at runtime via SetBadges() from the teacher's
+                         AdminGamificationService badge config + this student's
+                         earned badges/points - see StudentAchievementsController. -->
                 </ui:VisualElement>
 
-                <!-- ===================== SPECIAL ACHIEVEMENTS ===================== -->
-                <ui:VisualElement name="special-achievements-section" class="special-achievements-section">
-                    <ui:Label text="&#127919; Special Achievements" class="section-title"/>
-                    <ui:VisualElement name="special-achievements-list" class="badge-list">
-                        <!-- Populated at runtime via SetSpecialAchievements(), or add more badge-card
-                             blocks here following the same pattern used above. -->
-                    </ui:VisualElement>
-                </ui:VisualElement>
+                
 
             </ui:VisualElement>
         </ui:ScrollView>

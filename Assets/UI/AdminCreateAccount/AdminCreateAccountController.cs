@@ -409,9 +409,31 @@ namespace Anatomia3D.UI
         {
             SetStatus("Connecting to Google...");
             Debug.Log("[AdminCreateAccountController] Google signup tapped.");
+            _googleSignupButton.SetEnabled(false);
 
-            // TODO: hook up Google sign-up flow for admins, e.g.:
-            // AdminAuthService.Instance.SignUpWithGoogle(OnSignupResult);
+            AdminAuthService.Instance?.LoginWithGoogle((success, errorMessage) =>
+            {
+                _googleSignupButton.SetEnabled(true);
+
+                if (success)
+                {
+                    Debug.Log("[AdminCreateAccountController] Google account signed up/in successfully");
+                    SetStatus("Signed in with Google! Redirecting...");
+                    Invoke(nameof(RedirectAfterGoogle), 1f);
+                }
+                else
+                {
+                    Debug.LogError($"[AdminCreateAccountController] Google signup failed: {errorMessage}");
+                    SetStatus(errorMessage ?? "Google sign-in failed. Please try again.");
+                }
+            });
+        }
+
+        private void RedirectAfterGoogle()
+        {
+            // LoginWithGoogle already signs the admin in, so go straight to
+            // the dashboard rather than back through the login screen.
+            UIManager.Instance?.ShowAdminDashboard();
         }
 
         private void OnCreateAccountClicked(ClickEvent evt)

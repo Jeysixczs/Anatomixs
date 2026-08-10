@@ -144,13 +144,9 @@
     align-items: flex-start;
 }
 
-.screen-scroll .unity-scroller--vertical
-{
-    width: 0;
-    display: none;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+/* Styled by Unity's own BEM classes rather than the internal element names (#unity-*),
+   so this keeps working across ScrollView modes and Unity versions. */
+.screen-scroll .unity-scroll-view__content-viewport
 {
     padding: 0;
     margin: 0;
@@ -158,7 +154,7 @@
     height: 100%;
 }
 
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+.screen-scroll .unity-scroll-view__content-container
 {
     padding: 0;
     margin: 0;
@@ -172,6 +168,83 @@
     flex-grow: 0;
     height: auto;
     min-height: 100%;
+    width: 100%;
+}
+
+/* mode="Vertical" on the ScrollView is what applies "--vertical" here rather than
+   "--vertical-horizontal" - the horizontal variant lets the container shrink-wrap to
+   its children instead of stretching to the viewport width, which is what caused
+   inconsistent row widths. Both are covered in case the mode ever changes. */
+.screen-scroll .unity-scroll-view__content-container--vertical,
+.screen-scroll .unity-scroll-view__content-container--vertical-horizontal
+{
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Slim, themed vertical scrollbar (visibility stays "Auto" - it only appears once
+   content overflows) instead of a hard width:0 hide, so there's still a subtle
+   scroll affordance on long quiz lists. */
+.screen-scroll .unity-scroller--vertical
+{
+    width: 0;   
+    margin-left: 0px;
+    background-color: transparent;
+    border-width: 0;
+
+}
+
+.unity-scroll-view__vertical-scroller{
+    width: 0;
+    visibility: hidden;
+}
+
+.unity-toggle__checkmark
+{
+    width: 40px;
+    height: 40px;
+    border-radius: 15px;
+    background-color: rgb(240, 241, 245);
+    border-width: 0;
+}
+
+/* Unity's default theme puts padding/margin on this wrapper (it holds the
+   tracker + dragger), which was throwing off the slim 6px scrollbar's
+   centering/width below. Zeroed out rather than left to the default. */
+.screen-scroll .unity-scroller--vertical .unity-base-slider__drag-container
+{
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+}
+
+.screen-scroll .unity-scroller--vertical .unity-base-slider__tracker
+{
+    background-color: rgba(0, 0, 0, 0.05);
+    border-width: 0;
+    border-radius: 6px;
+}
+
+.screen-scroll .unity-scroller--vertical .unity-base-slider__dragger
+{
+    background-color: rgba(31, 36, 48, 0.22);
+    border-width: 0;
+    border-radius: 6px;
+    width: 6px;
+    left: 2px;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.screen-scroll .unity-scroller--vertical .unity-base-slider__dragger:hover
+{
+    background-color: rgba(31, 36, 48, 0.4);
+}
+
+.screen-scroll .unity-scroller--vertical .unity-scroller__low-button,
+.screen-scroll .unity-scroller--vertical .unity-scroller__high-button
+{
+    display: none;
 }
 
 /* ---------- Content Wrapper ---------- */
@@ -281,7 +354,24 @@
     background-color: rgb(248, 249, 251);
 }
 
-/* ---------- Quizzes list / cards ---------- */
+/* ---------- Quizzes list / cards ----------
+   Redesign notes:
+   - USS has no box-shadow, so "shadow" is faked with a second, slightly
+     offset VisualElement (.quiz-card-shadow) painted behind the card inside
+     a position:relative wrapper (.quiz-card-wrapper). It's the same trick
+     the file already uses for gradients-via-texture: work around a missing
+     CSS feature without touching layout logic.
+   - Units stay in the file's existing 1080-wide-canvas scale (~2.8x a
+     normal 1x pixel), so a "12-16px" spec below becomes ~34-45px etc, to
+     stay visually consistent with the header/stat cards/modals.
+   - Class names that existing C# already builds on (quiz-title-label,
+     quiz-category-label, add-question-button/plus/label, questions-list,
+     questions-empty-label, question-text-label, question-points-label,
+     question-difficulty-badge/label + easy/medium/hard, question-type-
+     badge/label, quiz-delete-button/icon, question-delete-button/icon)
+     are kept so the compact-mode rules further down still apply. New
+     classes are additive.
+   ---------- */
 
 .quizzes-list
 {
@@ -289,34 +379,84 @@
     flex-direction: column;
 }
 
-.quiz-card
+.quiz-card-wrapper
 {
+    position: relative;
     width: 100%;
-    background-color: white;
-    border-radius: 34px;
-    padding: 37px;
-    margin-bottom: 26px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 28px;
 }
 
-.quiz-card-top-row
+.quiz-card-shadow
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.10);
+    border-radius: 40px;
+    translate: 0 8px;
+    transition-property: translate, background-color;
+    transition-duration: 0.18s;
+}
+
+.quiz-card-wrapper:hover .quiz-card-shadow
+{
+    translate: 0 14px;
+    background-color: rgba(15, 23, 42, 0.14);
+}
+
+.quiz-card
+{
+    position: relative;
+    width: 100%;
+    background-color: rgb(255, 255, 255);
+    border-radius: 40px;
+    padding: 50px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.06);
+    transition-property: translate;
+    transition-duration: 0.18s;
+}
+
+.quiz-card-wrapper:hover .quiz-card
+{
+    translate: 0 -4px;
+}
+
+/* ---------- Card header: title/category left, actions top-right ---------- */
+
+.quiz-card-header
 {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.quiz-card-header-main
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 24px;
 }
 
 .quiz-title-label
 {
-    font-size: 34px;
+    font-size: 40px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
+    color: rgb(17, 24, 39);
     white-space: normal;
-    margin-right: 16px;
+}
+
+.quiz-category-label
+{
+    font-size: 26px;
+    color: rgb(148, 153, 168);
+    margin-top: 8px;
+    white-space: normal;
 }
 
 .quiz-header-actions
@@ -326,80 +466,102 @@
     flex-shrink: 0;
 }
 
-.quiz-expand-button
+/* Shared icon-button chip used by expand/edit/delete - a soft square instead
+   of bare glyphs floating in the header, so the action area reads as one
+   clean cluster. */
+.quiz-icon-button
 {
-    width: 92px;
-    height: 92px;
-    background-color: transparent;
-    border-width: 0;
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    background-color: rgb(247, 248, 251);
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.05);
     padding: 0;
     margin: 0;
+    margin-left: 12px;
+    justify-content: center;
+    align-items: center;
     font-size: 26px;
     color: rgb(90, 95, 112);
-    justify-content: center;
-    align-items: center;
     -unity-text-align: middle-center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
 }
 
-.quiz-expand-button:hover
+.quiz-icon-button:hover
 {
-    color: rgb(31, 36, 48);
+    background-color: rgb(237, 239, 245);
 }
 
-.quiz-delete-button
+.quiz-icon-button:active
 {
-    width: 92px;
-    height: 92px;
-    background-color: transparent;
-    border-width: 0;
-    padding: 0;
-    margin: 0;
-    margin-left: 18px;
-    justify-content: center;
-    align-items: center;
+    background-color: rgb(226, 229, 238);
+}
+
+.quiz-expand-button
+{
+    margin-left: 0;
+    font-size: 30px;
+
+}
+
+.quiz-edit-button
+{
+    color: rgb(37, 99, 235);
+}
+
+.quiz-edit-button:hover
+{
+    background-color: rgba(37, 99, 235, 0.10);
+    border-color: rgba(37, 99, 235, 0.18);
 }
 
 .quiz-delete-button:hover
 {
     background-color: rgba(220, 38, 38, 0.08);
-    border-radius: 24px;
+    border-color: rgba(220, 38, 38, 0.18);
 }
 
 .quiz-delete-icon
 {
-    font-size: 29px;
+    font-size: 26px;
     color: rgb(220, 38, 38);
     -unity-text-align: middle-center;
 }
 
-.quiz-category-label
-{
-    font-size: 28px;
-    color: rgb(138, 143, 163);
-    margin-top: 6px;
-    white-space: normal;
-}
+/* ---------- Metadata chips (questions / time / passing score / attempts / deadline) ---------- */
 
-.quiz-meta-row
+.quiz-meta-chips
 {
     flex-direction: row;
-    align-items: center;
-    margin-top: 16px;
     flex-wrap: wrap;
 }
 
-.quiz-meta-text
+.quiz-meta-chip
 {
-    font-size: 25px;
-    color: rgb(150, 155, 168);
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(247, 248, 251);
+    border-radius: 18px;
+    padding: 12px 18px;
+    margin-right: 12px;
+    margin-bottom: 12px;
 }
 
-.quiz-meta-dot
+.quiz-meta-chip-icon
 {
-    font-size: 25px;
-    color: rgb(150, 155, 168);
-    margin-left: 14px;
-    margin-right: 14px;
+    font-size: 24px;
+    margin-right: 10px;
+    -unity-text-align: middle-center;
+}
+
+.quiz-meta-chip-text
+{
+    font-size: 24px;
+    color: rgb(90, 95, 112);
+    -unity-font-style: bold;
+    white-space: normal;
 }
 
 /* ---------- Expanded quiz content: Questions ---------- */
@@ -408,9 +570,29 @@
 {
     width: 100%;
     height: 1px;
-    background-color: rgba(0, 0, 0, 0.07);
-    margin-top: 32px;
-    margin-bottom: 29px;
+    background-color: rgba(15, 23, 42, 0.08);
+    margin-top: 34px;
+    margin-bottom: 30px;
+}
+
+/* Fade + slide-in "enter" transition for the expanded section. UI Toolkit
+   can't transition height:auto, so opacity/translate stand in for a smooth
+   expand instead of the content just popping into place - the --enter
+   class is removed a frame after the element is added (see
+   AdminQuizManagementController.BuildQuizCard). */
+.quiz-expand-content
+{
+    opacity: 1;
+    translate: 0 0;
+    transition-property: opacity, translate;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-out;
+}
+
+.quiz-expand-content--enter
+{
+    opacity: 0;
+    translate: 0 -14px;
 }
 
 .questions-header-row
@@ -418,31 +600,49 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 26px;
 }
 
 .questions-header-title
 {
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: rgb(17, 24, 39);
 }
 
+/* Prominent filled "Add Question" button - solid brand blue instead of the
+   flat green fallback, since this one is rebuilt per quiz card on every
+   expand/collapse and isn't worth generating a runtime gradient texture
+   for (unlike the header/modal buttons, which are built once). */
 .add-question-button
 {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border-radius: 21px;
+    background-color: rgb(37, 99, 235);
+    border-radius: 20px;
     border-width: 0;
-    padding: 14px 20px;
+    padding: 18px 26px;
     margin: 0;
-    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+    transition-property: background-color, translate;
+    transition-duration: 0.15s;
+}
+
+.add-question-button:hover
+{
+    background-color: rgb(29, 78, 216);
+    translate: 0 -2px;
+}
+
+.add-question-button:active
+{
+    background-color: rgb(30, 64, 175);
+    translate: 0 0;
 }
 
 .add-question-plus
 {
-    font-size: 29px;
+    font-size: 30px;
     -unity-font-style: bold;
     color: white;
     margin-right: 10px;
@@ -450,16 +650,17 @@
 
 .add-question-label
 {
-    font-size: 25px;
+    font-size: 26px;
     -unity-font-style: bold;
     color: white;
 }
 
 .questions-empty-label
 {
-    font-size: 26px;
+    font-size: 27px;
     color: rgb(150, 155, 168);
-    padding: 10px 0;
+    padding: 30px 0;
+    -unity-text-align: middle-center;
 }
 
 .questions-list
@@ -468,18 +669,28 @@
     flex-direction: column;
 }
 
-.question-row
+/* Each question as its own mini-card instead of a plain divided row. */
+.question-card
 {
     width: 100%;
-    background-color: rgb(247, 248, 251);
-    border-radius: 24px;
-    padding: 18px 20px;
+    background-color: rgb(249, 250, 252);
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.05);
+    border-radius: 26px;
+    padding: 26px 28px;
     margin-bottom: 18px;
     flex-direction: column;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
 }
 
+.question-card:hover
+{
+    background-color: rgb(244, 246, 250);
+    border-color: rgba(15, 23, 42, 0.08);
+}
 
-.question-row-top
+.question-card-top
 {
     flex-direction: row;
     align-items: center;
@@ -487,17 +698,29 @@
 
 .question-index-badge
 {
-    font-size: 24px;
+    font-size: 25px;
     -unity-font-style: bold;
     color: rgb(37, 99, 235);
-    margin-right: 14px;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.question-badges-group
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .question-difficulty-badge
 {
     border-radius: 14px;
-    padding: 4px 12px;
-    margin-right: 14px;
+    padding: 6px 14px;
+    margin-right: 10px;
+    margin-bottom: 4px;
 }
 
 .question-difficulty-easy
@@ -542,10 +765,8 @@
     border-width: 1px;
     border-color: rgb(224, 226, 232);
     border-radius: 14px;
-    padding: 4px 12px;
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
+    padding: 6px 14px;
+    margin-bottom: 4px;
 }
 
 .question-type-label
@@ -558,45 +779,63 @@
 
 .question-delete-button
 {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     background-color: transparent;
     border-width: 0;
+    border-radius: 16px;
     padding: 0;
     margin: 0;
-    margin-left: 14px;
+    margin-left: 12px;
     flex-shrink: 0;
     justify-content: center;
     align-items: center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
 }
 
 .question-delete-button:hover
 {
     background-color: rgba(220, 38, 38, 0.08);
-    border-radius: 21px;
 }
 
 .question-delete-icon
 {
-    font-size: 25px;
+    font-size: 23px;
     color: rgb(220, 38, 38);
     -unity-text-align: middle-center;
 }
 
 .question-text-label
 {
-    font-size: 29px;
+    font-size: 28px;
     color: rgb(31, 36, 48);
-    margin-top: 16px;
+    margin-top: 18px;
     white-space: normal;
+}
+
+.question-footer-row
+{
+    flex-direction: row;
+    margin-top: 16px;
+}
+
+.question-points-chip
+{
+    background-color: white;
+    border-width: 1px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 14px;
+    padding: 6px 14px;
 }
 
 .question-points-label
 {
-    font-size: 24px;
-    color: rgb(150, 155, 168);
-    margin-top: 10px;
+    font-size: 22px;
+    color: rgb(90, 95, 112);
+    -unity-font-style: bold;
 }
+
 
 /* ---------- Fields (shared by modals) ---------- */
 
@@ -647,6 +886,10 @@
     font-size: 26px;
     color: rgb(220, 38, 38);
     margin-top: 8px;
+    /* Without this, long messages (e.g. the past-deadline error) stay on one line and
+       run straight past the modal's right edge instead of wrapping - that's the cut-off
+       text ("...current date and ti") seen in the screenshot. */
+    white-space: normal;
 }
 
 .status-label
@@ -655,6 +898,24 @@
     color: rgb(120, 123, 140);
     margin-top: 18px;
     -unity-text-align: middle-center;
+}
+
+.toggle-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.deadline-toggle
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.deadline-toggle > .unity-toggle__input
+{
+    margin-right: 12px;
 }
 
 .two-column-row
@@ -678,6 +939,33 @@
     margin-left: 14px;
 }
 
+.three-column-row
+{
+    flex-direction: row;
+}
+
+.three-column-item
+{
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.three-column-item-left
+{
+    margin-right: 10px;
+}
+
+.three-column-item-mid
+{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.three-column-item-right
+{
+    margin-left: 10px;
+}
+
 /* ---------- Dropdown fields ---------- */
 
 .dropdown-field
@@ -685,6 +973,8 @@
     font-size: 32px;
     color: rgb(31, 36, 48);
     margin: 0;
+    min-height: 68px;
+    justify-content: center;
 }
 
 .dropdown-field > .unity-base-popup-field__input
@@ -693,12 +983,488 @@
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.06);
     border-radius: 21px;
-    padding: 16px 20px;
+    padding: 16px 18px 16px 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.dropdown-field > .unity-base-popup-field__input:hover
+{
+    background-color: rgb(233, 235, 241);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-field:focus > .unity-base-popup-field__input
+{
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(37, 99, 235);
+    border-width: 2px;
+    padding: 15px 17px 15px 19px;
+}
+
+.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text
+{
+    color: rgb(31, 36, 48);
+    -unity-text-overflow-position: end;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+{
+    -unity-background-image-tint-color: rgb(120, 123, 140);
+    flex-shrink: 0;
+    margin-left: 10px;
+    width: 20px;
+    height: 20px;
+}
+
+.dropdown-field.unity-disabled > .unity-base-popup-field__input
+{
+    opacity: 0.5;
+}
+
+/* The choices list that opens on tap - Unity renders this as its own overlay, not
+   nested under screen-root, so these are unscoped by design. */
+.unity-base-dropdown__container-outer
+{
+    background-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 18px;
+    padding: 8px;
+    margin-top: 6px;
+    max-height: 616px;
+    min-width: 140px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 12px 28px rgba(20, 24, 36, 0.22);
+}
+
+/* The direct ScrollView child - let it grow to fill the container-outer's max-height
+   (616px minus the 8px+8px padding = 600px) so the viewport cap below is what actually
+   does the clipping, not an under-sized ScrollView leaving dead space. Row direction
+   lays the content viewport and the scroller out side-by-side; margin-left: auto on
+   the scroller (below) then guarantees it sits flush against the right edge regardless
+   of any other layout quirks. */
+.unity-base-dropdown__container-outer .unity-scroll-view
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: row;
+}
+
+/* Slim themed scrollbar for long lists (e.g. day-of-month) - matches the one used on
+   the main screen ScrollView instead of Unity's default chunky gray one. margin-left:
+   auto pushes it to the right edge regardless of sibling order in the row layout. */
+.unity-base-dropdown__container-outer .unity-scroller--vertical
+{
+    width: 10px;
+    margin-left: auto;
+    margin-right: 0;
+    align-self: stretch;
+    background-color: transparent;
+    border-width: 0;
+}
+
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__drag-container
+{
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+}
+
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__tracker
+{
+    width: 100%;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.04);
+    border-width: 0;
+    border-radius: 6px;
+}
+
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__dragger
+{
+    background-color: rgba(31, 36, 48, 0.22);
+    border-width: 0;
+    border-radius: 6px;
+    width: 6px;
+    left: 2px;
+}
+
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__dragger:hover
+{
+    background-color: rgba(31, 36, 48, 0.4);
+}
+
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-scroller__low-button,
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-scroller__high-button
+{
+    display: none;
+}
+
+/* The list itself lives in a ScrollView inside the popup. Its content-viewport has no
+   height cap by default, so a long choice list (e.g. day-of-month, 1-31) blows past the
+   screen instead of scrolling - that's the overflow seen with the Day dropdown. Capped
+   here to fit exactly 10 rows (10 * 60px item block, see .unity-base-dropdown__item
+   below) before scrolling kicks in - shorter lists (Month, Hour, AM/PM) just size to
+   their content since this is a max, not a fixed height. */
+.unity-base-dropdown__container-outer .unity-scroll-view__content-viewport,
+.unity-base-dropdown__container-outer .unity-scroll-view__content-viewport--vertical-horizontal
+{
+    max-height: 600px;
+    /* flex-grow is a MAIN-AXIS property, and the parent .unity-scroll-view above sets
+       flex-direction: row (so the scrollbar sits flush right) - that makes this axis
+       horizontal, not vertical. flex-grow: 0 was leaving the viewport (and therefore
+       every .unity-base-dropdown__item inside it) sized to its intrinsic content width
+       instead of the full row width, while the visible highlight/hover still spanned
+       the wider container-outer - hence only ~half of each item was actually clickable.
+       flex-grow: 1 makes the viewport fill the row's width; max-height above still caps
+       the cross-axis (height) exactly as before. */
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+/* Fixed row height (rather than padding + font auto-sizing) so "10 rows visible" above
+   is exact instead of approximate. */
+.unity-base-dropdown__item
+{
+    height: 56px;
+    border-radius: 12px;
+    padding: 0 14px;
+    margin: 2px 0;
+    flex-direction: row;
+    align-items: center;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+}
+
+.unity-base-dropdown__item:hover
+{
+    background-color: rgb(240, 241, 245);
+}
+
+.unity-base-dropdown__item--selected
+{
+    background-color: rgba(37, 99, 235, 0.12);
+}
+
+.unity-base-dropdown__item--selected .unity-base-dropdown__label
+{
+    color: rgb(37, 99, 235);
+    -unity-font-style: bold;
+}
+
+.unity-base-dropdown__checkmark
+{
+    -unity-background-image-tint-color: rgb(37, 99, 235);
+}
+
+.unity-base-dropdown__label
+{
+    font-size: 30px;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-left;
+    margin: 0;
 }
 
 .options-container
 {
     flex-direction: column;
+}
+
+/* ---------- Answer choice rows (Multiple Choice / Multiple Identification) ---------- */
+
+.option-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.option-letter-badge
+{
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    background-color: rgb(240, 241, 245);
+    color: rgb(90, 95, 112);
+    font-size: 26px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.option-row > .text-field
+{
+    flex-grow: 1;
+}
+
+.option-row > .text-field.option-field
+{
+    margin-bottom: 0;
+}
+
+/* ---------- Correct-answer picker (radio buttons for MC, checkboxes for MI) ---------- */
+
+.correct-answer-container
+{
+    flex-direction: column;
+}
+
+.correct-answer-choice-row
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: rgb(240, 241, 245);
+    border-radius: 21px;
+    padding: 12px 16px;
+}
+
+.correct-answer-choice
+{
+    flex-direction: row;
+    align-items: center;
+    margin: 8px 24px 8px 0;
+}
+
+.correct-answer-choice-label
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-left: 10px;
+}
+
+/* Round radio "dot" look for Multiple Choice's single-select toggles. */
+.radio-toggle > .unity-toggle__input
+{
+    margin-left: 0;
+}
+
+.radio-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(200, 203, 214);
+}
+
+.radio-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark
+{
+    background-color: rgb(37, 99, 235);
+    border-color: rgb(37, 99, 235);
+}
+
+/* Square checkbox look for Multiple Identification's multi-select toggles. */
+.checkbox-toggle > .unity-toggle__input
+{
+    margin-left: 0;
+}
+
+.checkbox-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(200, 203, 214);
+}
+
+.checkbox-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark
+{
+    background-color: rgb(16, 185, 129);
+    border-color: rgb(16, 185, 129);
+}
+
+/* ---------- Enumeration: dynamic answer list ---------- */
+
+.enumeration-answers-list
+{
+    flex-direction: column;
+    max-height: 320px;
+    overflow: hidden; /* clip to the ScrollView viewport; inner content still scrolls */
+}
+
+.enumeration-answers-list > .unity-scroll-view__content-viewport
+{
+    overflow: hidden;
+}
+
+.enumeration-answers-list > .unity-scroll-view__content-container
+{
+    flex-direction: column;
+    padding-right: 8px; /* keep rows clear of the vertical scrollbar */
+}
+
+.enumeration-answer-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.enumeration-answer-index-badge
+{
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    background-color: rgb(240, 241, 245);
+    color: rgb(90, 95, 112);
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.enumeration-answer-field
+{
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+
+.enumeration-answer-remove-button
+{
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    background-color: rgb(254, 242, 242);
+    border-width: 0;
+    color: rgb(220, 38, 38);
+    font-size: 26px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    margin: 0 0 0 14px;
+    flex-shrink: 0;
+}
+
+.enumeration-answer-remove-button:hover
+{
+    background-color: rgb(254, 226, 226);
+}
+
+.add-answer-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 20px;
+    border-width: 2px;
+    border-color: rgb(37, 99, 235);
+    padding: 16px 26px;
+    margin: 6px 0 0 0;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.add-answer-button:hover
+{
+    background-color: rgb(239, 246, 255);
+}
+
+.add-answer-plus
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    margin-right: 10px;
+}
+
+.add-answer-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+/* ---------- Image-Based: "View 3D Model" button (opens the 3D structure picker screen) ---------- */
+
+.view-3d-model-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 20px;
+    border-width: 2px;
+    border-color: rgb(37, 99, 235);
+    padding: 16px 26px;
+    margin: 0 0 12px 0;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.view-3d-model-button:hover
+{
+    background-color: rgb(239, 246, 255);
+}
+
+.view-3d-model-icon
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    margin-right: 10px;
+}
+
+.view-3d-model-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
+/* ---------- Image-Based: anatomy preview ---------- */
+
+.image-based-preview
+{
+    background-color: rgb(240, 241, 245);
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    min-height: 220px;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.image-based-preview-icon
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: rgb(219, 234, 254);
+    margin-bottom: 16px;
+}
+
+.image-based-preview-label
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* Red outline on a text field that failed validation. */
+.field-invalid > .unity-text-field__input
+{
+    border-color: rgb(220, 38, 38);
+    border-width: 2px;
 }
 
 /* ---------- Modal overlay ---------- */
@@ -887,6 +1653,27 @@
     font-size: 18px;
 }
 
+.compact .quiz-card
+{
+    padding: 34px;
+    border-radius: 32px;
+}
+
+.compact .quiz-card-shadow
+{
+    border-radius: 32px;
+}
+
+.compact .quiz-card-header
+{
+    margin-bottom: 22px;
+}
+
+.compact .quiz-card-header-main
+{
+    margin-right: 14px;
+}
+
 .compact .quiz-title-label
 {
     font-size: 29px;
@@ -894,7 +1681,57 @@
 
 .compact .quiz-category-label
 {
-    font-size: 24px;
+    font-size: 22px;
+    margin-top: 6px;
+}
+
+.compact .quiz-icon-button
+{
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    margin-left: 8px;
+    font-size: 22px;
+}
+
+.compact .quiz-expand-button
+{
+
+    font-size: 26px;
+}
+
+.compact .quiz-meta-chip
+{
+    padding: 9px 14px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.compact .quiz-meta-chip-icon
+{
+    font-size: 20px;
+    margin-right: 7px;
+}
+
+.compact .quiz-meta-chip-text
+{
+    font-size: 20px;
+}
+
+.compact .quiz-divider
+{
+    margin-top: 26px;
+    margin-bottom: 22px;
+}
+
+.compact .questions-header-title
+{
+    font-size: 27px;
+}
+
+.compact .add-question-button
+{
+    padding: 14px 18px;
 }
 
 .compact .add-question-label
@@ -907,9 +1744,36 @@
     margin-right: 0;
 }
 
+.compact .question-card
+{
+    padding: 20px 22px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+}
+
+.compact .question-index-badge
+{
+    font-size: 21px;
+    margin-right: 10px;
+}
+
+.compact .question-difficulty-badge,
+.compact .question-type-badge,
+.compact .question-points-chip
+{
+    padding: 5px 11px;
+}
+
 .compact .question-text-label
 {
     font-size: 25px;
+    margin-top: 14px;
+}
+
+.compact .question-delete-button
+{
+    width: 54px;
+    height: 54px;
 }
 
 .compact .modal-card
@@ -917,7 +1781,90 @@
     padding: 34px;
 }
 
+.compact .option-letter-badge,
+.compact .enumeration-answer-index-badge,
+.compact .enumeration-answer-remove-button
+{
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.compact .correct-answer-choice-label
+{
+    font-size: 24px;
+}
+
+.compact .radio-toggle > .unity-toggle__input > .unity-toggle__checkmark,
+.compact .checkbox-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    width: 36px;
+    height: 36px;
+}
+
+.compact .image-based-preview
+{
+    min-height: 160px;
+}
+
+.compact .enumeration-answers-list
+{
+    max-height: 240px;
+}
+
+.compact .view-3d-model-button
+{
+    padding: 10px 16px;
+}
+
+.compact .view-3d-model-icon,
+.compact .view-3d-model-label
+{
+    font-size: 20px;
+}
+
 .compact .modal-title
 {
     font-size: 32px;
+}
+
+.compact .dropdown-field
+{
+    font-size: 27px;
+    min-height: 58px;
+}
+
+.compact .dropdown-field > .unity-base-popup-field__input
+{
+    padding: 12px 14px 12px 16px;
+}
+
+.compact .dropdown-field:focus > .unity-base-popup-field__input
+{
+    padding: 11px 13px 11px 15px;
+}
+
+.compact .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+{
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+}
+
+.compact .three-column-item-mid
+{
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.compact .three-column-item-left
+{
+    margin-right: 8px;
+}
+
+.compact .three-column-item-right
+{
+    margin-left: 8px;
 }

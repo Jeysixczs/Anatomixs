@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Anatomia3D.Backend;
 
 namespace Anatomia3D.UI
 {
@@ -15,18 +16,23 @@ namespace Anatomia3D.UI
     ///    in sync with the Preview card as the fields change
     ///  - Badges: renders the current badge list, "Add Badge" opens a modal
     ///    with name/points/icon-emoji fields and a click-to-pick icon grid;
-    ///    each row has a delete (trash) button
-    ///  - Level Progression: renders the current level list, "Add Level"
-    ///    opens a modal with number/title/points fields; each row has a
-    ///    delete (trash) button
+    ///    each row has a delete (trash) button. Badges only apply to the
+    ///    classroom(s) the signed-in admin/teacher owns.
+    ///  - Level Progression: read-only. Levels are global and fixed across
+    ///    every classroom, so there's no add/edit/delete here - this screen
+    ///    just displays the current global thresholds (loaded via SetLevels)
+    ///    for reference. A student's level comes from their total points
+    ///    added up across every classroom they're enrolled in.
     ///  - Applies the green->blue gradient at runtime to the header, the two
     ///    "Add" buttons and the two modal submit buttons, plus a pale
     ///    green->blue gradient to the Preview card background (USS can't do
     ///    linear-gradient)
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
     ///
-    /// Hook up your real persistence call inside OnSaveChangesClicked() - e.g.
-    /// call into your existing AdminGamificationService / backend here.
+    /// Loads current settings from AdminGamificationService.FetchSettings() on
+    /// enable, and OnSaveChangesClicked() persists points config + badges via
+    /// AdminGamificationService.SaveSettings() (levels are intentionally left
+    /// out - see that method's doc comment).
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminGamificationSettingsController : MonoBehaviour
@@ -34,12 +40,20 @@ namespace Anatomia3D.UI
         /// <summary>Plain data for a single row in the "Badges" list.</summary>
         public struct BadgeData
         {
+            /// <summary>Firestore badge id. Empty for a badge just created in this
+            /// session - AdminGamificationService.SaveSettings() will mint one.
+            /// Populated when loaded from the backend so re-saving an existing
+            /// badge doesn't mint a *new* id and orphan students' earned-badge
+            /// records (students/{uid}.badgesEarned and .../badgeAwards both key
+            /// off this id).</summary>
+            public string BadgeId;
             public string Name;
             public int PointsRequired;
             public string IconEmoji;
 
-            public BadgeData(string name, int pointsRequired, string iconEmoji)
+            public BadgeData(string name, int pointsRequired, string iconEmoji, string badgeId = "")
             {
+                BadgeId = badgeId;
                 Name = name;
                 PointsRequired = pointsRequired;
                 IconEmoji = iconEmoji;
@@ -94,9 +108,7 @@ namespace Anatomia3D.UI
 
         private Texture2D _headerGradientTexture;
         private Texture2D _addBadgeButtonGradientTexture;
-        private Texture2D _addLevelButtonGradientTexture;
         private Texture2D _badgeModalSubmitGradientTexture;
-        private Texture2D _levelModalSubmitGradientTexture;
         private Texture2D _previewGradientTexture;
 
         private VisualElement _header;
@@ -111,7 +123,7 @@ namespace Anatomia3D.UI
         private VisualElement _badgesEmptyLabel;
         private VisualElement _badgesList;
 
-        private Button _addLevelButton;
+        private VisualElement _levelsGlobalTag;
         private VisualElement _levelsEmptyLabel;
         private VisualElement _levelsList;
 
@@ -134,17 +146,6 @@ namespace Anatomia3D.UI
         private string _selectedBadgeIcon;
         private readonly List<VisualElement> _badgeIconGridItems = new List<VisualElement>();
 
-        // Add Level modal
-        private VisualElement _addLevelModalOverlay;
-        private Button _addLevelCloseButton;
-        private Button _addLevelCancelButton;
-        private Button _addLevelSubmitButton;
-        private TextField _levelNumberField;
-        private TextField _levelTitleField;
-        private Label _levelTitleError;
-        private TextField _levelPointsField;
-        private Label _addLevelStatusLabel;
-
         private readonly List<BadgeData> _currentBadges = new List<BadgeData>
         {
             new BadgeData("Beginner", 100, "\U0001F31F"),
@@ -153,6 +154,11 @@ namespace Anatomia3D.UI
             new BadgeData("Expert", 2000, "\U0001F451"),
         };
 
+        /// <summary>
+        /// Placeholder shown until the real global level thresholds are loaded
+        /// from the backend via SetLevels(). This screen never mutates this
+        /// list through user input - it's display-only.
+        /// </summary>
         private readonly List<LevelData> _currentLevels = new List<LevelData>
         {
             new LevelData(1, "Novice", 0),
@@ -164,6 +170,16 @@ namespace Anatomia3D.UI
             new LevelData(7, "Guru", 2100),
             new LevelData(8, "Legend", 2800),
         };
+
+        private bool _realDataReceived;
+
+        // Last values pushed through SetPointsConfiguration() - the text fields
+        // above get destroyed and re-queried fresh every OnEnable (UI is rebuilt
+        // each time), so without this a re-enable that skips LoadSettings() would
+        // show blank/default fields instead of what was actually loaded/saved.
+        private int _lastEasyPoints = 10;
+        private int _lastMediumPoints = 20;
+        private int _lastHardPoints = 30;
 
         private void OnEnable()
         {
@@ -206,9 +222,53 @@ namespace Anatomia3D.UI
             RefreshBadgesUI();
             RefreshLevelsUI();
             RefreshPreview();
+            SetPointsConfiguration(_lastEasyPoints, _lastMediumPoints, _lastHardPoints);
 
             CloseAddBadgeModal();
-            CloseAddLevelModal();
+
+            // First time this screen opens this session -> fetch. Badges are
+            // already patched locally on add/remove (see OnAddBadgeSubmitClicked
+            // / the remove handler), and levels are fixed/read-only from this
+            // screen (see LoadSettings' doc comment), so a re-enable (e.g.
+            // switching tabs elsewhere and coming back) can just repaint from
+            // cache via RefreshBadgesUI()/RefreshLevelsUI()/RefreshPreview()
+            // above instead of re-fetching. Same pattern as
+            // StudentAchievementsController.
+            if (!_realDataReceived)
+            {
+                LoadSettings();
+            }
+        }
+
+        /// <summary>
+        /// Pulls the current points config / badges / (read-only) levels from
+        /// AdminGamificationService.FetchSettings() and pushes them into the
+        /// UI via the same SetPointsConfiguration/SetBadges/SetLevels public
+        /// API a caller outside this controller would use. Called on enable;
+        /// the mock defaults above render first so the screen isn't empty
+        /// while this fetch is in flight.
+        /// </summary>
+        private void LoadSettings()
+        {
+            if (AdminGamificationService.Instance == null)
+            {
+                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - " +
+                    "showing built-in defaults only.");
+                return;
+            }
+
+            AdminGamificationService.Instance.FetchSettings(settings =>
+            {
+                _realDataReceived = true;
+
+                SetPointsConfiguration(settings.EasyPoints, settings.MediumPoints, settings.HardPoints);
+
+                var badges = settings.Badges.ConvertAll(b => new BadgeData(b.Name, b.PointsRequired, b.IconEmoji, b.BadgeId));
+                SetBadges(badges);
+
+                var levels = settings.Levels.ConvertAll(l => new LevelData(l.LevelNumber, l.Title, l.PointsRequired));
+                SetLevels(levels);
+            });
         }
 
         private void OnDisable()
@@ -217,9 +277,7 @@ namespace Anatomia3D.UI
 
             if (_headerGradientTexture != null) { Destroy(_headerGradientTexture); _headerGradientTexture = null; }
             if (_addBadgeButtonGradientTexture != null) { Destroy(_addBadgeButtonGradientTexture); _addBadgeButtonGradientTexture = null; }
-            if (_addLevelButtonGradientTexture != null) { Destroy(_addLevelButtonGradientTexture); _addLevelButtonGradientTexture = null; }
             if (_badgeModalSubmitGradientTexture != null) { Destroy(_badgeModalSubmitGradientTexture); _badgeModalSubmitGradientTexture = null; }
-            if (_levelModalSubmitGradientTexture != null) { Destroy(_levelModalSubmitGradientTexture); _levelModalSubmitGradientTexture = null; }
             if (_previewGradientTexture != null) { Destroy(_previewGradientTexture); _previewGradientTexture = null; }
         }
 
@@ -238,11 +296,6 @@ namespace Anatomia3D.UI
             _addBadgeCloseButton?.UnregisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeCancelButton?.UnregisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeSubmitButton?.UnregisterCallback<ClickEvent>(OnAddBadgeSubmitClicked);
-
-            _addLevelButton?.UnregisterCallback<ClickEvent>(OnAddLevelClicked);
-            _addLevelCloseButton?.UnregisterCallback<ClickEvent>(OnAddLevelCancelClicked);
-            _addLevelCancelButton?.UnregisterCallback<ClickEvent>(OnAddLevelCancelClicked);
-            _addLevelSubmitButton?.UnregisterCallback<ClickEvent>(OnAddLevelSubmitClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -269,7 +322,7 @@ namespace Anatomia3D.UI
             _badgesEmptyLabel = _screenRoot.Q<VisualElement>("badges-empty-label");
             _badgesList = _screenRoot.Q<VisualElement>("badges-list");
 
-            _addLevelButton = _screenRoot.Q<Button>("add-level-button");
+            _levelsGlobalTag = _screenRoot.Q<VisualElement>("levels-global-tag");
             _levelsEmptyLabel = _screenRoot.Q<VisualElement>("levels-empty-label");
             _levelsList = _screenRoot.Q<VisualElement>("levels-list");
 
@@ -288,16 +341,6 @@ namespace Anatomia3D.UI
             _badgePointsField = _screenRoot.Q<TextField>("badge-points-field");
             _badgeIconGrid = _screenRoot.Q<VisualElement>("badge-icon-grid");
             _addBadgeStatusLabel = _screenRoot.Q<Label>("add-badge-status-label");
-
-            _addLevelModalOverlay = _screenRoot.Q<VisualElement>("add-level-modal-overlay");
-            _addLevelCloseButton = _screenRoot.Q<Button>("add-level-close-button");
-            _addLevelCancelButton = _screenRoot.Q<Button>("add-level-cancel-button");
-            _addLevelSubmitButton = _screenRoot.Q<Button>("add-level-submit-button");
-            _levelNumberField = _screenRoot.Q<TextField>("level-number-field");
-            _levelTitleField = _screenRoot.Q<TextField>("level-title-field");
-            _levelTitleError = _screenRoot.Q<Label>("level-title-error");
-            _levelPointsField = _screenRoot.Q<TextField>("level-points-field");
-            _addLevelStatusLabel = _screenRoot.Q<Label>("add-level-status-label");
 
             BuildBadgeIconGrid();
 
@@ -318,11 +361,6 @@ namespace Anatomia3D.UI
             _addBadgeCancelButton?.RegisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeSubmitButton?.RegisterCallback<ClickEvent>(OnAddBadgeSubmitClicked);
 
-            _addLevelButton?.RegisterCallback<ClickEvent>(OnAddLevelClicked);
-            _addLevelCloseButton?.RegisterCallback<ClickEvent>(OnAddLevelCancelClicked);
-            _addLevelCancelButton?.RegisterCallback<ClickEvent>(OnAddLevelCancelClicked);
-            _addLevelSubmitButton?.RegisterCallback<ClickEvent>(OnAddLevelSubmitClicked);
-
             if (_screenRoot != null)
             {
                 _screenRoot.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
@@ -334,6 +372,10 @@ namespace Anatomia3D.UI
         /// <summary>Push existing points configuration values in (e.g. loaded from backend).</summary>
         public void SetPointsConfiguration(int easyPoints, int mediumPoints, int hardPoints)
         {
+            _lastEasyPoints = easyPoints;
+            _lastMediumPoints = mediumPoints;
+            _lastHardPoints = hardPoints;
+
             if (_easyPointsField != null) _easyPointsField.SetValueWithoutNotify(easyPoints.ToString());
             if (_mediumPointsField != null) _mediumPointsField.SetValueWithoutNotify(mediumPoints.ToString());
             if (_hardPointsField != null) _hardPointsField.SetValueWithoutNotify(hardPoints.ToString());
@@ -473,6 +515,7 @@ namespace Anatomia3D.UI
             }
         }
 
+        /// <summary>Read-only row - levels are global/fixed, so there's no delete button here.</summary>
         private VisualElement BuildLevelRow(LevelData level)
         {
             var row = new VisualElement();
@@ -487,22 +530,9 @@ namespace Anatomia3D.UI
             textCol.Add(titleLabel);
             textCol.Add(subtitleLabel);
 
-            var deleteButton = new Button(() => OnDeleteLevelClicked(level)) { text = "\U0001F5D1" };
-            deleteButton.AddToClassList("item-delete-button");
-            deleteButton.Q<Label>()?.AddToClassList("item-delete-icon");
-
             row.Add(textCol);
-            row.Add(deleteButton);
 
             return row;
-        }
-
-        private void OnDeleteLevelClicked(LevelData level)
-        {
-            Debug.Log($"[AdminGamificationSettingsController] Deleting level {level.LevelNumber} ('{level.Title}').");
-            _currentLevels.Remove(level);
-            RefreshLevelsUI();
-            RefreshPreview();
         }
 
         // ---------------- Add Badge modal ----------------
@@ -588,59 +618,6 @@ namespace Anatomia3D.UI
             CloseAddBadgeModal();
         }
 
-        // ---------------- Add Level modal ----------------
-
-        private void OnAddLevelClicked(ClickEvent evt) => OpenAddLevelModal();
-
-        private void OpenAddLevelModal()
-        {
-            int nextLevelNumber = 1;
-            foreach (var level in _currentLevels)
-            {
-                if (level.LevelNumber >= nextLevelNumber) nextLevelNumber = level.LevelNumber + 1;
-            }
-
-            if (_levelNumberField != null) _levelNumberField.value = nextLevelNumber.ToString();
-            if (_levelTitleField != null) _levelTitleField.value = string.Empty;
-            if (_levelPointsField != null) _levelPointsField.value = "0";
-            ClearError(_levelTitleError);
-            SetStatus(_addLevelStatusLabel, string.Empty);
-
-            _addLevelModalOverlay?.RemoveFromClassList("hidden");
-        }
-
-        private void CloseAddLevelModal()
-        {
-            _addLevelModalOverlay?.AddToClassList("hidden");
-        }
-
-        private void OnAddLevelCancelClicked(ClickEvent evt) => CloseAddLevelModal();
-
-        private void OnAddLevelSubmitClicked(ClickEvent evt)
-        {
-            string title = _levelTitleField?.value?.Trim();
-
-            if (string.IsNullOrEmpty(title))
-            {
-                SetError(_levelTitleError, "Please enter a level title");
-                return;
-            }
-
-            ClearError(_levelTitleError);
-
-            int levelNumber = ParsePointsOrDefault(_levelNumberField, _currentLevels.Count + 1);
-            int points = ParsePointsOrDefault(_levelPointsField, 0);
-
-            _currentLevels.Add(new LevelData(levelNumber, title, points));
-            RefreshLevelsUI();
-            RefreshPreview();
-
-            // TODO: replace with your real persistence call, e.g.:
-            // AdminGamificationService.Instance.CreateLevel(levelNumber, title, points, OnCreateLevelResult);
-
-            CloseAddLevelModal();
-        }
-
         // ---------------- Button handlers ----------------
 
         private void OnBackClicked(ClickEvent evt)
@@ -653,9 +630,49 @@ namespace Anatomia3D.UI
         {
             Debug.Log("[AdminGamificationSettingsController] Save Changes tapped.");
 
-            // TODO: replace with your real persistence call, e.g.:
-            // AdminGamificationService.Instance.SaveGamificationSettings(
-            //     easyPoints, mediumPoints, hardPoints, _currentBadges, _currentLevels, OnSaveResult);
+            if (AdminGamificationService.Instance == null)
+            {
+                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - can't save.");
+                return;
+            }
+
+            int easyPoints = ParsePointsOrDefault(_easyPointsField, 10);
+            int mediumPoints = ParsePointsOrDefault(_mediumPointsField, 20);
+            int hardPoints = ParsePointsOrDefault(_hardPointsField, 30);
+
+            var badgeEntries = _currentBadges.ConvertAll(b => new AdminGamificationService.BadgeEntry
+            {
+                BadgeId = b.BadgeId,
+                Name = b.Name,
+                IconEmoji = b.IconEmoji,
+                PointsRequired = b.PointsRequired
+            });
+
+            // Note: no levels argument - levels are global & fixed and are never
+            // written from this screen (see AdminGamificationService.SaveSettings).
+            AdminGamificationService.Instance.SaveSettings(easyPoints, mediumPoints, hardPoints, badgeEntries, (success, error) =>
+            {
+                if (success)
+                {
+                    _lastEasyPoints = easyPoints;
+                    _lastMediumPoints = mediumPoints;
+                    _lastHardPoints = hardPoints;
+                }
+
+                OnSaveSettingsResult(success, error);
+            });
+        }
+
+        private void OnSaveSettingsResult(bool success, string error)
+        {
+            if (success)
+            {
+                Debug.Log("[AdminGamificationSettingsController] Gamification settings saved.");
+            }
+            else
+            {
+                Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
+            }
         }
 
         // ---------------- Helpers ----------------
@@ -713,25 +730,11 @@ namespace Anatomia3D.UI
                 _addBadgeButton.style.backgroundImage = new StyleBackground(_addBadgeButtonGradientTexture);
             }
 
-            if (_addLevelButton != null)
-            {
-                if (_addLevelButtonGradientTexture != null) Destroy(_addLevelButtonGradientTexture);
-                _addLevelButtonGradientTexture = BuildGradientTexture(gradientStart, gradientEnd);
-                _addLevelButton.style.backgroundImage = new StyleBackground(_addLevelButtonGradientTexture);
-            }
-
             if (_addBadgeSubmitButton != null)
             {
                 if (_badgeModalSubmitGradientTexture != null) Destroy(_badgeModalSubmitGradientTexture);
                 _badgeModalSubmitGradientTexture = BuildGradientTexture(gradientStart, gradientEnd);
                 _addBadgeSubmitButton.style.backgroundImage = new StyleBackground(_badgeModalSubmitGradientTexture);
-            }
-
-            if (_addLevelSubmitButton != null)
-            {
-                if (_levelModalSubmitGradientTexture != null) Destroy(_levelModalSubmitGradientTexture);
-                _levelModalSubmitGradientTexture = BuildGradientTexture(gradientStart, gradientEnd);
-                _addLevelSubmitButton.style.backgroundImage = new StyleBackground(_levelModalSubmitGradientTexture);
             }
 
             if (_previewCard != null)
