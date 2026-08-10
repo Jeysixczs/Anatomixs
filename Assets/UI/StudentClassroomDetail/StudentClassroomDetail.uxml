@@ -1,6 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentClassroomDetail/StudentClassroomDetail.uss?fileID=7433441132597879392&amp;guid=f9201abecd5a51947ae68a6497cf488d&amp;type=3#StudentClassroomDetail"/>
     <ui:VisualElement name="screen-root" class="screen-root">
+        <ui:VisualElement name="archived-blocked-panel" class="archived-blocked-panel hidden">
+            <ui:VisualElement class="archived-blocked-icon icon-lock-gray"/>
+            <ui:Label text="Classroom Archived" class="archived-blocked-title"/>
+            <ui:Label text="This classroom has been archived by the teacher and is no longer accessible." class="archived-blocked-message"/>
+            <ui:Button name="archived-blocked-back-button" text="Back to Classrooms" class="archived-blocked-back-button"/>
+        </ui:VisualElement>
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
@@ -39,6 +45,7 @@
                     <ui:VisualElement name="tab-switcher-row-2" class="tab-switcher-row tab-switcher-row-2">
                         <ui:Button name="leaderboard-tab-button" text="Leaderboard" class="tab-button"/>
                         <ui:Button name="scores-tab-button" text="Scores" class="tab-button"/>
+                        <ui:Button name="badges-tab-button" text="Badges" class="tab-button"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="overview-panel" class="tab-panel">
@@ -113,6 +120,16 @@
                         <ui:Label text="Quizzes you complete in this classroom will show up here." class="empty-subtitle"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="scores-list" class="scores-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="badges-panel" class="tab-panel hidden">
+                    <ui:Label text="Badges" class="section-title"/>
+                    <ui:Label text="Badges configured by your teacher for this classroom" class="section-subtitle"/>
+                    <ui:VisualElement name="badges-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-history-gray"/>
+                        <ui:Label text="No badges configured yet" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t set up any badges for this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="badges-list" class="badge-list hidden"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>

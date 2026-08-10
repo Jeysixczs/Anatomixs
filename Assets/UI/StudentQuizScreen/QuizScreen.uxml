@@ -1,0 +1,44 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentQuizScreen/QuizScreen.uss?fileID=7433441132597879392&amp;guid=705c3dca39b0c0f43a4e3eb5e6fb596f&amp;type=3#QuizScreen"/>
+    <ui:VisualElement name="quiz-root" class="quiz-root">
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-top-row" class="header-top-row">
+                <ui:Button name="close-button" text="✕" class="icon-button"/>
+                <ui:VisualElement name="badges-row" class="badges-row">
+                    <ui:VisualElement name="timer-pill" class="pill">
+                        <ui:Label text="🕑" class="pill-icon"/>
+                        <ui:Label name="timer-label" text="10:00" class="pill-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="points-pill" class="pill">
+                        <ui:Label text="🏆" class="pill-icon"/>
+                        <ui:Label name="points-label" text="10 pts" class="pill-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="progress-track" class="progress-track">
+                <ui:VisualElement name="progress-fill" class="progress-fill"/>
+            </ui:VisualElement>
+            <ui:Label name="question-counter-label" text="Question 1 of 6" class="question-counter"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="card-wrapper" class="card-wrapper" style="flex-grow: initial;">
+            <ui:VisualElement name="card" class="card">
+                <ui:VisualElement name="card-top-row" class="card-top-row">
+                    <ui:Label name="type-label" text="MULTIPLE CHOICE" class="type-label"/>
+                    <ui:Label name="quiz-label" text="Quiz 1" class="quiz-label"/>
+                </ui:VisualElement>
+                <ui:Label name="question-text-label" text="Question goes here" class="question-text"/>
+                <ui:ScrollView name="answer-scroll" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden">
+                    <ui:VisualElement name="answer-container" class="answer-container"/>
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Button name="action-button" text="Next Question" class="action-button"/>
+        <ui:VisualElement name="blocked-overlay" class="blocked-overlay hidden">
+            <ui:VisualElement name="blocked-card" class="blocked-card">
+                <ui:Label text="⛔" class="blocked-icon"/>
+                <ui:Label name="blocked-message-label" text="" class="blocked-message"/>
+                <ui:Button name="blocked-back-button" text="Back" class="blocked-back-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

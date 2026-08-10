@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Anatomia3D.UI.Quiz;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -19,6 +20,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset studentProfileScreen;
         [SerializeField] private VisualTreeAsset studentClassroomScreen;
         [SerializeField] private VisualTreeAsset studentQuizSelectionScreen;
+        [SerializeField] private VisualTreeAsset studentQuizGameplayScreen;
         [SerializeField] private VisualTreeAsset studentProgressScreen;
         [SerializeField] private VisualTreeAsset studentQuizResultScreen;
         [SerializeField] private VisualTreeAsset studentClassroomHubScreen;
@@ -39,6 +41,7 @@ namespace Anatomia3D.UI
         private StudentProfileController _studentProfileController;
         private StudentClassroomController _studentClassroomController;
         private StudentQuizSelectionController _studentQuizSelectionController;
+        private StudentQuizGameplayController _studentQuizGameplayController;
         private StudentQuizResultController _studentQuizResultController;
         private StudentProgressController _studentProgressController;
         private StudentClassroomHubController _studentClassroomHubController;
@@ -61,6 +64,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset adminClassroomDetailScreen;
         [SerializeField] private VisualTreeAsset adminProfileScreen;
         [SerializeField] private VisualTreeAsset adminEditProfileScreen;
+        [SerializeField] private VisualTreeAsset adminAboutAnatomiaScreen;
         // ADMIN CONTROLLERS
 
         private AdminLoginController _adminLoginController;
@@ -75,6 +79,7 @@ namespace Anatomia3D.UI
         private AdminClassroomDetailController _adminClassroomDetailController;
         private AdminProfileController _adminProfileController;
         private AdminEditProfileController _adminEditProfileController;
+        private AboutAnatomiaAdminController _aboutAnatomiaAdminController;
 
         private UIDocument _uiDocument;
         private VisualElement _root;
@@ -126,6 +131,7 @@ namespace Anatomia3D.UI
             _studentProfileController = GetComponent<StudentProfileController>();
             _studentClassroomController = GetComponent<StudentClassroomController>();
             _studentQuizSelectionController = GetComponent<StudentQuizSelectionController>();
+            _studentQuizGameplayController = GetComponent<StudentQuizGameplayController>();
             _studentQuizResultController = GetComponent<StudentQuizResultController>();
             _studentProgressController = GetComponent<StudentProgressController>();
             _studentClassroomHubController = GetComponent<StudentClassroomHubController>();
@@ -146,6 +152,7 @@ namespace Anatomia3D.UI
             _adminClassroomDetailController = GetComponent<AdminClassroomDetailController>();
             _adminProfileController = GetComponent<AdminProfileController>();
             _adminEditProfileController = GetComponent<AdminEditProfileController>();
+            _aboutAnatomiaAdminController = GetComponent<AboutAnatomiaAdminController>();
             // Disable all controllers initially
 
             _aboutAnatomiaController = GetComponent<AboutAnatomiaController>();
@@ -191,7 +198,7 @@ namespace Anatomia3D.UI
 
         public void ShowStudentProfile()
         {
-           
+
             ShowScreen(studentProfileScreen, _studentProfileController);
         }
 
@@ -205,9 +212,31 @@ namespace Anatomia3D.UI
             ShowScreen(studentQuizSelectionScreen, _studentQuizSelectionController);
         }
 
-        public void ShowStudentQuizResult()
+        /// <param name="classroomId">The classroom this quiz was launched from (e.g. Student
+        /// Classroom Detail's Available Quizzes tab). Threaded through to
+        /// StudentQuizGameplayController so it can attach the correct classroomId to the
+        /// quizAttempts doc on submit - pass null/empty for entry points with no classroom
+        /// context.</param>
+        public void ShowStudentQuizGameplay(string classroomId, string quizId)
         {
-            ShowScreen(studentQuizResultScreen, _studentQuizResultController);
+            ShowScreen(studentQuizGameplayScreen, _studentQuizGameplayController, () =>
+            {
+                _studentQuizGameplayController?.LoadQuiz(classroomId, quizId);
+            });
+        }
+
+        public void ShowStudentQuizResult(
+            string quizName,
+            int correctCount,
+            int incorrectCount,
+            int pointsEarned,
+            int pointsPossible,
+            int bonusXp)
+        {
+            ShowScreen(studentQuizResultScreen, _studentQuizResultController, () =>
+            {
+                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp);
+            });
         }
 
         public void ShowStudentProgress()
@@ -268,11 +297,11 @@ namespace Anatomia3D.UI
             ShowScreen(adminCreateClassroomScreen, _adminCreateClassroomController);
         }
 
-        public void ShowAdminClassroomCreated(string classroomCode, string classroomName, int studentCount)
+        public void ShowAdminClassroomCreated(string classroomId, string classroomCode, string classroomName, int studentCount)
         {
             ShowScreen(adminClassroomCreatedScreen, _adminClassroomCreatedController, () =>
             {
-                _adminClassroomCreatedController?.SetClassroomData(classroomCode, classroomName, studentCount);
+                _adminClassroomCreatedController?.SetClassroomData(classroomId, classroomCode, classroomName, studentCount);
             });
         }
 
@@ -293,7 +322,7 @@ namespace Anatomia3D.UI
         }
 
         public void ShowAdminClassroomDetail(
-            
+            string classroomId,
             string classroomName,
             string classroomCode,
             int studentCount,
@@ -302,7 +331,7 @@ namespace Anatomia3D.UI
         {
             ShowScreen(adminClassroomDetailScreen, _adminClassroomDetailController, () =>
             {
-                _adminClassroomDetailController?.SetClassroomData(classroomName, classroomCode, studentCount, avgScorePercent ,quizCount);
+                _adminClassroomDetailController?.SetClassroomData(classroomId, classroomName, classroomCode, studentCount, avgScorePercent, quizCount);
             });
         }
         public void ShowAdminProfile()
@@ -318,7 +347,11 @@ namespace Anatomia3D.UI
                 _adminEditProfileController?.LoadProfileData(fullName, email);
             });
         }
-        
+
+        public void ShowAboutAnatomiaAdmin()
+        {
+            ShowScreen(adminAboutAnatomiaScreen, _aboutAnatomiaAdminController);
+        }
 
         // ---------------- Core Screen Management ----------------
 
@@ -378,6 +411,7 @@ namespace Anatomia3D.UI
             if (_studentProfileController != null) _studentProfileController.enabled = false;
             if (_studentClassroomController != null) _studentClassroomController.enabled = false;
             if (_studentQuizSelectionController != null) _studentQuizSelectionController.enabled = false;
+            if (_studentQuizGameplayController != null) _studentQuizGameplayController.enabled = false;
             if (_studentQuizResultController != null) _studentQuizResultController.enabled = false;
             if (_studentProgressController != null) _studentProgressController.enabled = false;
             if (_studentClassroomHubController != null) _studentClassroomHubController.enabled = false;
@@ -401,6 +435,7 @@ namespace Anatomia3D.UI
             if (_adminEditProfileController != null) _adminEditProfileController.enabled = false;
 
 
+            if (_aboutAnatomiaAdminController != null) _aboutAnatomiaAdminController.enabled = false;
             if (_aboutAnatomiaController != null) _aboutAnatomiaController.enabled = false;
         }
 
@@ -412,6 +447,16 @@ namespace Anatomia3D.UI
             {
                 _studentdashboardController.SetStudentData(name, level, nextLevel, progress, pointsToNext, quizzes, totalPoints);
             }
+        }
+
+        /// <summary>Call after this student's classroom enrollment changes (e.g. right
+        /// after StudentClassroomController.OnJoinResult's join succeeds) so
+        /// StudentClassroomHub re-fetches instead of showing a stale "My Classrooms"
+        /// list next time it's opened. See StudentClassroomHubController.
+        /// InvalidateClassrooms().</summary>
+        public void InvalidateStudentClassroomHub()
+        {
+            _studentClassroomHubController?.InvalidateClassrooms();
         }
 
     }

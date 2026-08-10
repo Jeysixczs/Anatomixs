@@ -190,6 +190,127 @@
 
 /* ---------- Date filter ---------- */
 
+/* ---------- Filters row: classroom picker + date filter, side by side ---------- */
+
+.filters-row
+{
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
+/* Classroom picker - built at runtime by
+   AdminAnalyticsReportsController.BuildClassroomPicker() and inserted at the
+   start of #filters-row (there's no element for it in this .uxml). Styled to
+   match the .dropdown-field look from AdminQuizManagement (flat field,
+   tinted native arrow, blue focus ring) rather than the pill/icon-circle
+   language used elsewhere in this header. */
+.dropdown-field
+{
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+    min-height: 68px;
+    justify-content: center;
+}
+
+.dropdown-field > .unity-base-popup-field__input
+{
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 21px;
+    padding: 16px 18px 16px 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.dropdown-field > .unity-base-popup-field__input:hover
+{
+    background-color: rgb(233, 235, 241);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-field:focus > .unity-base-popup-field__input
+{
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(37, 99, 235);
+    border-width: 2px;
+    padding: 15px 17px 15px 19px;
+}
+
+.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text
+{
+    color: rgb(31, 36, 48);
+    -unity-text-overflow-position: end;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+{
+    -unity-background-image-tint-color: rgb(120, 123, 140);
+    flex-shrink: 0;
+    margin-left: 10px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Modifier: sizing/placement specific to sitting in #filters-row next to
+   the date filter button. Overrides the base .dropdown-field's gray-field
+   look with .date-filter-button's colors and sizing so the two pills read
+   as a matched pair. */
+.classroom-picker-dropdown
+{
+    min-width: 260px;
+    max-width: 420px;
+    margin-right: 24px;
+    margin-bottom: 12px;
+    align-self: flex-start;
+    min-height: 0;
+    font-size: 29px;
+}
+
+.classroom-picker-dropdown > .unity-base-popup-field__input
+{
+    background-color: white;
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 26px;
+    padding: 18px 24px;
+}
+
+.classroom-picker-dropdown > .unity-base-popup-field__input:hover
+{
+    background-color: rgb(248, 249, 251);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.classroom-picker-dropdown:focus > .unity-base-popup-field__input
+{
+    background-color: white;
+    padding: 17px 23px;
+}
+
+.classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__text
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+{
+    -unity-background-image-tint-color: rgb(150, 155, 168);
+}
+
 .date-filter-button
 {
     flex-direction: row;
@@ -200,7 +321,6 @@
     border-radius: 26px;
     padding: 18px 24px;
     margin: 0;
-    margin-bottom: 32px;
     align-self: flex-start;
 }
 
@@ -809,6 +929,22 @@
     flex-shrink: 0;
 }
 
+.unity-base-field{
+    max-width: 500px;
+    margin-left: 24px;
+    margin-right: 24px;
+    max-height: 100%;
+    min-height:100%;
+    min-width: 260px;
+
+}
+
+.unity-base-field__input{
+    border-bottom-color: #00000000;
+    border-top-color: #00000000;
+    border-left-color: #00000000;
+    border-right-color: #00000000;
+}
 .topic-bar-track
 {
     width: 100%;
@@ -862,6 +998,70 @@
 .compact .export-icon
 {
     margin-right: 0;
+}
+
+.compact .dropdown-field
+{
+    font-size: 27px;
+    min-height: 58px;
+}
+
+.compact .dropdown-field > .unity-base-popup-field__input
+{
+    padding: 12px 14px 12px 16px;
+}
+
+.compact .dropdown-field:focus > .unity-base-popup-field__input
+{
+    padding: 11px 13px 11px 15px;
+}
+
+.compact .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+{
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+}
+
+.compact .classroom-picker-dropdown
+{
+    min-width: 180px;
+    max-width: 260px;
+    margin-right: 16px;
+    margin-bottom: 10px;
+    font-size: 21px;
+}
+
+.compact .classroom-picker-dropdown > .unity-base-popup-field__input
+{
+    padding: 12px 16px;
+}
+
+.compact .classroom-picker-dropdown:focus > .unity-base-popup-field__input
+{
+    padding: 11px 15px;
+}
+
+.compact .classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__text
+{
+    font-size: 21px;
+}
+
+.compact .date-filter-button
+{
+    padding: 12px 16px;
+}
+
+.compact .date-filter-icon
+{
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.compact .date-filter-label
+{
+    font-size: 21px;
+    margin-right: 10px;
 }
 
 .compact .content-wrapper

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,9 +19,11 @@ namespace Anatomia3D.UI
     ///    header at runtime
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
     ///  - Exposes SetClassroomData() / SetAnalyticsOverview() /
-    ///    SetLeaderboard() / SetStudents() / SetQuizPublished() /
-    ///    SetAnnouncements() / GetAnnouncements() so admin/session code can
-    ///    push real values in instead of the mock data
+    ///    SetLeaderboard() / SetStudents() / SetAnnouncements() /
+    ///    GetAnnouncements() so admin/session code can push real values in
+    ///    instead of the mock data. The Quizzes tab's rows are built
+    ///    entirely at runtime (see LoadQuizzesTab()) so there's no fixed-slot
+    ///    setter for it anymore.
     ///
     /// The "Leaderboard" card in the Analytics tab (with its "Show to Students"
     /// toggle) is the full, live-ranked leaderboard - not a preview that links
@@ -28,16 +31,21 @@ namespace Anatomia3D.UI
     /// students in this classroom can see it on their end.
     ///
     /// The Announcements tab lets the teacher post/delete announcements for
-    /// this classroom. Posted announcements are held in-memory
-    /// (_announcements) and survive the UIManager's clear-and-rebuild screen
-    /// transitions; forward GetAnnouncements() into every enrolled student's
-    /// StudentClassroomDetailController.SetAnnouncements() so it shows up on
-    /// their Overview tab.
+    /// this classroom, backed by Firestore's `classrooms/{id}/announcements`
+    /// subcollection via AdminClassroomService (see LoadClassroomContent() /
+    /// OnPostAnnouncementClicked() / OnDeleteAnnouncementClicked()). Posted
+    /// announcements are cached in _liveAnnouncements and survive the
+    /// UIManager's clear-and-rebuild screen transitions; forward
+    /// GetAnnouncements() into every enrolled student's
+    /// StudentClassroomDetailController.SetAnnouncements() (or, on the student
+    /// side, just call ClassroomService.FetchAnnouncements() directly) so it
+    /// shows up on their Overview tab.
     ///
-    /// Hook up your real backend calls inside OnQuizToggleClicked() /
-    /// OnShowToStudentsToggleClicked() / OnPostAnnouncementClicked() /
-    /// OnDeleteAnnouncementClicked() - e.g. call into your existing
-    /// AdminClassroomService here.
+    /// Quiz publishing (OnQuizToggleClicked, one per dynamically-built row),
+    /// leaderboard visibility (OnShowToStudentsToggleClicked) and the
+    /// roster/analytics rollups (Students + Analytics tabs) are likewise
+    /// backed by AdminClassroomService - see LoadClassroomContent() /
+    /// LoadQuizzesTab().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminClassroomDetailController : MonoBehaviour
@@ -61,6 +69,20 @@ namespace Anatomia3D.UI
         private Label _classroomCodeLabel;
         private Button _copyCodeButton;
 
+        // Archive
+        private Button _archiveButton;
+        private Label _archivedBadgeLabel;
+        private VisualElement _archiveDialogOverlay;
+        private Label _archiveDialogTitleLabel;
+        private Label _archiveDialogMessageLabel;
+        private Button _archiveDialogCancelButton;
+        private Button _archiveDialogConfirmButton;
+
+        /// <summary>Whether this classroom is currently archived. Archived classrooms are
+        /// blocked from student access - see ClassroomService.FetchClassroomDetail /
+        /// StudentClassroomDetailController.LoadClassroomContent() on the student side.</summary>
+        public bool IsArchived { get; private set; }
+
         // Stats
         private Label _studentsValueLabel;
         private Label _avgScoreValueLabel;
@@ -83,10 +105,24 @@ namespace Anatomia3D.UI
         private Button _copyClassroomCodeButton;
 
         // Quizzes tab
-        private Button _quizToggle1;
-        private Button _quizToggle2;
-        public bool Quiz1Published { get; private set; } = true;
-        public bool Quiz2Published { get; private set; } = false;
+        private VisualElement _quizzesEmptyState;
+        private VisualElement _quizzesCard;
+        private VisualElement _quizzesList;
+
+        /// <summary>One dynamically-built row in the Quizzes tab, bound to a specific quiz id
+        /// rather than a fixed uxml slot - see LoadQuizzesTab() / BuildQuizRow().</summary>
+        private class QuizRow
+        {
+            public string QuizId;
+            public Button ToggleButton;
+            public bool Published;
+        }
+
+        // Rebuilt from scratch by LoadQuizzesTab() every time the admin's quiz library
+        // (QuizService.FetchMyQuizzes()) is (re)loaded, so there's one row per quiz - not
+        // just the first two.
+        private readonly List<QuizRow> _quizRows = new();
+        private List<string> _publishedQuizIds = new List<string>();
 
         // Analytics tab
         private Label _totalPointsValueLabel;
@@ -122,14 +158,25 @@ namespace Anatomia3D.UI
             }
         }
 
+        /// <summary>An AnnouncementInfo plus the Firestore doc id it was loaded from
+        /// (empty for announcements added via the legacy SetAnnouncements() overload
+        /// that doesn't carry ids - those can still be shown, just can't be deleted
+        /// from the backend).</summary>
+        private class LiveAnnouncement
+        {
+            public string AnnouncementId;
+            public AnnouncementInfo Info;
+        }
+
         // Most recent first.
-        private readonly List<AnnouncementInfo> _announcements = new();
+        private readonly List<LiveAnnouncement> _liveAnnouncements = new();
 
         /// <summary>Whether the leaderboard is currently visible to students in this classroom.</summary>
         public bool LeaderboardVisibleToStudents { get; private set; } = false;
 
         // Cached identity/state so it can be forwarded to the Leaderboard screen and
         // survives the UIManager's clear-and-rebuild screen transitions.
+        private string _classroomId = "";
         private string _classroomCode = "";
         private string _classroomName = "";
         private readonly List<(string name, int points, int quizzesCompleted)> _lastTopPerformers = new();
@@ -178,10 +225,14 @@ namespace Anatomia3D.UI
                 if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
                 if (_classroomCodeLabel != null) _classroomCodeLabel.text = _classroomCode;
             }
-            SetQuizPublished(1, Quiz1Published);
-            SetQuizPublished(2, Quiz2Published);
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
+            SetArchived(IsArchived);
+            _archiveDialogOverlay?.AddToClassList("hidden");
             RefreshAnnouncementsUI();
+
+            // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
+            // with a classroom already loaded - refresh from Firestore.
+            if (!string.IsNullOrEmpty(_classroomId)) LoadClassroomContent();
         }
 
         private void OnDisable()
@@ -203,13 +254,14 @@ namespace Anatomia3D.UI
             _copyCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
 
+            _archiveButton?.UnregisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _archiveDialogCancelButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
+            _archiveDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
+
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.UnregisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.UnregisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
-
-            _quizToggle1?.UnregisterCallback<ClickEvent>(OnQuizToggle1Clicked);
-            _quizToggle2?.UnregisterCallback<ClickEvent>(OnQuizToggle2Clicked);
 
             _showToStudentsToggle?.UnregisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
@@ -234,6 +286,14 @@ namespace Anatomia3D.UI
             _classroomCodeLabel = _screenRoot.Q<Label>("classroom-code-label");
             _copyCodeButton = _screenRoot.Q<Button>("copy-code-button");
 
+            _archiveButton = _screenRoot.Q<Button>("archive-button");
+            _archivedBadgeLabel = _screenRoot.Q<Label>("archived-badge-label");
+            _archiveDialogOverlay = _screenRoot.Q<VisualElement>("archive-dialog-overlay");
+            _archiveDialogTitleLabel = _screenRoot.Q<Label>("archive-dialog-title-label");
+            _archiveDialogMessageLabel = _screenRoot.Q<Label>("archive-dialog-message-label");
+            _archiveDialogCancelButton = _screenRoot.Q<Button>("archive-dialog-cancel-button");
+            _archiveDialogConfirmButton = _screenRoot.Q<Button>("archive-dialog-confirm-button");
+
             _studentsValueLabel = _screenRoot.Q<Label>("students-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
             _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
@@ -252,8 +312,9 @@ namespace Anatomia3D.UI
             _studentsList = _screenRoot.Q<VisualElement>("students-list");
             _copyClassroomCodeButton = _screenRoot.Q<Button>("copy-classroom-code-button");
 
-            _quizToggle1 = _screenRoot.Q<Button>("quiz-toggle-1");
-            _quizToggle2 = _screenRoot.Q<Button>("quiz-toggle-2");
+            _quizzesEmptyState = _screenRoot.Q<VisualElement>("quizzes-empty-state");
+            _quizzesCard = _screenRoot.Q<VisualElement>("quizzes-card");
+            _quizzesList = _screenRoot.Q<VisualElement>("quizzes-list");
 
             _totalPointsValueLabel = _screenRoot.Q<Label>("total-points-value-label");
             _totalQuizzesValueLabel = _screenRoot.Q<Label>("total-quizzes-value-label");
@@ -279,13 +340,14 @@ namespace Anatomia3D.UI
             _copyCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
 
+            _archiveButton?.RegisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _archiveDialogCancelButton?.RegisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
+            _archiveDialogConfirmButton?.RegisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
+
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.RegisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
-
-            _quizToggle1?.RegisterCallback<ClickEvent>(OnQuizToggle1Clicked);
-            _quizToggle2?.RegisterCallback<ClickEvent>(OnQuizToggle2Clicked);
 
             _showToStudentsToggle?.RegisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
@@ -299,9 +361,18 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Push the classroom's identity and header stats into the screen.</summary>
-        public void SetClassroomData(string classroomName, string classroomCode, int studentCount, float avgScorePercent, int quizzesDone)
+        /// <summary>
+        /// Push the classroom's identity and header stats into the screen, and kick off
+        /// the Firestore loads for the Students / Quizzes / Analytics / Announcements
+        /// tabs. Call from UIManager.ShowAdminClassroomDetail() right after showing this
+        /// screen (its callers - AdminDashboardController's classroom list and
+        /// AdminClassroomCreatedController.OnGoToDashboardClicked - need to pass the
+        /// classroom's Firestore doc id, i.e. AdminClassroomService.ClassroomRecord.
+        /// ClassroomId, as the new first argument).
+        /// </summary>
+        public void SetClassroomData(string classroomId, string classroomName, string classroomCode, int studentCount, float avgScorePercent, int quizzesDone)
         {
+            _classroomId = classroomId ?? "";
             _classroomName = classroomName ?? "";
             _classroomCode = classroomCode ?? "";
 
@@ -310,6 +381,98 @@ namespace Anatomia3D.UI
             if (_studentsValueLabel != null) _studentsValueLabel.text = studentCount.ToString("N0");
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
             if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = quizzesDone.ToString("N0");
+
+            // Reset from whatever classroom was previously loaded into this reused screen -
+            // LoadClassroomContent()'s FetchClassroomDetail callback will set the real value
+            // once it resolves.
+            SetArchived(false);
+
+            LoadClassroomContent();
+        }
+
+        // ---------------- Loading from AdminClassroomService / QuizService ----------------
+
+        /// <summary>Pulls publishedQuizIds + leaderboardVisible + the quiz library (for the
+        /// Quizzes tab), announcements (for the Announcements tab), and the roster/
+        /// leaderboard/rollup stats (for the Students and Analytics tabs) - all from
+        /// Firestore, replacing the old in-memory mock data.</summary>
+        private void LoadClassroomContent()
+        {
+            if (string.IsNullOrEmpty(_classroomId))
+            {
+                Debug.LogWarning("[AdminClassroomDetailController] LoadClassroomContent called with no classroom id set.");
+                return;
+            }
+
+            if (AdminClassroomService.Instance == null)
+            {
+                Debug.LogWarning("[AdminClassroomDetailController] AdminClassroomService not available yet.");
+                return;
+            }
+
+            AdminClassroomService.Instance.FetchClassroomDetail(_classroomId, record =>
+            {
+                if (record == null) return;
+                _publishedQuizIds = record.PublishedQuizIds ?? new List<string>();
+                SetLeaderboardVisibility(record.LeaderboardVisible);
+                SetArchived(record.IsArchived);
+                LoadQuizzesTab();
+            });
+
+            AdminClassroomService.Instance.FetchAnnouncements(_classroomId, announcements =>
+            {
+                _liveAnnouncements.Clear();
+                foreach (var a in announcements)
+                {
+                    _liveAnnouncements.Add(new LiveAnnouncement
+                    {
+                        AnnouncementId = a.AnnouncementId,
+                        Info = new AnnouncementInfo(a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))
+                    });
+                }
+                RefreshAnnouncementsUI();
+            });
+
+            AdminClassroomService.Instance.FetchClassroomAnalytics(_classroomId, analytics =>
+            {
+                SetAnalyticsOverview(analytics.TotalPointsEarned, analytics.TotalQuizzesCompleted, analytics.AvgScorePercent, analytics.ActiveStudents);
+                SetLeaderboard(analytics.Leaderboard.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
+                SetStudents(analytics.Students.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
+            });
+        }
+
+        /// <summary>Rebuilds the Quizzes tab's list from scratch with one row per quiz in
+        /// the admin's full quiz library (QuizService.FetchMyQuizzes()) - not just the
+        /// first two - showing the empty state instead if they haven't created any yet.
+        /// Each row's toggle reflects (and writes back to) this classroom's
+        /// publishedQuizIds via AdminClassroomService.SetQuizPublished(); see
+        /// BuildQuizRow() / OnQuizToggleClicked().</summary>
+        private void LoadQuizzesTab()
+        {
+            if (QuizService.Instance == null)
+            {
+                Debug.LogWarning("[AdminClassroomDetailController] QuizService not available yet.");
+                return;
+            }
+
+            QuizService.Instance.FetchMyQuizzes(records =>
+            {
+                _quizRows.Clear();
+                _quizzesList?.Clear();
+
+                bool hasQuizzes = records != null && records.Count > 0;
+                _quizzesEmptyState?.EnableInClassList("hidden", hasQuizzes);
+                _quizzesCard?.EnableInClassList("hidden", !hasQuizzes);
+
+                if (!hasQuizzes || _quizzesList == null) return;
+
+                for (int i = 0; i < records.Count; i++)
+                {
+                    var record = records[i];
+                    bool published = !string.IsNullOrEmpty(record.QuizId) && _publishedQuizIds.Contains(record.QuizId);
+                    _quizzesList.Add(BuildQuizRow(record.QuizId, record.Title, record.Category, published, i == records.Count - 1));
+                }
+            });
         }
 
         /// <summary>Push real class-wide statistics into the Analytics tab's Performance Overview card.</summary>
@@ -366,16 +529,12 @@ namespace Anatomia3D.UI
             }
         }
 
-        /// <summary>Set whether a given quiz (1 or 2, matching the mock's two rows) is published to this classroom.</summary>
-        public void SetQuizPublished(int quizNumber, bool published)
+        /// <summary>Sets a single quiz row's published state (and its toggle's visual state).</summary>
+        private void SetQuizRowPublished(QuizRow row, bool published)
         {
-            Button toggle = quizNumber == 1 ? _quizToggle1 : _quizToggle2;
-            if (toggle == null) return;
-
-            toggle.EnableInClassList("toggle-on", published);
-
-            if (quizNumber == 1) Quiz1Published = published;
-            else Quiz2Published = published;
+            if (row == null) return;
+            row.Published = published;
+            row.ToggleButton?.EnableInClassList("toggle-on", published);
         }
 
         // ---------------- Button handlers ----------------
@@ -433,31 +592,52 @@ namespace Anatomia3D.UI
             activePanel?.RemoveFromClassList("hidden");
         }
 
-        private void OnQuizToggle1Clicked(ClickEvent evt)
+        private void OnQuizToggleClicked(QuizRow row)
         {
-            SetQuizPublished(1, !Quiz1Published);
-            Debug.Log($"[AdminClassroomDetailController] Quiz 1 published: {Quiz1Published}");
+            if (row == null || string.IsNullOrEmpty(row.QuizId) || string.IsNullOrEmpty(_classroomId)) return;
 
-            // TODO: replace with your real backend call, e.g.:
-            // AdminClassroomService.Instance.SetQuizPublished(_classroomCode, quizId: "skeletal-system-basics", Quiz1Published);
-        }
+            bool wasPublished = row.Published;
+            bool newState = !wasPublished;
 
-        private void OnQuizToggle2Clicked(ClickEvent evt)
-        {
-            SetQuizPublished(2, !Quiz2Published);
-            Debug.Log($"[AdminClassroomDetailController] Quiz 2 published: {Quiz2Published}");
+            // Optimistic UI update; roll back on failure.
+            SetQuizRowPublished(row, newState);
 
-            // TODO: replace with your real backend call, e.g.:
-            // AdminClassroomService.Instance.SetQuizPublished(_classroomCode, quizId: "muscular-system-advanced", Quiz2Published);
+            AdminClassroomService.Instance.SetQuizPublished(_classroomId, row.QuizId, newState, (success, error) =>
+            {
+                if (success)
+                {
+                    if (newState) { if (!_publishedQuizIds.Contains(row.QuizId)) _publishedQuizIds.Add(row.QuizId); }
+                    else _publishedQuizIds.Remove(row.QuizId);
+
+                    Debug.Log($"[AdminClassroomDetailController] Quiz {row.QuizId} published: {newState}");
+                    return;
+                }
+
+                Debug.LogWarning($"[AdminClassroomDetailController] Could not update quiz {row.QuizId} publish state: {error}");
+                SetQuizRowPublished(row, wasPublished); // roll back
+            });
         }
 
         private void OnShowToStudentsToggleClicked(ClickEvent evt)
         {
-            SetLeaderboardVisibility(!LeaderboardVisibleToStudents);
-            Debug.Log($"[AdminClassroomDetailController] Leaderboard visible to students: {LeaderboardVisibleToStudents}");
+            if (string.IsNullOrEmpty(_classroomId)) return;
 
-            // TODO: replace with your real backend call, e.g.:
-            // AdminClassroomService.Instance.SetLeaderboardVisibility(_classroomCode, LeaderboardVisibleToStudents);
+            bool wasVisible = LeaderboardVisibleToStudents;
+            bool newState = !wasVisible;
+
+            SetLeaderboardVisibility(newState);
+
+            AdminClassroomService.Instance.SetLeaderboardVisibility(_classroomId, newState, (success, error) =>
+            {
+                if (success)
+                {
+                    Debug.Log($"[AdminClassroomDetailController] Leaderboard visible to students: {newState}");
+                    return;
+                }
+
+                Debug.LogWarning($"[AdminClassroomDetailController] Could not update leaderboard visibility: {error}");
+                SetLeaderboardVisibility(wasVisible); // roll back
+            });
         }
 
         /// <summary>Sets the leaderboard's student-visibility state and updates the toggle's visual state.</summary>
@@ -465,6 +645,68 @@ namespace Anatomia3D.UI
         {
             LeaderboardVisibleToStudents = visible;
             _showToStudentsToggle?.EnableInClassList("toggle-on", visible);
+        }
+
+        // ---------------- Archive ----------------
+
+        /// <summary>Reflects the classroom's archived state in the header badge and the
+        /// Archive/Unarchive button label. Does not itself write to Firestore - see
+        /// OnArchiveDialogConfirmClicked() for that.</summary>
+        public void SetArchived(bool archived)
+        {
+            IsArchived = archived;
+            _archivedBadgeLabel?.EnableInClassList("hidden", !archived);
+            if (_archiveButton != null) _archiveButton.text = archived ? "Unarchive" : "Archive";
+        }
+
+        private void OnArchiveButtonClicked(ClickEvent evt)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || _archiveDialogOverlay == null) return;
+
+            if (IsArchived)
+            {
+                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Restore Classroom";
+                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Students will be able to access this classroom again. Continue?";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Unarchive";
+            }
+            else
+            {
+                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Archive Classroom";
+                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Are you sure you want to archive this classroom? Archived classrooms will no longer accept student access.";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Archive";
+            }
+
+            _archiveDialogOverlay.RemoveFromClassList("hidden");
+        }
+
+        private void OnArchiveDialogCancelClicked(ClickEvent evt)
+        {
+            _archiveDialogOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnArchiveDialogConfirmClicked(ClickEvent evt)
+        {
+            _archiveDialogOverlay?.AddToClassList("hidden");
+
+            if (string.IsNullOrEmpty(_classroomId) || AdminClassroomService.Instance == null) return;
+
+            bool newState = !IsArchived;
+
+            _archiveButton?.SetEnabled(false);
+
+            AdminClassroomService.Instance.SetArchived(_classroomId, newState, (success, error) =>
+            {
+                _archiveButton?.SetEnabled(true);
+
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not update archived state: {error}");
+                    return;
+                }
+
+                SetArchived(newState);
+                Debug.Log($"[AdminClassroomDetailController] Classroom {_classroomId} archived: {newState}");
+            });
         }
 
         // ---------------- Announcements ----------------
@@ -476,13 +718,19 @@ namespace Anatomia3D.UI
         /// AnnouncementInfo across - the two types share the same Title/Body/
         /// DateText shape but are declared on different controllers).
         /// </summary>
-        public List<AnnouncementInfo> GetAnnouncements() => new List<AnnouncementInfo>(_announcements);
+        public List<AnnouncementInfo> GetAnnouncements() => _liveAnnouncements.ConvertAll(a => a.Info);
 
-        /// <summary>Preload announcements from your backend (most recent first), e.g. when this screen is first opened for a classroom.</summary>
+        /// <summary>Preload announcements without backend ids (e.g. for tests/mocks). Entries
+        /// loaded this way can't be deleted from Firestore - LoadClassroomContent()'s
+        /// AdminClassroomService.FetchAnnouncements() call is what normally populates
+        /// this screen with real, deletable announcements.</summary>
         public void SetAnnouncements(List<AnnouncementInfo> announcements)
         {
-            _announcements.Clear();
-            if (announcements != null) _announcements.AddRange(announcements);
+            _liveAnnouncements.Clear();
+            if (announcements != null)
+            {
+                foreach (var info in announcements) _liveAnnouncements.Add(new LiveAnnouncement { AnnouncementId = "", Info = info });
+            }
             RefreshAnnouncementsUI();
         }
 
@@ -492,13 +740,13 @@ namespace Anatomia3D.UI
 
             _announcementsList.Clear();
 
-            bool hasData = _announcements.Count > 0;
+            bool hasData = _liveAnnouncements.Count > 0;
             _announcementsEmptyState?.EnableInClassList("hidden", hasData);
             _announcementsList.EnableInClassList("hidden", !hasData);
 
             if (!hasData) return;
 
-            foreach (var announcement in _announcements)
+            foreach (var announcement in _liveAnnouncements)
             {
                 _announcementsList.Add(BuildAnnouncementCard(announcement));
             }
@@ -506,6 +754,12 @@ namespace Anatomia3D.UI
 
         private void OnPostAnnouncementClicked(ClickEvent evt)
         {
+            if (string.IsNullOrEmpty(_classroomId))
+            {
+                Debug.LogWarning("[AdminClassroomDetailController] Post Announcement tapped with no classroom loaded - ignoring.");
+                return;
+            }
+
             string title = _announcementTitleField != null ? (_announcementTitleField.value ?? "").Trim() : "";
             string body = _announcementBodyField != null ? (_announcementBodyField.value ?? "").Trim() : "";
 
@@ -517,32 +771,59 @@ namespace Anatomia3D.UI
 
             if (string.IsNullOrEmpty(title)) title = "Announcement";
 
-            var announcement = new AnnouncementInfo(title, body, System.DateTime.Now.ToString("MMM d, yyyy"));
-            _announcements.Insert(0, announcement);
-
             if (_announcementTitleField != null) _announcementTitleField.value = "";
             if (_announcementBodyField != null) _announcementBodyField.value = "";
+            _postAnnouncementButton?.SetEnabled(false);
 
-            RefreshAnnouncementsUI();
+            AdminClassroomService.Instance.PostAnnouncement(_classroomId, title, body, (success, error, record) =>
+            {
+                _postAnnouncementButton?.SetEnabled(true);
 
-            Debug.Log($"[AdminClassroomDetailController] Posted announcement \"{announcement.Title}\" to classroom {_classroomCode}");
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not post announcement: {error}");
+                    // Restore the text the teacher typed so they don't lose it.
+                    if (_announcementTitleField != null) _announcementTitleField.value = title;
+                    if (_announcementBodyField != null) _announcementBodyField.value = body;
+                    return;
+                }
 
-            // TODO: replace with your real backend call, e.g.:
-            // AdminClassroomService.Instance.PostAnnouncement(_classroomCode, announcement.Title, announcement.Body);
+                _liveAnnouncements.Insert(0, new LiveAnnouncement
+                {
+                    AnnouncementId = record.AnnouncementId,
+                    Info = new AnnouncementInfo(record.Title, record.Body, record.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))
+                });
+                RefreshAnnouncementsUI();
+
+                Debug.Log($"[AdminClassroomDetailController] Posted announcement \"{record.Title}\" to classroom {_classroomId}");
+            });
         }
 
-        private void OnDeleteAnnouncementClicked(AnnouncementInfo announcement)
+        private void OnDeleteAnnouncementClicked(LiveAnnouncement announcement)
         {
-            _announcements.Remove(announcement);
-            RefreshAnnouncementsUI();
+            if (string.IsNullOrEmpty(_classroomId) || string.IsNullOrEmpty(announcement.AnnouncementId))
+            {
+                _liveAnnouncements.Remove(announcement);
+                RefreshAnnouncementsUI();
+                return;
+            }
 
-            Debug.Log($"[AdminClassroomDetailController] Deleted announcement \"{announcement.Title}\" from classroom {_classroomCode}");
+            AdminClassroomService.Instance.DeleteAnnouncement(_classroomId, announcement.AnnouncementId, (success, error) =>
+            {
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not delete announcement: {error}");
+                    return;
+                }
 
-            // TODO: replace with your real backend call, e.g.:
-            // AdminClassroomService.Instance.DeleteAnnouncement(_classroomCode, announcement.Title);
+                _liveAnnouncements.Remove(announcement);
+                RefreshAnnouncementsUI();
+
+                Debug.Log($"[AdminClassroomDetailController] Deleted announcement \"{announcement.Info.Title}\" from classroom {_classroomId}");
+            });
         }
 
-        private VisualElement BuildAnnouncementCard(AnnouncementInfo announcement)
+        private VisualElement BuildAnnouncementCard(LiveAnnouncement announcement)
         {
             var card = new VisualElement();
             card.AddToClassList("announcement-card");
@@ -550,19 +831,19 @@ namespace Anatomia3D.UI
             var headerRow = new VisualElement();
             headerRow.AddToClassList("announcement-header-row");
 
-            var titleLabel = new Label(announcement.Title);
+            var titleLabel = new Label(announcement.Info.Title);
             titleLabel.AddToClassList("announcement-title-label");
 
-            var dateLabel = new Label(announcement.DateText);
+            var dateLabel = new Label(announcement.Info.DateText);
             dateLabel.AddToClassList("announcement-date-label");
 
             headerRow.Add(titleLabel);
             headerRow.Add(dateLabel);
             card.Add(headerRow);
 
-            if (!string.IsNullOrEmpty(announcement.Body))
+            if (!string.IsNullOrEmpty(announcement.Info.Body))
             {
-                var bodyLabel = new Label(announcement.Body);
+                var bodyLabel = new Label(announcement.Info.Body);
                 bodyLabel.AddToClassList("announcement-body-label");
                 card.Add(bodyLabel);
             }
@@ -633,6 +914,42 @@ namespace Anatomia3D.UI
             row.Add(avatar);
             row.Add(info);
             row.Add(pointsLabel);
+            return row;
+        }
+
+        private VisualElement BuildQuizRow(string quizId, string title, string category, bool published, bool isLast)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("quiz-row");
+            if (isLast) row.AddToClassList("quiz-row-last");
+
+            var textContainer = new VisualElement();
+            textContainer.AddToClassList("quiz-row-text");
+
+            var titleLabel = new Label(title);
+            titleLabel.AddToClassList("quiz-row-title");
+
+            var subjectLabel = new Label(category);
+            subjectLabel.AddToClassList("quiz-row-subject");
+
+            textContainer.Add(titleLabel);
+            textContainer.Add(subjectLabel);
+
+            var quizRow = new QuizRow { QuizId = quizId, Published = published };
+
+            var toggle = new Button(() => OnQuizToggleClicked(quizRow));
+            toggle.AddToClassList("toggle-switch");
+            toggle.EnableInClassList("toggle-on", published);
+
+            var knob = new VisualElement();
+            knob.AddToClassList("toggle-knob");
+            toggle.Add(knob);
+
+            quizRow.ToggleButton = toggle;
+            _quizRows.Add(quizRow);
+
+            row.Add(textContainer);
+            row.Add(toggle);
             return row;
         }
 

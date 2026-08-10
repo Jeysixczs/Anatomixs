@@ -222,6 +222,143 @@
     margin-top: 16px;
 }
 
+/* ---------- Level Roadmap Card ---------- */
+
+.level-roadmap-card
+{
+    background-color: white;
+    border-radius: 32px;
+    padding: 40px;
+    margin-bottom: 30px;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.05);
+}
+
+.level-roadmap-subtitle
+{
+    font-size: 20px;
+    color: rgb(138,143,163);
+    margin-top: -16px;
+    margin-bottom: 24px;
+}
+
+.level-roadmap-list
+{
+    flex-direction: column;
+}
+
+.level-roadmap-item
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background-color: rgb(246,248,251);
+    margin-bottom: 14px;
+    border-width: 2px;
+    border-color: transparent;
+}
+
+.level-roadmap-badge
+{
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    background-color: rgb(230,233,240);
+    justify-content: center;
+    align-items: center;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.level-roadmap-badge-number
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(110,115,133);
+}
+
+.level-roadmap-text-col
+{
+    flex-grow: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.level-roadmap-title
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(31,36,48);
+    white-space: normal;
+}
+
+.level-roadmap-points
+{
+    font-size: 20px;
+    color: rgb(138,143,163);
+    margin-top: 4px;
+    white-space: normal;
+}
+
+.level-roadmap-status
+{
+    font-size: 18px;
+    -unity-font-style: bold;
+    padding: 8px 16px;
+    border-radius: 14px;
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+    background-color: rgb(230,233,240);
+    color: rgb(110,115,133);
+}
+
+/* Current level: highlighted card + blue badge/pill */
+.level-roadmap-item-current
+{
+    background-color: rgba(37,99,235,0.08);
+    border-color: rgb(37,99,235);
+}
+
+.level-roadmap-item-current .level-roadmap-badge
+{
+    background-color: rgb(37,99,235);
+}
+
+.level-roadmap-item-current .level-roadmap-badge-number
+{
+    color: white;
+}
+
+.level-roadmap-item-current .level-roadmap-status
+{
+    background-color: rgb(37,99,235);
+    color: white;
+}
+
+/* Already-reached levels below the current one: green badge/pill */
+.level-roadmap-item-completed .level-roadmap-badge
+{
+    background-color: rgb(22,163,74);
+}
+
+.level-roadmap-item-completed .level-roadmap-badge-number
+{
+    color: white;
+}
+
+.level-roadmap-item-completed .level-roadmap-status
+{
+    background-color: rgba(22,163,74,0.14);
+    color: rgb(22,163,74);
+}
+
+/* Not-yet-reached levels: muted */
+.level-roadmap-item-locked
+{
+    opacity: 0.85;
+}
+
 /* ---------- Stat Cards ---------- */
 
 .stats-row
@@ -586,6 +723,51 @@
 .compact .level-caption
 {
     font-size: 19px;
+}
+
+.compact .level-roadmap-card
+{
+    padding: 28px;
+    border-radius: 26px;
+}
+
+.compact .level-roadmap-subtitle
+{
+    font-size: 18px;
+}
+
+.compact .level-roadmap-item
+{
+    padding: 14px 16px;
+}
+
+.compact .level-roadmap-badge
+{
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    margin-right: 14px;
+}
+
+.compact .level-roadmap-badge-number
+{
+    font-size: 20px;
+}
+
+.compact .level-roadmap-title
+{
+    font-size: 20px;
+}
+
+.compact .level-roadmap-points
+{
+    font-size: 17px;
+}
+
+.compact .level-roadmap-status
+{
+    font-size: 16px;
+    padding: 6px 12px;
 }
 
 .compact .stat-card

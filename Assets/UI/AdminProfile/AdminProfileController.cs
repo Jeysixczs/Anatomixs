@@ -1,3 +1,5 @@
+using System.Linq;
+using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,15 +12,17 @@ namespace Anatomia3D.UI
     ///
     /// Responsibilities:
     ///  - Wires up the back button and the Account menu buttons
+    ///  - Loads real data from AdminAuthService.CurrentAdmin via
+    ///    RefreshFromBackend() - classroomCount/quizzesCreated come straight
+    ///    from the admin doc (kept accurate by AdminClassroomService/QuizService
+    ///    incrementing them), but studentCount is computed by summing each
+    ///    classroom's own studentCount instead, since admins/{uid}.studentCount
+    ///    itself is never incremented anywhere and would just read 0
     ///  - Applies the green->blue gradient (matches AdminDashboard) to the
     ///    header at runtime
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
-    ///  - Exposes SetProfileData() so admin/session code can push real
-    ///    values in instead of the placeholder mock data.
-    ///
-    /// Hook up your real navigation/logout calls inside the relevant
-    /// On...Clicked() handlers below - e.g. call into your existing
-    /// AdminAuthService from OnLogoutClicked().
+    ///  - Exposes SetProfileData() so other code can still push values in
+    ///    directly instead of going through RefreshFromBackend().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminProfileController : MonoBehaviour
@@ -95,6 +99,8 @@ namespace Anatomia3D.UI
             ApplyHeaderGradient();
             WireCallbacks();
             UpdateResponsiveLayout();
+
+            RefreshFromBackend();
         }
 
         private void OnDisable()
@@ -172,6 +178,53 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
+        // Cached so classroomCount/quizzesCreated (from the admin doc) and
+        // studentCount (summed separately from each classroom) can each update
+        // independently while still calling SetProfileData with all three.
+        private string _teacherName = "";
+        private string _teacherEmail = "";
+        private int _classroomCount;
+        private int _quizzesCreated;
+        private int _studentCount;
+
+        /// <summary>Loads AdminAuthService.CurrentAdmin into the header summary
+        /// card and stat row, then sums studentCount live across this admin's
+        /// classrooms since the admin doc's own studentCount field is never kept
+        /// in sync. Doesn't re-fetch the admin doc itself anymore -
+        /// classroomCount/quizzesCreated are kept current locally as soon as a
+        /// classroom or quiz is actually created/deleted (see
+        /// AdminAuthService.ApplyClassroomCreated / ApplyQuizzesCreatedDelta), so
+        /// the cached copy is already accurate by the time this screen opens.</summary>
+        public void RefreshFromBackend()
+        {
+            var admin = AdminAuthService.Instance != null ? AdminAuthService.Instance.CurrentAdmin : null;
+            if (admin == null)
+            {
+                Debug.LogWarning("[AdminProfileController] No admin signed in - leaving profile fields as-is.");
+                return;
+            }
+
+            ApplyAdminProfile(admin);
+
+            if (AdminClassroomService.Instance != null)
+            {
+                AdminClassroomService.Instance.FetchMyClassrooms(classrooms =>
+                {
+                    _studentCount = classrooms.Sum(c => c.StudentCount);
+                    SetProfileData(_teacherName, _teacherEmail, _classroomCount, _studentCount, _quizzesCreated);
+                });
+            }
+        }
+
+        private void ApplyAdminProfile(AdminAuthService.AdminProfile admin)
+        {
+            _teacherName = admin.FullName;
+            _teacherEmail = admin.Email;
+            _classroomCount = admin.ClassroomCount;
+            _quizzesCreated = admin.QuizzesCreated;
+            SetProfileData(_teacherName, _teacherEmail, _classroomCount, _studentCount, _quizzesCreated);
+        }
+
         /// <summary>Push real teacher data into the header summary card and stat row.</summary>
         public void SetProfileData(
             string teacherName,
@@ -213,20 +266,19 @@ namespace Anatomia3D.UI
         {
             Debug.Log("[AdminProfileController] Edit Profile tapped.");
             UIManager.Instance.ShowAdminEditProfile(_teacherNameLabel?.text, _teacherEmailLabel?.text);
-            
+
         }
 
 
         private void OnAboutClicked(ClickEvent evt)
         {
-            UIManager.Instance.ShowAboutAnatomia();
+            UIManager.Instance.ShowAboutAnatomiaAdmin();
         }
 
         private void OnLogoutClicked(ClickEvent evt)
         {
-            // TODO: replace with your real logout call, e.g.:
-            // AdminAuthService.Instance.LogoutAdmin();
             Debug.Log("[AdminProfileController] Log Out tapped.");
+            AdminAuthService.Instance?.LogoutAdmin();
             UIManager.Instance.ShowAdminLogin();
         }
 

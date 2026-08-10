@@ -57,6 +57,13 @@ namespace Anatomia3D.UI
         private TextField _emailField;
         private Label _emailError;
 
+        private Label _verifyEmailStatusBadge;
+        private Button _verifyEmailButton;
+        private Label _verifyEmailStatusLabel;
+        private Label _cardSubtitle;
+        private VisualElement _verifyEmailWarning;
+        private Label _emailPendingHint;
+
         private Button _togglePasswordVisibilityButton;
         private TextField _currentPasswordField;
         private Label _currentPasswordError;
@@ -69,6 +76,7 @@ namespace Anatomia3D.UI
         private Button _saveChangesButton;
 
         private bool _passwordsVisible;
+        private string _loadedEmail;
 
         private void OnEnable()
         {
@@ -110,11 +118,25 @@ namespace Anatomia3D.UI
             UpdatePasswordVisibility();
             ClearAllErrors();
             SetStatus(string.Empty);
+
+            RefreshVerificationBadge();
+            UpdatePendingEmailHint();
+
+            if (AdminAuthService.Instance != null)
+            {
+                AdminAuthService.Instance.OnEmailChangeConfirmed -= OnEmailChangeConfirmed;
+                AdminAuthService.Instance.OnEmailChangeConfirmed += OnEmailChangeConfirmed;
+            }
         }
 
         private void OnDisable()
         {
             UnregisterCallbacks();
+
+            if (AdminAuthService.Instance != null)
+            {
+                AdminAuthService.Instance.OnEmailChangeConfirmed -= OnEmailChangeConfirmed;
+            }
 
             if (_headerGradientTexture != null) { Destroy(_headerGradientTexture); _headerGradientTexture = null; }
             if (_buttonGradientTexture != null) { Destroy(_buttonGradientTexture); _buttonGradientTexture = null; }
@@ -126,6 +148,7 @@ namespace Anatomia3D.UI
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _togglePasswordVisibilityButton?.UnregisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
+            _verifyEmailButton?.UnregisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.UnregisterCallback<ClickEvent>(OnSaveChangesClicked);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -148,6 +171,13 @@ namespace Anatomia3D.UI
             _emailField = _screenRoot.Q<TextField>("email-field");
             _emailError = _screenRoot.Q<Label>("email-error");
 
+            _verifyEmailStatusBadge = _screenRoot.Q<Label>("verify-email-status-badge");
+            _verifyEmailButton = _screenRoot.Q<Button>("verify-email-button");
+            _verifyEmailStatusLabel = _screenRoot.Q<Label>("verify-email-status-label");
+            _verifyEmailWarning = _screenRoot.Q<VisualElement>("verify-email-warning");
+            _cardSubtitle = _screenRoot.Q<Label>("card-subtitle");
+            _emailPendingHint = _screenRoot.Q<Label>("email-pending-hint");
+
             _togglePasswordVisibilityButton = _screenRoot.Q<Button>("toggle-password-visibility-button");
             _currentPasswordField = _screenRoot.Q<TextField>("current-password-field");
             _currentPasswordError = _screenRoot.Q<Label>("current-password-error");
@@ -166,6 +196,7 @@ namespace Anatomia3D.UI
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _togglePasswordVisibilityButton?.RegisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
+            _verifyEmailButton?.RegisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.RegisterCallback<ClickEvent>(OnSaveChangesClicked);
 
             if (_screenRoot != null)
@@ -181,6 +212,7 @@ namespace Anatomia3D.UI
         {
             if (_fullNameField != null) _fullNameField.SetValueWithoutNotify(fullName);
             if (_emailField != null) _emailField.SetValueWithoutNotify(email);
+            _loadedEmail = email;
         }
 
         // ---------------- Button handlers ----------------
@@ -205,6 +237,86 @@ namespace Anatomia3D.UI
             if (_togglePasswordVisibilityButton != null) _togglePasswordVisibilityButton.text = _passwordsVisible ? "Hide" : "Show";
         }
 
+        private void OnVerifyEmailClicked(ClickEvent evt)
+        {
+            if (AdminAuthService.Instance.IsEmailVerified)
+            {
+                SetVerifyEmailStatus("Your email is already verified.");
+                RefreshVerificationBadge();
+                return;
+            }
+
+            _verifyEmailButton.SetEnabled(false);
+            SetVerifyEmailStatus("Sending verification email...");
+
+            AdminAuthService.Instance.SendEmailVerification((success, error) =>
+            {
+                _verifyEmailButton.SetEnabled(true);
+
+                if (!success)
+                {
+                    Debug.LogError($"[AdminEditProfileController] Send verification email failed: {error}");
+                    SetVerifyEmailStatus(error ?? "Could not send verification email. Please try again.");
+                    return;
+                }
+
+                SetVerifyEmailStatus($"Verification email sent to {_loadedEmail}. Check your inbox and click the link, then reopen this screen.");
+            });
+        }
+
+        /// <summary>Reloads the current user from Firebase so the verified/not
+        /// verified badge reflects a link the admin may have just clicked, then
+        /// updates the badge text/style.</summary>
+        private void RefreshVerificationBadge()
+        {
+            UpdateVerifyBadge(AdminAuthService.Instance.IsEmailVerified);
+
+            AdminAuthService.Instance.RefreshEmailVerificationStatus(isVerified =>
+            {
+                UpdateVerifyBadge(isVerified);
+            });
+        }
+
+        private void UpdateVerifyBadge(bool isVerified)
+        {
+            if (_verifyEmailStatusBadge != null)
+            {
+                _verifyEmailStatusBadge.text = isVerified ? "Verified" : "Not verified";
+                _verifyEmailStatusBadge.EnableInClassList("verify-status-verified", isVerified);
+                _verifyEmailStatusBadge.EnableInClassList("verify-status-unverified", !isVerified);
+            }
+
+            if (_verifyEmailButton != null)
+            {
+                _verifyEmailButton.text = isVerified ? "Resend Verification Email" : "Send Verification Email";
+            }
+
+            // The "you won't be able to recover this account" warning only
+            // matters while the email is actually unverified - hide it once
+            // verified instead of leaving it up permanently.
+            _verifyEmailWarning?.EnableInClassList("hidden", isVerified);
+            _verifyEmailButton?.EnableInClassList("hidden", isVerified);
+
+            // chnage the label of the card subtitle mkae the you are verified
+
+            if (_cardSubtitle != null)
+            {
+                _cardSubtitle.text = isVerified ? "Your email is verified." : "We'll send a verification link to your current email address.";
+            }
+
+
+        }
+
+        private void SetVerifyEmailStatus(string message)
+        {
+            if (_verifyEmailStatusLabel == null) return;
+            _verifyEmailStatusLabel.text = message;
+            if (string.IsNullOrEmpty(message))
+                _verifyEmailStatusLabel.AddToClassList("hidden");
+            else
+                _verifyEmailStatusLabel.RemoveFromClassList("hidden");
+        }
+
         private void OnSaveChangesClicked(ClickEvent evt)
         {
             ClearAllErrors();
@@ -224,20 +336,29 @@ namespace Anatomia3D.UI
                 valid = false;
             }
 
+            // Changing the email is a sensitive Auth operation and always needs
+            // the current password, whether or not they're also setting a new
+            // password below.
+            bool emailChanged = !string.IsNullOrEmpty(email) &&
+                !string.Equals(email, _loadedEmail, System.StringComparison.OrdinalIgnoreCase);
+
             string currentPassword = _currentPasswordField.value;
             string newPassword = _newPasswordField.value;
             string confirmPassword = _confirmPasswordField.value;
-            bool changingPassword = !string.IsNullOrEmpty(currentPassword) || !string.IsNullOrEmpty(newPassword) || !string.IsNullOrEmpty(confirmPassword);
+            bool changingPassword = !string.IsNullOrEmpty(newPassword) || !string.IsNullOrEmpty(confirmPassword);
+            bool needsCurrentPassword = changingPassword || emailChanged;
+
+            if (needsCurrentPassword && string.IsNullOrEmpty(currentPassword))
+            {
+                SetError(_currentPasswordError, emailChanged && !changingPassword
+                    ? "Enter your current password to change your email"
+                    : "Enter your current password");
+                valid = false;
+            }
 
             if (changingPassword)
             {
-                if (string.IsNullOrEmpty(currentPassword))
-                {
-                    SetError(_currentPasswordError, "Enter your current password");
-                    valid = false;
-                }
-
-                if (string.IsNullOrEmpty(newPassword) || newPassword.Length < minPasswordLength)
+                if (newPassword.Length < minPasswordLength)
                 {
                     SetError(_newPasswordError, $"New password must be at least {minPasswordLength} characters");
                     valid = false;
@@ -258,64 +379,104 @@ namespace Anatomia3D.UI
             SetStatus("Saving changes...");
             _saveChangesButton.SetEnabled(false);
 
-            // TODO: replace with your real "update profile" / "change password" calls, e.g.:
-            // AdminAccountService.Instance.UpdateProfile(fullName, email, OnProfileSaved);
-            // if (changingPassword) AdminAccountService.Instance.ChangePassword(currentPassword, newPassword, OnPasswordChanged);
-
-            AdminAuthService.Instance.UpdateProfile(fullName, email, (success, error) =>
+            AdminAuthService.Instance.UpdateProfile(fullName, email, currentPassword, (success, error) =>
             {
-                if (success)
+                if (!success)
                 {
-                    if (changingPassword)
+                    Debug.LogError($"[AdminEditProfileController] Profile update failed: {error}");
+                    SetStatus(error ?? "Failed to save changes. Please try again.");
+                    _saveChangesButton.SetEnabled(true);
+                    return;
+                }
+
+                if (changingPassword)
+                {
+                    AdminAuthService.Instance.ChangePassword(currentPassword, newPassword, (pwSuccess, pwError) =>
                     {
-                        AdminAuthService.Instance.ChangePassword(currentPassword, newPassword, (pwSuccess, pwError) =>
+                        if (pwSuccess)
                         {
-                            if (pwSuccess)
-                            {
-                                Debug.Log("[AdminEditProfileController] Profile and password updated successfully.");
-                                FakeSaveComplete();
-                            }
-                            else
-                            {
-                                Debug.LogError($"[AdminEditProfileController] Password change failed: {pwError}");
-                                SetStatus("Failed to change password. Please try again.");
-                                _saveChangesButton.SetEnabled(true);
-                            }
-                        });
-                    }
-                    else
-                    {
-                        Debug.Log("[AdminEditProfileController] Profile updated successfully.");
-                        FakeSaveComplete();
-                    }
+                            Debug.Log("[AdminEditProfileController] Profile and password updated successfully.");
+                            OnSaveComplete(emailChanged, email);
+                        }
+                        else
+                        {
+                            Debug.LogError($"[AdminEditProfileController] Password change failed: {pwError}");
+                            SetStatus(pwError ?? "Failed to change password. Please try again.");
+                            _saveChangesButton.SetEnabled(true);
+                        }
+                    });
                 }
                 else
                 {
-                    Debug.LogError($"[AdminEditProfileController] Profile update failed: {error}");
-                    SetStatus("Failed to save changes. Please try again.");
-                    _saveChangesButton.SetEnabled(true);
+                    Debug.Log("[AdminEditProfileController] Profile updated successfully.");
+                    OnSaveComplete(emailChanged, email);
                 }
             });
-
-            Invoke(nameof(FakeSaveComplete), 0.4f);
         }
 
-        private void FakeSaveComplete()
+        private void OnSaveComplete(bool emailChanged, string newEmail)
         {
             _saveChangesButton.SetEnabled(true);
-            SetStatus(string.Empty);
-
-            Debug.Log("[AdminEditProfileController] Save stub complete - hook up AdminAccountService here.");
 
             // Clear password fields either way; they're never re-displayed.
             _currentPasswordField.value = string.Empty;
             _newPasswordField.value = string.Empty;
             _confirmPasswordField.value = string.Empty;
 
-            // TODO: only navigate once your real save call reports success, and
-            // ideally push the updated name/email back into AdminProfileController
-            // (e.g. via UIManager.Instance.ShowAdminProfile() + SetProfileData()).
+            if (emailChanged)
+            {
+                // Auth.CurrentUser.Email (and therefore this screen's display)
+                // won't actually become newEmail until the admin clicks the
+                // verification link in their inbox. Stay signed in on the OLD
+                // email in the meantime - don't log out here or on a fixed
+                // timer. AdminAuthService.UpdateProfile already started
+                // background polling (on itself, not this screen) the moment
+                // it sent the link, so the admin gets logged out automatically
+                // the instant they confirm it - even if they've since
+                // navigated away from this screen.
+                SetStatus($"Saved. A verification link was sent to {newEmail}. Check your inbox and click it - you'll be logged out automatically once it's confirmed.");
+                UpdatePendingEmailHint();
+                _saveChangesButton.SetEnabled(false);
+                return;
+            }
+
+            SetStatus(string.Empty);
+
+            // Push the updated name/email back into AdminProfileController so it
+            // doesn't keep showing stale values, then navigate back.
             UIManager.Instance.ShowAdminProfile();
+        }
+
+        /// <summary>Fired by AdminAuthService the instant it detects the admin
+        /// has confirmed a pending email change (from its own background
+        /// polling, which keeps running no matter which screen is visible).
+        /// By the time this fires AdminAuthService has already logged the
+        /// admin out and navigated to Login, so if this screen still happens
+        /// to be enabled in that instant there's nothing left to do here
+        /// except make sure it isn't left showing stale state.</summary>
+        private void OnEmailChangeConfirmed()
+        {
+            SetStatus(string.Empty);
+            UpdatePendingEmailHint();
+        }
+
+        /// <summary>Shows a small hint under the verify-email section while a
+        /// change is pending, so the admin isn't confused about why the
+        /// email field still shows the old address after saving.</summary>
+        private void UpdatePendingEmailHint()
+        {
+            if (_emailPendingHint == null) return;
+
+            string pending = AdminAuthService.Instance?.PendingEmail;
+            if (string.IsNullOrEmpty(pending))
+            {
+                _emailPendingHint.text = string.Empty;
+                _emailPendingHint.AddToClassList("hidden");
+                return;
+            }
+
+            _emailPendingHint.text = $"Pending change to {pending} - check your inbox to confirm.";
+            _emailPendingHint.RemoveFromClassList("hidden");
         }
 
         // ---------------- Helpers ----------------

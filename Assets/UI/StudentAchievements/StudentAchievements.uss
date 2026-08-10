@@ -202,6 +202,11 @@
     box-sizing: border-box;
 }
 
+.badge-list-bottom-padded
+{
+    padding-bottom: 60px;
+}
+
 .badge-card
 {
     flex-direction: row;
@@ -364,22 +369,6 @@
 
 /* ---------- Special Achievements ---------- */
 
-.special-achievements-section
-{
-    padding-top: 10px;
-    padding-bottom: 60px;
-}
-
-.section-title
-{
-    font-size: 32px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    padding-left: 40px;
-    padding-right: 40px;
-    margin-bottom: 20px;
-}
-
 /* =========================================================
    Compact Layout (toggled by C# based on panel width)
    ========================================================= */
@@ -490,11 +479,4 @@
 .compact .progress-footer-label
 {
     font-size: 18px;
-}
-
-.compact .section-title
-{
-    font-size: 28px;
-    padding-left: 26px;
-    padding-right: 26px;
 }

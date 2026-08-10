@@ -1,3 +1,4 @@
+using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,14 +11,14 @@ namespace Anatomia3D.UI
     ///
     /// Responsibilities:
     ///  - Wires up the back button and the account/support menu buttons
+    ///  - Loads real data from PlayerSessionManager.CurrentStudent via
+    ///    RefreshFromBackend() (paints the cached copy immediately, then
+    ///    refreshes it from Firestore since gameplay code doesn't keep that
+    ///    cache in sync after a quiz - see PlayerSessionManager.RefreshCurrentStudent)
     ///  - Applies the purple->pink gradient to the header at runtime
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
-    ///  - Exposes SetProfileData() so gameplay/session code can push real
-    ///    values in instead of the placeholder mock data.
-    ///
-    /// Hook up your real navigation/logout calls inside the relevant
-    /// On...Clicked() handlers below - e.g. call into your existing
-    /// PlayerSessionManager from OnLogoutClicked().
+    ///  - Exposes SetProfileData() so other code can still push values in
+    ///    directly instead of going through RefreshFromBackend().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class StudentProfileController : MonoBehaviour
@@ -96,17 +97,38 @@ namespace Anatomia3D.UI
             ApplyHeaderGradient();
             WireCallbacks();
             UpdateResponsiveLayout();
+
+            // Paint whatever's already cached immediately (no network wait), then
+            // stay subscribed so a later change - local or from the real-time
+            // listener - repaints this screen without needing to be re-opened.
+            RefreshFromBackend();
+
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+                PlayerSessionManager.Instance.OnStudentProfileChanged += OnStudentProfileChanged;
+            }
         }
 
         private void OnDisable()
         {
             UnregisterCallbacks();
 
+            if (PlayerSessionManager.Instance != null)
+            {
+                PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
+            }
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
+        {
+            ApplyStudent(student);
         }
 
         private void UnregisterCallbacks()
@@ -177,6 +199,29 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
+        /// <summary>Loads PlayerSessionManager.CurrentStudent into the header summary
+        /// card and stat row. Reads straight from the cache - no Firestore call here
+        /// anymore. Gameplay/profile/classroom code keeps CurrentStudent in sync at
+        /// the point each of those actually changes the student doc (see
+        /// PlayerSessionManager.ApplyQuizAttemptResult and .WriteFullName), so by the
+        /// time this screen opens the cached copy is already accurate.</summary>
+        public void RefreshFromBackend()
+        {
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+            if (student == null)
+            {
+                Debug.LogWarning("[StudentProfileController] No student signed in - leaving profile fields as-is.");
+                return;
+            }
+
+            ApplyStudent(student);
+        }
+
+        private void ApplyStudent(PlayerSessionManager.StudentProfile student)
+        {
+            SetProfileData(student.FullName, student.Email, student.Level, student.TotalPoints, student.QuizzesCompleted);
+        }
+
         /// <summary>Push real student data into the header summary card and stat row.</summary>
         public void SetProfileData(
             string studentName,
@@ -231,15 +276,14 @@ namespace Anatomia3D.UI
 
         private void OnAboutClicked(ClickEvent evt)
         {
-           
+
             UIManager.Instance.ShowAboutAnatomia();
         }
 
         private void OnLogoutClicked(ClickEvent evt)
         {
-            // TODO: replace with your real logout call, e.g.:
-            // PlayerSessionManager.Instance.LogoutStudent();
             Debug.Log("[StudentProfileController] Log Out tapped.");
+            PlayerSessionManager.Instance?.LogoutStudent();
             UIManager.Instance.ShowStudentLogin();
         }
 

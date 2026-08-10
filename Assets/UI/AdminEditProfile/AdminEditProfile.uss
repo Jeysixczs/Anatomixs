@@ -240,6 +240,79 @@
     margin-top: 10px;
 }
 
+.field-hint
+{
+    font-size: 24px;
+    color: rgb(138, 143, 163);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+/* ---------- Email verification card ---------- */
+
+.verify-status-badge
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    padding: 8px 18px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+.verify-status-unverified
+{
+    color: rgb(180, 83, 9);
+    background-color: rgb(254, 243, 199);
+}
+
+.verify-status-verified
+{
+    color: rgb(6, 95, 70);
+    background-color: rgb(209, 250, 229);
+}
+
+.verify-email-button
+{
+    margin-top: 28px;
+    align-self: flex-start;
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.08);
+    border-radius: 21px;
+    padding: 18px 30px;
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(16, 185, 129);
+}
+
+.verify-email-button:hover
+{
+    background-color: rgb(230, 231, 236);
+}
+
+.verify-email-button:disabled
+{
+    color: rgb(163, 167, 183);
+}
+
+.warning-box
+{
+    margin-top: 28px;
+    padding: 24px;
+    border-radius: 21px;
+    background-color: rgb(255, 247, 237);
+    border-width: 1px;
+    border-color: rgb(253, 224, 176);
+}
+
+.warning-text
+{
+    font-size: 26px;
+    color: rgb(154, 74, 5);
+    white-space: normal;
+}
+
 /* ---------- Status label ---------- */
 
 .status-label
@@ -361,9 +434,30 @@
     font-size: 24px;
 }
 
+.compact .field-hint
+{
+    font-size: 20px;
+}
+
 .compact .save-changes-label
 {
     font-size: 32px;
+}
+
+.compact .verify-status-badge
+{
+    font-size: 20px;
+}
+
+.compact .verify-email-button
+{
+    font-size: 24px;
+    padding: 14px 24px;
+}
+
+.compact .warning-text
+{
+    font-size: 21px;
 }
 
 .compact .save-changes-submit-button

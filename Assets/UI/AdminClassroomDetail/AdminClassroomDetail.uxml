@@ -8,7 +8,11 @@
                         <ui:Button name="back-button" class="back-button">
                             <ui:VisualElement class="back-icon"/>
                         </ui:Button>
-                        <ui:Label name="classroom-name-label" text="Anatomi" class="header-title"/>
+                        <ui:VisualElement name="header-title-block" class="header-title-block">
+                            <ui:Label name="classroom-name-label" text="Anatomi" class="header-title"/>
+                            <ui:Label name="archived-badge-label" text="Archived" class="archived-badge hidden"/>
+                        </ui:VisualElement>
+                        <ui:Button name="archive-button" text="Archive" class="archive-button"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="classroom-code-box" class="classroom-code-box">
                         <ui:VisualElement class="classroom-code-text-block">
@@ -58,27 +62,15 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="quizzes-panel" class="tab-panel hidden">
-                    <ui:VisualElement name="quizzes-card" class="panel-card">
+                    <ui:VisualElement name="quizzes-empty-state" class="panel-card empty-state hidden">
+                        <ui:VisualElement class="empty-icon icon-users-gray"/>
+                        <ui:Label text="No quizzes yet" class="empty-title"/>
+                        <ui:Label text="Create a quiz from the dashboard to publish it to this classroom" class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-card" class="panel-card hidden">
                         <ui:Label text="Published Quizzes" class="panel-card-title"/>
                         <ui:Label text="Select which quizzes are available to this classroom." class="panel-card-subtitle"/>
-                        <ui:VisualElement name="quiz-row-1" class="quiz-row">
-                            <ui:VisualElement class="quiz-row-text">
-                                <ui:Label name="quiz-title-1" text="Skeletal System Basics" class="quiz-row-title"/>
-                                <ui:Label name="quiz-subject-1" text="Skeletal System" class="quiz-row-subject"/>
-                            </ui:VisualElement>
-                            <ui:Button name="quiz-toggle-1" class="toggle-switch toggle-on">
-                                <ui:VisualElement class="toggle-knob"/>
-                            </ui:Button>
-                        </ui:VisualElement>
-                        <ui:VisualElement name="quiz-row-2" class="quiz-row quiz-row-last">
-                            <ui:VisualElement class="quiz-row-text">
-                                <ui:Label name="quiz-title-2" text="Muscular System Advanced" class="quiz-row-title"/>
-                                <ui:Label name="quiz-subject-2" text="Muscular System" class="quiz-row-subject"/>
-                            </ui:VisualElement>
-                            <ui:Button name="quiz-toggle-2" class="toggle-switch">
-                                <ui:VisualElement class="toggle-knob"/>
-                            </ui:Button>
-                        </ui:VisualElement>
+                        <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="analytics-panel" class="tab-panel hidden">
@@ -141,5 +133,15 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="archive-dialog-overlay" class="dialog-overlay hidden">
+            <ui:VisualElement name="archive-dialog-card" class="dialog-card">
+                <ui:Label name="archive-dialog-title-label" text="Archive Classroom" class="dialog-title"/>
+                <ui:Label name="archive-dialog-message-label" text="Are you sure you want to archive this classroom? Archived classrooms will no longer accept student access." class="dialog-message"/>
+                <ui:VisualElement name="archive-dialog-button-row" class="dialog-button-row">
+                    <ui:Button name="archive-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
+                    <ui:Button name="archive-dialog-confirm-button" text="Archive" class="dialog-button dialog-button-danger"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

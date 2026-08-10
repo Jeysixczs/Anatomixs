@@ -23,11 +23,15 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Button name="date-filter-button" class="date-filter-button">
-                    <ui:Label text="📅" class="date-filter-icon"/>
-                    <ui:Label name="date-filter-label" text="Last 30 days" class="date-filter-label"/>
-                    <ui:Label text="▼" class="date-filter-chevron"/>
-                </ui:Button>
+                <ui:VisualElement name="filters-row" class="filters-row">
+                    <!-- classroom-picker-wrapper is inserted here at runtime, before the
+                         date filter button, by AdminAnalyticsReportsController.BuildClassroomPicker() -->
+                    <ui:Button name="date-filter-button" class="date-filter-button">
+                        <ui:Label text="📅" class="date-filter-icon"/>
+                        <ui:Label name="date-filter-label" text="Last 30 days" class="date-filter-label"/>
+                        <ui:Label text="▼" class="date-filter-chevron"/>
+                    </ui:Button>
+                </ui:VisualElement>
                 <ui:VisualElement name="stats-grid" class="stats-grid">
                     <ui:VisualElement name="stats-row-1" class="stats-grid-row">
                         <ui:VisualElement name="active-users-card" class="overview-card overview-card-left">

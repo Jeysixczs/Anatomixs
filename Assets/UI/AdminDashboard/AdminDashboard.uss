@@ -537,6 +537,29 @@
     background-image: url("project://database/Assets/UI/Icons/reward-icon.png");
 }
 
+.classroom-card-archived
+{
+    opacity: 0.6;
+}
+
+.classroom-archived-badge
+{
+    padding: 8px 18px;
+    margin-left: 12px;
+    border-radius: 20px;
+    background-color: rgba(150, 155, 168, 0.18);
+    border-width: 1px;
+    border-color: rgba(150, 155, 168, 0.35);
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(110, 115, 128);
+}
+
+.view-classroom-button-disabled
+{
+    opacity: 0.5;
+}
+
 .quick-action-title
 {
     font-size: 33px;
@@ -633,6 +656,89 @@
     color: rgb(150, 155, 168);
     margin-left: 16px;
     flex-shrink: 0;
+}
+
+/* ---------- Recent Activity: quiz-completion card ---------- */
+
+.activity-quiz-card
+{
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.activity-card-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.activity-student-name
+{
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    white-space: normal;
+}
+
+.activity-status-pill
+{
+    font-size: 22px;
+    color: rgb(22, 163, 74);
+    background-color: rgba(22, 163, 74, 0.12);
+    border-radius: 20px;
+    padding: 6px 16px;
+    margin-left: 12px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+.activity-quiz-title
+{
+    font-size: 26px;
+    color: rgb(60, 66, 80);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+.activity-classroom-name
+{
+    font-size: 24px;
+    color: rgb(150, 155, 168);
+    margin-top: 4px;
+    white-space: normal;
+}
+
+.activity-meta-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 14px;
+}
+
+.activity-score-badge
+{
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: rgb(20, 95, 232);
+    background-color: rgba(20, 95, 232, 0.1);
+    border-radius: 16px;
+    padding: 5px 14px;
+}
+
+/* Brief pop-in highlight for a card that just landed at the top of the list -
+   e.g. right after a student submits a quiz. Purely a background/opacity fade,
+   no layout-affecting properties, so it never causes a reflow of neighboring rows. */
+.activity-row-new
+{
+    background-color: rgba(20, 95, 232, 0.08);
+    transition-property: background-color;
+    transition-duration: 1.2s;
+    transition-timing-function: ease-out;
 }
 
 /* ---------- Utility ---------- */

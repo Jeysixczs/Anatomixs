@@ -1,11 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/StudentEditProfile/StudentEditProfile.uss"/>
+    <Style src="project://database/Assets/UI/StudentEditProfile/StudentEditProfile.uss?fileID=7433441132597879392&amp;guid=994ab4ec73bc85949bb1161386367106&amp;type=3#StudentEditProfile"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-
-        <!-- ===================== SCROLLABLE CONTENT ===================== -->
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-
-            <!-- ===================== HEADER ===================== -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
@@ -17,48 +13,53 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-
                 <ui:VisualElement name="profile-info-card" class="form-card">
                     <ui:Label text="Profile Information" class="card-title"/>
-
                     <ui:Label text="Full Name" class="field-label"/>
                     <ui:TextField name="full-name-field" class="text-field"/>
                     <ui:Label name="full-name-error" text="" class="field-error hidden"/>
-
                     <ui:Label text="Email Address" class="field-label field-label-spaced"/>
                     <ui:TextField name="email-field" class="text-field"/>
                     <ui:Label name="email-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Changing your email requires your current password below" class="field-hint"/>
+                    <ui:Label name="email-pending-hint" text="" class="field-hint field-hint-pending hidden"/>
                 </ui:VisualElement>
-
+                <ui:VisualElement name="verify-email-card" class="form-card">
+                    <ui:VisualElement name="verify-email-header-row" class="card-header-row">
+                        <ui:Label text="Email Verification" class="card-title"/>
+                        <ui:Label name="verify-email-status-badge" text="Not verified" class="verify-status-badge verify-status-unverified"/>
+                    </ui:VisualElement>
+                    <ui:Label text="We&apos;ll send a verification link to your current email address." name="card-subtitle" class="card-subtitle"/>
+                    <ui:Button name="verify-email-button" text="Send Verification Email" class="verify-email-button"/>
+                    <ui:Label name="verify-email-status-label" text="" class="field-hint hidden"/>
+                    <ui:VisualElement name="verify-email-warning" class="warning-box">
+                        <ui:Label text="If you don&apos;t verify your email, you won&apos;t be able to recover this account if something happens to it - for example, if you lose access to your password. Verify now to keep your account safe." class="warning-text"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="password-card" class="form-card">
                     <ui:VisualElement name="password-card-header-row" class="card-header-row">
-                        <ui:Label text="Change Password" class="card-title"/>
+                        <ui:Label text="Security" class="card-title"/>
                         <ui:Button name="toggle-password-visibility-button" text="Show" class="toggle-visibility-button"/>
                     </ui:VisualElement>
-                    <ui:Label text="Leave blank to keep your current password" class="card-subtitle"/>
-
+                    <ui:Label text="Enter your current password to change your email or set a new password" class="card-subtitle"/>
                     <ui:Label text="Current Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="current-password-field" class="text-field" password="true"/>
+                    <ui:TextField name="current-password-field" password="true" class="text-field"/>
                     <ui:Label name="current-password-error" text="" class="field-error hidden"/>
-
+                    <ui:Label text="Required only if you changed your email above or a password below" class="field-hint"/>
                     <ui:Label text="New Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="new-password-field" class="text-field" password="true"/>
+                    <ui:TextField name="new-password-field" password="true" class="text-field"/>
                     <ui:Label name="new-password-error" text="" class="field-error hidden"/>
-
+                    <ui:Label text="Leave blank to keep your current password" class="field-hint"/>
                     <ui:Label text="Confirm New Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="confirm-password-field" class="text-field" password="true"/>
+                    <ui:TextField name="confirm-password-field" password="true" class="text-field"/>
                     <ui:Label name="confirm-password-error" text="" class="field-error hidden"/>
                 </ui:VisualElement>
-
                 <ui:Label name="status-label" text="" class="status-label hidden"/>
-
                 <ui:Button name="save-changes-button" class="save-changes-submit-button">
                     <ui:VisualElement name="save-changes-icon" class="save-changes-icon"/>
                     <ui:Label text="Save Changes" class="save-changes-label"/>
                 </ui:Button>
-
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

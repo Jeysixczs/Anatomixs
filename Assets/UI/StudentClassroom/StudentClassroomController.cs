@@ -195,6 +195,20 @@ namespace Anatomia3D.UI
             {
                 Debug.Log("[StudentClassroomController] Join classroom succeeded");
                 SetStatus("Successfully joined classroom!");
+
+                // Hub's "My Classrooms" list only fetches once per screen instance
+                // (see StudentClassroomHubController.OnEnable) - without this, a
+                // newly-joined classroom wouldn't show up there until something
+                // else forces a reload.
+                UIManager.Instance.InvalidateStudentClassroomHub();
+
+                // Same idea for the dashboard's Recent Activity feed - a join isn't
+                // covered by PlayerSessionManager.OnStudentProfileChanged (points/level/
+                // badges don't change here), so it needs its own explicit invalidation
+                // or the "Joined 'X'" row wouldn't show up until some other event
+                // happened to trigger a refetch.
+                UIManager.Instance.GetComponent<StudentDashboardController>()?.MarkActivityDirty();
+
                 // Navigate to the dashboard or classroom view
                 UIManager.Instance.ShowStudentDashboard();
             }

@@ -1,9 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id">
-  <string name="gcm_defaultSenderId" translatable="false">386800185692</string>
-  <string name="google_storage_bucket" translatable="false">anatomia3d-82258.firebasestorage.app</string>
-  <string name="project_id" translatable="false">anatomia3d-82258</string>
-  <string name="google_api_key" translatable="false">AIzaSyDZmQbljXBxpPsRG1rHfIIki5tw2oPC3Ec</string>
-  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDZmQbljXBxpPsRG1rHfIIki5tw2oPC3Ec</string>
-  <string name="google_app_id" translatable="false">1:386800185692:android:f0d78d8166e9e988045199</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
+  <string name="firebase_database_url" translatable="false">https://anatomia-46a5a-default-rtdb.firebaseio.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">1076492717353</string>
+  <string name="google_storage_bucket" translatable="false">anatomia-46a5a.firebasestorage.app</string>
+  <string name="project_id" translatable="false">anatomia-46a5a</string>
+  <string name="google_api_key" translatable="false">AIzaSyCoikSmTBCZDt0A-pownAwvUas1bA_3KRs</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCoikSmTBCZDt0A-pownAwvUas1bA_3KRs</string>
+  <string name="google_app_id" translatable="false">1:1076492717353:android:a0d549218a4941d44a3b38</string>
+  <string name="default_android_client_id" translatable="false">1076492717353-a8v3jhe9uhmuimcfjtqvhkp7knu614u8.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">1076492717353-n8cc5aovcgevrh2g3i1ts2gl25bki36k.apps.googleusercontent.com</string>
 </resources>

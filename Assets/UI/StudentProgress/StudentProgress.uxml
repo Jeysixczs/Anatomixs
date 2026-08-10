@@ -37,6 +37,16 @@
                     <ui:Label name="points-to-next-label" text="250 points to next level" class="level-caption"/>
                 </ui:VisualElement>
 
+                <!-- ================= LEVEL ROADMAP CARD ================= -->
+                <!-- Populated at runtime by StudentProgressController from the admin's
+                     gamificationSettings/config levels, so it always matches whatever
+                     the admin has configured (title + points required per level). -->
+                <ui:VisualElement name="level-roadmap-card" class="level-roadmap-card">
+                    <ui:Label text="Level Roadmap" class="section-title"/>
+                    <ui:Label text="Points needed for every level" class="level-roadmap-subtitle"/>
+                    <ui:VisualElement name="level-roadmap-list" class="level-roadmap-list"/>
+                </ui:VisualElement>
+
                 <!-- ================= STATS GRID ================= -->
                 <ui:VisualElement name="stats-row-1" class="stats-row">
                     <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">

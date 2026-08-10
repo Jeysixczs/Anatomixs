@@ -59,6 +59,7 @@ namespace Anatomia3D.UI
         private Button _goToDashboardButton;
 
         private AdminDashboardController.ClassroomSummary classroom;
+        private string _classroomId = "";
 
         private void OnEnable()
         {
@@ -154,9 +155,14 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Push the freshly created classroom's details into the screen.</summary>
-        public void SetClassroomData(string classroomCode, string classroomName, int studentCount)
+        /// <summary>Push the freshly created classroom's details into the screen. Called
+        /// from UIManager.ShowAdminClassroomCreated() - see the note in
+        /// AdminCreateClassroomController.OnCreateResult() about adding classroomId as
+        /// that method's new leading parameter so it can be forwarded here and on to
+        /// ShowAdminClassroomDetail() in OnGoToDashboardClicked() below.</summary>
+        public void SetClassroomData(string classroomId, string classroomCode, string classroomName, int studentCount)
         {
+            _classroomId = classroomId ?? "";
             if (_classroomCodeLabel != null) _classroomCodeLabel.text = classroomCode;
             if (_classroomNameValueLabel != null) _classroomNameValueLabel.text = classroomName;
             if (_studentsValueLabel != null) _studentsValueLabel.text = studentCount.ToString();
@@ -185,17 +191,8 @@ namespace Anatomia3D.UI
         }
 
         private void OnGoToDashboardClicked(ClickEvent evt)
-        {
-            Debug.Log("[AdminClassroomCreatedController] Navigating to admin dashboard");
-            //UIManager.Instance.ShowAdminDashboard();
-            string classroomName = classroom.Name;
-            string classroomCode = classroom.Code;
-            int classroomStudentCount = classroom.StudentCount;
-            float avgScorePercent = 0f; // TODO: fetch real average score from backend when available
-            int quizCount = 0; // TODO: fetch real quiz count from backend when available
-
-            UIManager.Instance.ShowAdminClassroomDetail(classroomName, classroomCode, classroomStudentCount, avgScorePercent, quizCount);
-
+        {  
+            UIManager.Instance.ShowAdminDashboard();
         }
 
         // ---------------- Responsive layout ----------------

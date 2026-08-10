@@ -21,6 +21,14 @@ namespace Anatomia3D.Backend
     {
         public static FirebaseBootstrap Instance { get; private set; }
 
+        [Header("Google Sign-In")]
+        [Tooltip("Firebase Console -> Authentication -> Sign-in method -> Google -> " +
+                 "Web SDK configuration -> Web client ID. NOT the Android/iOS OAuth " +
+                 "client ID - Firebase auto-creates this Web one when you enable Google " +
+                 "as a sign-in provider, and it's what GoogleAuthProvider needs on both platforms.")]
+        [SerializeField] private string googleWebClientId;
+        public string GoogleWebClientId => googleWebClientId;
+
         public FirebaseAuth Auth { get; private set; }
         public FirebaseFirestore Db { get; private set; }
         public bool IsReady { get; private set; }

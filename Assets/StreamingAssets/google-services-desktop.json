@@ -1,26 +1,45 @@
 {
   "project_info": {
-    "project_number": "386800185692",
-    "project_id": "anatomia3d-82258",
-    "storage_bucket": "anatomia3d-82258.firebasestorage.app"
+    "project_number": "1076492717353",
+    "firebase_url": "https://anatomia-46a5a-default-rtdb.firebaseio.com",
+    "project_id": "anatomia-46a5a",
+    "storage_bucket": "anatomia-46a5a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:386800185692:android:f0d78d8166e9e988045199",
+        "mobilesdk_app_id": "1:1076492717353:android:a0d549218a4941d44a3b38",
         "android_client_info": {
           "package_name": "com.fouras.anatomia"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1076492717353-a8v3jhe9uhmuimcfjtqvhkp7knu614u8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fouras.anatomia",
+            "certificate_hash": "5237172225afac7678fd65c955be39e0ca88757c"
+          }
+        },
+        {
+          "client_id": "1076492717353-n8cc5aovcgevrh2g3i1ts2gl25bki36k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDZmQbljXBxpPsRG1rHfIIki5tw2oPC3Ec"
+          "current_key": "AIzaSyCoikSmTBCZDt0A-pownAwvUas1bA_3KRs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1076492717353-n8cc5aovcgevrh2g3i1ts2gl25bki36k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
