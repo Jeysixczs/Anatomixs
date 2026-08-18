@@ -162,10 +162,8 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnBackButtonClicked()
     {
-        Debug.Log("[StudentExplore3dController] Back button tapped, navigating back to dashboard");
-        if (_headerTitle != null)
-            _headerTitle.text = $"Back tapped @ {Time.time:F1}s";
-       // UIManager.Instance.ShowStudentDashboard();
+  
+       UIManager.Instance.ShowStudentDashboard();
     }
 
     private void ApplyHeaderGradient()

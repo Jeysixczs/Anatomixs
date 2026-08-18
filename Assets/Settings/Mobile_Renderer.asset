@@ -16,8 +16,8 @@ MonoBehaviour:
   settings:
     maskMaterial: {fileID: 2100000, guid: f4242eca1f360e44bb2dc2a379913525, type: 2}
     compositeMaterial: {fileID: 2100000, guid: 7dd3f81365be0374fa56f1981f3f1dcf, type: 2}
-    outlineWidthPixels: 2
-    outlineColor: {r: 1, g: 0.82, b: 0.15, a: 1}
+    outlineWidthPixels: 0.5
+    outlineColor: {r: 1, g: 0, b: 1, a: 1}
     maskDownsample: 2
     debugFillSilhouette: 0
 --- !u!114 &11400000

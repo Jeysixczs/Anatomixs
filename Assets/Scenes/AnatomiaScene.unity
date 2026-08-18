@@ -4101,8 +4101,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d2e441c80528464da79582ee8e5a462, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StudentExplore3dController
-  gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
-  gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
+  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   diagonalGradient: 1
   gradientTextureResolution: 64
 --- !u!114 &1051780049
@@ -4137,18 +4137,18 @@ MonoBehaviour:
   modelCamera: {fileID: 911559545}
   modelRenderTexture: {fileID: 8400000, guid: 571ea7c61e456944fbb7ffd681a2e80e, type: 2}
   skeletonRoot: {fileID: 0}
-  rotateSpeed: 0.3
-  zoomSpeed: 0.02
-  zoomDistanceRange: {x: 1.5, y: 6}
-  autoFramePadding: 1.12
-  selectedBoneZoomDistance: 2
+  rotateSpeed: 0.1
+  zoomSpeed: 0.004
+  zoomDistanceRange: {x: 0.1, y: 1}
+  autoFramePadding: 1
+  selectedBoneZoomDistance: 0.9
   selectedBoneZoomDuration: 0.5
-  selectedBoneMinZoomDistance: 0.5
+  selectedBoneMinZoomDistance: 0.2
   selectedBoneMaxZoomDistance: 4
-  boneRotateSensitivity: 0.25
-  cameraPanSensitivity: 0.0025
-  pinchZoomSensitivity: 0.02
-  gestureSmoothTime: 0.08
+  boneRotateSensitivity: 0.025
+  cameraPanSensitivity: 0.001
+  pinchZoomSensitivity: 0.004
+  gestureSmoothTime: 0.07
   boneRaycastLayerMask:
     serializedVersion: 2
     m_Bits: 8
