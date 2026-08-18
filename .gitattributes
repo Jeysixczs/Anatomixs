@@ -149,5 +149,10 @@ Packages/packages-lock.json linguist-generated
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
 *.bundle filter=lfs diff=lfs merge=lfs -text
-
 *.fbx filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/Isolate-icon.png filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/hide-icon.png filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/reset-icon.png filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/search-icon.png filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/undo-icon.png filter=lfs diff=lfs merge=lfs -text
+Assets/UI/Icons/unhide-icon.png filter=lfs diff=lfs merge=lfs -text
