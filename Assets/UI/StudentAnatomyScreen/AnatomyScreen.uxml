@@ -1,0 +1,70 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentAnatomyScreen/AnatomyScreen.uss"/>
+    <ui:VisualElement name="Screen" class="screen">
+        <ui:VisualElement name="TopBar" class="top-bar">
+            <ui:Button name="BackButton" text="‹" class="back-button"/>
+            <ui:VisualElement name="TitleBlock" class="title-block">
+                <ui:Label text="&lt;color=#22C582&gt;Anatomia&lt;/color&gt;&lt;color=#3B82F6&gt;Learn 3D&lt;/color&gt;" name="AppTitle" enable-rich-text="true" class="app-title"/>
+                <ui:Label text="SKELETAL SYSTEM" name="AppSubtitle" class="app-subtitle"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="SearchBar" class="search-bar">
+            <ui:Label text="🔍" name="SearchIcon" class="search-icon" style="-unity-font-definition: initial; background-image: url(&quot;project://database/Assets/UIS/search-icon.png?fileID=2800000&amp;guid=46917629dafc20049adaebe048c8263a&amp;type=3#search-icon&quot;); height: 51px; width: 48px;"/>
+            <ui:TextField name="SearchField" placeholder-text="Search bones..." class="search-field"/>
+            <ui:Button name="SearchClearButton" text="✕" class="search-clear-button hidden"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="BodyArea" class="body-area"/>
+        <ui:VisualElement name="InfoPanel" class="info-panel hidden">
+            <ui:VisualElement name="Header" class="header">
+                <ui:VisualElement name="DragIndicator" picking-mode="Ignore" class="drag-indicator"/>
+                <ui:VisualElement name="HeaderLeft" class="header-left">
+                    <ui:VisualElement name="InfoIcon" class="info-icon">
+                        <ui:Label text="i" name="InfoIconLabel" class="info-icon-label"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Thoracic Cage (Ribs)" name="TitleLabel" class="title-label"/>
+                </ui:VisualElement>
+                <ui:Button name="MinimizeButton" text="−" class="minimize-button"/>
+                <ui:Button name="CloseButton" text="✕" class="close-button"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="BodyWrapper" class="body-wrapper">
+                <ui:ScrollView name="Body" mode="Vertical" class="body">
+                    <ui:Label name="DescriptionLabel" text="The rib cage protects the heart and lungs. It consists of 12 pairs of ribs, the sternum (breastbone), and the thoracic vertebrae. The ribs are curved bones that articulate with the spine at the back." class="description-label"/>
+                </ui:ScrollView>
+                <ui:VisualElement name="ScrollHint" picking-mode="Ignore" class="scroll-hint hidden">
+                    <ui:Label text="⌄ Scroll for more" name="ScrollHintLabel" class="scroll-hint-label"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="AudioRow" class="audio-row">
+                <ui:VisualElement name="AudioLabelGroup" picking-mode="Ignore" class="audio-label-group">
+                    <ui:Label text="AUDIO GUIDE" name="AudioLabel" class="audio-label"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="AudioControls" class="audio-controls">
+                    <ui:Button name="PlayButton" text="▶" class="audio-btn play-btn"/>
+                    <ui:Button name="StopButton" text="■" class="audio-btn stop-btn"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="ResizeHandle" picking-mode="Position" class="resize-handle">
+                <ui:Label text="⤡" name="ResizeHandleIcon" picking-mode="Ignore" class="resize-handle-icon"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="BottomToolbar" class="bottom-toolbar" style="margin-right: 50px; margin-bottom: 50px; margin-left: 50px; border-bottom-right-radius: 48px; border-bottom-left-radius: 48px;">
+            <ui:Button name="ResetButton" class="toolbar-btn">
+                <ui:Label text="↺" class="toolbar-icon" style="background-image: url(&quot;project://database/Assets/UIS/reset-icon.png?fileID=2800000&amp;guid=e7a8a30d7164699418de34067dd22b69&amp;type=3#reset-icon&quot;); -unity-background-image-tint-color: rgb(34, 160, 110); border-left-color: rgb(34, 160, 110); border-right-color: rgb(34, 160, 110); border-top-color: rgb(34, 160, 110); border-bottom-color: rgb(34, 160, 110); -unity-font-definition: initial; height: 52px; width: 54px; background-color: rgba(55, 55, 55, 0);"/>
+                <ui:Label text="Reset" class="toolbar-label"/>
+            </ui:Button>
+            <ui:Button name="IsolateButton" class="toolbar-btn">
+                <ui:Label text="◎" class="toolbar-icon" style="-unity-font-style: bold; background-image: url(&quot;project://database/Assets/UIS/target-icon.png?fileID=2800000&amp;guid=96c3718f85fbb3642aa083033ca8dc42&amp;type=3#target-icon&quot;); -unity-font-definition: initial; color: rgb(55, 55, 55); height: 67px; width: 62px;"/>
+                <ui:Label text="Isolate" class="toolbar-label"/>
+            </ui:Button>
+            <ui:Button name="HideButton" class="toolbar-btn">
+                <ui:Label text="👁" class="toolbar-icon hide-button" style="display: flex; -unity-background-image-tint-color: rgb(55, 55, 55); -unity-font-style: bold; -unity-font-definition: initial; background-image: url(&quot;project://database/Assets/UIS/hide-icon.png?fileID=2800000&amp;guid=e906549f2d19035478ae238930b629f0&amp;type=3#hide-icon&quot;); height: 60px; width: 62px;"/>
+                <ui:Label text="Hide" name="unity-hidelabel" class="toolbar-label"/>
+            </ui:Button>
+            <ui:Button name="UndoButton" class="toolbar-btn toolbar-btn-disabled">
+                <ui:Label text="↶" class="toolbar-icon" style="background-image: url(&quot;project://database/Assets/UIS/undo-icon.png?fileID=2800000&amp;guid=3afd37646364bc1438477ec32824e233&amp;type=3#undo-icon&quot;); height: 54px; width: 49px; -unity-font-definition: initial;"/>
+                <ui:Label text="Undo" class="toolbar-label"/>
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:ScrollView name="SearchResults" mode="Vertical" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" class="search-results hidden"/>
+    </ui:VisualElement>
+</ui:UXML>

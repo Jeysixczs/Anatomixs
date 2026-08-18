@@ -17,10 +17,10 @@ public class StudentExplore3dController : MonoBehaviour
     private Texture2D _headerGradientTexture;
 
     private VisualElement _header;
-    private VisualElement _headerTopRow;
+  
     private Button _backButton;
     private Label _headerTitle;
-    private Label _headerSubtitle;
+  
 
     private void OnEnable()
     {
@@ -58,7 +58,7 @@ public class StudentExplore3dController : MonoBehaviour
     {
         if (_screenRoot == null) return;
 
-        _backButton?.UnregisterCallback<ClickEvent>(OnbackToDashboard);
+        if (_backButton != null) _backButton.clicked -= OnBackButtonClicked;
 
         if (_headerGradientTexture != null)
         {
@@ -80,10 +80,10 @@ public class StudentExplore3dController : MonoBehaviour
         }
 
         _header = _screenRoot.Q<VisualElement>("header");
-        _headerTopRow = _screenRoot.Q<VisualElement>("header-top-row");
+    
         _backButton = _screenRoot.Q<Button>("back-button");
         _headerTitle = _screenRoot.Q<Label>("header-title");
-        _headerSubtitle = _screenRoot.Q<Label>("header-subtitle");
+       
 
         Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}");
     }
@@ -92,15 +92,80 @@ public class StudentExplore3dController : MonoBehaviour
     {
         if (_backButton != null)
         {
-            _backButton.UnregisterCallback<ClickEvent>(OnbackToDashboard);
-            _backButton.RegisterCallback<ClickEvent>(OnbackToDashboard);
+            // Use the Button's built-in .clicked event (same reliable input path as
+            // the anatomy-system cards) instead of manually registering ClickEvent.
+            _backButton.clicked -= OnBackButtonClicked;
+            _backButton.clicked += OnBackButtonClicked;
+        }
+
+        WireAnatomySystemCards();
+    }
+
+    // Connects each existing Card List card (see StudentExplore3d.uxml -
+    // "card-list") to the matching AnatomySystem, so tapping it opens the
+    // one reusable Anatomy Screen loaded with that system's model/database
+    // (see UIManager.ShowStudentAnatomyScreen(AnatomySystem) /
+    // AnatomyScreenController.ResolveAnatomySystem). Cards aren't
+    // individually named in the UXML, so each is matched by the same
+    // icon-skeletal/icon-muscular/icon-cardio class its icon-box already
+    // carries (see StudentExplore3d.uss) rather than by list position -
+    // reordering the cards in the UXML can't silently mis-wire them. Safe
+    // to call every OnEnable: ShowScreen clones a brand-new UI tree each
+    // time the screen opens, so there are never stale elements left with a
+    // callback registered twice.
+    private void WireAnatomySystemCards()
+    {
+        if (_screenRoot == null)
+        {
+            Debug.LogError("[AnatomyNav] WireAnatomySystemCards: _screenRoot is NULL, cannot wire cards.");
+            return;
+        }
+
+      
+        var cards = _screenRoot.Query<Button>(className: "card").ToList();
+        
+
+        
+
+        foreach (var card in cards)
+        {
+            AnatomySystem system;
+            if (card.Q<VisualElement>(className: "icon-skeletal") != null)
+                system = AnatomySystem.Skeletal;
+            else if (card.Q<VisualElement>(className: "icon-muscular") != null)
+                system = AnatomySystem.Muscular;
+            else if (card.Q<VisualElement>(className: "icon-cardio") != null)
+                system = AnatomySystem.Cardiovascular;
+            else
+            {
+                Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class — skipping.");
+                continue; // not one of the three anatomy-system cards (e.g. none - skip)
+            }
+         
+            card.clicked += () =>
+            {
+               
+
+                try
+                {
+                    UIManager.Instance.ShowStudentAnatomyScreen(system);
+                    Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}) called successfully.");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
+                 
+                }
+            };
         }
     }
 
-    private void OnbackToDashboard(ClickEvent evt)
+    private void OnBackButtonClicked()
     {
-        Debug.Log("[StudentExplore3dController] Navigating back to dashboard");
-        UIManager.Instance.ShowStudentDashboard();
+        Debug.Log("[StudentExplore3dController] Back button tapped, navigating back to dashboard");
+        if (_headerTitle != null)
+            _headerTitle.text = $"Back tapped @ {Time.time:F1}s";
+       // UIManager.Instance.ShowStudentDashboard();
     }
 
     private void ApplyHeaderGradient()

@@ -27,7 +27,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset studentClassroomDetailScreen;
         [SerializeField] private VisualTreeAsset studentEditProfileScreen;
         [SerializeField] private VisualTreeAsset studentNotificationsScreen;
-
+        [SerializeField] private VisualTreeAsset studentAnatomyScreen;
         // not sure if dito sya nakalagay
         [SerializeField] private VisualTreeAsset studentQuizResult;
 
@@ -48,6 +48,7 @@ namespace Anatomia3D.UI
         private StudentClassroomDetailController _studentClassroomDetailController;
         private StudentEditProfileController _studentEditProfileController;
         private StudentNotificationsController _studentNotificationsController;
+        private AnatomyScreenController _studentAnatomyScreenController;
 
 
         // ADMIN SCREENS
@@ -138,6 +139,7 @@ namespace Anatomia3D.UI
             _studentClassroomDetailController = GetComponent<StudentClassroomDetailController>();
             _studentEditProfileController = GetComponent<StudentEditProfileController>();
             _studentNotificationsController = GetComponent<StudentNotificationsController>();
+            _studentAnatomyScreenController = GetComponent<AnatomyScreenController>();
 
             //admin controllers
             _adminLoginController = GetComponent<AdminLoginController>();
@@ -190,6 +192,7 @@ namespace Anatomia3D.UI
             ShowScreen(studentExplore3dScreen, _studentExplore3dController);
         }
 
+       
         public void ShowStudentAchievements()
         {
 
@@ -225,6 +228,11 @@ namespace Anatomia3D.UI
             });
         }
 
+        public void ShowStudentAnatomyScreen(AnatomySystem system)
+        {
+            _studentAnatomyScreenController?.SetAnatomySystem(system);
+            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController);
+        }
         public void ShowStudentQuizResult(
             string quizName,
             int correctCount,

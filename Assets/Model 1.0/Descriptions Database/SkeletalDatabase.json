@@ -1,0 +1,1387 @@
+{
+    "Parietal bone.r": {
+        "displayName": "Right Parietal bone",
+        "baseName": "Parietal bone",
+        "description": "One of a pair of bones forming the upper sides and roof of the cranium. Bounded by the frontal bone anteriorly, the temporal bone inferiorly, and the occipital bone posteriorly, the two parietal bones meet at the sagittal suture. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Parietal bone.l": {
+        "displayName": "Left Parietal bone",
+        "baseName": "Parietal bone",
+        "description": "One of a pair of bones forming the upper sides and roof of the cranium. Bounded by the frontal bone anteriorly, the temporal bone inferiorly, and the occipital bone posteriorly, the two parietal bones meet at the sagittal suture. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Sinus of frontal bone": {
+        "displayName": "Sinus of frontal bone",
+        "baseName": "Sinus of frontal bone",
+        "description": "One of a pair of air-filled cavities within the frontal bone above the eyebrows. It drains into the middle nasal meatus and, like the other paranasal sinuses, helps humidify air and lighten the skull. Source: https://www.kenhub.com/en/library/anatomy/the-paranasal-sinuses"
+    },
+    "Frontal bone": {
+        "displayName": "Frontal bone",
+        "baseName": "Frontal bone",
+        "description": "The single bone that forms the forehead and the upper part of the eye sockets. Its midline depression between the eyebrows is the glabella, and it also forms the roof of the anterior cranial fossa. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Occipital bone": {
+        "displayName": "Occipital bone",
+        "baseName": "Occipital bone",
+        "description": "The unpaired bone forming the back and base of the skull. It contains the foramen magnum, through which the spinal cord passes, and its occipital condyles articulate with the first cervical vertebra (atlas). Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Sinus of sphenoid bone": {
+        "displayName": "Sinus of sphenoid bone",
+        "baseName": "Sinus of sphenoid bone",
+        "description": "An air-filled cavity within the body of the sphenoid bone, situated close to the pituitary gland and optic nerves. It drains into the sphenoethmoidal recess of the nasal cavity. Source: https://www.kenhub.com/en/library/anatomy/the-paranasal-sinuses"
+    },
+    "Sphenoid bone": {
+        "displayName": "Sphenoid bone",
+        "baseName": "Sphenoid bone",
+        "description": "A butterfly-shaped bone in the middle of the skull base that forms part of the walls of the eye socket and unites with nearly every other cranial bone. Its central sella turcica houses the pituitary gland. Source: https://geekymedics.com/bones-of-the-skull/"
+    },
+    "Temporal bone.r": {
+        "displayName": "Right Temporal bone",
+        "baseName": "Temporal bone",
+        "description": "A paired bone forming the lower side of the skull, made up of squamous, petrous, mastoid, and tympanic parts. The petrous portion houses the structures of the inner and middle ear, including the auditory ossicles. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Ethmoid bone": {
+        "displayName": "Ethmoid bone",
+        "baseName": "Ethmoid bone",
+        "description": "A light, spongy unpaired bone between the orbits that contributes to the nasal cavity and orbital walls. Its cribriform plate is pierced by olfactory nerve fibers, and its perpendicular plate forms part of the nasal septum. Source: https://www.kenhub.com/en/library/anatomy/lateral-wall-of-the-nasal-cavity"
+    },
+    "Inferior nasal concha bone.r": {
+        "displayName": "Right Inferior nasal concha bone",
+        "baseName": "Inferior nasal concha bone",
+        "description": "A thin, curved paired bone forming the lowest of the three nasal conchae (turbinates) that project into the nasal cavity. It increases the surface area of the nasal mucosa to warm and humidify inhaled air. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Lacrimal bone.r": {
+        "displayName": "Right Lacrimal bone",
+        "baseName": "Lacrimal bone",
+        "description": "The smallest and most fragile bone of the face, forming part of the medial wall of the eye socket. It contains a groove that houses the lacrimal sac, part of the tear-drainage pathway. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Nasal bone.r": {
+        "displayName": "Right Nasal bone",
+        "baseName": "Nasal bone",
+        "description": "One of a pair of small bones that join in the midline to form the bridge of the nose. Together they connect superiorly with the frontal bone and laterally with the maxilla. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Maxilla.r": {
+        "displayName": "Right Maxilla",
+        "baseName": "Maxilla",
+        "description": "The paired bone forming the upper jaw. It carries the upper teeth, forms most of the hard palate and the floor of the eye socket, and contains the maxillary sinus, the largest paranasal sinus. Source: https://www.kenhub.com/en/library/anatomy/the-paranasal-sinuses"
+    },
+    "Palatine bone.r": {
+        "displayName": "Right Palatine bone",
+        "baseName": "Palatine bone",
+        "description": "An L-shaped paired bone at the back of the nasal cavity. Its horizontal plate forms the posterior part of the hard palate, and its perpendicular plate contributes to the lateral nasal wall and orbital floor. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Zygomatic bone.r": {
+        "displayName": "Right Zygomatic bone",
+        "baseName": "Zygomatic bone",
+        "description": "The paired cheekbone, which forms the prominence of the cheek and part of the lateral wall and floor of the eye socket. It articulates with the maxilla, temporal, sphenoid, and frontal bones. Source: https://en.wikipedia.org/wiki/Zygomatic_bone"
+    },
+    "Mandible": {
+        "displayName": "Mandible",
+        "baseName": "Mandible",
+        "description": "The lower jawbone and the only movable bone of the skull. Its body carries the lower teeth, and its rami articulate with the temporal bones to form the temporomandibular joints. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Hyoid bone": {
+        "displayName": "Hyoid bone",
+        "baseName": "Hyoid bone",
+        "description": "A U-shaped bone in the neck that does not articulate directly with any other bone, instead being suspended by muscles and ligaments below the mandible. It anchors muscles of the tongue, floor of the mouth, and larynx. Source: https://en.wikipedia.org/wiki/Hyoid_bone"
+    },
+    "Malleus.r": {
+        "displayName": "Right Malleus",
+        "baseName": "Malleus",
+        "description": "The largest and most lateral of the three auditory ossicles in the middle ear. Its handle attaches to the eardrum and its head articulates with the incus, so vibrations of the eardrum are passed along the ossicular chain. Source: https://www.kenhub.com/en/library/anatomy/malleus"
+    },
+    "Incus.r": {
+        "displayName": "Right Incus",
+        "baseName": "Incus",
+        "description": "The middle of the three auditory ossicles, shaped like an anvil. It connects the malleus laterally to the stapes medially, relaying sound vibrations across the middle ear. Source: https://www.kenhub.com/en/library/anatomy/incus"
+    },
+    "Stapes.r": {
+        "displayName": "Right Stapes",
+        "baseName": "Stapes",
+        "description": "The smallest and lightest bone in the human body, and the most medial of the three auditory ossicles. Its footplate sits in the oval window of the inner ear, transmitting vibrations from the incus into the fluid-filled cochlea. Source: https://www.kenhub.com/en/library/anatomy/stapes"
+    },
+    "Upper medial incisor.r": {
+        "displayName": "Right Upper medial incisor",
+        "baseName": "Upper medial incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Upper lateral incisor.r": {
+        "displayName": "Right Upper lateral incisor",
+        "baseName": "Upper lateral incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Upper canine.r": {
+        "displayName": "Right Upper canine",
+        "baseName": "Upper canine",
+        "description": "A single-cusped, pointed tooth located beside the lateral incisor. Canines are usually the longest teeth in the mouth and are adapted for tearing and piercing food. Source: https://www.britannica.com/science/canine-tooth"
+    },
+    "Lower medial incisor.r": {
+        "displayName": "Right Lower medial incisor",
+        "baseName": "Lower medial incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Lower lateral incisor.r": {
+        "displayName": "Right Lower lateral incisor",
+        "baseName": "Lower lateral incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Lower canine.r": {
+        "displayName": "Right Lower canine",
+        "baseName": "Lower canine",
+        "description": "A single-cusped, pointed tooth located beside the lateral incisor. Canines are usually the longest teeth in the mouth and are adapted for tearing and piercing food. Source: https://www.britannica.com/science/canine-tooth"
+    },
+    "Upper first premolar.r": {
+        "displayName": "Right Upper first premolar",
+        "baseName": "Upper first premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Upper second premolar.r": {
+        "displayName": "Right Upper second premolar",
+        "baseName": "Upper second premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Upper first molar tooth.r": {
+        "displayName": "Right Upper first molar tooth",
+        "baseName": "Upper first molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Upper second molar tooth.r": {
+        "displayName": "Right Upper second molar tooth",
+        "baseName": "Upper second molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Lower first premolar.r": {
+        "displayName": "Right Lower first premolar",
+        "baseName": "Lower first premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Lower second premolar.r": {
+        "displayName": "Right Lower second premolar",
+        "baseName": "Lower second premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Lower first molar tooth.r": {
+        "displayName": "Right Lower first molar tooth",
+        "baseName": "Lower first molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Lower second molar tooth.r": {
+        "displayName": "Right Lower second molar tooth",
+        "baseName": "Lower second molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Major alar cartilage.r": {
+        "displayName": "Right Major alar cartilage",
+        "baseName": "Major alar cartilage",
+        "description": "A thin, flexible plate of cartilage that curves to form the medial and lateral walls of each nostril, giving shape and support to the tip and ala (wing) of the nose. Source: https://en.wikipedia.org/wiki/Major_alar_cartilage"
+    },
+    "Lateral process of nasal septal cartilage.r": {
+        "displayName": "Right Lateral process of nasal septal cartilage",
+        "baseName": "Lateral process of nasal septal cartilage",
+        "description": "A flattened, triangular cartilage (also called the upper lateral cartilage) lying below the nasal bone, continuous above with the septal cartilage and connected below to the major alar cartilage. It supports the middle third of the external nose. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/nasal-septal-cartilage-1536897652"
+    },
+    "Nasal septal cartilage": {
+        "displayName": "Nasal septal cartilage",
+        "baseName": "Nasal septal cartilage",
+        "description": "A plate of hyaline cartilage that forms the anterior part of the nasal septum, the partition separating the two nasal cavities. It is continuous posteriorly with the perpendicular plate of the ethmoid and the vomer. Source: https://www.kenhub.com/en/library/anatomy/nasal-septum"
+    },
+    "Thyroid cartilage": {
+        "displayName": "Thyroid cartilage",
+        "baseName": "Thyroid cartilage",
+        "description": "The largest cartilage of the larynx, formed by two laminae that fuse anteriorly to create the laryngeal prominence (Adam's apple). It shields the vocal folds and other structures within the voice box. Source: https://www.kenhub.com/en/library/anatomy/larynx"
+    },
+    "Cricoid cartilage": {
+        "displayName": "Cricoid cartilage",
+        "baseName": "Cricoid cartilage",
+        "description": "A complete, signet-ring-shaped cartilage that forms the inferior boundary of the larynx. Its narrow anterior arch and broad posterior lamina provide attachment for laryngeal muscles and ligaments. Source: https://teachmeanatomy.info/neck/viscera/larynx/laryngealcartilages/"
+    },
+    "Arytenoid cartilage.r": {
+        "displayName": "Right Arytenoid cartilage",
+        "baseName": "Arytenoid cartilage",
+        "description": "A small, paired pyramid-shaped cartilage that sits atop the cricoid cartilage at the back of the larynx. Its vocal process anchors the vocal ligament, and rotation of the cartilage opens and closes the vocal folds. Source: https://www.kenhub.com/en/library/anatomy/arytenoid-cartilage"
+    },
+    "Corniculate cartilage.r": {
+        "displayName": "Right Corniculate cartilage",
+        "baseName": "Corniculate cartilage",
+        "description": "A small, paired conical nodule of elastic cartilage that sits atop the apex of each arytenoid cartilage, prolonging it posteriorly within the aryepiglottic fold. Source: https://en.wikipedia.org/wiki/Corniculate_cartilage"
+    },
+    "Atlas (C1)": {
+        "displayName": "Atlas (C1)",
+        "baseName": "Atlas (C1)",
+        "description": "The first cervical vertebra, a ring-shaped bone with no body that supports the skull. Its superior facets articulate with the occipital condyles, allowing the nodding (yes) movement of the head. Source: https://en.wikipedia.org/wiki/Atlas_(anatomy)"
+    },
+    "Vertebra C6": {
+        "displayName": "Vertebra C6",
+        "baseName": "Vertebra C6",
+        "description": "A typical cervical vertebra of the neck, characterized by a small body, a bifid spinous process, and a foramen transversarium in each transverse process that transmits the vertebral artery. Source: https://en.wikipedia.org/wiki/Cervical_vertebrae"
+    },
+    "Vertebra C3": {
+        "displayName": "Vertebra C3",
+        "baseName": "Vertebra C3",
+        "description": "A typical cervical vertebra of the neck, characterized by a small body, a bifid spinous process, and a foramen transversarium in each transverse process that transmits the vertebral artery. Source: https://en.wikipedia.org/wiki/Cervical_vertebrae"
+    },
+    "Vertebra C5": {
+        "displayName": "Vertebra C5",
+        "baseName": "Vertebra C5",
+        "description": "A typical cervical vertebra of the neck, characterized by a small body, a bifid spinous process, and a foramen transversarium in each transverse process that transmits the vertebral artery. Source: https://en.wikipedia.org/wiki/Cervical_vertebrae"
+    },
+    "Vertebra C7": {
+        "displayName": "Vertebra C7",
+        "baseName": "Vertebra C7",
+        "description": "The seventh and largest cervical vertebra, known as the vertebra prominens because its long, non-bifid spinous process is easily felt at the base of the neck. Source: https://en.wikipedia.org/wiki/Cervical_vertebrae"
+    },
+    "Vertebra C4": {
+        "displayName": "Vertebra C4",
+        "baseName": "Vertebra C4",
+        "description": "A typical cervical vertebra of the neck, characterized by a small body, a bifid spinous process, and a foramen transversarium in each transverse process that transmits the vertebral artery. Source: https://en.wikipedia.org/wiki/Cervical_vertebrae"
+    },
+    "Vertebra T2": {
+        "displayName": "Vertebra T2",
+        "baseName": "Vertebra T2",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. The second thoracic vertebra, larger than T1, articulates with the second rib and lies below the thoracic spinal nerve T2. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T3": {
+        "displayName": "Vertebra T3",
+        "baseName": "Vertebra T3",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical mid-thoracic vertebra, articulating with the third rib and giving passage to the thoracic spinal nerve T3. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T4": {
+        "displayName": "Vertebra T4",
+        "baseName": "Vertebra T4",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical mid-thoracic vertebra lying, together with T5, at the level of the sternal angle; it articulates with the fourth rib. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T5": {
+        "displayName": "Vertebra T5",
+        "baseName": "Vertebra T5",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical mid-thoracic vertebra at the level of the sternal angle; the trachea typically bifurcates into the main bronchi near this level. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T6": {
+        "displayName": "Vertebra T6",
+        "baseName": "Vertebra T6",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical mid-thoracic vertebra, articulating with the sixth rib and giving passage to the thoracic spinal nerve T6. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T7": {
+        "displayName": "Vertebra T7",
+        "baseName": "Vertebra T7",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical mid-thoracic vertebra, articulating with the seventh rib and giving passage to the thoracic spinal nerve T7. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T9": {
+        "displayName": "Vertebra T9",
+        "baseName": "Vertebra T9",
+        "description": "A thoracic vertebra that, in many people, has only a single facet (rather than the usual demi-facets) on each side for articulation with the ninth rib. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T10": {
+        "displayName": "Vertebra T10",
+        "baseName": "Vertebra T10",
+        "description": "A thoracic vertebra with a single, full costal facet on each side (rather than the demi-facets typical of the vertebrae above it) for articulation with the tenth rib. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T11": {
+        "displayName": "Vertebra T11",
+        "baseName": "Vertebra T11",
+        "description": "A thoracic vertebra whose body begins to resemble that of a lumbar vertebra in size and shape. It has a single costal facet, placed mainly on the pedicle, for the eleventh rib. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T12": {
+        "displayName": "Vertebra T12",
+        "baseName": "Vertebra T12",
+        "description": "The last thoracic vertebra, transitional in form toward the lumbar vertebrae, with convex, laterally directed inferior articular surfaces. It bears a single costal facet for the twelfth (floating) rib. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T8": {
+        "displayName": "Vertebra T8",
+        "baseName": "Vertebra T8",
+        "description": "Like the other typical thoracic vertebrae, it has a heart-shaped body with costal facets for rib articulation and a long, downward-sloping spinous process. A typical thoracic vertebra lying, together with T9, near the level of the xiphisternal joint. Source: https://en.wikipedia.org/wiki/Thoracic_vertebrae"
+    },
+    "Vertebra T1": {
+        "displayName": "Vertebra T1",
+        "baseName": "Vertebra T1",
+        "description": "The first thoracic vertebra, transitional in shape between a cervical and thoracic vertebra. It bears a full costal facet for the head of the first rib and a demi-facet for the second rib. Source: https://en.wikipedia.org/wiki/Vertebra"
+    },
+    "Vertebra L1": {
+        "displayName": "Vertebra L1",
+        "baseName": "Vertebra L1",
+        "description": "One of the five lumbar vertebrae between the rib cage and pelvis. Lumbar vertebrae are the largest of the movable vertebrae, with a large kidney-shaped body and no foramen transversarium or facets for ribs, reflecting their weight-bearing role. Source: https://en.wikipedia.org/wiki/Lumbar_vertebrae"
+    },
+    "Vertebra L2": {
+        "displayName": "Vertebra L2",
+        "baseName": "Vertebra L2",
+        "description": "One of the five lumbar vertebrae between the rib cage and pelvis. Lumbar vertebrae are the largest of the movable vertebrae, with a large kidney-shaped body and no foramen transversarium or facets for ribs, reflecting their weight-bearing role. Source: https://en.wikipedia.org/wiki/Lumbar_vertebrae"
+    },
+    "Vertebra L4": {
+        "displayName": "Vertebra L4",
+        "baseName": "Vertebra L4",
+        "description": "One of the five lumbar vertebrae between the rib cage and pelvis. Lumbar vertebrae are the largest of the movable vertebrae, with a large kidney-shaped body and no foramen transversarium or facets for ribs, reflecting their weight-bearing role. Source: https://en.wikipedia.org/wiki/Lumbar_vertebrae"
+    },
+    "Vertebra L5": {
+        "displayName": "Vertebra L5",
+        "baseName": "Vertebra L5",
+        "description": "One of the five lumbar vertebrae between the rib cage and pelvis. Lumbar vertebrae are the largest of the movable vertebrae, with a large kidney-shaped body and no foramen transversarium or facets for ribs, reflecting their weight-bearing role. Source: https://en.wikipedia.org/wiki/Lumbar_vertebrae"
+    },
+    "Vertebra L3": {
+        "displayName": "Vertebra L3",
+        "baseName": "Vertebra L3",
+        "description": "One of the five lumbar vertebrae between the rib cage and pelvis. Lumbar vertebrae are the largest of the movable vertebrae, with a large kidney-shaped body and no foramen transversarium or facets for ribs, reflecting their weight-bearing role. Source: https://en.wikipedia.org/wiki/Lumbar_vertebrae"
+    },
+    "Coccyx": {
+        "displayName": "Coccyx",
+        "baseName": "Coccyx",
+        "description": "The tailbone, a small triangular bone at the very bottom of the spine formed by the fusion of three to five rudimentary vertebrae. Though largely vestigial, it serves as an attachment site for several pelvic floor muscles and ligaments. Source: https://louis.pressbooks.pub/anatomylab/chapter/lab-5-vertebral-column-bony-thorax-and-forelimb-bones/"
+    },
+    "Fifth rib.r": {
+        "displayName": "Right Fifth rib",
+        "baseName": "Fifth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "First rib.r": {
+        "displayName": "Right First rib",
+        "baseName": "First rib",
+        "description": "The shortest and most sharply curved of the ribs, and the widest relative to its length. Unlike the ribs below it, it lies almost horizontally and has only one facet for articulation with the vertebral body of T1. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Fourth rib.r": {
+        "displayName": "Right Fourth rib",
+        "baseName": "Fourth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Second rib.r": {
+        "displayName": "Right Second rib",
+        "baseName": "Second rib",
+        "description": "A true rib, longer than the first but with a similar sharp curvature. It is thinner and less horizontal than the first rib and provides attachment for part of the serratus anterior muscle. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Seventh rib.r": {
+        "displayName": "Right Seventh rib",
+        "baseName": "Seventh rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Sixth rib.r": {
+        "displayName": "Right Sixth rib",
+        "baseName": "Sixth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Third rib.r": {
+        "displayName": "Right Third rib",
+        "baseName": "Third rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Eleventh rib.r": {
+        "displayName": "Right Eleventh rib",
+        "baseName": "Eleventh rib",
+        "description": "A floating rib: it articulates posteriorly with the vertebral column but has no anterior attachment to the sternum or to another rib, ending instead in the musculature of the abdominal wall. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Twelfth rib.r": {
+        "displayName": "Right Twelfth rib",
+        "baseName": "Twelfth rib",
+        "description": "A floating rib: it articulates posteriorly with the vertebral column but has no anterior attachment to the sternum or to another rib, ending instead in the musculature of the abdominal wall. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Eighth rib.r": {
+        "displayName": "Right Eighth rib",
+        "baseName": "Eighth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Ninth rib.r": {
+        "displayName": "Right Ninth rib",
+        "baseName": "Ninth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Tenth rib.r": {
+        "displayName": "Right Tenth rib",
+        "baseName": "Tenth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Manubrium of sternum": {
+        "displayName": "Manubrium of sternum",
+        "baseName": "Manubrium of sternum",
+        "description": "The broad, trapezoid-shaped upper part of the sternum. Its superior border forms the jugular notch, and it articulates with the clavicles, the first ribs, and part of the second costal cartilage. Source: https://teachmeanatomy.info/thorax/bones/sternum/"
+    },
+    "Xiphoid process": {
+        "displayName": "Xiphoid process",
+        "baseName": "Xiphoid process",
+        "description": "The small, variably shaped cartilaginous-to-bony tip at the lower end of the sternum. It does not fully ossify until adulthood and serves as a landmark for correct hand placement during chest compressions. Source: https://teachmeanatomy.info/thorax/bones/sternum/"
+    },
+    "Body of sternum": {
+        "displayName": "Body of sternum",
+        "baseName": "Body of sternum",
+        "description": "The long, flat middle portion of the sternum, also called the gladiolus. It articulates with the manubrium above and the xiphoid process below, and its lateral borders carry facets for the costal cartilages of ribs three through seven. Source: https://www.kenhub.com/en/library/anatomy/sternum"
+    },
+    "Costal cartilage of first rib.r": {
+        "displayName": "Right Costal cartilage of first rib",
+        "baseName": "Costal cartilage of first rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. The cartilage of the first rib attaches directly to the manubrium of the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of second rib.r": {
+        "displayName": "Right Costal cartilage of second rib",
+        "baseName": "Costal cartilage of second rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of third rib.r": {
+        "displayName": "Right Costal cartilage of third rib",
+        "baseName": "Costal cartilage of third rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of fourth rib.r": {
+        "displayName": "Right Costal cartilage of fourth rib",
+        "baseName": "Costal cartilage of fourth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of fifth rib.r": {
+        "displayName": "Right Costal cartilage of fifth rib",
+        "baseName": "Costal cartilage of fifth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of sixth rib.r": {
+        "displayName": "Right Costal cartilage of sixth rib",
+        "baseName": "Costal cartilage of sixth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of seventh rib.r": {
+        "displayName": "Right Costal cartilage of seventh rib",
+        "baseName": "Costal cartilage of seventh rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of eighth rib.r": {
+        "displayName": "Right Costal cartilage of eighth rib",
+        "baseName": "Costal cartilage of eighth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of tenth rib.r": {
+        "displayName": "Right Costal cartilage of tenth rib",
+        "baseName": "Costal cartilage of tenth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of ninth rib.r": {
+        "displayName": "Right Costal cartilage of ninth rib",
+        "baseName": "Costal cartilage of ninth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Clavicle.r": {
+        "displayName": "Right Clavicle",
+        "baseName": "Clavicle",
+        "description": "The collarbone: a slender, S-shaped long bone that struts the shoulder blade away from the sternum. It is the only long bone that lies horizontally and is also the most commonly fractured bone in the body. Source: https://en.wikipedia.org/wiki/Clavicle"
+    },
+    "Humerus.r": {
+        "displayName": "Right Humerus",
+        "baseName": "Humerus",
+        "description": "The long bone of the upper arm, running from the shoulder to the elbow. Its rounded head articulates with the scapula to form the shoulder joint, and its lower end articulates with the radius and ulna at the elbow. Source: https://en.wikipedia.org/wiki/Humerus"
+    },
+    "Patella.r": {
+        "displayName": "Right Patella",
+        "baseName": "Patella",
+        "description": "The kneecap, the largest sesamoid bone in the body. It sits within the quadriceps tendon in front of the knee joint and increases the mechanical leverage of the thigh muscles during knee extension. Source: https://en.wikipedia.org/wiki/Patella"
+    },
+    "Talus.r": {
+        "displayName": "Right Talus",
+        "baseName": "Talus",
+        "description": "The bone that connects the leg to the foot, articulating with the tibia and fibula above to form the ankle joint and with the calcaneus below. It transmits the body's weight from the leg to the foot. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Calcaneus.r": {
+        "displayName": "Right Calcaneus",
+        "baseName": "Calcaneus",
+        "description": "The heel bone, the largest of the tarsal bones. It articulates with the talus above and the cuboid in front, and provides attachment for the Achilles tendon at its posterior tuberosity. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Navicular bone.r": {
+        "displayName": "Right Navicular bone",
+        "baseName": "Navicular bone",
+        "description": "A boat-shaped tarsal bone of the midfoot, positioned between the talus behind and the three cuneiform bones in front. It contributes to the medial longitudinal arch of the foot. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Cuboid bone.r": {
+        "displayName": "Right Cuboid bone",
+        "baseName": "Cuboid bone",
+        "description": "The most lateral tarsal bone of the distal row, located between the calcaneus and the fourth and fifth metatarsals. Its plantar surface carries a groove for the tendon of fibularis (peroneus) longus. Source: https://www.kenhub.com/en/library/anatomy/cuboid"
+    },
+    "Intermediate cuneiform bone.r": {
+        "displayName": "Right Intermediate cuneiform bone",
+        "baseName": "Intermediate cuneiform bone",
+        "description": "The smallest of the three cuneiform bones, wedged between the medial and lateral cuneiforms and articulating with the second metatarsal. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "Lateral cuneiform bone.r": {
+        "displayName": "Right Lateral cuneiform bone",
+        "baseName": "Lateral cuneiform bone",
+        "description": "The most lateral of the three cuneiform bones, located between the intermediate cuneiform and the cuboid, and articulating with the third metatarsal. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "Medial cuneiform bone.r": {
+        "displayName": "Right Medial cuneiform bone",
+        "baseName": "Medial cuneiform bone",
+        "description": "The largest and most medial of the three cuneiform bones, located between the navicular and the first metatarsal bone. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "First metatarsal bone.r": {
+        "displayName": "Right First metatarsal bone",
+        "baseName": "First metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Fifth metatarsal bone.r": {
+        "displayName": "Right Fifth metatarsal bone",
+        "baseName": "Fifth metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Second metatarsal bone.r": {
+        "displayName": "Right Second metatarsal bone",
+        "baseName": "Second metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Third metatarsal bone.r": {
+        "displayName": "Right Third metatarsal bone",
+        "baseName": "Third metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Fourth metatarsal bone.r": {
+        "displayName": "Right Fourth metatarsal bone",
+        "baseName": "Fourth metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Distal phalanx of fifth finger of foot.r": {
+        "displayName": "Right Distal phalanx of fifth finger of foot",
+        "baseName": "Distal phalanx of fifth finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of first finger of foot.r": {
+        "displayName": "Right Distal phalanx of first finger of foot",
+        "baseName": "Distal phalanx of first finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of fourth finger of foot.r": {
+        "displayName": "Right Distal phalanx of fourth finger of foot",
+        "baseName": "Distal phalanx of fourth finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of second finger of foot.r": {
+        "displayName": "Right Distal phalanx of second finger of foot",
+        "baseName": "Distal phalanx of second finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of third finger of foot.r": {
+        "displayName": "Right Distal phalanx of third finger of foot",
+        "baseName": "Distal phalanx of third finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of second finger of foot.r": {
+        "displayName": "Right Middle phalanx of second finger of foot",
+        "baseName": "Middle phalanx of second finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of third finger of foot.r": {
+        "displayName": "Right Middle phalanx of third finger of foot",
+        "baseName": "Middle phalanx of third finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of fourth finger of foot.r": {
+        "displayName": "Right Middle phalanx of fourth finger of foot",
+        "baseName": "Middle phalanx of fourth finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of fifth finger of foot.r": {
+        "displayName": "Right Middle phalanx of fifth finger of foot",
+        "baseName": "Middle phalanx of fifth finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of first finger of foot.r": {
+        "displayName": "Right Proximal phalanx of first finger of foot",
+        "baseName": "Proximal phalanx of first finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of second finger of foot.r": {
+        "displayName": "Right Proximal phalanx of second finger of foot",
+        "baseName": "Proximal phalanx of second finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of third finger of foot.r": {
+        "displayName": "Right Proximal phalanx of third finger of foot",
+        "baseName": "Proximal phalanx of third finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of fourth finger of foot.r": {
+        "displayName": "Right Proximal phalanx of fourth finger of foot",
+        "baseName": "Proximal phalanx of fourth finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of fifth finger of foot.r": {
+        "displayName": "Right Proximal phalanx of fifth finger of foot",
+        "baseName": "Proximal phalanx of fifth finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Sesamoid bones of foot.r": {
+        "displayName": "Right Sesamoid bones of foot",
+        "baseName": "Sesamoid bones of foot",
+        "description": "Small, oval bones embedded within the tendon of flexor hallucis brevis beneath the head of the first metatarsal. They help bear weight and protect the flexor tendon of the big toe during push-off. Source: https://andersonpodiatrycenter.com/2024/02/06/complex-anatomy-phalanges-bones-foot/"
+    },
+    "Distal phalanx of first finger of hand.r": {
+        "displayName": "Right Distal phalanx of first finger of hand",
+        "baseName": "Distal phalanx of first finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of second finger of hand.r": {
+        "displayName": "Right Distal phalanx of second finger of hand",
+        "baseName": "Distal phalanx of second finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of third finger of hand.r": {
+        "displayName": "Right Distal phalanx of third finger of hand",
+        "baseName": "Distal phalanx of third finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of fourth finger of hand.r": {
+        "displayName": "Right Distal phalanx of fourth finger of hand",
+        "baseName": "Distal phalanx of fourth finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of fifth finger of hand.r": {
+        "displayName": "Right Distal phalanx of fifth finger of hand",
+        "baseName": "Distal phalanx of fifth finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of second finger of hand.r": {
+        "displayName": "Right Middle phalanx of second finger of hand",
+        "baseName": "Middle phalanx of second finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of third finger of hand.r": {
+        "displayName": "Right Middle phalanx of third finger of hand",
+        "baseName": "Middle phalanx of third finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of fourth finger of hand.r": {
+        "displayName": "Right Middle phalanx of fourth finger of hand",
+        "baseName": "Middle phalanx of fourth finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of fifth finger of hand.r": {
+        "displayName": "Right Middle phalanx of fifth finger of hand",
+        "baseName": "Middle phalanx of fifth finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of first finger of hand.r": {
+        "displayName": "Right Proximal phalanx of first finger of hand",
+        "baseName": "Proximal phalanx of first finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of second finger of hand.r": {
+        "displayName": "Right Proximal phalanx of second finger of hand",
+        "baseName": "Proximal phalanx of second finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of third finger of hand.r": {
+        "displayName": "Right Proximal phalanx of third finger of hand",
+        "baseName": "Proximal phalanx of third finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of fourth finger of hand.r": {
+        "displayName": "Right Proximal phalanx of fourth finger of hand",
+        "baseName": "Proximal phalanx of fourth finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of fifth finger of hand.r": {
+        "displayName": "Right Proximal phalanx of fifth finger of hand",
+        "baseName": "Proximal phalanx of fifth finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "First metacarpal bone.r": {
+        "displayName": "Right First metacarpal bone",
+        "baseName": "First metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Second metacarpal bone.r": {
+        "displayName": "Right Second metacarpal bone",
+        "baseName": "Second metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Third metacarpal bone.r": {
+        "displayName": "Right Third metacarpal bone",
+        "baseName": "Third metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Fourth metacarpal bone.r": {
+        "displayName": "Right Fourth metacarpal bone",
+        "baseName": "Fourth metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Fifth metacarpal bone.r": {
+        "displayName": "Right Fifth metacarpal bone",
+        "baseName": "Fifth metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Capitate bone.r": {
+        "displayName": "Right Capitate bone",
+        "baseName": "Capitate bone",
+        "description": "The largest carpal bone, positioned in the center of the distal row. It articulates with the third metacarpal as well as several neighboring carpal bones, anchoring the central column of the wrist. Source: https://en.wikipedia.org/wiki/Capitate_bone"
+    },
+    "Hamate bone.r": {
+        "displayName": "Right Hamate bone",
+        "baseName": "Hamate bone",
+        "description": "A wedge-shaped carpal bone on the little-finger side of the distal row, named for the hook-like process (hamulus) that projects from its palmar surface and provides attachment for the transverse carpal ligament. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Lunate bone.r": {
+        "displayName": "Right Lunate bone",
+        "baseName": "Lunate bone",
+        "description": "A crescent-shaped carpal bone in the middle of the proximal row, between the scaphoid and triquetrum. It articulates with the radius above and helps form the wrist joint. Source: https://en.wikipedia.org/wiki/Lunate_bone"
+    },
+    "Pisiform bone.r": {
+        "displayName": "Right Pisiform bone",
+        "baseName": "Pisiform bone",
+        "description": "A small, pea-shaped carpal bone on the palmar surface of the triquetrum. It is a sesamoid bone embedded in the tendon of flexor carpi ulnaris and does not directly participate in the wrist joint. Source: https://emedicine.medscape.com/article/1899456-overview"
+    },
+    "Scaphoid bone.r": {
+        "displayName": "Right Scaphoid bone",
+        "baseName": "Scaphoid bone",
+        "description": "The largest carpal bone of the proximal row, boat-shaped and located at the base of the thumb side of the wrist. It bridges the two carpal rows and is the most commonly fractured carpal bone. Source: https://www.kenhub.com/en/library/anatomy/carpal-bones"
+    },
+    "Trapezium bone.r": {
+        "displayName": "Right Trapezium bone",
+        "baseName": "Trapezium bone",
+        "description": "A carpal bone of the distal row, located at the base of the thumb. Its saddle-shaped surface articulates with the first metacarpal, forming the highly mobile joint at the base of the thumb. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Trapezoid bone.r": {
+        "displayName": "Right Trapezoid bone",
+        "baseName": "Trapezoid bone",
+        "description": "The smallest carpal bone of the distal row, wedged between the trapezium and the capitate. It articulates distally with the base of the second metacarpal. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Triquetrum bone.r": {
+        "displayName": "Right Triquetrum bone",
+        "baseName": "Triquetrum bone",
+        "description": "A pyramid-shaped carpal bone on the little-finger side of the proximal row. It articulates with the lunate, the pisiform, and the hamate bone. Source: https://www.kenhub.com/en/library/anatomy/carpal-bones"
+    },
+    "Axis (C2)": {
+        "displayName": "Axis (C2)",
+        "baseName": "Axis (C2)",
+        "description": "The second cervical vertebra, distinguished by a bony peg called the dens (odontoid process) that projects upward into the ring of the atlas, forming a pivot that allows side-to-side rotation of the head. Source: https://en.wikipedia.org/wiki/Axis_(anatomy)"
+    },
+    "Scapula.r": {
+        "displayName": "Right Scapula",
+        "baseName": "Scapula",
+        "description": "The shoulder blade: a flat, triangular bone on the back of the rib cage that provides attachment for many muscles of the shoulder and forms the glenoid cavity, which articulates with the head of the humerus. Source: https://en.wikipedia.org/wiki/Scapula"
+    },
+    "Radius.r": {
+        "displayName": "Right Radius",
+        "baseName": "Radius",
+        "description": "The lateral bone of the forearm (on the thumb side), which rotates around the ulna to allow the palm to turn up or down. Its head articulates with the humerus and its distal end forms most of the wrist joint. Source: https://en.wikipedia.org/wiki/Radius_(bone)"
+    },
+    "Ulna.r": {
+        "displayName": "Right Ulna",
+        "baseName": "Ulna",
+        "description": "The medial, longer bone of the forearm, on the little-finger side. Its proximal olecranon process forms the point of the elbow, and it articulates with the humerus and radius. Source: https://en.wikipedia.org/wiki/Ulna"
+    },
+    "Femur.r": {
+        "displayName": "Right Femur",
+        "baseName": "Femur",
+        "description": "The thigh bone, the longest and strongest bone in the body. Its rounded head articulates with the acetabulum of the hip bone, and its distal end articulates with the tibia and patella to form the knee joint. Source: https://en.wikipedia.org/wiki/Femur"
+    },
+    "Hip bone.r": {
+        "displayName": "Right Hip bone",
+        "baseName": "Hip bone",
+        "description": "The large, irregular bone of the pelvis formed by the fusion of the ilium, ischium, and pubis. Its cup-shaped acetabulum articulates with the femur, and it joins its counterpart anteriorly and the sacrum posteriorly. Source: https://teachmeanatomy.info/pelvis/bones/"
+    },
+    "Tibia.r": {
+        "displayName": "Right Tibia",
+        "baseName": "Tibia",
+        "description": "The shinbone, the larger and stronger of the two bones of the lower leg, bearing most of the body's weight. Its upper end articulates with the femur at the knee and its lower end with the talus at the ankle. Source: https://en.wikipedia.org/wiki/Tibia"
+    },
+    "Fibula.r": {
+        "displayName": "Right Fibula",
+        "baseName": "Fibula",
+        "description": "The slender, laterally positioned bone of the lower leg. It bears little body weight but provides muscle attachment and forms the lateral malleolus, stabilizing the outer side of the ankle joint. Source: https://en.wikipedia.org/wiki/Fibula"
+    },
+    "Sacrum": {
+        "displayName": "Sacrum",
+        "baseName": "Sacrum",
+        "description": "A large, triangular bone formed by the fusion of five sacral vertebrae, located at the base of the spine between the two hip bones. It transmits the weight of the upper body to the pelvis and forms the posterior wall of the pelvic cavity. Source: https://teachmeanatomy.info/pelvis/bones/"
+    },
+    "Temporal bone.l": {
+        "displayName": "Left Temporal bone",
+        "baseName": "Temporal bone",
+        "description": "A paired bone forming the lower side of the skull, made up of squamous, petrous, mastoid, and tympanic parts. The petrous portion houses the structures of the inner and middle ear, including the auditory ossicles. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Inferior nasal concha bone.l": {
+        "displayName": "Left Inferior nasal concha bone",
+        "baseName": "Inferior nasal concha bone",
+        "description": "A thin, curved paired bone forming the lowest of the three nasal conchae (turbinates) that project into the nasal cavity. It increases the surface area of the nasal mucosa to warm and humidify inhaled air. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Lacrimal bone.l": {
+        "displayName": "Left Lacrimal bone",
+        "baseName": "Lacrimal bone",
+        "description": "The smallest and most fragile bone of the face, forming part of the medial wall of the eye socket. It contains a groove that houses the lacrimal sac, part of the tear-drainage pathway. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Nasal bone.l": {
+        "displayName": "Left Nasal bone",
+        "baseName": "Nasal bone",
+        "description": "One of a pair of small bones that join in the midline to form the bridge of the nose. Together they connect superiorly with the frontal bone and laterally with the maxilla. Source: https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull"
+    },
+    "Vomer": {
+        "displayName": "Vomer",
+        "baseName": "Vomer",
+        "description": "A thin, unpaired bone forming the lower and back part of the nasal septum. It sits in the midline and articulates with the sphenoid, ethmoid, palatine, and maxillary bones. Source: https://en.wikipedia.org/wiki/Vomer"
+    },
+    "Maxilla.l": {
+        "displayName": "Left Maxilla",
+        "baseName": "Maxilla",
+        "description": "The paired bone forming the upper jaw. It carries the upper teeth, forms most of the hard palate and the floor of the eye socket, and contains the maxillary sinus, the largest paranasal sinus. Source: https://www.kenhub.com/en/library/anatomy/the-paranasal-sinuses"
+    },
+    "Palatine bone.l": {
+        "displayName": "Left Palatine bone",
+        "baseName": "Palatine bone",
+        "description": "An L-shaped paired bone at the back of the nasal cavity. Its horizontal plate forms the posterior part of the hard palate, and its perpendicular plate contributes to the lateral nasal wall and orbital floor. Source: https://www.kenhub.com/en/library/anatomy/nasal-cavity"
+    },
+    "Zygomatic bone.l": {
+        "displayName": "Left Zygomatic bone",
+        "baseName": "Zygomatic bone",
+        "description": "The paired cheekbone, which forms the prominence of the cheek and part of the lateral wall and floor of the eye socket. It articulates with the maxilla, temporal, sphenoid, and frontal bones. Source: https://en.wikipedia.org/wiki/Zygomatic_bone"
+    },
+    "Malleus.l": {
+        "displayName": "Left Malleus",
+        "baseName": "Malleus",
+        "description": "The largest and most lateral of the three auditory ossicles in the middle ear. Its handle attaches to the eardrum and its head articulates with the incus, so vibrations of the eardrum are passed along the ossicular chain. Source: https://www.kenhub.com/en/library/anatomy/malleus"
+    },
+    "Incus.l": {
+        "displayName": "Left Incus",
+        "baseName": "Incus",
+        "description": "The middle of the three auditory ossicles, shaped like an anvil. It connects the malleus laterally to the stapes medially, relaying sound vibrations across the middle ear. Source: https://www.kenhub.com/en/library/anatomy/incus"
+    },
+    "Stapes.l": {
+        "displayName": "Left Stapes",
+        "baseName": "Stapes",
+        "description": "The smallest and lightest bone in the human body, and the most medial of the three auditory ossicles. Its footplate sits in the oval window of the inner ear, transmitting vibrations from the incus into the fluid-filled cochlea. Source: https://www.kenhub.com/en/library/anatomy/stapes"
+    },
+    "Upper medial incisor.l": {
+        "displayName": "Left Upper medial incisor",
+        "baseName": "Upper medial incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Upper lateral incisor.l": {
+        "displayName": "Left Upper lateral incisor",
+        "baseName": "Upper lateral incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Upper canine.l": {
+        "displayName": "Left Upper canine",
+        "baseName": "Upper canine",
+        "description": "A single-cusped, pointed tooth located beside the lateral incisor. Canines are usually the longest teeth in the mouth and are adapted for tearing and piercing food. Source: https://www.britannica.com/science/canine-tooth"
+    },
+    "Lower medial incisor.l": {
+        "displayName": "Left Lower medial incisor",
+        "baseName": "Lower medial incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Lower lateral incisor.l": {
+        "displayName": "Left Lower lateral incisor",
+        "baseName": "Lower lateral incisor",
+        "description": "One of the eight chisel-shaped incisor teeth at the front of the mouth (four upper, four lower). Incisors have a thin cutting edge used for biting and slicing food. Source: https://www.britannica.com/science/tooth-anatomy"
+    },
+    "Lower canine.l": {
+        "displayName": "Left Lower canine",
+        "baseName": "Lower canine",
+        "description": "A single-cusped, pointed tooth located beside the lateral incisor. Canines are usually the longest teeth in the mouth and are adapted for tearing and piercing food. Source: https://www.britannica.com/science/canine-tooth"
+    },
+    "Upper first premolar.l": {
+        "displayName": "Left Upper first premolar",
+        "baseName": "Upper first premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Upper second premolar.l": {
+        "displayName": "Left Upper second premolar",
+        "baseName": "Upper second premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Upper first molar tooth.l": {
+        "displayName": "Left Upper first molar tooth",
+        "baseName": "Upper first molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Upper second molar tooth.l": {
+        "displayName": "Left Upper second molar tooth",
+        "baseName": "Upper second molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Lower first premolar.l": {
+        "displayName": "Left Lower first premolar",
+        "baseName": "Lower first premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Lower second premolar.l": {
+        "displayName": "Left Lower second premolar",
+        "baseName": "Lower second premolar",
+        "description": "A transitional tooth located between the canine and the molars, bearing at least two cusps. Premolars (bicuspids) help tear and grind food, combining features of canines and molars. Source: https://en.wikipedia.org/wiki/Human_tooth"
+    },
+    "Lower first molar tooth.l": {
+        "displayName": "Left Lower first molar tooth",
+        "baseName": "Lower first molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Lower second molar tooth.l": {
+        "displayName": "Left Lower second molar tooth",
+        "baseName": "Lower second molar tooth",
+        "description": "A large, flat tooth at the back of the mouth with a broad, multi-cusped surface used mainly for grinding and crushing food during chewing. Source: https://en.wikipedia.org/wiki/Molar_(tooth)"
+    },
+    "Major alar cartilage.l": {
+        "displayName": "Left Major alar cartilage",
+        "baseName": "Major alar cartilage",
+        "description": "A thin, flexible plate of cartilage that curves to form the medial and lateral walls of each nostril, giving shape and support to the tip and ala (wing) of the nose. Source: https://en.wikipedia.org/wiki/Major_alar_cartilage"
+    },
+    "Lateral process of nasal septal cartilage.l": {
+        "displayName": "Left Lateral process of nasal septal cartilage",
+        "baseName": "Lateral process of nasal septal cartilage",
+        "description": "A flattened, triangular cartilage (also called the upper lateral cartilage) lying below the nasal bone, continuous above with the septal cartilage and connected below to the major alar cartilage. It supports the middle third of the external nose. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/nasal-septal-cartilage-1536897652"
+    },
+    "Arytenoid cartilage.l": {
+        "displayName": "Left Arytenoid cartilage",
+        "baseName": "Arytenoid cartilage",
+        "description": "A small, paired pyramid-shaped cartilage that sits atop the cricoid cartilage at the back of the larynx. Its vocal process anchors the vocal ligament, and rotation of the cartilage opens and closes the vocal folds. Source: https://www.kenhub.com/en/library/anatomy/arytenoid-cartilage"
+    },
+    "Corniculate cartilage.l": {
+        "displayName": "Left Corniculate cartilage",
+        "baseName": "Corniculate cartilage",
+        "description": "A small, paired conical nodule of elastic cartilage that sits atop the apex of each arytenoid cartilage, prolonging it posteriorly within the aryepiglottic fold. Source: https://en.wikipedia.org/wiki/Corniculate_cartilage"
+    },
+    "Fifth rib.l": {
+        "displayName": "Left Fifth rib",
+        "baseName": "Fifth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "First rib.l": {
+        "displayName": "Left First rib",
+        "baseName": "First rib",
+        "description": "The shortest and most sharply curved of the ribs, and the widest relative to its length. Unlike the ribs below it, it lies almost horizontally and has only one facet for articulation with the vertebral body of T1. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Fourth rib.l": {
+        "displayName": "Left Fourth rib",
+        "baseName": "Fourth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Second rib.l": {
+        "displayName": "Left Second rib",
+        "baseName": "Second rib",
+        "description": "A true rib, longer than the first but with a similar sharp curvature. It is thinner and less horizontal than the first rib and provides attachment for part of the serratus anterior muscle. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Seventh rib.l": {
+        "displayName": "Left Seventh rib",
+        "baseName": "Seventh rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Sixth rib.l": {
+        "displayName": "Left Sixth rib",
+        "baseName": "Sixth rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Third rib.l": {
+        "displayName": "Left Third rib",
+        "baseName": "Third rib",
+        "description": "A typical true rib: a long, curved bone that articulates posteriorly with the vertebral column and anteriorly, via its own costal cartilage, directly with the sternum. Source: https://teachmeanatomy.info/thorax/bones/ribcage/"
+    },
+    "Eleventh rib.l": {
+        "displayName": "Left Eleventh rib",
+        "baseName": "Eleventh rib",
+        "description": "A floating rib: it articulates posteriorly with the vertebral column but has no anterior attachment to the sternum or to another rib, ending instead in the musculature of the abdominal wall. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Twelfth rib.l": {
+        "displayName": "Left Twelfth rib",
+        "baseName": "Twelfth rib",
+        "description": "A floating rib: it articulates posteriorly with the vertebral column but has no anterior attachment to the sternum or to another rib, ending instead in the musculature of the abdominal wall. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Ninth rib.l": {
+        "displayName": "Left Ninth rib",
+        "baseName": "Ninth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Tenth rib.l": {
+        "displayName": "Left Tenth rib",
+        "baseName": "Tenth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of first rib.l": {
+        "displayName": "Left Costal cartilage of first rib",
+        "baseName": "Costal cartilage of first rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. The cartilage of the first rib attaches directly to the manubrium of the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of second rib.l": {
+        "displayName": "Left Costal cartilage of second rib",
+        "baseName": "Costal cartilage of second rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of third rib.l": {
+        "displayName": "Left Costal cartilage of third rib",
+        "baseName": "Costal cartilage of third rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of fourth rib.l": {
+        "displayName": "Left Costal cartilage of fourth rib",
+        "baseName": "Costal cartilage of fourth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of fifth rib.l": {
+        "displayName": "Left Costal cartilage of fifth rib",
+        "baseName": "Costal cartilage of fifth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of sixth rib.l": {
+        "displayName": "Left Costal cartilage of sixth rib",
+        "baseName": "Costal cartilage of sixth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of seventh rib.l": {
+        "displayName": "Left Costal cartilage of seventh rib",
+        "baseName": "Costal cartilage of seventh rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the true ribs' cartilages, it attaches directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of eighth rib.l": {
+        "displayName": "Left Costal cartilage of eighth rib",
+        "baseName": "Costal cartilage of eighth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of tenth rib.l": {
+        "displayName": "Left Costal cartilage of tenth rib",
+        "baseName": "Costal cartilage of tenth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Costal cartilage of ninth rib.l": {
+        "displayName": "Left Costal cartilage of ninth rib",
+        "baseName": "Costal cartilage of ninth rib",
+        "description": "A bar of hyaline cartilage that extends a rib forward and adds elasticity to the chest wall. Costal cartilages increase in length from the first to the seventh rib and then decrease toward the twelfth. As one of the false ribs' cartilages, it does not reach the sternum directly but joins the cartilage of the rib above, contributing to the costal margin. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    },
+    "Clavicle.l": {
+        "displayName": "Left Clavicle",
+        "baseName": "Clavicle",
+        "description": "The collarbone: a slender, S-shaped long bone that struts the shoulder blade away from the sternum. It is the only long bone that lies horizontally and is also the most commonly fractured bone in the body. Source: https://en.wikipedia.org/wiki/Clavicle"
+    },
+    "Humerus.l": {
+        "displayName": "Left Humerus",
+        "baseName": "Humerus",
+        "description": "The long bone of the upper arm, running from the shoulder to the elbow. Its rounded head articulates with the scapula to form the shoulder joint, and its lower end articulates with the radius and ulna at the elbow. Source: https://en.wikipedia.org/wiki/Humerus"
+    },
+    "Patella.l": {
+        "displayName": "Left Patella",
+        "baseName": "Patella",
+        "description": "The kneecap, the largest sesamoid bone in the body. It sits within the quadriceps tendon in front of the knee joint and increases the mechanical leverage of the thigh muscles during knee extension. Source: https://en.wikipedia.org/wiki/Patella"
+    },
+    "Talus.l": {
+        "displayName": "Left Talus",
+        "baseName": "Talus",
+        "description": "The bone that connects the leg to the foot, articulating with the tibia and fibula above to form the ankle joint and with the calcaneus below. It transmits the body's weight from the leg to the foot. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Calcaneus.l": {
+        "displayName": "Left Calcaneus",
+        "baseName": "Calcaneus",
+        "description": "The heel bone, the largest of the tarsal bones. It articulates with the talus above and the cuboid in front, and provides attachment for the Achilles tendon at its posterior tuberosity. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Navicular bone.l": {
+        "displayName": "Left Navicular bone",
+        "baseName": "Navicular bone",
+        "description": "A boat-shaped tarsal bone of the midfoot, positioned between the talus behind and the three cuneiform bones in front. It contributes to the medial longitudinal arch of the foot. Source: https://www.kenhub.com/en/library/anatomy/tarsal-bones"
+    },
+    "Cuboid bone.l": {
+        "displayName": "Left Cuboid bone",
+        "baseName": "Cuboid bone",
+        "description": "The most lateral tarsal bone of the distal row, located between the calcaneus and the fourth and fifth metatarsals. Its plantar surface carries a groove for the tendon of fibularis (peroneus) longus. Source: https://www.kenhub.com/en/library/anatomy/cuboid"
+    },
+    "Intermediate cuneiform bone.l": {
+        "displayName": "Left Intermediate cuneiform bone",
+        "baseName": "Intermediate cuneiform bone",
+        "description": "The smallest of the three cuneiform bones, wedged between the medial and lateral cuneiforms and articulating with the second metatarsal. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "Lateral cuneiform bone.l": {
+        "displayName": "Left Lateral cuneiform bone",
+        "baseName": "Lateral cuneiform bone",
+        "description": "The most lateral of the three cuneiform bones, located between the intermediate cuneiform and the cuboid, and articulating with the third metatarsal. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "Medial cuneiform bone.l": {
+        "displayName": "Left Medial cuneiform bone",
+        "baseName": "Medial cuneiform bone",
+        "description": "The largest and most medial of the three cuneiform bones, located between the navicular and the first metatarsal bone. Source: https://www.getbodysmart.com/lower-limb-bones/tarsals/"
+    },
+    "First metatarsal bone.l": {
+        "displayName": "Left First metatarsal bone",
+        "baseName": "First metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Fifth metatarsal bone.l": {
+        "displayName": "Left Fifth metatarsal bone",
+        "baseName": "Fifth metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Second metatarsal bone.l": {
+        "displayName": "Left Second metatarsal bone",
+        "baseName": "Second metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Third metatarsal bone.l": {
+        "displayName": "Left Third metatarsal bone",
+        "baseName": "Third metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Fourth metatarsal bone.l": {
+        "displayName": "Left Fourth metatarsal bone",
+        "baseName": "Fourth metatarsal bone",
+        "description": "One of five long bones in the midfoot that connect the tarsal bones to the phalanges of the toes, numbered one (big toe) through five (little toe) from medial to lateral. Source: https://en.wikipedia.org/wiki/Metatarsal_bones"
+    },
+    "Distal phalanx of fifth finger of foot.l": {
+        "displayName": "Left Distal phalanx of fifth finger of foot",
+        "baseName": "Distal phalanx of fifth finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of first finger of foot.l": {
+        "displayName": "Left Distal phalanx of first finger of foot",
+        "baseName": "Distal phalanx of first finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of fourth finger of foot.l": {
+        "displayName": "Left Distal phalanx of fourth finger of foot",
+        "baseName": "Distal phalanx of fourth finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of second finger of foot.l": {
+        "displayName": "Left Distal phalanx of second finger of foot",
+        "baseName": "Distal phalanx of second finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Distal phalanx of third finger of foot.l": {
+        "displayName": "Left Distal phalanx of third finger of foot",
+        "baseName": "Distal phalanx of third finger of foot",
+        "description": "The smallest bone at the tip of a toe, flatter and smaller than its counterpart in the hand, lying beneath the toenail. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of second finger of foot.l": {
+        "displayName": "Left Middle phalanx of second finger of foot",
+        "baseName": "Middle phalanx of second finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of third finger of foot.l": {
+        "displayName": "Left Middle phalanx of third finger of foot",
+        "baseName": "Middle phalanx of third finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of fourth finger of foot.l": {
+        "displayName": "Left Middle phalanx of fourth finger of foot",
+        "baseName": "Middle phalanx of fourth finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Middle phalanx of fifth finger of foot.l": {
+        "displayName": "Left Middle phalanx of fifth finger of foot",
+        "baseName": "Middle phalanx of fifth finger of foot",
+        "description": "The middle bone of a toe (absent in the big toe), smaller than the proximal phalanx and positioned between the proximal and distal phalanges. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of first finger of foot.l": {
+        "displayName": "Left Proximal phalanx of first finger of foot",
+        "baseName": "Proximal phalanx of first finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of second finger of foot.l": {
+        "displayName": "Left Proximal phalanx of second finger of foot",
+        "baseName": "Proximal phalanx of second finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of third finger of foot.l": {
+        "displayName": "Left Proximal phalanx of third finger of foot",
+        "baseName": "Proximal phalanx of third finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of fourth finger of foot.l": {
+        "displayName": "Left Proximal phalanx of fourth finger of foot",
+        "baseName": "Proximal phalanx of fourth finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Proximal phalanx of fifth finger of foot.l": {
+        "displayName": "Left Proximal phalanx of fifth finger of foot",
+        "baseName": "Proximal phalanx of fifth finger of foot",
+        "description": "The largest of the phalanges in a toe, articulating proximally with a metatarsal bone and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/phalanges-of-the-foot"
+    },
+    "Sesamoid bones of foot.l": {
+        "displayName": "Left Sesamoid bones of foot",
+        "baseName": "Sesamoid bones of foot",
+        "description": "Small, oval bones embedded within the tendon of flexor hallucis brevis beneath the head of the first metatarsal. They help bear weight and protect the flexor tendon of the big toe during push-off. Source: https://andersonpodiatrycenter.com/2024/02/06/complex-anatomy-phalanges-bones-foot/"
+    },
+    "Distal phalanx of first finger of hand.l": {
+        "displayName": "Left Distal phalanx of first finger of hand",
+        "baseName": "Distal phalanx of first finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of second finger of hand.l": {
+        "displayName": "Left Distal phalanx of second finger of hand",
+        "baseName": "Distal phalanx of second finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of third finger of hand.l": {
+        "displayName": "Left Distal phalanx of third finger of hand",
+        "baseName": "Distal phalanx of third finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of fourth finger of hand.l": {
+        "displayName": "Left Distal phalanx of fourth finger of hand",
+        "baseName": "Distal phalanx of fourth finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Distal phalanx of fifth finger of hand.l": {
+        "displayName": "Left Distal phalanx of fifth finger of hand",
+        "baseName": "Distal phalanx of fifth finger of hand",
+        "description": "The smallest bone at the tip of a finger, with a flattened, roughened distal end (tuberosity) that supports the fingertip and nail bed. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of second finger of hand.l": {
+        "displayName": "Left Middle phalanx of second finger of hand",
+        "baseName": "Middle phalanx of second finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of third finger of hand.l": {
+        "displayName": "Left Middle phalanx of third finger of hand",
+        "baseName": "Middle phalanx of third finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of fourth finger of hand.l": {
+        "displayName": "Left Middle phalanx of fourth finger of hand",
+        "baseName": "Middle phalanx of fourth finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Middle phalanx of fifth finger of hand.l": {
+        "displayName": "Left Middle phalanx of fifth finger of hand",
+        "baseName": "Middle phalanx of fifth finger of hand",
+        "description": "The middle bone of a finger (absent in the thumb), positioned between the proximal and distal phalanges and forming the two interphalangeal joints. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of first finger of hand.l": {
+        "displayName": "Left Proximal phalanx of first finger of hand",
+        "baseName": "Proximal phalanx of first finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of second finger of hand.l": {
+        "displayName": "Left Proximal phalanx of second finger of hand",
+        "baseName": "Proximal phalanx of second finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of third finger of hand.l": {
+        "displayName": "Left Proximal phalanx of third finger of hand",
+        "baseName": "Proximal phalanx of third finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of fourth finger of hand.l": {
+        "displayName": "Left Proximal phalanx of fourth finger of hand",
+        "baseName": "Proximal phalanx of fourth finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "Proximal phalanx of fifth finger of hand.l": {
+        "displayName": "Left Proximal phalanx of fifth finger of hand",
+        "baseName": "Proximal phalanx of fifth finger of hand",
+        "description": "The largest of the phalanges in a finger, articulating proximally with a metacarpal bone at the knuckle and distally with the next phalanx. Source: https://www.kenhub.com/en/library/anatomy/the-phalanges"
+    },
+    "First metacarpal bone.l": {
+        "displayName": "Left First metacarpal bone",
+        "baseName": "First metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Second metacarpal bone.l": {
+        "displayName": "Left Second metacarpal bone",
+        "baseName": "Second metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Third metacarpal bone.l": {
+        "displayName": "Left Third metacarpal bone",
+        "baseName": "Third metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Fourth metacarpal bone.l": {
+        "displayName": "Left Fourth metacarpal bone",
+        "baseName": "Fourth metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Fifth metacarpal bone.l": {
+        "displayName": "Left Fifth metacarpal bone",
+        "baseName": "Fifth metacarpal bone",
+        "description": "One of five long bones in the palm that connect the carpal bones of the wrist to the phalanges of the fingers, numbered one (thumb) through five (little finger) from lateral to medial. Source: https://en.wikipedia.org/wiki/Metacarpal_bones"
+    },
+    "Capitate bone.l": {
+        "displayName": "Left Capitate bone",
+        "baseName": "Capitate bone",
+        "description": "The largest carpal bone, positioned in the center of the distal row. It articulates with the third metacarpal as well as several neighboring carpal bones, anchoring the central column of the wrist. Source: https://en.wikipedia.org/wiki/Capitate_bone"
+    },
+    "Hamate bone.l": {
+        "displayName": "Left Hamate bone",
+        "baseName": "Hamate bone",
+        "description": "A wedge-shaped carpal bone on the little-finger side of the distal row, named for the hook-like process (hamulus) that projects from its palmar surface and provides attachment for the transverse carpal ligament. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Lunate bone.l": {
+        "displayName": "Left Lunate bone",
+        "baseName": "Lunate bone",
+        "description": "A crescent-shaped carpal bone in the middle of the proximal row, between the scaphoid and triquetrum. It articulates with the radius above and helps form the wrist joint. Source: https://en.wikipedia.org/wiki/Lunate_bone"
+    },
+    "Pisiform bone.l": {
+        "displayName": "Left Pisiform bone",
+        "baseName": "Pisiform bone",
+        "description": "A small, pea-shaped carpal bone on the palmar surface of the triquetrum. It is a sesamoid bone embedded in the tendon of flexor carpi ulnaris and does not directly participate in the wrist joint. Source: https://emedicine.medscape.com/article/1899456-overview"
+    },
+    "Scaphoid bone.l": {
+        "displayName": "Left Scaphoid bone",
+        "baseName": "Scaphoid bone",
+        "description": "The largest carpal bone of the proximal row, boat-shaped and located at the base of the thumb side of the wrist. It bridges the two carpal rows and is the most commonly fractured carpal bone. Source: https://www.kenhub.com/en/library/anatomy/carpal-bones"
+    },
+    "Trapezium bone.l": {
+        "displayName": "Left Trapezium bone",
+        "baseName": "Trapezium bone",
+        "description": "A carpal bone of the distal row, located at the base of the thumb. Its saddle-shaped surface articulates with the first metacarpal, forming the highly mobile joint at the base of the thumb. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Trapezoid bone.l": {
+        "displayName": "Left Trapezoid bone",
+        "baseName": "Trapezoid bone",
+        "description": "The smallest carpal bone of the distal row, wedged between the trapezium and the capitate. It articulates distally with the base of the second metacarpal. Source: https://www.ncbi.nlm.nih.gov/books/NBK535382/"
+    },
+    "Triquetrum bone.l": {
+        "displayName": "Left Triquetrum bone",
+        "baseName": "Triquetrum bone",
+        "description": "A pyramid-shaped carpal bone on the little-finger side of the proximal row. It articulates with the lunate, the pisiform, and the hamate bone. Source: https://www.kenhub.com/en/library/anatomy/carpal-bones"
+    },
+    "Scapula.l": {
+        "displayName": "Left Scapula",
+        "baseName": "Scapula",
+        "description": "The shoulder blade: a flat, triangular bone on the back of the rib cage that provides attachment for many muscles of the shoulder and forms the glenoid cavity, which articulates with the head of the humerus. Source: https://en.wikipedia.org/wiki/Scapula"
+    },
+    "Radius.l": {
+        "displayName": "Left Radius",
+        "baseName": "Radius",
+        "description": "The lateral bone of the forearm (on the thumb side), which rotates around the ulna to allow the palm to turn up or down. Its head articulates with the humerus and its distal end forms most of the wrist joint. Source: https://en.wikipedia.org/wiki/Radius_(bone)"
+    },
+    "Ulna.l": {
+        "displayName": "Left Ulna",
+        "baseName": "Ulna",
+        "description": "The medial, longer bone of the forearm, on the little-finger side. Its proximal olecranon process forms the point of the elbow, and it articulates with the humerus and radius. Source: https://en.wikipedia.org/wiki/Ulna"
+    },
+    "Femur.l": {
+        "displayName": "Left Femur",
+        "baseName": "Femur",
+        "description": "The thigh bone, the longest and strongest bone in the body. Its rounded head articulates with the acetabulum of the hip bone, and its distal end articulates with the tibia and patella to form the knee joint. Source: https://en.wikipedia.org/wiki/Femur"
+    },
+    "Hip bone.l": {
+        "displayName": "Left Hip bone",
+        "baseName": "Hip bone",
+        "description": "The large, irregular bone of the pelvis formed by the fusion of the ilium, ischium, and pubis. Its cup-shaped acetabulum articulates with the femur, and it joins its counterpart anteriorly and the sacrum posteriorly. Source: https://teachmeanatomy.info/pelvis/bones/"
+    },
+    "Tibia.l": {
+        "displayName": "Left Tibia",
+        "baseName": "Tibia",
+        "description": "The shinbone, the larger and stronger of the two bones of the lower leg, bearing most of the body's weight. Its upper end articulates with the femur at the knee and its lower end with the talus at the ankle. Source: https://en.wikipedia.org/wiki/Tibia"
+    },
+    "Fibula.l": {
+        "displayName": "Left Fibula",
+        "baseName": "Fibula",
+        "description": "The slender, laterally positioned bone of the lower leg. It bears little body weight but provides muscle attachment and forms the lateral malleolus, stabilizing the outer side of the ankle joint. Source: https://en.wikipedia.org/wiki/Fibula"
+    },
+    "Posterior cells of ethmoid bone.l": {
+        "displayName": "Left Posterior cells of ethmoid bone",
+        "baseName": "Posterior cells of ethmoid bone",
+        "description": "A group of roughly six air-filled cavities within the posterior part of the ethmoid bone's labyrinth. They drain into the superior nasal meatus, close to the sphenoid sinus. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/posterior-ethmoidal-cells-1541214124"
+    },
+    "Middle cells of ethmoid bone.l": {
+        "displayName": "Left Middle cells of ethmoid bone",
+        "baseName": "Middle cells of ethmoid bone",
+        "description": "A group of air-filled cavities within the middle part of the ethmoid bone's labyrinth. They open onto the surface of the ethmoidal bulla within the middle nasal meatus. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/cells-of-ethmoid-bone-1536896848"
+    },
+    "Anterior cells of ethmoid bone.l": {
+        "displayName": "Left Anterior cells of ethmoid bone",
+        "baseName": "Anterior cells of ethmoid bone",
+        "description": "A cluster of roughly 11 small air-filled cavities within the anterior part of the ethmoid bone's labyrinth. They drain into the middle nasal meatus via the ethmoidal infundibulum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/anterior-cells-of-ethmoid-bone-1536896856"
+    },
+    "Posterior cells of ethmoid bone.r": {
+        "displayName": "Right Posterior cells of ethmoid bone",
+        "baseName": "Posterior cells of ethmoid bone",
+        "description": "A group of roughly six air-filled cavities within the posterior part of the ethmoid bone's labyrinth. They drain into the superior nasal meatus, close to the sphenoid sinus. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/posterior-ethmoidal-cells-1541214124"
+    },
+    "Middle cells of ethmoid bone.r": {
+        "displayName": "Right Middle cells of ethmoid bone",
+        "baseName": "Middle cells of ethmoid bone",
+        "description": "A group of air-filled cavities within the middle part of the ethmoid bone's labyrinth. They open onto the surface of the ethmoidal bulla within the middle nasal meatus. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/cells-of-ethmoid-bone-1536896848"
+    },
+    "Anterior cells of ethmoid bone.r": {
+        "displayName": "Right Anterior cells of ethmoid bone",
+        "baseName": "Anterior cells of ethmoid bone",
+        "description": "A cluster of roughly 11 small air-filled cavities within the anterior part of the ethmoid bone's labyrinth. They drain into the middle nasal meatus via the ethmoidal infundibulum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/anterior-cells-of-ethmoid-bone-1536896856"
+    },
+    "Eighth rib.l": {
+        "displayName": "Left Eighth rib",
+        "baseName": "Eighth rib",
+        "description": "A false rib: it articulates posteriorly with the vertebral column, but anteriorly its costal cartilage attaches to the cartilage of the rib above rather than directly to the sternum. Source: https://www.imaios.com/en/e-anatomy/anatomical-structures/costal-cartilages-1537019452"
+    }
+}

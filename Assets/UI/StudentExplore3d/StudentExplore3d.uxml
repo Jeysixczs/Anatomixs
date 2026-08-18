@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/StudentExplore3d/StudentExplore3d.uss?fileID=7433441132597879392&amp;guid=743ca842e0d65074d907c76c9ffa0cb1&amp;type=3#StudentExplore3d"/>
+    <Style src="project://database/Assets/UI/StudentExplore3d/StudentExplore3d.uss"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <!-- ===================== SCROLLABLE CONTENT ===================== -->
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
@@ -18,51 +18,51 @@
 
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="card-list" class="card-list">
-                    <ui:VisualElement class="card">
-                        <ui:VisualElement class="icon-box icon-skeletal">
-                            <ui:Label text="" class="icon-emoji"/>
+                    <ui:Button name="card-skeletal" class="card card-button">
+                        <ui:VisualElement class="icon-box icon-skeletal" picking-mode="Ignore">
+                            <ui:Label text="" class="icon-emoji" picking-mode="Ignore"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="card-info">
-                            <ui:Label text="Skeletal System" class="card-title"/>
-                            <ui:Label text="206 structures" class="card-subtitle"/>
-                            <ui:VisualElement class="progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill fill-skeletal"/>
+                        <ui:VisualElement class="card-info" picking-mode="Ignore">
+                            <ui:Label text="Skeletal System" class="card-title" picking-mode="Ignore"/>
+                            <ui:Label text="206 structures" class="card-subtitle" picking-mode="Ignore"/>
+                            <ui:VisualElement class="progress-row" picking-mode="Ignore">
+                                <ui:VisualElement class="progress-track" picking-mode="Ignore">
+                                    <ui:VisualElement class="progress-fill fill-skeletal" picking-mode="Ignore"/>
                                 </ui:VisualElement>
-                                <ui:Label text="75%" class="progress-label"/>
+                                <ui:Label text="75%" class="progress-label" picking-mode="Ignore"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="card">
-                        <ui:VisualElement class="icon-box icon-muscular">
-                            <ui:Label text="" class="icon-emoji"/>
+                    </ui:Button>
+                    <ui:Button name="card-muscular" class="card card-button">
+                        <ui:VisualElement class="icon-box icon-muscular" picking-mode="Ignore">
+                            <ui:Label text="" class="icon-emoji" picking-mode="Ignore"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="card-info">
-                            <ui:Label text="Muscular System" class="card-title"/>
-                            <ui:Label text="640 structures" class="card-subtitle"/>
-                            <ui:VisualElement class="progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill fill-muscular"/>
+                        <ui:VisualElement class="card-info" picking-mode="Ignore">
+                            <ui:Label text="Muscular System" class="card-title" picking-mode="Ignore"/>
+                            <ui:Label text="640 structures" class="card-subtitle" picking-mode="Ignore"/>
+                            <ui:VisualElement class="progress-row" picking-mode="Ignore">
+                                <ui:VisualElement class="progress-track" picking-mode="Ignore">
+                                    <ui:VisualElement class="progress-fill fill-muscular" picking-mode="Ignore"/>
                                 </ui:VisualElement>
-                                <ui:Label text="45%" class="progress-label"/>
+                                <ui:Label text="45%" class="progress-label" picking-mode="Ignore"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="card">
-                        <ui:VisualElement class="icon-box icon-cardio">
-                            <ui:Label text="" class="icon-emoji"/>
+                    </ui:Button>
+                    <ui:Button name="card-cardio" class="card card-button">
+                        <ui:VisualElement class="icon-box icon-cardio" picking-mode="Ignore">
+                            <ui:Label text="" class="icon-emoji" picking-mode="Ignore"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="card-info">
-                            <ui:Label text="Cardiovascular System" class="card-title"/>
-                            <ui:Label text="124 structures" class="card-subtitle"/>
-                            <ui:VisualElement class="progress-row">
-                                <ui:VisualElement class="progress-track">
-                                    <ui:VisualElement class="progress-fill fill-cardio"/>
+                        <ui:VisualElement class="card-info" picking-mode="Ignore">
+                            <ui:Label text="Cardiovascular System" class="card-title" picking-mode="Ignore"/>
+                            <ui:Label text="124 structures" class="card-subtitle" picking-mode="Ignore"/>
+                            <ui:VisualElement class="progress-row" picking-mode="Ignore">
+                                <ui:VisualElement class="progress-track" picking-mode="Ignore">
+                                    <ui:VisualElement class="progress-fill fill-cardio" picking-mode="Ignore"/>
                                 </ui:VisualElement>
-                                <ui:Label text="30%" class="progress-label"/>
+                                <ui:Label text="30%" class="progress-label" picking-mode="Ignore"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                    </ui:VisualElement>
+                    </ui:Button>
                     <ui:VisualElement class="pro-tip-card">
                         <ui:Label text="💡 Pro Tip" class="pro-tip-title"/>
                         <ui:Label text="Use pinch to zoom, rotate with two fingers, and tap on structures to learn more!" class="pro-tip-text"/>
