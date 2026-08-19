@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Anatomia3D.Backend;
 using Anatomia3D.UI.Quiz;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -228,10 +229,34 @@ namespace Anatomia3D.UI
             });
         }
 
-        public void ShowStudentAnatomyScreen(AnatomySystem system)
+        /// <param name="startInPlayMode">Pass true from Student Explore 3D's Play
+        /// Mode system picker so the Anatomy Screen comes up with Play Mode
+        /// already active - the student picked "play the Skeletal System",
+        /// not "explore it and then find the Play button". Every other
+        /// caller (the normal Explore Mode cards) omits this and gets the
+        /// existing Explore Mode behavior unchanged.</param>
+        public void ShowStudentAnatomyScreen(AnatomySystem system, bool startInPlayMode = false)
         {
             _studentAnatomyScreenController?.SetAnatomySystem(system);
-            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController);
+            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
+            {
+                if (!startInPlayMode) return;
+
+                // Play Mode itself still lives entirely on the Anatomy Screen's
+                // GameObject (AnatomyPlayModeController) - this just requests
+                // that it switch itself on as soon as its own UI is wired.
+                // This is the ONLY way Play Mode is ever entered - the
+                // Anatomy Screen no longer has its own Play Mode button.
+                var playMode = _studentAnatomyScreenController != null
+                    ? _studentAnatomyScreenController.GetComponent<AnatomyPlayModeController>()
+                    : null;
+
+                if (playMode != null)
+                    playMode.RequestPlayModeOnOpen();
+                else
+                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreen: startInPlayMode was true but no " +
+                                      "AnatomyPlayModeController was found on the Anatomy Screen GameObject.");
+            });
         }
         public void ShowStudentQuizResult(
             string quizName,

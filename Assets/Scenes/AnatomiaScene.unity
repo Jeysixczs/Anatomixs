@@ -3404,6 +3404,8 @@ GameObject:
   - component: {fileID: 1051780047}
   - component: {fileID: 1051780049}
   - component: {fileID: 1051780048}
+  - component: {fileID: 1051780051}
+  - component: {fileID: 1051780050}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -4074,7 +4076,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c818bee5821a4764f905e674eac6e0e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AboutAnatomiaAdminController
-  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   appName: ANATOMIA
   appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
@@ -4101,7 +4103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d2e441c80528464da79582ee8e5a462, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StudentExplore3dController
-  gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   diagonalGradient: 1
   gradientTextureResolution: 64
@@ -4178,6 +4180,42 @@ MonoBehaviour:
   canvasSize: {x: 1080, y: 1920}
   infoPanelMinSize: {x: 460, y: 400}
   infoPanelEdgeVisibleMargin: 80
+--- !u!114 &1051780050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de41baa22f36c4d41a5785bb5b474435, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnatomyPlayModeController
+  pointsNoHints: 100
+  points1Hint: 60
+  points2Hints: 30
+  points3PlusHints: 10
+  streakBonuses:
+  - streakCount: 3
+    bonusPoints: 25
+  - streakCount: 5
+    bonusPoints: 50
+  - streakCount: 10
+    bonusPoints: 100
+  firebase: {fileID: 1051780051}
+--- !u!114 &1051780051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 925d0ba4f50b5dc439e157c8d51f28d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AnatomyPlayModeFirebase
 --- !u!1 &1092176651
 GameObject:
   m_ObjectHideFlags: 0

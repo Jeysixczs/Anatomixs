@@ -20,7 +20,20 @@ public class StudentExplore3dController : MonoBehaviour
   
     private Button _backButton;
     private Label _headerTitle;
-  
+
+    // ===== Play Mode entry point =====
+    private Button _playModeEntryButton;
+    private VisualElement _playModePickerBanner;
+    private Button _playModePickerCancelButton;
+    private VisualElement _cardList;
+
+    // True from the moment play-mode-entry-button is tapped until either a
+    // card is chosen or Cancel is pressed. While true, the NEXT card tap
+    // launches that system's Anatomy Screen already in Play Mode instead
+    // of the normal Explore Mode. There is no separate picker UI - the
+    // existing card list doubles as the picker (see WireAnatomySystemCards).
+    private bool _playModePickingArmed;
+
 
     private void OnEnable()
     {
@@ -59,6 +72,8 @@ public class StudentExplore3dController : MonoBehaviour
         if (_screenRoot == null) return;
 
         if (_backButton != null) _backButton.clicked -= OnBackButtonClicked;
+        if (_playModeEntryButton != null) _playModeEntryButton.clicked -= OnPlayModeEntryButtonClicked;
+        if (_playModePickerCancelButton != null) _playModePickerCancelButton.clicked -= OnPlayModePickerCancelClicked;
 
         if (_headerGradientTexture != null)
         {
@@ -83,9 +98,13 @@ public class StudentExplore3dController : MonoBehaviour
     
         _backButton = _screenRoot.Q<Button>("back-button");
         _headerTitle = _screenRoot.Q<Label>("header-title");
-       
 
-        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}");
+        _playModeEntryButton = _screenRoot.Q<Button>("play-mode-entry-button");
+        _playModePickerBanner = _screenRoot.Q<VisualElement>("play-mode-picker-banner");
+        _playModePickerCancelButton = _screenRoot.Q<Button>("play-mode-picker-cancel");
+        _cardList = _screenRoot.Q<VisualElement>("card-list");
+
+        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}");
     }
 
     private void WireCallbacks()
@@ -99,6 +118,85 @@ public class StudentExplore3dController : MonoBehaviour
         }
 
         WireAnatomySystemCards();
+        WirePlayModeEntry();
+    }
+
+    // Play Mode's entry point lives here (Student Explore 3D), not on the
+    // Anatomy Screen toolbar - there's no loaded 3D model/selection system
+    // to play against until a system has been chosen. Tapping this button
+    // just arms "picking" mode: the banner appears and the next card tap
+    // (handled in WireAnatomySystemCards) launches
+    // UIManager.ShowStudentAnatomyScreen(system, startInPlayMode: true)
+    // instead of the normal Explore Mode call. There's no separate picker
+    // popup - the card list already lists the three systems, so it doubles
+    // as the picker rather than duplicating it.
+    private void WirePlayModeEntry()
+    {
+        if (_playModeEntryButton != null)
+        {
+            _playModeEntryButton.clicked -= OnPlayModeEntryButtonClicked;
+            _playModeEntryButton.clicked += OnPlayModeEntryButtonClicked;
+        }
+
+        if (_playModePickerCancelButton != null)
+        {
+            _playModePickerCancelButton.clicked -= OnPlayModePickerCancelClicked;
+            _playModePickerCancelButton.clicked += OnPlayModePickerCancelClicked;
+        }
+
+        // Always start disarmed - ShowScreen clones a fresh UI tree each
+        // time this screen opens, so nothing carries over from a previous
+        // visit, but make sure the visuals match that (banner hidden,
+        // entry button not in its "active" state).
+        SetPlayModePickingArmed(false);
+    }
+
+    private void OnPlayModeEntryButtonClicked()
+    {
+        // Tapping the button again while armed cancels, same as Cancel.
+        SetPlayModePickingArmed(!_playModePickingArmed);
+    }
+
+    private void OnPlayModePickerCancelClicked()
+    {
+        SetPlayModePickingArmed(false);
+    }
+
+    private void SetPlayModePickingArmed(bool armed)
+    {
+        _playModePickingArmed = armed;
+
+        if (_playModePickerBanner != null)
+        {
+            if (armed) _playModePickerBanner.RemoveFromClassList("hidden");
+            else _playModePickerBanner.AddToClassList("hidden");
+        }
+
+        if (_playModeEntryButton != null)
+        {
+            if (armed)
+            {
+                _playModeEntryButton.AddToClassList("play-mode-entry-button-active");
+                _playModeEntryButton.text = "✕ Cancel";
+            }
+            else
+            {
+                _playModeEntryButton.RemoveFromClassList("play-mode-entry-button-active");
+                _playModeEntryButton.text = "▶ Play";
+            }
+        }
+
+        // Ring every card so it's obvious tapping one right now starts a
+        // game instead of opening Explore Mode.
+        if (_cardList != null)
+        {
+            var cards = _cardList.Query<Button>(className: "card").ToList();
+            foreach (var card in cards)
+            {
+                if (armed) card.AddToClassList("card-play-armed");
+                else card.RemoveFromClassList("card-play-armed");
+            }
+        }
     }
 
     // Connects each existing Card List card (see StudentExplore3d.uxml -
@@ -113,6 +211,11 @@ public class StudentExplore3dController : MonoBehaviour
     // to call every OnEnable: ShowScreen clones a brand-new UI tree each
     // time the screen opens, so there are never stale elements left with a
     // callback registered twice.
+    //
+    // Each card also doubles as the Play Mode picker: if
+    // _playModePickingArmed is true when a card is tapped, that tap opens
+    // the system in Play Mode instead of Explore Mode, and disarms picking
+    // mode again either way.
     private void WireAnatomySystemCards()
     {
         if (_screenRoot == null)
@@ -138,18 +241,19 @@ public class StudentExplore3dController : MonoBehaviour
                 system = AnatomySystem.Cardiovascular;
             else
             {
-                Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class � skipping.");
+                Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
                 continue; // not one of the three anatomy-system cards (e.g. none - skip)
             }
          
             card.clicked += () =>
             {
-               
+                bool playMode = _playModePickingArmed;
+                SetPlayModePickingArmed(false);
 
                 try
                 {
-                    UIManager.Instance.ShowStudentAnatomyScreen(system);
-                    Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}) called successfully.");
+                    UIManager.Instance.ShowStudentAnatomyScreen(system, startInPlayMode: playMode);
+                    Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}, startInPlayMode: {playMode}) called successfully.");
                 }
                 catch (System.Exception e)
                 {

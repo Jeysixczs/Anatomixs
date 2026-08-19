@@ -13,10 +13,27 @@
                         <ui:Label name="header-title" text="Anatomy Systems" class="header-title"/>
                         <ui:Label name="header-subtitle" text="Explore human body in 3D" class="header-subtitle"/>
                     </ui:VisualElement>
+                    <!-- Play Mode entry point. Tapping this arms "pick a
+                         system" mode (see play-mode-picker-banner below) -
+                         it does not open its own picker UI. The next
+                         card-list tap is what actually launches that
+                         system's Anatomy Screen in Play Mode. -->
+                    <ui:Button name="play-mode-entry-button" text="▶ Play" class="play-mode-entry-button"/>
                 </ui:VisualElement>
             </ui:VisualElement>
 
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <!-- Shown only while Play Mode picking is armed (after
+                     play-mode-entry-button is tapped, before a card is
+                     chosen or Cancel is pressed). StudentExplore3dController
+                     toggles the "hidden" class and, while armed, makes the
+                     next card tap call
+                     UIManager.Instance.ShowStudentAnatomyScreen(system, startInPlayMode: true)
+                     instead of the normal Explore Mode call. -->
+                <ui:VisualElement name="play-mode-picker-banner" class="play-mode-picker-banner hidden">
+                    <ui:Label text="🎯 Play Mode: tap a system below to start" class="play-mode-picker-banner-label"/>
+                    <ui:Button name="play-mode-picker-cancel" text="Cancel" class="play-mode-picker-cancel"/>
+                </ui:VisualElement>
                 <ui:VisualElement name="card-list" class="card-list">
                     <ui:Button name="card-skeletal" class="card card-button">
                         <ui:VisualElement class="icon-box icon-skeletal" picking-mode="Ignore">

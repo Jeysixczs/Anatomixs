@@ -178,6 +178,25 @@ public class AnatomyScreenController : MonoBehaviour
     private BoneInfo _selectedBone;
     private readonly Stack<System.Action> _undoStack = new Stack<System.Action>();
 
+    // ===== Play Mode integration hook =====
+    // Fired at the very end of SelectStructure - after info panel, camera
+    // focus, outline, isolate-sync and hide-mode have already run - so a
+    // subscriber (AnatomyPlayModeController) always observes the fully
+    // settled selection state, the same one the player sees on screen.
+    // AnatomyScreenController never knows Play Mode exists beyond this
+    // one event and the public accessors below it in the class.
+    public event System.Action<BoneInfo> OnStructureSelected;
+
+    // Fires at the very end of every OnEnable pass - i.e. every single time
+    // this screen (re)opens with a freshly cloned UXML tree, not just the
+    // first time this component's own OnEnable ever ran. AnatomyPlayModeController
+    // subscribes to this once and re-queries/re-wires its own UI (letter boxes,
+    // hint/submit, Isolate Answered, etc.) from the handler - its own
+    // MonoBehaviour OnEnable is not a reliable re-wiring hook, since UIManager
+    // only toggles THIS controller's enabled flag when the screen is shown,
+    // never AnatomyPlayModeController's.
+    public event System.Action OnScreenReady;
+
     // Whether Isolate is currently active, so a second tap of the same
     // button toggles it back off instead of stacking another isolate on
     // top. _isolateUndo is the exact same delegate handed to PushUndo when
@@ -713,6 +732,11 @@ public class AnatomyScreenController : MonoBehaviour
         _infoPanel.schedule.Execute(UpdateAudioRowScale).ExecuteLater(0);
 
         HideInfoPanel();
+
+        // Fired last, after every step above has finished, so any subscriber
+        // (AnatomyPlayModeController) that queries the UXML tree in response
+        // always sees the screen in its fully-initialized state.
+        OnScreenReady?.Invoke();
     }
 
     private void Update()
@@ -1392,6 +1416,8 @@ public class AnatomyScreenController : MonoBehaviour
         // bone.
         if (_isHideModeActive)
             HideBone(info);
+
+        OnStructureSelected?.Invoke(info);
     }
 
     // Hotspot-button tap (see the click wiring around PopulateBoneDataFromSkeleton)
@@ -2673,6 +2699,114 @@ public class AnatomyScreenController : MonoBehaviour
         _undoStack.Push(undo);
         _undoButton.SetEnabled(true);
         _undoButton.RemoveFromClassList("toolbar-btn-disabled");
+    }
+
+    // ===================================================================
+    // ===== Play Mode integration API ==================================
+    // ===================================================================
+    // Everything below is the ONLY surface AnatomyPlayModeController is
+    // allowed to touch on this class. It never reaches into boneData,
+    // _selectedBone, the toolbar buttons, or the isolate/hide undo state
+    // directly - see AnatomyPlayModeController.cs's own header comment.
+
+    /// <summary>Every structure on the currently active anatomy system,
+    /// in the same order PopulateBoneDataFromSkeleton built them. Read-only -
+    /// Play Mode never adds, removes, or reorders entries here.</summary>
+    public IReadOnlyList<BoneInfo> AllBoneData => boneData;
+
+    /// <summary>Looks up a structure's BoneDatabase.json entry (displayName,
+    /// baseName, description) by its exact GameObject name - the same
+    /// exact-key lookup DisplayBoneInfo uses. DisplayName is the answer
+    /// Play Mode should guess against; baseName must never be used for
+    /// that.</summary>
+    public bool TryGetBoneDatabaseEntry(BoneInfo info, out BoneDatabaseEntry entry)
+    {
+        entry = null;
+        if (info == null) return false;
+        return _boneDatabaseService.TryGetEntry(info.boneName, out entry);
+    }
+
+    /// <summary>Overwrites the Info Panel's title through the same
+    /// auto-fit path (FitTitleLabel) normal bone titles use, so Play
+    /// Mode's blanks/answer text sizes exactly like DisplayBoneInfo's does.</summary>
+    public void SetInfoPanelTitle(string text) => SetTitleText(text);
+
+    /// <summary>Overwrites the Info Panel's description/body text. Play
+    /// Mode uses this for guessing blanks, hint progress, and
+    /// correct/incorrect feedback instead of the bone's real description.</summary>
+    public void SetInfoPanelDescription(string text)
+    {
+        if (_descriptionLabel != null) _descriptionLabel.text = text;
+    }
+
+    /// <summary>Turns off Explore Mode's Isolate Selected Bone and Hide
+    /// Mode if either is currently active, via their own existing
+    /// toggle-off paths (so the undo stack / renderer-collider state they
+    /// each own is restored correctly). Call this when Play Mode is
+    /// switched on, so its own Isolate Answered visibility never has to
+    /// fight with Explore Mode's isolate/hide state.</summary>
+    public void ExitExploreOnlyModes()
+    {
+        if (_isHideModeActive) OnHideClicked();
+        if (_isIsolated) OnIsolateClicked();
+    }
+
+    /// <summary>Shows or hides the Explore Mode search bar (and, when
+    /// hiding, closes any open results dropdown and clears the typed
+    /// query via ClearSearch). Play Mode has no use for looking a
+    /// structure up by name - that would let a player skip straight to
+    /// the answer - so this is called with false when Play Mode switches
+    /// on and true when it switches off.</summary>
+    public void SetSearchBarVisible(bool visible)
+    {
+        if (_searchBar != null)
+            _searchBar.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+
+        if (!visible)
+            ClearSearch();
+    }
+
+    /// <summary>Selects and focuses the camera on a specific structure
+    /// exactly as if the player had tapped its hotspot button - builds
+    /// the outline highlight, focuses/zooms the camera, opens the Info
+    /// Panel, and fires OnStructureSelected so Play Mode picks it up as
+    /// the current question. Falls back to ShowBoneInfoByName (no
+    /// camera focus) for a structure with no resolved worldBone, same
+    /// as OnSearchResultSelected does. Used by Play Mode's "Unanswered"
+    /// toolbar button to jump straight to a structure the player hasn't
+    /// identified yet.</summary>
+    public void SelectAndFocusStructure(BoneInfo info)
+    {
+        if (info == null) return;
+
+        if (info.worldBone != null)
+            OnBoneClicked(info);
+        else
+            ShowBoneInfoByName(info.boneName);
+    }
+
+    /// <summary>Applies (or clears) Play Mode's "Isolate Answered"
+    /// visibility rule: every structure for which isAnswered(info) is
+    /// true stays visible/tappable, every other structure is hidden -
+    /// same renderer+collider enable/disable ApplyIsolateVisibility uses
+    /// for Isolate Selected Bone, just keyed off the predicate instead of
+    /// _selectedBone. Deliberately independent of _undoStack/_isolateUndo -
+    /// Isolate Answered is a Play Mode concept and was never meant to be
+    /// undoable through Explore Mode's Undo button. Passing active=false
+    /// restores every structure to visible/tappable.</summary>
+    public void SetIsolateAnsweredActive(bool active, System.Func<BoneInfo, bool> isAnswered)
+    {
+        foreach (var info in boneData)
+        {
+            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
+            if (rend == null) continue;
+
+            bool visible = !active || (isAnswered != null && isAnswered(info));
+            rend.enabled = visible;
+
+            var col = rend.GetComponent<Collider>();
+            if (col != null) col.enabled = visible;
+        }
     }
 
     private void OnBackClicked()
