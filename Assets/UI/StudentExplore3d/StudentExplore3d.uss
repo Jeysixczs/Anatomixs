@@ -79,6 +79,112 @@
     word-wrap: break-word;
 }
 
+/* ---------------- PLAY MODE ENTRY BUTTON ---------------- */
+
+.play-mode-entry-button {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    width: auto;
+    height: 64px;
+    padding-left: 26px;
+    padding-right: 26px;
+    margin-left: 12px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    border-width: 0;
+    border-radius: 32px;
+    background-color: rgba(255, 255, 255, 0.18);
+    color: white;
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+.play-mode-entry-button:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.play-mode-entry-button:active {
+    background-color: rgba(255, 255, 255, 0.36);
+}
+
+/* While Play Mode picking is armed - matches the toolbar's own
+   .toolbar-btn-active green accent (AnatomyScreen.uss) so the "on" state
+   reads the same way across the app. */
+.play-mode-entry-button-active {
+    background-color: rgb(34, 160, 110);
+    color: white;
+}
+
+.play-mode-entry-button-active:hover {
+    background-color: rgb(30, 145, 100);
+}
+
+/* ---------------- PLAY MODE PICKER BANNER ---------------- */
+
+/* Sits above the card list once Play Mode is armed and tells the student
+   their next tap on a card launches that system in Play Mode instead of
+   Explore Mode - the card list itself is the picker, this is just the
+   instruction + a way out. */
+.play-mode-picker-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgb(230, 247, 240);
+    border-radius: 24px;
+    padding: 22px 26px;
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 30px;
+    box-sizing: border-box;
+}
+
+.play-mode-picker-banner.hidden {
+    display: none;
+}
+
+.play-mode-picker-banner-label {
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(20, 110, 75);
+    white-space: normal;
+    word-wrap: break-word;
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 16px;
+}
+
+.play-mode-picker-cancel {
+    align-self: center;
+    flex-shrink: 0;
+    width: auto;
+    height: 52px;
+    padding-left: 24px;
+    padding-right: 24px;
+    border-width: 0;
+    border-radius: 26px;
+    background-color: rgb(255, 255, 255);
+    color: rgb(20, 110, 75);
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+.play-mode-picker-cancel:hover {
+    background-color: rgb(245, 245, 245);
+}
+
+/* Applied to each .card while Play Mode is armed, so it's visually
+   obvious tapping a card right now starts a game rather than opening
+   Explore Mode - a colored ring rather than moving/hiding anything, so
+   layout never shifts when picking mode toggles on. */
+.card-play-armed {
+    border-width: 3px;
+    border-color: rgb(34, 160, 110);
+}
+
 /* ---------------- SCROLL VIEW ---------------- */
 
 .screen-scroll {
@@ -344,6 +450,31 @@
     font-size: 22px;
 }
 
+.compact .play-mode-entry-button {
+    height: 52px;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-size: 22px;
+}
+
+.compact .play-mode-picker-banner {
+    margin-left: 34px;
+    margin-right: 34px;
+    margin-top: 22px;
+    padding: 18px 20px;
+}
+
+.compact .play-mode-picker-banner-label {
+    font-size: 22px;
+}
+
+.compact .play-mode-picker-cancel {
+    height: 44px;
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 20px;
+}
+
 .compact .card-list {
     padding-left: 34px;
     padding-right: 34px;
@@ -425,6 +556,32 @@
 
 .compact-extra .header-subtitle {
     font-size: 20px;
+}
+
+.compact-extra .play-mode-entry-button {
+    height: 44px;
+    padding-left: 16px;
+    padding-right: 16px;
+    font-size: 18px;
+    border-radius: 22px;
+}
+
+.compact-extra .play-mode-picker-banner {
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 16px;
+    padding: 14px 16px;
+}
+
+.compact-extra .play-mode-picker-banner-label {
+    font-size: 18px;
+}
+
+.compact-extra .play-mode-picker-cancel {
+    height: 38px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 16px;
 }
 
 .compact-extra .card-list {
