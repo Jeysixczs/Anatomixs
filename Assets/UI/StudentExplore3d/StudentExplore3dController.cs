@@ -1,3 +1,4 @@
+using Anatomia3D.Backend;
 using Anatomia3D.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,6 +11,12 @@ public class StudentExplore3dController : MonoBehaviour
     [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);
     [SerializeField] private bool diagonalGradient = true;
     [SerializeField, Range(2, 256)] private int gradientTextureResolution = 64;
+
+    [Header("Sync Progress")]
+    [Tooltip("Optional. Drives the Sync Progress button/status label. Leave " +
+             "unassigned to hide sync entirely - the button/label are simply " +
+             "left in their default UXML state and never wired.")]
+    [SerializeField] private AnatomyPlayModeSyncService syncService;
 
     private UIDocument _document;
     private VisualElement _root;
@@ -33,6 +40,10 @@ public class StudentExplore3dController : MonoBehaviour
     // of the normal Explore Mode. There is no separate picker UI - the
     // existing card list doubles as the picker (see WireAnatomySystemCards).
     private bool _playModePickingArmed;
+
+    // ===== Sync Progress =====
+    private Button _syncProgressButton;
+    private Label _syncStatusLabel;
 
 
     private void OnEnable()
@@ -69,6 +80,11 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (syncService != null)
+            syncService.OnStatusChanged -= HandleSyncStatusChanged;
+
+        if (_syncProgressButton != null) _syncProgressButton.clicked -= OnSyncProgressButtonClicked;
+
         if (_screenRoot == null) return;
 
         if (_backButton != null) _backButton.clicked -= OnBackButtonClicked;
@@ -104,7 +120,10 @@ public class StudentExplore3dController : MonoBehaviour
         _playModePickerCancelButton = _screenRoot.Q<Button>("play-mode-picker-cancel");
         _cardList = _screenRoot.Q<VisualElement>("card-list");
 
-        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}");
+        _syncProgressButton = _screenRoot.Q<Button>("sync-progress-button");
+        _syncStatusLabel = _screenRoot.Q<Label>("sync-status-label");
+
+        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
     }
 
     private void WireCallbacks()
@@ -119,6 +138,118 @@ public class StudentExplore3dController : MonoBehaviour
 
         WireAnatomySystemCards();
         WirePlayModeEntry();
+        WireSyncProgress();
+    }
+
+    // ===== Sync Progress =====
+    //
+    // Follows the same wire-on-every-OnEnable pattern as everything else on
+    // this screen (see WirePlayModeEntry) - ShowScreen clones a fresh UI
+    // tree every visit, so this always runs against this visit's real
+    // sync-progress-button/sync-status-label, never a stale one.
+    private void WireSyncProgress()
+    {
+        if (_syncProgressButton != null)
+        {
+            _syncProgressButton.clicked -= OnSyncProgressButtonClicked;
+            _syncProgressButton.clicked += OnSyncProgressButtonClicked;
+        }
+
+        if (syncService == null)
+        {
+            // No sync service assigned - leave the button/label exactly as
+            // authored in the UXML rather than guessing at a state.
+            return;
+        }
+
+        syncService.OnStatusChanged -= HandleSyncStatusChanged;
+        syncService.OnStatusChanged += HandleSyncStatusChanged;
+
+        // Auto-sync trigger: "Student Explore 3D opens" (plan section 8).
+        // Paint whatever's already known immediately (no network wait), then
+        // kick off a real full sync (upload pending + download/merge) in
+        // the background - HandleSyncStatusChanged repaints again the
+        // moment that finishes.
+        syncService.RefreshStatus();
+        syncService.RequestFullSync();
+    }
+
+    private void OnSyncProgressButtonClicked()
+    {
+        if (syncService == null) return;
+
+        if (!syncService.IsOnline)
+        {
+            // Never lose or delete local data for pressing this while
+            // offline - just tell the student why nothing happened.
+            SetSyncStatusText(
+                "No internet connection.",
+                "Your progress is safely saved locally and will sync when you are online.");
+            return;
+        }
+
+        syncService.RequestFullSync();
+    }
+
+    private void HandleSyncStatusChanged(PlayModeSyncState state, int pendingCount)
+    {
+        switch (state)
+        {
+            case PlayModeSyncState.Syncing:
+                SetSyncButtonText("⟳ Syncing...");
+                SetSyncStatusText("⟳ Syncing...", null);
+                SetSyncProgressButtonEnabled(false);
+                break;
+
+            case PlayModeSyncState.Offline:
+                SetSyncButtonText("☁ Sync Progress");
+                SetSyncStatusText("Offline", "Progress is saved on this device");
+                SetSyncProgressButtonEnabled(true);
+                break;
+
+            case PlayModeSyncState.Pending:
+                SetSyncButtonText(pendingCount > 0 ? $"☁ Sync Now ({pendingCount})" : "☁ Sync Progress");
+                SetSyncStatusText(
+                    pendingCount == 1 ? "⚠ 1 answer waiting to sync" : $"⚠ {pendingCount} answers waiting to sync",
+                    null);
+                SetSyncProgressButtonEnabled(true);
+                break;
+
+            case PlayModeSyncState.Failed:
+                SetSyncButtonText("⚠ Sync failed");
+                SetSyncStatusText("⚠ Sync failed", "Tap to retry");
+                SetSyncProgressButtonEnabled(true);
+                break;
+
+            case PlayModeSyncState.Synced:
+            case PlayModeSyncState.Idle:
+            default:
+                SetSyncButtonText("✓ Synced");
+                SetSyncStatusText("✓ Synced", "All progress is up to date");
+                SetSyncProgressButtonEnabled(true);
+                break;
+        }
+    }
+
+    private void SetSyncButtonText(string text)
+    {
+        if (_syncProgressButton != null) _syncProgressButton.text = text;
+    }
+
+    private void SetSyncProgressButtonEnabled(bool enabled)
+    {
+        if (_syncProgressButton != null) _syncProgressButton.SetEnabled(enabled);
+    }
+
+    // The status label is a single Label element (see the UXML), so a
+    // two-line state ("✓ Synced" / "All progress is up to date") is joined
+    // with a newline rather than needing a second element - USS's
+    // white-space: normal on .sync-status-label lets it wrap/break as
+    // authored.
+    private void SetSyncStatusText(string headline, string detail)
+    {
+        if (_syncStatusLabel == null) return;
+        _syncStatusLabel.text = string.IsNullOrEmpty(detail) ? headline : $"{headline}\n{detail}";
     }
 
     // Play Mode's entry point lives here (Student Explore 3D), not on the

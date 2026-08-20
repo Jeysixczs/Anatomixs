@@ -117,9 +117,59 @@ namespace Anatomia3D.UI
 
         private void Start()
         {
-            // Show login screen by default
-            ShowStudentLogin();
+            // Offline at launch with a previously-signed-in student: there's
+            // no connection to submit the login screen anyway, and
+            // PlayerSessionManager can rebuild CurrentStudent from its local
+            // cache with zero network calls (see
+            // PlayerSessionManager.TryRestoreSessionOffline) - so skip
+            // Login and go straight to Student Explore 3D instead of
+            // stranding the student on a screen they can't get past.
+            // Online, or with no cached session to restore, the normal
+            // login flow is unchanged.
+          
+            StartCoroutine(DecideInitialScreen());
+
+
         }
+
+        
+        
+
+        private IEnumerator DecideInitialScreen()
+        {
+            bool offline = Application.internetReachability == NetworkReachability.NotReachable;
+
+            if (offline)
+            {
+                // FirebaseBootstrap's dependency check is async and can still be
+                // running on this exact frame. This does NOT wait for network -
+                // Auth becomes ready from Firebase's own on-device persisted state,
+                // which doesn't require a connection - it just hasn't finished
+                // initializing yet. Give it a short window before concluding
+                // there's nothing to restore.
+                float timeout = 3f;
+                float elapsed = 0f;
+                while ((FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) && elapsed < timeout)
+                {
+                    yield return null;
+                    elapsed += Time.unscaledDeltaTime;
+                }
+            }
+
+            bool restoredOffline = offline && PlayerSessionManager.Instance != null
+                                             && PlayerSessionManager.Instance.TryRestoreSessionOffline();
+
+            if (restoredOffline)
+            {
+                Debug.Log("[UIManager] Offline at launch with a cached student session - skipping Login, opening Student Explore 3D.");
+                ShowStudentExplore3d();
+            }
+            else
+            {
+                ShowStudentLogin();
+            }
+        }
+
 
         private void FindControllers()
         {
@@ -191,6 +241,29 @@ namespace Anatomia3D.UI
         public void ShowStudentExplore3d()
         {
             ShowScreen(studentExplore3dScreen, _studentExplore3dController);
+        }
+
+        /// <summary>Centralized offline-routing entry point for any screen
+        /// that requires an internet connection. This does NOT add a
+        /// connectivity listener and does NOT run automatically - it only
+        /// routes when a screen explicitly calls it after checking
+        /// connectivity itself, e.g.:
+        ///
+        ///   if (Application.internetReachability == NetworkReachability.NotReachable)
+        ///   {
+        ///       UIManager.Instance?.OfflineDetected();
+        ///       return;
+        ///   }
+        ///
+        /// Student Explore 3D is the safe landing screen because it (and
+        /// Play Mode launched from it) already works fully offline via
+        /// AnatomyPlayModeLocalStorage/AnatomyPlayModeSyncService - nothing
+        /// about that offline support is changed by this method. This is
+        /// separate from the offline-at-launch handling in Start(), which
+        /// stays exactly as-is.</summary>
+        public void OfflineDetected()
+        {
+            ShowStudentExplore3d();
         }
 
        

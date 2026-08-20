@@ -252,6 +252,20 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            //bool offline = Application.internetReachability == NetworkReachability.NotReachable;
+
+            //if (AdminGamificationService.Instance == null || offline)
+            //{
+            //    // Same fallback that already exists for "service not ready" -
+            //    // now also used offline, so cached Level/TotalPoints/QuizzesCompleted
+            //    // paint immediately instead of waiting on a Firestore call that
+            //    // may never resolve with no connection.
+            //    SetStudentData(student.FullName, student.Level, student.Level, 0f, 0,
+            //                   student.QuizzesCompleted, student.TotalPoints);
+            //    return;
+            //}
+
+
             if (AdminGamificationService.Instance == null)
             {
                 Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +

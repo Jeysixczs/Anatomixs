@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Anatomia3D.UI;
 using Firebase;
 using Firebase.Auth;
@@ -48,6 +49,108 @@ namespace Anatomia3D.Backend
 
         public StudentProfile CurrentStudent { get; private set; }
         public bool IsLoggedIn => CurrentStudent != null;
+
+        // ---------------- Offline session restore ----------------
+        //
+        // Firebase Auth persists its own signed-in user locally on-device
+        // (Auth.CurrentUser survives an app restart with zero network
+        // calls) - what's missing without the cache below is the
+        // students/{uid} PROFILE data (fullName, level, points, etc.),
+        // which normally only arrives via a Firestore read. CacheStudent
+        // mirrors the last known-good profile to disk every time
+        // CurrentStudent is set from real data (login or the live
+        // listener), so TryRestoreSessionOffline can rebuild a full
+        // CurrentStudent with no network at all.
+
+        private const string SessionCacheFileName = "student_session_cache.json";
+        private string SessionCacheFilePath => Path.Combine(Application.persistentDataPath, SessionCacheFileName);
+
+        private void CacheStudent(StudentProfile profile)
+        {
+            if (profile == null) return;
+            try
+            {
+                File.WriteAllText(SessionCacheFilePath, JsonUtility.ToJson(profile));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[PlayerSessionManager] Could not cache session: {e.Message}");
+            }
+        }
+
+        private StudentProfile LoadCachedStudent()
+        {
+            try
+            {
+                if (!File.Exists(SessionCacheFilePath)) return null;
+                return JsonUtility.FromJson<StudentProfile>(File.ReadAllText(SessionCacheFilePath));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[PlayerSessionManager] Could not read cached session: {e.Message}");
+                return null;
+            }
+        }
+
+        private void ClearCachedStudent()
+        {
+            try
+            {
+                if (File.Exists(SessionCacheFilePath)) File.Delete(SessionCacheFilePath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[PlayerSessionManager] Could not clear cached session: {e.Message}");
+            }
+        }
+
+        /// <summary>Restores CurrentStudent from the last cached profile with
+        /// NO network call - call this once at app start (see
+        /// UIManager.Start) before deciding whether to show the login
+        /// screen, so a student who's already signed in doesn't get stuck
+        /// on Login with no internet to submit it. Only succeeds if Firebase
+        /// Auth still has a locally-persisted signed-in user (Auth.CurrentUser
+        /// - Firebase's own on-device cache, unrelated to connectivity)
+        /// whose uid matches the cached profile, so a logged-out device or a
+        /// different account never picks up someone else's cached data.
+        ///
+        /// Still starts the normal real-time students/{uid} listener, so the
+        /// moment connectivity returns the restored profile is refreshed
+        /// from the server exactly as if this had been a normal online
+        /// login - this is a starting point, not a permanent substitute for
+        /// real data.</summary>
+        public bool TryRestoreSessionOffline()
+        {
+            if (CurrentStudent != null) return true; // already signed in this session
+
+            // Firebase initializes asynchronously (see FirebaseBootstrap.Awake) -
+            // this can be called (from UIManager.Start) before that finishes,
+            // in which case Auth isn't available yet. Nothing has changed
+            // about WHAT gets restored or how - this just avoids reading
+            // through a not-yet-ready FirebaseBootstrap.Instance.Auth.
+            if (FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null)
+            {
+                Debug.LogWarning("[PlayerSessionManager] Firebase not ready yet - cannot restore offline session this early.");
+                return false;
+            }
+
+            var authUser = Auth.CurrentUser;
+            if (authUser == null) return false; // Firebase itself has no persisted sign-in
+
+            var cached = LoadCachedStudent();
+            if (cached == null || cached.Uid != authUser.UserId) return false;
+
+            // Email/EmailVerified always mirror Auth directly (see the
+            // StudentProfile field comments) - refresh them from Auth even
+            // though the rest of the profile below is coming from cache.
+            cached.Email = authUser.Email;
+            cached.EmailVerified = authUser.IsEmailVerified;
+
+            CurrentStudent = cached;
+            OnStudentProfileChanged?.Invoke(CurrentStudent);
+            StartStudentListener(cached.Uid);
+            return true;
+        }
 
         /// <summary>The new address a verification link was just sent to, if
         /// any - purely in-memory for this session, never written to
@@ -641,6 +744,11 @@ namespace Anatomia3D.Backend
             try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
             PendingEmail = null;
+
+            // Without this, TryRestoreSessionOffline would have nothing of
+            // this student's to restore next launch - which is exactly
+            // right, since they explicitly signed out.
+            ClearCachedStudent();
         }
 
         // ---------------- Refresh ----------------
@@ -754,6 +862,7 @@ namespace Anatomia3D.Backend
         private void SetCurrentStudentAndListen(StudentProfile profile)
         {
             CurrentStudent = profile;
+            CacheStudent(profile);
             OnStudentProfileChanged?.Invoke(CurrentStudent);
             StartStudentListener(profile.Uid);
         }
@@ -793,6 +902,7 @@ namespace Anatomia3D.Backend
             if (StudentProfilesEqual(CurrentStudent, incoming)) return;
 
             CurrentStudent = incoming;
+            CacheStudent(incoming);
             OnStudentProfileChanged?.Invoke(CurrentStudent);
         }
 

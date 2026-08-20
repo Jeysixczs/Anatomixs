@@ -73,9 +73,23 @@ namespace Anatomia3D.Backend
         }
 
         [Header("Firebase")]
-        [Tooltip("Optional. If assigned, every answered question is saved via this script. " +
-                 "Leave unassigned to run Play Mode without Firebase saving.")]
+        [Tooltip("Optional. If assigned, incorrect attempts are logged via this script directly, " +
+                 "and it's used as a fallback for correct answers when no LocalStorage is assigned. " +
+                 "Leave unassigned to run Play Mode without any Firebase saving.")]
         [SerializeField] private AnatomyPlayModeFirebase firebase;
+
+        [Header("Offline Storage & Sync")]
+        [Tooltip("Required for offline play. Every correct answer is saved here immediately, " +
+                 "before any Firebase call is attempted - this is what makes Play Mode work " +
+                 "with no internet connection, and what restores completed structures the next " +
+                 "time Play Mode opens. Leave unassigned to fall back to saving straight to " +
+                 "Firebase (no offline support, no restore across sessions).")]
+        [SerializeField] private AnatomyPlayModeLocalStorage localStorage;
+
+        [Tooltip("Optional. Automatically retries syncing pending local answers to Firebase " +
+                 "once the device is back online. Leave unassigned to skip auto-retry - answers " +
+                 "still save locally and sync immediately whenever they're first answered while online.")]
+        [SerializeField] private AnatomyPlayModeSyncService syncService;
 
         private AnatomyScreenController _screen;
         private VisualElement _root;
@@ -116,6 +130,14 @@ namespace Anatomia3D.Backend
         // index that is whitespace in the DisplayName - spaces are always
         // shown, never counted as a hintable position.
         private readonly HashSet<int> _revealedIndices = new HashSet<int>();
+
+        // The signed-in student's uid, the same identity AnatomyPlayModeFirebase
+        // already reads from PlayerSessionManager - never a locally-invented id,
+        // so local storage and Firebase records for the same student always line up.
+        private static string CurrentStudentId =>
+            PlayerSessionManager.Instance != null && PlayerSessionManager.Instance.CurrentStudent != null
+                ? PlayerSessionManager.Instance.CurrentStudent.Uid
+                : null;
 
         public bool IsPlayModeActive => _isPlayModeActive;
         public int TotalPoints => _totalPoints;
@@ -168,6 +190,18 @@ namespace Anatomia3D.Backend
             _screen.OnScreenReady -= HandleScreenReady;
             _screen.OnScreenReady += HandleScreenReady;
 
+            // Sync Progress can complete while this screen is sitting open
+            // in Play Mode (a background auto-sync, or the student
+            // switching back after tapping Sync on Student Explore 3D) -
+            // subscribe so _completedKeys picks up anything newly merged
+            // down from Firebase without requiring a screen reopen (see the
+            // plan's section 7 and RefreshCompletedKeys below).
+            if (syncService != null)
+            {
+                syncService.OnSyncCompleted -= HandleSyncCompleted;
+                syncService.OnSyncCompleted += HandleSyncCompleted;
+            }
+
             // Also cover the screen instance that's already active right now
             // (the one that caused this OnEnable to run in the first place).
             HandleScreenReady();
@@ -180,6 +214,9 @@ namespace Anatomia3D.Backend
                 _screen.OnStructureSelected -= OnStructureSelected;
                 _screen.OnScreenReady -= HandleScreenReady;
             }
+
+            if (syncService != null)
+                syncService.OnSyncCompleted -= HandleSyncCompleted;
 
             if (_isolateAnsweredButton != null) _isolateAnsweredButton.clicked -= OnIsolateAnsweredClicked;
             if (_unansweredButton != null) _unansweredButton.clicked -= OnUnansweredClicked;
@@ -333,6 +370,14 @@ namespace Anatomia3D.Backend
         {
             _isPlayModeActive = true;
 
+            // Restore this student's completed structures from local
+            // storage before anything else below can generate or allow a
+            // question - see the plan's section 5 ("Populate
+            // _completedKeys before generating or allowing new questions").
+            // This works with no internet connection, since local storage
+            // never touches Firebase.
+            LoadCompletedKeysFromLocalStorage();
+
             // Play Mode's own Isolate Answered must never fight Explore
             // Mode's Isolate Selected Bone / Hide - turn those off first so
             // Play Mode starts from a clean visibility state. Their
@@ -381,6 +426,93 @@ namespace Anatomia3D.Backend
 
             _currentQuestion = null;
             HideCompletionPanel();
+        }
+
+        // Populates _completedKeys from AnatomyPlayModeLocalStorage - the
+        // same data that's used to restore "Already Answered" state and to
+        // stop the Random button from ever picking a completed structure.
+        // Reloading from local storage (rather than trusting whatever was
+        // already in memory) is deliberate: local storage is the
+        // authoritative record of what this student has completed, and it's
+        // exactly what section 5 of the plan asks for on every Play Mode
+        // start. Safe to call with no signed-in student or no LocalStorage
+        // assigned - _completedKeys is simply left as-is (in-memory-only
+        // progress, same as before this feature existed).
+        private void LoadCompletedKeysFromLocalStorage()
+        {
+            if (localStorage == null) return;
+
+            string studentId = CurrentStudentId;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                Debug.LogWarning("[AnatomyPlayModeController] No signed-in student - cannot restore Play Mode progress from local storage.");
+                return;
+            }
+
+            localStorage.Load(studentId);
+
+            _completedKeys.Clear();
+            foreach (var key in localStorage.GetCompletedKeys())
+                _completedKeys.Add(key);
+        }
+
+        // Fires whenever AnatomyPlayModeSyncService finishes a full sync
+        // (upload + download/merge), whether or not this screen - or Play
+        // Mode within it - happens to be open right now. Only act if Play
+        // Mode is actually active; otherwise the next ActivatePlayMode call
+        // will call LoadCompletedKeysFromLocalStorage itself anyway.
+        private void HandleSyncCompleted()
+        {
+            if (_isPlayModeActive)
+                RefreshCompletedKeys();
+        }
+
+        /// <summary>Re-reads _completedKeys from local storage and updates
+        /// every part of the UI that depends on it, WITHOUT resetting the
+        /// current question, points, or streak - the safe "refresh, don't
+        /// restart" path the plan's section 7 asks for so a Sync Progress
+        /// download that merges in structures answered on another device
+        /// shows up immediately if Play Mode is already open. Newly-merged
+        /// keys are also excluded from being asked again by CurrentQuestion/
+        /// PickRandomUnanswered - they simply behave exactly like a
+        /// just-answered-in-this-session key would.
+        ///
+        /// Safe to call whether or not Play Mode is currently active (it
+        /// simply does nothing useful if not - HandleSyncCompleted already
+        /// guards that for the automatic path, but this stays public so
+        /// StudentExplore3dController/other callers don't need to know
+        /// that).</summary>
+        public void RefreshCompletedKeys()
+        {
+            if (!_isPlayModeActive) return;
+
+            int before = _completedKeys.Count;
+            LoadCompletedKeysFromLocalStorage();
+
+            UpdateProgressLabel();
+
+            // Isolate Answered/Unanswered fully replace the visible set on
+            // every call rather than layering - re-apply whichever is
+            // currently on so newly-merged structures are reflected without
+            // the player having to re-toggle it themselves.
+            if (_isolateAnsweredEnabled)
+                SetIsolateAnswered(true);
+            else if (_isolateUnansweredEnabled)
+                SetIsolateUnanswered(true);
+
+            // A structure the player is CURRENTLY being quizzed on just got
+            // marked complete by the merge (e.g. answered on another
+            // device moments ago) - don't leave a stale question up.
+            if (_currentQuestion != null && _completedKeys.Contains(_currentQuestion.boneName))
+            {
+                _currentQuestion = null;
+                _screen.SetInfoPanelDescription("This structure was already answered on another device.");
+                SetGuessUiEnabled(false);
+                _letterRow?.AddToClassList("hidden");
+            }
+
+            if (_completedKeys.Count > before)
+                CheckForCompletion();
         }
 
         // ===== Isolate Answered / Isolate Unanswered =====
@@ -730,7 +862,7 @@ namespace Anatomia3D.Backend
             SetGuessUiEnabled(false);
             _letterRow?.AddToClassList("hidden");
 
-            firebase?.SaveAnswer(info.boneName, entry.displayName, true, _currentHints, questionPoints, _currentStreak, streakBonus);
+            SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints, streakBonus);
 
             // Isolate Answered is live - a newly-completed key should
             // immediately become visible if the player has it toggled on.
@@ -744,6 +876,42 @@ namespace Anatomia3D.Backend
 
             UpdateProgressLabel();
             CheckForCompletion();
+        }
+
+        // Offline-first save for a correct answer - see the plan's section
+        // 3. Local storage is written to immediately and always succeeds
+        // regardless of connectivity; Firebase is then attempted (via the
+        // sync service if one is assigned, so retries stay idempotent) but
+        // is never required for the answer itself to be accepted.
+        private void SaveCorrectAnswer(string key, string displayName, int pointsEarned, int streakBonus)
+        {
+            string studentId = CurrentStudentId;
+            if (localStorage == null || string.IsNullOrEmpty(studentId))
+            {
+                // No offline storage available (or no signed-in student) -
+                // fall back to the original direct-to-Firebase save so Play
+                // Mode still works, just without offline/restore support.
+                firebase?.SaveAnswer(key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+                return;
+            }
+
+            var record = localStorage.SaveAnswer(
+                studentId, key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+
+            if (syncService != null)
+            {
+                syncService.RequestSync();
+            }
+            else if (firebase != null)
+            {
+                // No sync service assigned - still try to reach Firebase
+                // right away (e.g. while online) using the same idempotent,
+                // deterministic-ID write a retry would use.
+                firebase.SyncRecord(record, success =>
+                {
+                    if (success) localStorage.MarkSynced(key);
+                });
+            }
         }
 
         private void HandleIncorrectAnswer()
