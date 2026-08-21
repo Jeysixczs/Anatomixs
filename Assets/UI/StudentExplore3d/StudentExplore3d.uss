@@ -185,6 +185,61 @@
     border-color: rgb(34, 160, 110);
 }
 
+/* ---------------- SYNC PROGRESS ---------------- */
+
+/* Sits below the header-top-row, above the card list. StudentExplore3dController
+   sets both the button text and the status label text/color from
+   AnatomyPlayModeSyncService's current state (synced/pending/offline/
+   syncing/failed) - the classes below only cover layout, not per-state
+   coloring, which is applied inline via USS class swaps below. */
+.sync-progress-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    padding: 16px 22px;
+    margin-top: 20px;
+    box-sizing: border-box;
+}
+
+.sync-progress-button {
+    flex-shrink: 0;
+    width: auto;
+    height: 56px;
+    padding-left: 22px;
+    padding-right: 22px;
+    border-width: 0;
+    border-radius: 28px;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: white;
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+.sync-progress-button:hover {
+    background-color: rgba(255, 255, 255, 0.32);
+}
+
+.sync-progress-button:active {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.sync-progress-button:disabled {
+    opacity: 0.7;
+}
+
+.sync-status-label {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 20px;
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: normal;
+    word-wrap: break-word;
+    -unity-text-align: middle-right;
+}
+
 /* ---------------- SCROLL VIEW ---------------- */
 
 .screen-scroll {
@@ -457,6 +512,24 @@
     font-size: 22px;
 }
 
+.compact .sync-progress-row {
+    padding: 12px 18px;
+    margin-top: 16px;
+    border-radius: 20px;
+}
+
+.compact .sync-progress-button {
+    height: 46px;
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 20px;
+}
+
+.compact .sync-status-label {
+    font-size: 18px;
+    margin-left: 14px;
+}
+
 .compact .play-mode-picker-banner {
     margin-left: 34px;
     margin-right: 34px;
@@ -564,6 +637,25 @@
     padding-right: 16px;
     font-size: 18px;
     border-radius: 22px;
+}
+
+.compact-extra .sync-progress-row {
+    padding: 10px 14px;
+    margin-top: 12px;
+    border-radius: 16px;
+}
+
+.compact-extra .sync-progress-button {
+    height: 38px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 16px;
+    border-radius: 19px;
+}
+
+.compact-extra .sync-status-label {
+    font-size: 15px;
+    margin-left: 10px;
 }
 
 .compact-extra .play-mode-picker-banner {

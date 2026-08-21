@@ -3406,6 +3406,8 @@ GameObject:
   - component: {fileID: 1051780048}
   - component: {fileID: 1051780051}
   - component: {fileID: 1051780050}
+  - component: {fileID: 1051780053}
+  - component: {fileID: 1051780052}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -4107,6 +4109,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   diagonalGradient: 1
   gradientTextureResolution: 64
+  syncService: {fileID: 0}
 --- !u!114 &1051780049
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4204,6 +4207,8 @@ MonoBehaviour:
   - streakCount: 10
     bonusPoints: 100
   firebase: {fileID: 1051780051}
+  localStorage: {fileID: 1051780053}
+  syncService: {fileID: 1051780052}
 --- !u!114 &1051780051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4216,6 +4221,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925d0ba4f50b5dc439e157c8d51f28d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AnatomyPlayModeFirebase
+--- !u!114 &1051780052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc538e50177de5340b5404e9e645c049, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AnatomyPlayModeSyncService
+  pollIntervalSeconds: 5
+  localStorage: {fileID: 1051780053}
+  firebase: {fileID: 1051780051}
+--- !u!114 &1051780053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 380b71b4bcd879144904efa2244a62f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.AnatomyPlayModeLocalStorage
 --- !u!1 &1092176651
 GameObject:
   m_ObjectHideFlags: 0

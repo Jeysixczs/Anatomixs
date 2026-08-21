@@ -20,6 +20,17 @@
                          system's Anatomy Screen in Play Mode. -->
                     <ui:Button name="play-mode-entry-button" text="▶ Play" class="play-mode-entry-button"/>
                 </ui:VisualElement>
+                <!-- Manual sync entry point for locally-stored offline Play
+                     Mode progress. StudentExplore3dController drives both
+                     the button text and the status label from
+                     AnatomyPlayModeSyncService's status - see
+                     HandleSyncStatusChanged. -->
+                <ui:VisualElement name="sync-progress-row" class="sync-progress-row">
+                    <ui:Button name="sync-progress-button"
+                               class="sync-progress-button"
+                               text="☁ Sync Progress"/>
+                    <ui:Label name="sync-status-label" class="sync-status-label"/>
+                </ui:VisualElement>
             </ui:VisualElement>
 
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
