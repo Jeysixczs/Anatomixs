@@ -262,9 +262,16 @@ namespace Anatomia3D.Backend
                 StructureDisplayName = _highlightedEntry.displayName,
             };
 
+            _screen.ResetView();
+
             OnTeacherStructureSelected?.Invoke(result);
 
             ReturnToAdminQuizManagement();
         }
+
+   
+       
+
+
     }
 }

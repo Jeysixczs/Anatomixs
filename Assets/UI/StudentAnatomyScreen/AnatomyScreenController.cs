@@ -2491,6 +2491,15 @@ public class AnatomyScreenController : MonoBehaviour
             }
         }
 
+        // Restore the Mesh Collider's enabled state for every bone, in case any were disabled by Hide or Isolate.
+        foreach (var info in boneData)
+        {
+            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
+            if (rend == null) continue;
+            var col = rend.GetComponent<Collider>();
+            if (col != null) col.enabled = true;
+        }
+
         if (modelCamera != null && skeletonRoot != null)
         {
             _isFocusingBone = false;
@@ -2838,4 +2847,6 @@ public class AnatomyScreenController : MonoBehaviour
         else
             UIManager.Instance.ShowStudentExplore3d();
     }
+
+    public void ResetView() => OnResetClicked();
 }

@@ -12,7 +12,7 @@
                             <ui:Label name="classroom-name-label" text="Anatomi" class="header-title"/>
                             <ui:Label name="archived-badge-label" text="Archived" class="archived-badge hidden"/>
                         </ui:VisualElement>
-                        <ui:Button name="archive-button" text="Archive" class="archive-button"/>
+                        <ui:Button name="archive-button" text="Lock" class="archive-button"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="classroom-code-box" class="classroom-code-box">
                         <ui:VisualElement class="classroom-code-text-block">
