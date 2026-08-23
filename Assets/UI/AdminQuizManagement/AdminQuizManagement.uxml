@@ -404,6 +404,13 @@
                                 <ui:Label text="Cardiovascular" class="image-based-system-label"/>
                             </ui:Button>
                         </ui:VisualElement>
+                        <ui:VisualElement name="image-based-selected-structure-panel" class="image-based-selected-structure-panel hidden">
+                            <ui:Label text="Selected Structure" class="field-label"/>
+                            <ui:Label name="image-based-selected-structure-name" text="" class="image-based-selected-structure-name"/>
+                            <ui:Label name="image-based-selected-structure-system" text="" class="image-based-selected-structure-system"/>
+                            <ui:Button name="image-based-change-structure-button" text="Change Structure" class="image-based-change-structure-button"/>
+                        </ui:VisualElement>
+                        <ui:Label name="image-based-structure-error" text="" class="field-error hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="identification-container">
                         <ui:Label text="Correct Answer" name="correct-answer-label" class="field-label field-label-spaced"/>

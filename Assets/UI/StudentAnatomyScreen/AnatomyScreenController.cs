@@ -197,6 +197,16 @@ public class AnatomyScreenController : MonoBehaviour
     // never AnatomyPlayModeController's.
     public event System.Action OnScreenReady;
 
+    // ===== Teacher structure-selection integration hook =====
+    // Optional override for where the Back button navigates. Null (default) keeps
+    // the normal behavior - back to Student Explore 3D. A sibling controller (see
+    // AnatomyTeacherSelectionController) sets this while its own teacher-only
+    // selection mode is active, so Back returns to Admin Quiz Management instead -
+    // same "this class stays completely agnostic of the caller" approach already
+    // used for OnStructureSelected/OnScreenReady above. The sibling controller is
+    // responsible for clearing this back to null once its mode ends.
+    public System.Action BackNavigationOverride;
+
     // Whether Isolate is currently active, so a second tap of the same
     // button toggles it back off instead of stacking another isolate on
     // top. _isolateUndo is the exact same delegate handed to PushUndo when
@@ -2811,14 +2821,16 @@ public class AnatomyScreenController : MonoBehaviour
 
     private void OnBackClicked()
     {
-        //reset the camera and bone selection before going back to the explore 3d screen
+        //reset the camera and bone selection before going back
         OnResetClicked();
 
         // hide the active fbx
         if (skeletonRoot != null)
             skeletonRoot.gameObject.SetActive(false);
 
-
-        UIManager.Instance.ShowStudentExplore3d();
+        if (BackNavigationOverride != null)
+            BackNavigationOverride.Invoke();
+        else
+            UIManager.Instance.ShowStudentExplore3d();
     }
 }

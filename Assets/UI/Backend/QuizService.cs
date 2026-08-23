@@ -46,6 +46,19 @@ namespace Anatomia3D.Backend
             public string CorrectAnswer;
             public string Difficulty;
             public int Points;
+
+            // Image-Based only (QuestionTypeSlugs.ImageBased) - which anatomy system/
+            // structure the teacher picked via the Student Anatomy Screen. Left null/
+            // empty for every other question type (see QuestionTypeSlugs.cs).
+            // structureKey is the internal 3D-model/BoneDatabase.json identifier -
+            // structureDisplayName is the human-readable name, which CorrectAnswer
+            // above must always equal for this type. Never used to derive
+            // CorrectAnswer here - AdminQuizManagementController sets both from the
+            // same selection so they can never drift apart.
+            public string AnatomySystemKey;
+            public string AnatomySystemDisplayName;
+            public string StructureKey;
+            public string StructureDisplayName;
         }
 
         [Serializable]
@@ -1655,7 +1668,14 @@ namespace Anatomia3D.Backend
                 { "options", q.Options ?? new List<string>() },
                 { "correctAnswer", q.CorrectAnswer },
                 { "difficulty", q.Difficulty },
-                { "points", q.Points }
+                { "points", q.Points },
+                // Empty string (not null) for non-Image-Based questions - Firestore
+                // dictionary values can't be C# null here without extra handling, and
+                // an absent/empty field reads back the same way via TryGetValue below.
+                { "anatomySystemKey", q.AnatomySystemKey ?? string.Empty },
+                { "anatomySystemDisplayName", q.AnatomySystemDisplayName ?? string.Empty },
+                { "structureKey", q.StructureKey ?? string.Empty },
+                { "structureDisplayName", q.StructureDisplayName ?? string.Empty }
             };
         }
 
@@ -1699,7 +1719,11 @@ namespace Anatomia3D.Backend
                                 : new List<string>(),
                             CorrectAnswer = map.TryGetValue("correctAnswer", out var ca) ? ca.ToString() : "",
                             Difficulty = map.TryGetValue("difficulty", out var diff) ? diff.ToString() : "medium",
-                            Points = map.TryGetValue("points", out var pts) ? Convert.ToInt32(pts) : 0
+                            Points = map.TryGetValue("points", out var pts) ? Convert.ToInt32(pts) : 0,
+                            AnatomySystemKey = map.TryGetValue("anatomySystemKey", out var ask) ? ask.ToString() : "",
+                            AnatomySystemDisplayName = map.TryGetValue("anatomySystemDisplayName", out var asd) ? asd.ToString() : "",
+                            StructureKey = map.TryGetValue("structureKey", out var sk) ? sk.ToString() : "",
+                            StructureDisplayName = map.TryGetValue("structureDisplayName", out var sd) ? sd.ToString() : ""
                         });
                     }
                 }

@@ -3518,6 +3518,51 @@
     color: rgb(31, 36, 48);
 }
 
+.image-based-selected-structure-panel
+{
+    flex-direction: column;
+    background-color: rgba(37, 99, 235, 0.05);
+    border-width: 2px;
+    border-color: rgb(37, 99, 235);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-top: 16px;
+}
+
+.image-based-selected-structure-name
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-top: 4px;
+}
+
+.image-based-selected-structure-system
+{
+    font-size: 20px;
+    color: rgb(100, 108, 128);
+    margin-top: 2px;
+}
+
+.image-based-change-structure-button
+{
+    align-self: flex-start;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(37, 99, 235);
+    border-radius: 14px;
+    color: rgb(37, 99, 235);
+    -unity-font-style: bold;
+    font-size: 20px;
+    padding: 8px 18px;
+    margin-top: 12px;
+}
+
+.image-based-change-structure-button:hover
+{
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
 /* ---------- Success views (quiz created / question added) ---------- */
 
 .success-view

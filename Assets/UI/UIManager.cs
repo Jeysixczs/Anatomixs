@@ -302,6 +302,19 @@ namespace Anatomia3D.UI
             });
         }
 
+        /// <summary>Returns to the SAME in-progress quiz attempt after a round trip to
+        /// the Anatomy Screen for an Image-Based question's "View on 3D Model" button
+        /// (see AnatomyQuizHighlightController) - repaints the current question and
+        /// resumes the countdown from wherever it was left, but never re-fetches the
+        /// quiz or resets progress the way ShowStudentQuizGameplay above does.</summary>
+        public void ShowStudentQuizGameplayResume()
+        {
+            ShowScreen(studentQuizGameplayScreen, _studentQuizGameplayController, () =>
+            {
+                _studentQuizGameplayController?.ResumeInProgressQuiz();
+            });
+        }
+
         /// <param name="startInPlayMode">Pass true from Student Explore 3D's Play
         /// Mode system picker so the Anatomy Screen comes up with Play Mode
         /// already active - the student picked "play the Skeletal System",
@@ -331,6 +344,52 @@ namespace Anatomia3D.UI
                                       "AnatomyPlayModeController was found on the Anatomy Screen GameObject.");
             });
         }
+
+        /// <summary>Opens the same reusable Anatomy Screen, but in Teacher Selection
+        /// Mode - called from Admin Quiz Management's Image-Based system cards (see
+        /// AdminQuizManagementController.OpenAnatomyScreenForStructureSelection) so a
+        /// teacher can pick the exact 3D structure that becomes a question's correct
+        /// answer. Never used by any student-facing flow; Play Mode and Explore Mode
+        /// are untouched by this path (see AnatomyTeacherSelectionController).</summary>
+        public void ShowStudentAnatomyScreenForTeacherSelection(AnatomySystem system)
+        {
+            _studentAnatomyScreenController?.SetAnatomySystem(system);
+            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
+            {
+                var teacherSelection = _studentAnatomyScreenController != null
+                    ? _studentAnatomyScreenController.GetComponent<AnatomyTeacherSelectionController>()
+                    : null;
+
+                if (teacherSelection != null)
+                    teacherSelection.RequestTeacherSelectionModeOnOpen(system);
+                else
+                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForTeacherSelection: no " +
+                                      "AnatomyTeacherSelectionController was found on the Anatomy Screen GameObject.");
+            });
+        }
+
+        /// <summary>Opens the Anatomy Screen read-only, highlighting/focusing the exact
+        /// structure a teacher picked for an Image-Based quiz question, WITHOUT
+        /// revealing its name (see AnatomyQuizHighlightController) - called from the
+        /// quiz card's "View on 3D Model" button. Back returns to the same in-progress
+        /// attempt via ShowStudentQuizGameplayResume below, never to Student Explore 3D.</summary>
+        public void ShowStudentAnatomyScreenForQuizHighlight(AnatomySystem system, string structureKey)
+        {
+            _studentAnatomyScreenController?.SetAnatomySystem(system);
+            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
+            {
+                var quizHighlight = _studentAnatomyScreenController != null
+                    ? _studentAnatomyScreenController.GetComponent<AnatomyQuizHighlightController>()
+                    : null;
+
+                if (quizHighlight != null)
+                    quizHighlight.RequestHighlightModeOnOpen(structureKey);
+                else
+                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForQuizHighlight: no " +
+                                      "AnatomyQuizHighlightController was found on the Anatomy Screen GameObject.");
+            });
+        }
+
         public void ShowStudentQuizResult(
             string quizName,
             int correctCount,

@@ -748,3 +748,25 @@
     height: 84px;
     margin: 9px 24px 30px 24px;
 }
+
+/* ---------------- IMAGE BASED (View on 3D Model button) ---------------- */
+
+.view-model-button {
+    height: 78px;
+    margin: 0 0 21px 0;
+    border-radius: 21px;
+    border-width: 0;
+    background-color: rgb(59, 130, 246);
+    color: rgb(255, 255, 255);
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+.view-model-button:hover {
+    background-color: rgb(37, 99, 235);
+}
+
+.compact .view-model-button {
+    height: 66px;
+    font-size: 21px;
+}
