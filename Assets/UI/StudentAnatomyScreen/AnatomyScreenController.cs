@@ -494,6 +494,9 @@ public class AnatomyScreenController : MonoBehaviour
         ResolveAnatomySystem();
         ResetRuntimeState();
 
+        //low
+        OfflineTextToSpeech.prewarm();
+
         // --- Info panel ---
         _infoPanel = _root.Q<VisualElement>("InfoPanel");
         _titleLabel = _root.Q<Label>("TitleLabel");
@@ -1361,6 +1364,8 @@ public class AnatomyScreenController : MonoBehaviour
     private void SelectStructure(BoneInfo info, BoneSelectionSource source)
     {
         Debug.Log($"[AnatomyScreenController] SelectStructure ({source}): '{info.boneName}'");
+
+        StopAudio();
 
         _selectedBone = info;
         DisplayBoneInfo(info);

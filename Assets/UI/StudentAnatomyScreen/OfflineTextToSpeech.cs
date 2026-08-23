@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -183,6 +184,13 @@ public static class OfflineTextToSpeech
         }
 #elif UNITY_IOS && !UNITY_EDITOR
         _TTS_Stop();
+#endif
+    }
+
+    public static void prewarm()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        EnsureInitialized();
 #endif
     }
 }
