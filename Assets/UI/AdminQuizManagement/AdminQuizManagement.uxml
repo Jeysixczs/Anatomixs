@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;type=3#AdminQuizManagement"/>
+    <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
@@ -31,13 +31,12 @@
                 <ui:VisualElement name="body-content" class="body-content">
                     <ui:VisualElement name="search-row" class="search-row">
                         <ui:VisualElement name="search-field-wrapper" class="search-field-wrapper">
-                            <ui:Label text="" class="search-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;type=3#search-icon&quot;); height: 51px; width: 52px;"/>
+                            <ui:Label text="" class="search-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;guid=46917629dafc20049adaebe048c8263a&amp;type=3#search-icon&quot;); height: 51px; width: 52px;"/>
                             <ui:TextField name="quiz-search-field" placeholder-text="Search quizzes" class="search-field"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
                         <ui:Label text="No quizzes yet" class="empty-state-text"/>
-                        <ui:Button name="create-first-quiz-button" text="Create Your First Quiz" class="empty-state-button"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="quizzes-no-results-state" class="quizzes-empty-state hidden">
                         <ui:Label text="No quizzes match your search" class="empty-state-text"/>
@@ -62,7 +61,7 @@
                     <ui:Label name="quiz-detail-subtitle-label" text="" class="quiz-detail-subtitle"/>
                 </ui:VisualElement>
                 <ui:Button name="quiz-detail-delete-button" class="quiz-detail-delete-button">
-                    <ui:Label class="quiz-detail-delete-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/delete-icon.png?fileID=2800000&amp;type=3#delete-icon&quot;); width: 56px; height: 56px;"/>
+                    <ui:Label class="quiz-detail-delete-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/delete-icon.png?fileID=2800000&amp;guid=88ae72ac12e6cc14a8115adf270a483f&amp;type=3#delete-icon&quot;); width: 56px; height: 56px;"/>
                 </ui:Button>
             </ui:VisualElement>
             <ui:ScrollView name="quiz-detail-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="quiz-detail-scroll screen-scroll">
@@ -163,13 +162,13 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="create-quiz-step-1" class="wizard-step wizard-step-static">
                     <ui:Label text="Quiz Title" class="field-label field-label-spaced"/>
-                    <ui:TextField name="quiz-title-field" class="text-field" placeholder-text="Enter quiz title"/>
+                    <ui:TextField name="quiz-title-field" placeholder-text="Enter quiz title" class="text-field"/>
                     <ui:Label name="quiz-title-error" text="" class="field-error hidden"/>
                     <ui:VisualElement class="field-label-row field-label-spaced">
                         <ui:Label text="Category" class="field-label"/>
                         <ui:Label text="Type to create your own" class="field-hint"/>
                     </ui:VisualElement>
-                    <ui:TextField name="quiz-category-field" class="text-field" placeholder-text="e.g. Science, History, General Knowledge"/>
+                    <ui:TextField name="quiz-category-field" placeholder-text="e.g. Science, History, General Knowledge" class="text-field"/>
                     <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
                     <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
                     <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
@@ -441,17 +440,6 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <!-- Declared here - as a top-level sibling of screen-root's other children/overlays,
-             rather than nested inside #create-quiz-step-1 - so it floats the same way Unity's
-             own unity-base-dropdown__container-outer does: attached at the panel level instead
-             of a local ancestor, so it is never clipped by #create-quiz-step-1's overflow:hidden
-             (that section is a fixed, non-scrolling area, so a nested panel could get cut off
-             whenever the calendar didn't fit inside that step's own bounds) and always paints on
-             top of the wizard/modal content beneath it, since it's the LAST sibling here. Its
-             left/top/width are computed at runtime in PositionDeadlinePanel() from the selector
-             button's world bounds converted into this element's parent (#screen-root) local
-             space, the same way Unity computes a dropdown's outer container position from its
-             source control. -->
         <ui:VisualElement name="quiz-deadline-picker-panel" class="deadline-picker-panel hidden">
             <ui:ScrollView name="quiz-deadline-picker-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" class="deadline-picker-scroll">
                 <ui:VisualElement name="quiz-deadline-picker-content" class="deadline-picker-content">
