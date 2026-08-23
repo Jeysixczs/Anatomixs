@@ -39,5 +39,4 @@ A Unity-based educational application for learning human anatomy through interac
 - `/home/runner/work/Anatomixs/Anatomixs/Packages/` - Unity package configuration (`manifest.json`, `packages-lock.json`)
 - `/home/runner/work/Anatomixs/Anatomixs/ProjectSettings/` - Unity project settings and editor version
 
-## Authors
-- Jeysixczs
+
