@@ -28,10 +28,12 @@
 .header
 {
     width: 100%;
-    padding-left: 53px;
-    padding-right: 53px;
-    padding-top: 118px;
-    padding-bottom: 53px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 92px;
+    padding-bottom: 30px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
     flex-shrink: 0;
     background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
 }
@@ -93,27 +95,8 @@
 {
     font-size: 29px;
     color: rgba(255, 255, 255, 0.85);
-    margin-top: 8px;
-    white-space: normal;
-}
-
-.new-quiz-button
-{
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    background-color: rgb(16, 150, 105); /* fallback, overridden by gradient texture */
-    border-width: 0;
-    border-radius: 21px;
-    padding: 14px 20px;
-    margin: 0;
     margin-top: 6px;
-    flex-shrink: 0;
-}
-
-.new-quiz-button:hover
-{
-    opacity: 0.92;
+    white-space: normal;
 }
 
 .new-quiz-plus
@@ -129,6 +112,38 @@
     font-size: 26px;
     -unity-font-style: bold;
     color: white;
+}
+
+/* ---------- New Quiz footer: fixed to the bottom of the screen, sibling of
+   screen-scroll (not inside it) so it stays pinned in place instead of
+   scrolling away with the quiz list - same pattern as
+   .quiz-detail-add-question-footer below. ---------- */
+.new-quiz-footer
+{
+    width: 100%;
+    flex-shrink: 0;
+    background-color: rgb(243, 244, 248);
+    border-top-width: 1px;
+    border-top-color: rgba(15, 23, 42, 0.06);
+    padding: 20px 38px 34px 38px;
+}
+
+.new-quiz-full-button
+{
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 150, 105); /* fallback, overridden by gradient texture */
+    border-width: 0;
+    border-radius: 22px;
+    padding: 20px;
+    margin: 0;
+}
+
+.new-quiz-full-button:hover
+{
+    opacity: 0.92;
 }
 
 /* ---------- ScrollView ---------- */
@@ -152,6 +167,9 @@
     margin: 0;
     flex-grow: 1;
     height: 100%;
+    overflow: hidden; /* clip so the container scrolls instead of overflowing when it
+                          exceeds the viewport - explicit rather than relying on
+                          Unity's default runtime theme to set this. */
 }
 
 .screen-scroll .unity-scroll-view__content-container
@@ -166,9 +184,14 @@
     justify-content: flex-start;
     align-items: stretch;
     flex-grow: 0;
-    height: auto;
+    height: auto;   /* sized by its children, so it only grows past 100% (and
+                        becomes scrollable) once content actually needs it */
     min-height: 100%;
     width: 100%;
+    overflow: visible; /* this element must never clip/scroll itself - it just holds
+                           content that the viewport (its parent, inside
+                           unity-content-and-vertical-scroll-container) clips and
+                           the ScrollView translates via scroll offset */
 }
 
 /* mode="Vertical" on the ScrollView is what applies "--vertical" here rather than
@@ -253,12 +276,25 @@
 {
     width: 100%;
     flex-direction: column;
-    padding: 30px 32px 60px 32px;
+    padding: 0;
     max-width: 100%;
     margin: 0;
     justify-content: flex-start;
     align-items: stretch;
     flex-shrink: 0;
+}
+
+/* ---------- Body content (everything below the full-bleed header) ----------
+   Carries the side/bottom padding that content-wrapper used to have before
+   the header needed to go edge-to-edge; keeps stat cards, search bar and
+   quiz cards inset by the same amount on both sides. ---------- */
+
+.body-content
+{
+    width: 100%;
+    flex-direction: column;
+    padding: 44px 50px 70px 50px;
+    align-items: stretch;
 }
 
 /* ---------- Stats row ---------- */
@@ -267,20 +303,20 @@
 {
     flex-direction: row;
     justify-content: space-between;
-    margin-bottom: 32px;
+    margin-top: 22px;
 }
 
 .stat-card
 {
     flex-grow: 1;
     flex-basis: 0;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.18);
     border-radius: 29px;
-    padding-top: 34px;
-    padding-bottom: 29px;
+    padding-top: 22px;
+    padding-bottom: 18px;
     align-items: center;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .stat-card-left
@@ -297,15 +333,15 @@
 {
     font-size: 45px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: white;
     -unity-text-align: middle-center;
 }
 
 .stat-label
 {
     font-size: 23px;
-    color: rgb(138, 143, 163);
-    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 5px;
     -unity-text-align: middle-center;
     white-space: normal;
 }
@@ -316,21 +352,21 @@
 {
     background-color: white;
     border-radius: 37px;
-    padding-top: 74px;
-    padding-bottom: 59px;
+    padding-top: 48px;
+    padding-bottom: 40px;
     padding-left: 39px;
     padding-right: 39px;
     align-items: center;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.05);
-    margin-bottom: 29px;
+    margin-bottom: 20px;
 }
 
 .empty-state-text
 {
     font-size: 34px;
     color: rgb(138, 143, 163);
-    margin-bottom: 39px;
+    margin-bottom: 26px;
 }
 
 .empty-state-button
@@ -341,8 +377,8 @@
     border-radius: 24px;
     padding-left: 45px;
     padding-right: 45px;
-    padding-top: 26px;
-    padding-bottom: 26px;
+    padding-top: 18px;
+    padding-bottom: 18px;
     font-size: 32px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
@@ -383,7 +419,7 @@
 {
     position: relative;
     width: 100%;
-    margin-bottom: 28px;
+    margin-bottom: 18px;
 }
 
 .quiz-card-shadow
@@ -394,7 +430,7 @@
     top: 0;
     bottom: 0;
     background-color: rgba(15, 23, 42, 0.10);
-    border-radius: 40px;
+    border-radius: 48px;
     translate: 0 8px;
     transition-property: translate, background-color;
     transition-duration: 0.18s;
@@ -411,8 +447,8 @@
     position: relative;
     width: 100%;
     background-color: rgb(255, 255, 255);
-    border-radius: 40px;
-    padding: 50px;
+    border-radius: 48px;
+    padding: 44px;
     border-width: 1px;
     border-color: rgba(15, 23, 42, 0.06);
     transition-property: translate;
@@ -431,7 +467,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 30px;
+    margin-bottom: 18px;
 }
 
 .quiz-card-header-main
@@ -455,7 +491,7 @@
 {
     font-size: 26px;
     color: rgb(148, 153, 168);
-    margin-top: 8px;
+    margin-top: 5px;
     white-space: normal;
 }
 
@@ -471,15 +507,15 @@
    clean cluster. */
 .quiz-icon-button
 {
-    width: 76px;
-    height: 76px;
+    width: 64px;
+    height: 64px;
     border-radius: 20px;
     background-color: rgb(247, 248, 251);
     border-width: 1px;
     border-color: rgba(15, 23, 42, 0.05);
     padding: 0;
     margin: 0;
-    margin-left: 12px;
+    margin-left: 8px;
     justify-content: center;
     align-items: center;
     font-size: 26px;
@@ -544,9 +580,9 @@
     align-items: center;
     background-color: rgb(247, 248, 251);
     border-radius: 18px;
-    padding: 12px 18px;
-    margin-right: 12px;
-    margin-bottom: 12px;
+    padding: 9px 14px;
+    margin-right: 8px;
+    margin-bottom: 8px;
 }
 
 .quiz-meta-chip-icon
@@ -571,8 +607,8 @@
     width: 100%;
     height: 1px;
     background-color: rgba(15, 23, 42, 0.08);
-    margin-top: 34px;
-    margin-bottom: 30px;
+    margin-top: 22px;
+    margin-bottom: 20px;
 }
 
 /* Fade + slide-in "enter" transition for the expanded section. UI Toolkit
@@ -600,7 +636,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 26px;
+    margin-bottom: 16px;
 }
 
 .questions-header-title
@@ -622,7 +658,7 @@
     background-color: rgb(37, 99, 235);
     border-radius: 20px;
     border-width: 0;
-    padding: 18px 26px;
+    padding: 14px 22px;
     margin: 0;
     transition-property: background-color, translate;
     transition-duration: 0.15s;
@@ -659,7 +695,7 @@
 {
     font-size: 27px;
     color: rgb(150, 155, 168);
-    padding: 30px 0;
+    padding: 20px 0;
     -unity-text-align: middle-center;
 }
 
@@ -677,8 +713,8 @@
     border-width: 1px;
     border-color: rgba(15, 23, 42, 0.05);
     border-radius: 26px;
-    padding: 26px 28px;
-    margin-bottom: 18px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
     flex-direction: column;
     transition-property: background-color, border-color;
     transition-duration: 0.15s;
@@ -810,14 +846,14 @@
 {
     font-size: 28px;
     color: rgb(31, 36, 48);
-    margin-top: 18px;
+    margin-top: 10px;
     white-space: normal;
 }
 
 .question-footer-row
 {
     flex-direction: row;
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 .question-points-chip
@@ -848,8 +884,8 @@
 
 .field-label-spaced
 {
-    margin-top: 29px;
-    margin-bottom: 14px;
+    margin-top: 18px;
+    margin-bottom: 8px;
 }
 
 .text-field
@@ -861,31 +897,54 @@
 
 .text-field > .unity-text-field__input
 {
-    background-color: rgb(240, 241, 245);
+    background-color: white;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
     border-radius: 21px;
-    padding: 18px 20px;
+    padding: 14px 18px;
     -unity-text-align: upper-left;
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.text-field > .unity-text-field__input:hover
+{
+    background-color: rgb(248, 249, 251);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Focused state uses a solid black border/ring rather than the accent blue,
+   so it's unambiguous which field is active while typing. Padding drops by
+   1px on each side to offset the border going 1px -> 2px, so the field
+   doesn't visibly grow when focused. */
+.text-field:focus > .unity-text-field__input
+{
+    background-color: white;
+    border-color: black;
+    border-width: 2px;
+    padding: 13px 17px;
 }
 
 .text-area > .unity-text-field__input
 {
-    min-height: 132px;
+    min-height: 108px;
     -unity-text-align: upper-left;
     white-space: normal;
 }
 
 .option-field
 {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .field-error
 {
     font-size: 26px;
     color: rgb(220, 38, 38);
-    margin-top: 8px;
+    margin-top: 5px;
     /* Without this, long messages (e.g. the past-deadline error) stay on one line and
        run straight past the modal's right edge instead of wrapping - that's the cut-off
        text ("...current date and ti") seen in the screenshot. */
@@ -896,7 +955,7 @@
 {
     font-size: 26px;
     color: rgb(120, 123, 140);
-    margin-top: 18px;
+    margin-top: 12px;
     -unity-text-align: middle-center;
 }
 
@@ -970,20 +1029,19 @@
 
 .dropdown-field
 {
-    font-size: 32px;
+    font-size: 36px;
     color: rgb(31, 36, 48);
     margin: 0;
-    min-height: 68px;
     justify-content: center;
 }
 
 .dropdown-field > .unity-base-popup-field__input
 {
-    background-color: rgb(240, 241, 245);
+    background-color: white;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
     border-radius: 21px;
-    padding: 16px 18px 16px 20px;
+    padding: 14px 18px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -993,16 +1051,16 @@
 
 .dropdown-field > .unity-base-popup-field__input:hover
 {
-    background-color: rgb(233, 235, 241);
-    border-color: rgba(0, 0, 0, 0.1);
+    background-color: rgb(248, 249, 251);
+    border-color: rgba(0, 0, 0, 0.2);
 }
 
 .dropdown-field:focus > .unity-base-popup-field__input
 {
-    background-color: rgb(255, 255, 255);
-    border-color: rgb(37, 99, 235);
+    background-color: white;
+    border-color: black;
     border-width: 2px;
-    padding: 15px 17px 15px 19px;
+    padding: 13px 17px;
 }
 
 .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text
@@ -1187,7 +1245,7 @@
 {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .option-letter-badge
@@ -1195,18 +1253,24 @@
     width: 52px;
     height: 52px;
     border-radius: 26px;
-    background-color: rgb(240, 241, 245);
-    color: rgb(90, 95, 112);
+    background-color: white;
+    border-width: 1px;
+    border-color: rgb(230, 232, 238);
+    color: rgb(100, 107, 122);
     font-size: 26px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    margin-right: 16px;
+    margin-right: 12px;
     flex-shrink: 0;
 }
 
 .option-row > .text-field
 {
     flex-grow: 1;
+    flex-shrink: 1;
+    width: 0;   /* see .search-field above - forces width from the flex layout
+                   instead of the typed text's content size */
+    min-width: 0;
 }
 
 .option-row > .text-field.option-field
@@ -1225,16 +1289,21 @@
 {
     flex-direction: row;
     flex-wrap: wrap;
-    background-color: rgb(240, 241, 245);
-    border-radius: 21px;
-    padding: 12px 16px;
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
 }
 
 .correct-answer-choice
 {
     flex-direction: row;
     align-items: center;
-    margin: 8px 24px 8px 0;
+    background-color: white;
+    border-width: 1px;
+    border-color: rgb(230, 232, 238);
+    border-radius: 18px;
+    padding: 10px 20px;
+    margin: 0 10px 10px 0;
 }
 
 .correct-answer-choice-label
@@ -1256,15 +1325,15 @@
     width: 44px;
     height: 44px;
     border-radius: 22px;
-    background-color: white;
-    border-width: 2px;
-    border-color: rgb(200, 203, 214);
+    background-color: rgb(237, 238, 243);
+    border-width: 0;
 }
 
 .radio-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark
 {
-    background-color: rgb(37, 99, 235);
-    border-color: rgb(37, 99, 235);
+    background-color: rgb(16, 185, 129);
+    border-color: rgb(16, 185, 129);
+    -unity-background-image-tint-color: white;
 }
 
 /* Square checkbox look for Multiple Identification's multi-select toggles. */
@@ -1278,15 +1347,15 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background-color: white;
-    border-width: 2px;
-    border-color: rgb(200, 203, 214);
+    background-color: rgb(237, 238, 243);
+    border-width: 0;
 }
 
 .checkbox-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark
 {
     background-color: rgb(16, 185, 129);
     border-color: rgb(16, 185, 129);
+    -unity-background-image-tint-color: white;
 }
 
 /* ---------- Enumeration: dynamic answer list ---------- */
@@ -1312,16 +1381,21 @@
 .enumeration-answer-row
 {
     flex-direction: row;
-    align-items: center;
-    margin-bottom: 14px;
+    align-items: flex-start;
+    background-color: white;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.08);
+    padding: 16px 16px 16px 18px;
+    margin-bottom: 12px;
 }
 
 .enumeration-answer-index-badge
 {
-    width: 52px;
-    height: 52px;
-    border-radius: 26px;
-    background-color: rgb(240, 241, 245);
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    background-color: rgb(237, 233, 254);
     color: rgb(90, 95, 112);
     font-size: 24px;
     -unity-font-style: bold;
@@ -1333,27 +1407,50 @@
 .enumeration-answer-field
 {
     flex-grow: 1;
+    flex-shrink: 1;
+    width: 0;
+    min-width: 0;
     margin-bottom: 0;
+    margin-top: 6px;
+    font-size: 28px;
+    color: rgb(31, 36, 48);
+    white-space: normal;   /* wrap long answers onto multiple lines instead of
+                               clipping them - this is a plain Label, not a
+                               single-line text-field, so full text should
+                               always stay visible */
+    overflow: visible;
 }
 
 .enumeration-answer-remove-button
 {
-    width: 52px;
-    height: 52px;
-    border-radius: 26px;
-    background-color: rgb(254, 242, 242);
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: rgb(254, 226, 226);
     border-width: 0;
-    color: rgb(220, 38, 38);
-    font-size: 26px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
+    justify-content: center;
+    align-items: center;
     margin: 0 0 0 14px;
+    padding: 0;
     flex-shrink: 0;
+    transition-property: background-color;
+    transition-duration: 0.15s;
 }
 
 .enumeration-answer-remove-button:hover
 {
-    background-color: rgb(254, 226, 226);
+    background-color: rgb(252, 205, 205);
+}
+
+.enumeration-answer-remove-icon
+{
+    width: 24px;
+    height: 24px;
+    background-image: url("project://database/Assets/UI/Icons/delete-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(220, 38, 38);
 }
 
 .add-answer-button
@@ -1365,8 +1462,8 @@
     border-radius: 20px;
     border-width: 2px;
     border-color: rgb(37, 99, 235);
-    padding: 16px 26px;
-    margin: 6px 0 0 0;
+    padding: 12px 20px;
+    margin: 4px 0 0 0;
     transition-property: background-color;
     transition-duration: 0.12s;
 }
@@ -1402,8 +1499,8 @@
     border-radius: 20px;
     border-width: 2px;
     border-color: rgb(37, 99, 235);
-    padding: 16px 26px;
-    margin: 0 0 12px 0;
+    padding: 12px 20px;
+    margin: 0 0 8px 0;
     transition-property: background-color;
     transition-duration: 0.12s;
 }
@@ -1436,19 +1533,19 @@
     border-radius: 24px;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.06);
-    min-height: 220px;
+    min-height: 170px;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 18px;
 }
 
 .image-based-preview-icon
 {
-    width: 84px;
-    height: 84px;
-    border-radius: 42px;
+    width: 68px;
+    height: 68px;
+    border-radius: 34px;
     background-color: rgb(219, 234, 254);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .image-based-preview-label
@@ -1481,7 +1578,7 @@
     background-color: rgba(15, 18, 28, 0.55);
     justify-content: center;
     align-items: center;
-    padding: 53px;
+    padding: 32px;
 }
 
 .modal-card
@@ -1489,9 +1586,12 @@
     width: 100%;
     max-width: 846px;
     max-height: 90%;
+    overflow: hidden; /* keep content within the rounded card if it still exceeds
+                          max-height - the inner wizard-step-scroll handles the
+                          actual scrolling */
     background-color: white;
     border-radius: 37px;
-    padding: 47px;
+    padding: 32px;
 }
 
 .modal-header-row
@@ -1499,7 +1599,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .modal-header-text-col
@@ -1522,7 +1622,7 @@
 {
     font-size: 26px;
     color: rgb(138, 143, 163);
-    margin-top: 6px;
+    margin-top: 4px;
     white-space: normal;
 }
 
@@ -1557,10 +1657,10 @@
     align-items: center;
     border-radius: 26px;
     border-width: 0;
-    padding-top: 29px;
-    padding-bottom: 29px;
+    padding-top: 22px;
+    padding-bottom: 22px;
     margin: 0;
-    margin-top: 37px;
+    margin-top: 22px;
     background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
 }
 
@@ -1580,10 +1680,10 @@
     border-width: 1px;
     border-color: rgb(224, 226, 232);
     background-color: white;
-    padding-top: 26px;
-    padding-bottom: 26px;
+    padding-top: 18px;
+    padding-bottom: 18px;
     margin: 0;
-    margin-top: 18px;
+    margin-top: 12px;
     font-size: 32px;
     -unity-font-style: bold;
     color: rgb(90, 95, 112);
@@ -1607,10 +1707,10 @@
 
 .compact .header
 {
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 87px;
-    padding-bottom: 39px;
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-top: 70px;
+    padding-bottom: 26px;
 }
 
 .compact .header-title
@@ -1623,24 +1723,9 @@
     font-size: 24px;
 }
 
-.compact .new-quiz-label
+.compact .body-content
 {
-    display: none;
-}
-
-.compact .new-quiz-button
-{
-    padding: 18px;
-}
-
-.compact .new-quiz-plus
-{
-    margin-right: 0;
-}
-
-.compact .content-wrapper
-{
-    padding: 24px 22px 48px 22px;
+    padding: 16px 20px 32px 20px;
 }
 
 .compact .stat-value
@@ -1655,7 +1740,7 @@
 
 .compact .quiz-card
 {
-    padding: 34px;
+    padding: 24px;
     border-radius: 32px;
 }
 
@@ -1666,7 +1751,7 @@
 
 .compact .quiz-card-header
 {
-    margin-bottom: 22px;
+    margin-bottom: 14px;
 }
 
 .compact .quiz-card-header-main
@@ -1687,8 +1772,8 @@
 
 .compact .quiz-icon-button
 {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 16px;
     margin-left: 8px;
     font-size: 22px;
@@ -1702,9 +1787,9 @@
 
 .compact .quiz-meta-chip
 {
-    padding: 9px 14px;
-    margin-right: 8px;
-    margin-bottom: 8px;
+    padding: 7px 12px;
+    margin-right: 6px;
+    margin-bottom: 6px;
 }
 
 .compact .quiz-meta-chip-icon
@@ -1720,8 +1805,8 @@
 
 .compact .quiz-divider
 {
-    margin-top: 26px;
-    margin-bottom: 22px;
+    margin-top: 18px;
+    margin-bottom: 14px;
 }
 
 .compact .questions-header-title
@@ -1731,7 +1816,7 @@
 
 .compact .add-question-button
 {
-    padding: 14px 18px;
+    padding: 11px 16px;
 }
 
 .compact .add-question-label
@@ -1746,9 +1831,9 @@
 
 .compact .question-card
 {
-    padding: 20px 22px;
+    padding: 14px 16px;
     border-radius: 20px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .compact .question-index-badge
@@ -1767,7 +1852,7 @@
 .compact .question-text-label
 {
     font-size: 25px;
-    margin-top: 14px;
+    margin-top: 8px;
 }
 
 .compact .question-delete-button
@@ -1778,18 +1863,25 @@
 
 .compact .modal-card
 {
-    padding: 34px;
+    padding: 24px;
 }
 
 .compact .option-letter-badge,
-.compact .enumeration-answer-index-badge,
-.compact .enumeration-answer-remove-button
+.compact .enumeration-answer-index-badge
 {
     width: 42px;
     height: 42px;
     border-radius: 21px;
     font-size: 20px;
     margin-right: 12px;
+}
+
+.compact .enumeration-answer-remove-button
+{
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    margin-left: 12px;
 }
 
 .compact .correct-answer-choice-label
@@ -1833,12 +1925,12 @@
 .compact .dropdown-field
 {
     font-size: 27px;
-    min-height: 58px;
+    min-height: 50px;
 }
 
 .compact .dropdown-field > .unity-base-popup-field__input
 {
-    padding: 12px 14px 12px 16px;
+    padding: 9px 12px 9px 14px;
 }
 
 .compact .dropdown-field:focus > .unity-base-popup-field__input
@@ -1867,4 +1959,2527 @@
 .compact .three-column-item-right
 {
     margin-left: 8px;
+}
+
+/* =========================================================
+   Wizard redesign additions (Create Quiz / Add Question flows,
+   search bar, question-type grid, calendar deadline picker,
+   success screens). Appended below the original rules so every
+   existing class above is untouched; new class names only.
+   ========================================================= */
+
+/* ---------- Search row ---------- */
+
+.search-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.search-field-wrapper
+{
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    background-color: white;
+    border-radius: 30px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.08);
+    padding: 0 26px;
+    margin-right: 12px;
+    height: 98px;
+    overflow: hidden;
+}
+
+.search-icon
+{
+    font-size: 32px;
+    margin-right: 18px;
+    color: rgb(148, 153, 168);
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+}
+
+.search-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    width: 0;   /* combined with flex-grow:1 this makes the field's width come purely
+                   from the flex layout instead of its text content, so a long,
+                   unbroken word being typed can't force the field (and wrapper)
+                   to widen - text just clips/scrolls within the fixed width */
+    min-width: 0;
+    background-color: transparent;
+    border-width: 0;
+    font-size: 33px;
+    color: rgb(31, 36, 48);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.search-field > .unity-text-field__input
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    font-size: 33px;
+    color: rgb(31, 36, 48);
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.search-filter-button
+{
+    width: 98px;
+    height: 98px;
+    border-radius: 30px;
+    background-color: white;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.08);
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.search-filter-button:hover
+{
+    background-color: rgb(248, 249, 251);
+}
+
+.search-filter-icon
+{
+    font-size: 28px;
+    color: rgb(90, 95, 112);
+}
+
+/* ---------- Shared field helpers ---------- */
+
+.field-label-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-hint
+{
+    font-size: 22px;
+    color: rgb(148, 153, 168);
+}
+
+#quiz-deadline-empty-hint
+{
+    align-self: center;
+}
+
+.percent-field-wrapper
+{
+    position: relative;
+}
+
+.percent-field > .unity-text-field__input
+{
+    padding-right: 60px;
+}
+
+.percent-suffix
+{
+    position: absolute;
+    right: 26px;
+    top: 0;
+    bottom: 0;
+    font-size: 27px;
+    color: rgb(148, 153, 168);
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Wizard shell (Create Quiz / Add Question modals) ---------- */
+
+.wizard-modal-card
+{
+    max-width: 780px;
+}
+
+.wizard-header
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.wizard-back-button
+{
+    width: 56px;
+    height: 56px;
+    border-radius: 32px;
+    background-color: rgb(247, 248, 251);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    margin-right: 12px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.wizard-back-button:hover
+{
+    background-color: rgb(237, 239, 245);
+}
+
+.wizard-back-icon
+{
+    width: 26px;
+    height: 26px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(31, 36, 48);
+}
+
+.wizard-header-text-col
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.wizard-title
+{
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.wizard-step-label
+{
+    font-size: 22px;
+    color: rgb(148, 153, 168);
+    margin-top: 2px;
+}
+
+.wizard-cancel-link
+{
+    background-color: transparent;
+    border-width: 0;
+    font-size: 23px;
+    color: rgb(148, 153, 168);
+    padding: 6px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.wizard-cancel-link:hover
+{
+    color: rgb(90, 95, 112);
+}
+
+/* ---------- Step indicator row (circle + label per step, sits above the
+   segmented progress bar) - toggled the same way as the bar: "done" once
+   passed (green, checkmark), "active" for the current step (blue, bold
+   label), plain grey while upcoming. ---------- */
+.wizard-steps-row
+{
+    flex-direction: row;
+    align-items: flex-start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+
+.wizard-step-item
+{
+    flex-direction: row;
+    flex-grow: 1;
+    flex-basis: 0;   /* same equal-width slot as .wizard-progress-segment below,
+                         so each step item lines up directly above its segment */
+    justify-content: center;
+    align-items: center;
+    margin-right: 14px;
+}
+
+.wizard-step-item-last
+{
+    margin-right: 0;
+}
+
+.wizard-step-circle
+{
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    background-color: rgb(237, 238, 243);
+    justify-content: center;
+    align-items: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.wizard-step-circle-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(148, 153, 168);
+    -unity-text-align: middle-center;
+}
+
+.wizard-step-item-label
+{
+    font-size: 28px;
+    color: rgb(148, 153, 168);
+    white-space: normal;
+}
+
+.wizard-step-item.done .wizard-step-circle
+{
+    background-color: rgb(16, 185, 129);
+}
+
+.wizard-step-item.done .wizard-step-circle-label
+{
+    color: white;
+}
+
+.wizard-step-item.done .wizard-step-item-label
+{
+    color: rgb(31, 36, 48);
+}
+
+.wizard-step-item.active .wizard-step-circle
+{
+    background-color: rgb(37, 99, 235);
+}
+
+.wizard-step-item.active .wizard-step-circle-label
+{
+    color: white;
+}
+
+.wizard-step-item.active .wizard-step-item-label
+{
+    color: rgb(37, 99, 235);
+    -unity-font-style: bold;
+}
+
+/* Segmented progress bar - filled left-to-right as .active/.done are toggled
+   in C#; flat colors here (matches the rest of the file's gradient-via-
+   texture fallback approach - USS alone can't gradient a thin bar). */
+.wizard-progress-row
+{
+    flex-direction: row;
+    margin-bottom: 14px;
+}
+
+.wizard-progress-segment
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgb(230, 232, 238);
+    margin-right: 10px;
+}
+
+.wizard-progress-segment-last
+{
+    margin-right: 0;
+}
+
+.wizard-progress-segment.done
+{
+    background-color: rgb(16, 185, 129);
+}
+
+.wizard-progress-segment.active
+{
+    background-color: rgb(37, 99, 235);
+}
+
+/* ---------- Add Question wizard header: enlarged + colored ---------------
+   Same brand-color treatment as the Create Quiz wizard header (background
+   matches the main app header's gradient, applied at runtime in C#; flat
+   green is the CSS fallback below). Text/icon colors switch to white to
+   stay readable against it. Scoped to this header's id so nothing else
+   using the shared .wizard-header classes is affected. -------------------*/
+
+#add-question-wizard-header
+{
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+    border-radius: 32px;
+    padding: 78px 32px 32px 32px;
+    margin-bottom: 22px;
+}
+
+#add-question-wizard-header .wizard-back-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: rgba(255, 255, 255, 0.18);
+    margin-right: 20px;
+}
+
+#add-question-wizard-header .wizard-back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+#add-question-wizard-header .wizard-back-icon
+{
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: white;
+}
+
+#add-question-wizard-header .wizard-title
+{
+    font-size: 52px;
+    color: white;
+}
+
+#add-question-wizard-header .wizard-step-label
+{
+    font-size: 30px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+}
+
+#add-question-wizard-header .wizard-cancel-link
+{
+    font-size: 32px;
+    padding: 10px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+#add-question-wizard-header .wizard-cancel-link:hover
+{
+    color: white;
+}
+
+/* ---------- Create Quiz wizard header: enlarged + colored ---------------
+   Same enlargement as the Add Question header now that this card is also
+   fullscreen, plus a background matching the main app header's brand
+   color (green->purple gradient, applied at runtime in C#; flat green is
+   the CSS fallback below). Text/icon colors switch to white to stay
+   readable against it. Scoped to this header's id so nothing else using
+   the shared .wizard-header classes is affected. -------------------------*/
+
+#create-quiz-wizard-header
+{
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+    border-radius: 32px;
+    padding: 78px 32px 32px 32px;
+    margin-bottom: 28px;
+}
+
+#create-quiz-wizard-header .wizard-back-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: rgba(255, 255, 255, 0.18);
+    margin-right: 20px;
+}
+
+#create-quiz-wizard-header .wizard-back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+#create-quiz-wizard-header .wizard-back-icon
+{
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: white;
+}
+
+#create-quiz-wizard-header .wizard-title
+{
+    font-size: 52px;
+    color: white;
+}
+
+#create-quiz-wizard-header .wizard-step-label
+{
+    font-size: 30px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 6px;
+}
+
+.wizard-step
+{
+    width: 100%;
+}
+
+/* Create Quiz step 1 is intentionally not a ScrollView.
+   Keep it as a normal fixed wizard section so dragging cannot reveal
+   empty space above or below the form. */
+#create-quiz-step-1
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.wizard-step-static
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.wizard-step-scroll
+{
+    max-height: 900px;
+}
+
+.wizard-step-scroll > .unity-scroll-view__content-viewport
+{
+    padding: 0;
+    overflow: hidden; /* clip so the step scrolls instead of overflowing past the
+                          modal's max-height (900px) or the fullscreen card's
+                          flex-grown height once its cards don't fit */
+}
+
+/* Content should sit flush at the top of the step, growing downward with the
+   cards - not stretched/centered by the ScrollView's default layout. This
+   also means the step only becomes scrollable once the cards actually
+   exceed the available height, instead of always allocating extra scroll
+   space below a short list. */
+.wizard-step-scroll .unity-scroll-view__content-container
+{
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-grow: 0;
+    height: auto;
+    min-height: 0;
+    width: 100%;
+    overflow: visible; /* only the content-viewport above clips/scrolls - this
+                           element just holds the step's cards and gets translated */
+}
+
+.wizard-step-banner
+{
+    font-size: 24px;
+    color: rgb(148, 153, 168);
+    -unity-font-style: normal;
+    white-space: normal;
+    margin-bottom: 14px;
+}
+
+.wizard-button-row
+{
+    flex-direction: row;
+    margin-top: 20px;
+}
+
+.wizard-half-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-top: 0;
+    margin-right: 14px;
+}
+
+.wizard-half-button-last
+{
+    margin-right: 0;
+    margin-left: 14px;
+}
+
+.wizard-next-button
+{
+    margin-top: 20px;
+}
+
+/* ---------- Add Question steps 1-3: enlarged content --------------------
+   These steps stopped being ScrollViews (no more scroll/clip), so they now
+   have the fullscreen card's actual space to fill instead of a capped
+   900px scroll region. Sized up over the shared field/button/card classes
+   below, scoped to each step's id so other places that reuse the same
+   classes - the Create Quiz modal, quiz detail view, etc. - are untouched.
+   ------------------------------------------------------------------------ */
+
+#add-question-step-1 .question-type-card
+{
+    padding: 40px 32px;
+    margin-bottom: 28px;
+}
+
+#add-question-step-1 .question-type-icon-badge
+{
+    width: 86px;
+    height: 86px;
+    border-radius: 26px;
+    margin-bottom: 20px;
+}
+
+#add-question-step-1 .question-type-icon
+{
+    width: 42px;
+    height: 42px;
+}
+
+#add-question-step-1 .question-type-card-title
+{
+    font-size: 34px;
+}
+
+#add-question-step-1 .question-type-card-subtitle
+{
+    font-size: 27px;
+    margin-top: 8px;
+}
+
+#add-question-step-2 .wizard-step-banner
+{
+    font-size: 28px;
+    margin-bottom: 18px;
+}
+
+#add-question-step-2 .field-label,
+#add-question-step-3 .field-label
+{
+    font-size: 33px;
+}
+
+#add-question-step-2 .field-hint,
+#add-question-step-3 .field-hint
+{
+    font-size: 25px;
+}
+
+#add-question-step-2 .field-error,
+#add-question-step-3 .field-error
+{
+    font-size: 29px;
+}
+
+#add-question-step-2 .text-field,
+#add-question-step-3 .text-field
+{
+    font-size: 36px;
+}
+
+#add-question-step-2 .text-field > .unity-text-field__input,
+#add-question-step-3 .text-field > .unity-text-field__input
+{
+    padding: 18px 22px;
+    border-radius: 24px;
+}
+
+#add-question-step-2 .text-field:focus > .unity-text-field__input,
+#add-question-step-3 .text-field:focus > .unity-text-field__input
+{
+    padding: 17px 21px;
+}
+
+#add-question-step-2 .text-area > .unity-text-field__input
+{
+    min-height: 130px;
+}
+
+#add-question-step-2 .option-letter-badge
+{
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    font-size: 29px;
+    margin-right: 16px;
+}
+
+#add-question-step-2 .correct-answer-choice-label
+{
+    font-size: 34px;
+    margin-left: 12px;
+}
+
+#add-question-step-2 .radio-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+}
+
+#add-question-step-2 .checkbox-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+}
+
+#add-question-step-2 .true-false-button
+{
+    font-size: 30px;
+    padding: 20px;
+}
+
+#add-question-step-2 .enumeration-add-button
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+}
+
+#add-question-step-2 .enumeration-add-icon
+{
+    font-size: 34px;
+}
+
+#add-question-step-2 .image-based-system-card
+{
+    padding: 22px 10px;
+}
+
+#add-question-step-2 .image-based-system-icon
+{
+    font-size: 38px;
+}
+
+#add-question-step-2 .image-based-system-label
+{
+    font-size: 26px;
+}
+
+#add-question-step-2 .wizard-next-button
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+#add-question-step-3 .difficulty-button
+{
+    font-size: 28px;
+    padding: 18px 12px;
+}
+
+#add-question-step-3 .modal-submit-label
+{
+    font-size: 35px;
+}
+
+#add-question-step-3 .modal-submit-button
+{
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+#add-question-step-3 .modal-cancel-button
+{
+    font-size: 35px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#add-question-step-3 .status-label
+{
+    font-size: 28px;
+    margin-top: 18px;
+}
+
+/* ---------- Add Question steps 1-3: spacing -----------------------------
+   Now that these steps hold bigger content and no longer scroll, the old
+   tight margins (18px between field groups, 10-12px between rows) look
+   cramped. Loosened up here, still scoped per step so the Create Quiz
+   modal's spacing (which reuses the same classes) is unaffected.
+   ------------------------------------------------------------------------ */
+
+#add-question-progress-row
+{
+    margin-bottom: 24px;
+}
+
+#add-question-step-1,
+#add-question-step-2,
+#add-question-step-3
+{
+    margin-top: 6px;
+}
+
+#add-question-step-1 .question-type-grid
+{
+    margin-top: 4px;
+    padding: 28px 32px 28px 32px;
+}
+
+.compact #add-question-step-1 .question-type-grid
+{
+    padding-left: 22px;
+    padding-right: 22px;
+}
+
+#add-question-step-2 .field-label-spaced,
+#add-question-step-3 .field-label-spaced
+{
+    margin-top: 36px;
+    margin-bottom: 14px;
+}
+
+#add-question-step-2 .option-row
+{
+    margin-bottom: 18px;
+}
+
+#add-question-step-2 .correct-answer-choice
+{
+    padding: 14px 24px;
+    margin: 0 12px 12px 0;
+}
+
+#add-question-step-2 .true-false-button-row
+{
+    margin-bottom: 6px;
+}
+
+#add-question-step-2 .true-false-button
+{
+    margin-right: 16px;
+}
+
+#add-question-step-2 .true-false-button-last
+{
+    margin-right: 0;
+}
+
+#add-question-step-2 .enumeration-add-row
+{
+    margin-bottom: 16px;
+}
+
+#add-question-step-2 .image-based-system-row
+{
+    margin-top: 4px;
+}
+
+#add-question-step-2 .wizard-next-button
+{
+    margin-top: 34px;
+}
+
+#add-question-step-3 .difficulty-button-row
+{
+    margin-bottom: 4px;
+}
+
+#add-question-step-3 .wizard-button-row
+{
+    margin-top: 34px;
+}
+
+/* ---------- Create Quiz modal: full-bleed card ---------------------------
+   Card and overlay padding removed (scoped by id - Add Question's modal
+   shares these same classes and keeps its padding). The colored wizard
+   header can now sit flush with the screen edges; individual steps add
+   their own padding back where they need it. ------------------------------*/
+
+#create-quiz-modal-overlay
+{
+    padding: 0;
+}
+
+#create-quiz-modal-card
+{
+    padding: 0;
+}
+
+/* ---------- Create Quiz steps 1-3: sizing + spacing ----------------------
+   Same treatment as the Add Question steps now that this card is
+   fullscreen too - bigger text fields/dropdowns and looser spacing
+   between field groups, scoped per step id. --------------------------- */
+
+#create-quiz-progress-row
+{
+    margin-bottom: 24px;
+}
+
+#create-quiz-step-1
+{
+    margin-top: 6px;
+    padding: 24px 32px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-height: 0;
+    max-height: 100%;
+}
+
+#create-quiz-step-2,
+#create-quiz-step-3
+{
+    margin-top: 6px;
+    padding: 24px 32px;
+}
+
+#create-quiz-step-1 .field-label,
+#create-quiz-step-2 .field-label,
+#create-quiz-step-3 .field-label
+{
+    font-size: 33px;
+}
+
+#create-quiz-step-1 .field-hint,
+#create-quiz-step-2 .field-hint,
+#create-quiz-step-3 .field-hint
+{
+    font-size: 25px;
+}
+
+#create-quiz-step-1 .field-error,
+#create-quiz-step-2 .field-error,
+#create-quiz-step-3 .field-error
+{
+    font-size: 29px;
+}
+
+#create-quiz-step-1 .field-label-spaced,
+#create-quiz-step-2 .field-label-spaced,
+#create-quiz-step-3 .field-label-spaced
+{
+    margin-top: 30px;
+    margin-bottom: 14px;
+}
+
+#create-quiz-step-1 .text-field,
+#create-quiz-step-2 .text-field
+{
+    font-size: 36px;
+}
+
+#create-quiz-step-1 .text-field > .unity-text-field__input,
+#create-quiz-step-2 .text-field > .unity-text-field__input
+{
+    padding: 18px 22px;
+    border-radius: 24px;
+}
+
+#create-quiz-step-1 .text-field:focus > .unity-text-field__input,
+#create-quiz-step-2 .text-field:focus > .unity-text-field__input
+{
+    padding: 17px 21px;
+}
+
+#create-quiz-step-2 .dropdown-field
+{
+    font-size: 36px;
+    min-height: 68px;
+}
+
+#create-quiz-step-2 .dropdown-field > .unity-base-popup-field__input
+{
+    padding: 16px 20px 16px 22px;
+    border-radius: 24px;
+}
+
+#create-quiz-step-2 .dropdown-field:focus > .unity-base-popup-field__input
+{
+    padding: 15px 19px 15px 21px;
+}
+
+#create-quiz-step-1 .wizard-next-button
+{
+    margin-top: 34px;
+}
+
+/* create-quiz-step-1's .text-field inputs are bumped to 18px/22px padding and a
+   24px radius (see the #create-quiz-step-1 .text-field override above), which
+   beats the base .dropdown-field padding on specificity. Mirror those same
+   values here so quiz-time-limit-dropdown and quiz-max-attempts-dropdown end
+   up the exact same height as the text inputs on this step. */
+#create-quiz-step-1 .dropdown-field > .unity-base-popup-field__input
+{
+    padding: 18px 22px;
+    border-radius: 24px;
+}
+
+#create-quiz-step-1 .dropdown-field:focus > .unity-base-popup-field__input
+{
+    padding: 17px 21px;
+}
+
+#create-quiz-step-2 .wizard-button-row,
+#create-quiz-step-3 .wizard-button-row
+{
+    margin-top: 34px;
+}
+
+/* Both "Next" buttons get explicit text styling (bold white, larger) since -
+   unlike buttons that wrap a styled Label - their text is set directly on
+   the Button and had no font-size/color of its own before. Padding is
+   bumped up too so the buttons themselves are visibly bigger. */
+#create-quiz-step1-next-button,
+#create-quiz-step2-next-button
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+    padding-top: 26px;
+    padding-bottom: 26px;
+}
+
+/* ---------- Deadline: selector + calendar picker (Step 3) ---------- */
+
+.deadline-selector-button
+{
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 24px;
+    padding: 24px 26px;
+    margin: 0;
+}
+
+.deadline-selector-button:hover
+{
+    border-color: rgb(200, 204, 214);
+}
+
+.deadline-selector-icon
+{
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/calendar-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(90, 95, 112);
+}
+
+.deadline-selector-label
+{
+    flex-grow: 1;
+    font-size: 32px;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-left;
+    white-space: normal;
+}
+
+.deadline-selector-chevron
+{
+    font-size: 28px;
+    color: rgb(148, 153, 168);
+}
+
+/* Floating dropdown panel, styled/positioned the same way Unity's own dropdowns
+   float (see unity-base-dropdown__container-outer): position:absolute pulls it
+   out of the normal flex flow, and it's declared in the UXML as a top-level
+   sibling of #screen-root's other children - not nested inside
+   #create-quiz-step-1 - so it's never clipped by that step's overflow:hidden
+   (a fixed, non-scrolling section that would otherwise cut the calendar off
+   whenever it didn't fit inside that step's own bounds) and always paints on
+   top of the wizard/modal content beneath it, since it's the LAST such
+   sibling. Because it no longer lives inside a step-local parent, left/right:0
+   can no longer be used to line it up with a field's edges via CSS alone -
+   left, top and width are instead all computed at runtime in
+   PositionDeadlinePanel() from the selector button's world bounds converted
+   into #screen-root's local space, the same way Unity computes a dropdown's
+   outer container position/size from its source control. */
+.deadline-picker-panel
+{
+    position: absolute;
+    width: auto;
+    background-color: rgb(255, 255, 255);
+    border-radius: 28px;
+    padding: 26px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.12);
+    flex-direction: column;
+    max-height: 620px; /* fallback before PositionDeadlinePanel() sets a precise
+                           runtime value from the actual room left below the
+                           selector button; either way .deadline-picker-scroll
+                           below is what actually scrolls once content overflows -
+                           when everything fits, it just renders at full size with
+                           no visible scrollbar. */
+}
+
+/* Wraps the ENTIRE panel body - calendar, time controls, AND the Clear/Set
+   Deadline row - in one ScrollView, so if it doesn't all fit within the
+   max-height above, the whole thing scrolls together and the buttons are
+   always reachable, instead of only the calendar scrolling internally while
+   the buttons get stranded below the visible/clamped area. */
+.deadline-picker-scroll
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.deadline-picker-scroll > .unity-scroll-view__content-viewport
+{
+    padding: 0;
+}
+
+.deadline-picker-scroll .unity-scroll-view__content-container
+{
+    flex-grow: 0;
+    height: auto;
+    min-height: 0;
+    justify-content: flex-start;
+}
+
+/* Plain (non-scrolling) wrapper for the calendar/time controls inside the
+   ScrollView above - it just sizes to its content; the ScrollView around it
+   is what actually clips/scrolls. */
+.deadline-picker-content
+{
+    flex-direction: column;
+}
+
+.calendar-nav-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.calendar-nav-button
+{
+    width: 64px;
+    height: 64px;
+    border-radius: 36px;
+    background-color: white;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.08);
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.calendar-nav-button:hover
+{
+    background-color: rgb(240, 241, 245);
+}
+
+.calendar-month-year-label
+{
+    font-size: 33px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.calendar-weekday-row
+{
+    flex-direction: row;
+    margin-bottom: 8px;
+}
+
+.calendar-weekday-label
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    font-size: 25px;
+    color: rgb(148, 153, 168);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.calendar-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.calendar-day-cell
+{
+    width: 14.2857%;
+    align-items: center;
+    justify-content: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.calendar-day-button
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 38px;
+    background-color: transparent;
+    border-width: 0;
+    font-size: 28px;
+    color: rgb(31, 36, 48);
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.calendar-day-button:hover
+{
+    background-color: rgb(237, 239, 245);
+}
+
+.calendar-day-button.other-month
+{
+    color: rgb(196, 199, 210);
+}
+
+.calendar-day-button.past-day
+{
+    color: rgb(210, 213, 222);
+}
+
+.calendar-day-button.today
+{
+    color: rgb(37, 99, 235);
+    -unity-font-style: bold;
+}
+
+.calendar-day-button.selected
+{
+    background-color: rgb(37, 99, 235);
+    color: white;
+    -unity-font-style: bold;
+}
+
+/* 2-row x 3-column grid for the time controls (UI Toolkit has no CSS grid, so
+   this is the flexbox equivalent: an outer column of "grid rows", each a flex
+   row of "grid cells"). Row 1 holds the Hour and Minute labels plus an empty
+   third cell. Row 2 holds the matching Hour and Minute dropdowns plus AM/PM
+   in the third column, directly beneath that empty cell. */
+.calendar-time-row
+{
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.calendar-time-grid-row
+{
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+
+.calendar-time-grid-row-last
+{
+    margin-bottom: 0;
+}
+
+.calendar-time-col
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 12px;
+}
+
+.calendar-time-col-last
+{
+    margin-right: 0;
+}
+
+.calendar-grid-cell-empty
+{
+    background-color: transparent;
+}
+
+.calendar-ampm-col
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 0;
+}
+
+.ampm-toggle-row
+{
+    flex-direction: row;
+    height: 70px;
+}
+
+.ampm-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.ampm-button-left
+{
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-right-width: 1px;
+}
+
+.ampm-button-right
+{
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-left-width: 1px;
+}
+
+.ampm-button.selected
+{
+    background-color: rgb(16, 185, 129);
+    border-color: rgb(16, 185, 129);
+    color: white;
+}
+
+/* ---------- Question type grid (Add Question step 1) ---------- */
+
+.question-type-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.question-type-card
+{
+    width: 47%;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(230, 232, 238);
+    border-radius: 28px;
+    padding: 34px 28px;
+    margin: 0 0 24px 0;
+    transition-property: border-color, translate;
+    transition-duration: 0.12s;
+}
+
+.question-type-card:hover
+{
+    border-color: rgb(0, 0, 0);
+    translate: 0 -2px;
+}
+
+.question-type-card.selected
+{
+    border-color: rgb(0, 0, 0);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.question-type-icon-badge
+{
+    width: 74px;
+    height: 74px;
+    border-radius: 22px;
+    background-color: rgb(241, 243, 247);
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.question-type-icon
+{
+    width: 34px;
+    height: 34px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(109, 40, 217);
+}
+
+.question-type-icon--multiple-choice
+{
+    background-image: url("project://database/Assets/UI/Icons/multiple-choice-icon.png");
+}
+
+.question-type-icon--true-false
+{
+    background-image: url("project://database/Assets/UI/Icons/trueorfalse-icon.png");
+}
+
+.question-type-icon--identification
+{
+    background-image: url("project://database/Assets/UI/Icons/identification-icon.png");
+}
+
+.question-type-icon--enumeration
+{
+    background-image: url("project://database/Assets/UI/Icons/enumeration-icon.png");
+}
+
+.question-type-icon--multiple-id
+{
+    background-image: url("project://database/Assets/UI/Icons/multiple-id-icon.png");
+}
+
+.question-type-icon--image-based
+{
+    background-image: url("project://database/Assets/UI/Icons/image-based-icon.png");
+}
+
+.question-type-card-title
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.question-type-card-subtitle
+{
+    font-size: 24px;
+    color: rgb(148, 153, 168);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+/* ---------- True/False buttons ---------- */
+
+.true-false-button-row
+{
+    flex-direction: row;
+}
+
+.true-false-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 20px;
+    padding: 16px;
+    margin: 0;
+    margin-right: 12px;
+    font-size: 27px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.true-false-button-last
+{
+    margin-right: 0;
+}
+
+.true-false-button.selected
+{
+    background-color: rgb(37, 99, 235);
+    border-color: rgb(37, 99, 235);
+    color: white;
+}
+
+/* ---------- Difficulty buttons (Add Question step 3) ---------- */
+
+.difficulty-button-row
+{
+    flex-direction: row;
+}
+
+.difficulty-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 18px;
+    padding: 14px 10px;
+    margin: 0;
+    margin-right: 10px;
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.difficulty-button-last
+{
+    margin-right: 0;
+}
+
+.difficulty-button.selected-easy
+{
+    background-color: rgb(209, 250, 229);
+    border-color: rgb(5, 122, 85);
+    color: rgb(5, 122, 85);
+}
+
+.difficulty-button.selected-medium
+{
+    background-color: rgb(254, 240, 199);
+    border-color: rgb(161, 98, 7);
+    color: rgb(161, 98, 7);
+}
+
+.difficulty-button.selected-hard
+{
+    background-color: rgb(253, 220, 220);
+    border-color: rgb(185, 28, 28);
+    color: rgb(185, 28, 28);
+}
+
+/* ---------- Enumeration: add-row above the answer chip list ---------- */
+
+.enumeration-add-row
+{
+    flex-direction: row;
+}
+
+.enumeration-new-answer-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    width: 0;
+    min-width: 0;
+    margin-right: 10px;
+}
+
+.enumeration-add-button
+{
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background-color: rgb(16, 185, 129);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.enumeration-add-button:hover
+{
+    opacity: 0.92;
+}
+
+.enumeration-add-icon
+{
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- Image-based anatomical system cards ---------- */
+
+.image-based-system-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.image-based-system-card
+{
+    width: 31.5%;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    border-width: 2px;
+    border-color: rgb(224, 226, 232);
+    border-radius: 22px;
+    padding: 18px 8px;
+    margin: 0;
+}
+
+.image-based-system-card:hover
+{
+    border-color: rgb(196, 203, 224);
+}
+
+.image-based-system-card.selected
+{
+    border-color: rgb(37, 99, 235);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.image-based-system-icon
+{
+    font-size: 34px;
+    margin-bottom: 6px;
+}
+
+.image-based-system-label
+{
+    font-size: 23px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+/* ---------- Success views (quiz created / question added) ---------- */
+
+.success-view
+{
+    width: 100%;
+    align-items: center;
+    padding: 16px 0 6px 0;
+}
+
+.success-icon-circle
+{
+    width: 116px;
+    height: 116px;
+    border-radius: 58px;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.success-icon-check
+{
+    font-size: 52px;
+    color: white;
+    -unity-font-style: bold;
+}
+
+.success-title
+{
+    font-size: 37px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 10px;
+}
+
+.success-subtitle
+{
+    font-size: 26px;
+    color: rgb(148, 153, 168);
+    -unity-text-align: upper-center;
+    white-space: normal;
+    margin-bottom: 22px;
+}
+
+.success-view > .modal-submit-button,
+.success-view > .modal-cancel-button
+{
+    width: 100%;
+}
+
+/* ---------- Quiz delete confirmation modal ---------- */
+
+.confirm-card
+{
+    max-width: 560px;
+    align-items: center;
+    padding: 32px;
+}
+
+.confirm-icon-circle
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    background-color: rgb(220, 38, 38);
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.confirm-icon-mark
+{
+    font-size: 46px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.confirm-title
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 10px;
+    -unity-text-align: upper-center;
+}
+
+.confirm-subtitle
+{
+    font-size: 26px;
+    color: rgb(148, 153, 168);
+    -unity-text-align: upper-center;
+    white-space: normal;
+    margin-bottom: 22px;
+}
+
+.confirm-card > .modal-delete-button,
+.confirm-card > .modal-cancel-button
+{
+    width: 100%;
+}
+
+.modal-delete-button
+{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    border-width: 0;
+    padding-top: 22px;
+    padding-bottom: 22px;
+    margin: 0;
+    margin-top: 22px;
+    background-color: rgb(220, 38, 38);
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.modal-delete-button:hover
+{
+    background-color: rgb(185, 28, 28);
+}
+
+/* ---------- Add Question success view: enlarged, centered ---------------
+   Scoped to this view's id so the Create Quiz success view (same base
+   classes) is untouched. The wizard header + progress bar stay visible
+   above it, so flex-grow:1 + justify-content:center fills whatever space
+   is left below them and centers the checkmark/title/buttons within it,
+   instead of the content just sitting flush at the top. -------------------*/
+
+#add-question-success-view
+{
+    flex-grow: 1;
+    justify-content: center;
+    padding: 16px 24px 24px 24px;
+}
+
+#add-question-success-view .success-icon-circle
+{
+    width: 156px;
+    height: 156px;
+    border-radius: 78px;
+    margin-bottom: 32px;
+}
+
+#add-question-success-view .success-icon-check
+{
+    font-size: 70px;
+}
+
+#add-question-success-view .success-title
+{
+    font-size: 46px;
+    margin-bottom: 16px;
+}
+
+#add-question-success-view .success-subtitle
+{
+    font-size: 30px;
+    margin-bottom: 40px;
+}
+
+#add-question-success-view .modal-submit-button
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    margin-top: 0;
+}
+
+#add-question-success-view .modal-cancel-button
+{
+    font-size: 32px;
+    padding-top: 22px;
+    padding-bottom: 22px;
+    margin-top: 18px;
+}
+
+/* ---------- Create Quiz success view: enlarged, centered -----------------
+   Same treatment as the Add Question success view now that this card is
+   fullscreen too. Scoped to this view's id so nothing else using the
+   shared .success-view classes is affected. -------------------------------*/
+
+#create-quiz-success-view
+{
+    flex-grow: 1;
+    justify-content: center;
+    padding: 16px 24px 24px 24px;
+}
+
+#create-quiz-success-view .success-icon-circle
+{
+    width: 156px;
+    height: 156px;
+    border-radius: 78px;
+    margin-bottom: 32px;
+}
+
+#create-quiz-success-view .success-icon-check
+{
+    font-size: 70px;
+}
+
+#create-quiz-success-view .success-title
+{
+    font-size: 46px;
+    margin-bottom: 16px;
+}
+
+#create-quiz-success-view .success-subtitle
+{
+    font-size: 30px;
+    margin-bottom: 40px;
+}
+
+#create-quiz-success-view .modal-submit-button
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    margin-top: 0;
+}
+
+#create-quiz-success-view .modal-cancel-button
+{
+    font-size: 32px;
+    padding-top: 22px;
+    padding-bottom: 22px;
+    margin-top: 18px;
+}
+
+/* ---------- Quiz card: compact one-line summary + icon avatar ---------- */
+
+.quiz-card-icon-avatar
+{
+    width: 78px;
+    height: 78px;
+    border-radius: 24px;
+    background-color: rgb(241, 243, 247);
+    justify-content: center;
+    align-items: center;
+    margin-right: 18px;
+    flex-shrink: 0;
+}
+
+.quiz-card-icon-glyph
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/quiz-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(100, 105, 122);
+}
+
+.quiz-card-header-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.quiz-meta-summary
+{
+    font-size: 25px;
+    color: rgb(148, 153, 168);
+    margin-top: 4px;
+    white-space: normal;
+}
+
+/* ---------- Quiz detail tabs (Overview / Questions), shown when a card is
+   expanded, matching the reference quiz-detail screen ---------- */
+
+.quiz-tab-row
+{
+    flex-direction: row;
+    background-color: rgb(243, 244, 248);
+    border-radius: 28px;
+    padding: 11px;
+    margin-bottom: 40px;
+}
+
+.quiz-tab-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 24px;
+    padding: 24px 14px;
+    margin: 0;
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(90, 95, 112);
+}
+
+.quiz-tab-button.active
+{
+    background-color: rgb(37, 99, 235); /* fallback, overridden by gradient texture */
+    color: white;
+}
+
+.quiz-overview-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.quiz-overview-stat-card
+{
+    width: 47%;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(249, 250, 252);
+    border-radius: 30px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.05);
+    padding: 32px 28px;
+    margin-bottom: 26px;
+}
+
+.quiz-overview-stat-icon-badge
+{
+    width: 78px;
+    height: 78px;
+    border-radius: 24px;
+    background-color: rgb(241, 243, 247);
+    justify-content: center;
+    align-items: center;
+    margin-right: 22px;
+    flex-shrink: 0;
+}
+
+.quiz-overview-stat-icon
+{
+    width: 36px;
+    height: 36px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(31, 36, 48);
+}
+
+.quiz-overview-stat-icon-time-limit
+{
+    background-image: url("project://database/Assets/UI/Icons/time-limit.png");
+}
+
+.quiz-overview-stat-icon-target
+{
+    background-image: url("project://database/Assets/UI/Icons/target-iconss.png");
+}
+
+.quiz-overview-stat-icon-attempt
+{
+    background-image: url("project://database/Assets/UI/Icons/attempt-icon.png");
+}
+
+.quiz-overview-stat-icon-deadline
+{
+    background-image: url("project://database/Assets/UI/Icons/deadline-icon.png");
+}
+
+.quiz-overview-stat-icon-total-questions
+{
+    background-image: url("project://database/Assets/UI/Icons/total-question-icon.png");
+}
+
+.quiz-overview-stat-icon-total-points
+{
+    background-image: url("project://database/Assets/UI/Icons/total-points-icon.png");
+}
+
+.quiz-overview-stat-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.quiz-overview-stat-value
+{
+    font-size: 43px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.quiz-overview-stat-label
+{
+    font-size: 30px;
+    color: rgb(148, 153, 168);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+/* ---------- Overview: Total Questions / Total Points summary row ----------
+   Same card/badge/icon/text markup as the 2x2 stat grid above (.quiz-overview-stat-card
+   etc.) - just a second 2-up row, so it stays visually consistent with the
+   reference mock. */
+.quiz-overview-totals-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* ---------- Overview: Question types summary card ---------- */
+.quiz-overview-types-card
+{
+    background-color: rgb(249, 250, 252);
+    border-radius: 30px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.05);
+    padding: 38px 32px;
+    min-height: 165px;
+}
+
+.quiz-overview-types-title
+{
+    font-size: 35px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin-bottom: 20px;
+}
+
+.quiz-overview-types-row
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.quiz-overview-type-pill
+{
+    flex-direction: row;
+    flex-grow: 0;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(249, 250, 252);
+    border-radius: 22px;
+    border-width: 1px;
+    border-color: rgba(15, 23, 42, 0.05);
+    padding: 20px 22px;
+    margin-right: 16px;
+    margin-bottom: 16px;
+}
+
+.quiz-overview-type-pill-label
+{
+    font-size: 29px;
+    color: rgb(90, 95, 112);
+    white-space: nowrap;
+}
+
+.quiz-overview-type-pill-count
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(109, 40, 217);
+    background-color: rgb(241, 243, 247);
+    border-radius: 999px;
+    min-width: 40px;
+    height: 40px;
+    -unity-text-align: middle-center;
+    margin-left: 14px;
+}
+
+.quiz-overview-types-empty-label
+{
+    font-size: 23px;
+    color: rgb(148, 153, 168);
+}
+
+/* ---------- Quiz Detail: full screen (NOT a modal/overlay) ----------
+   Sibling of screen-scroll inside screen-root. Toggled via "hidden";
+   when shown it covers the whole screen-root itself (position:
+   absolute, full width/height) rather than floating as a centered
+   card over a dimmed backdrop like the wizard modals do. ---------- */
+
+.quiz-detail-view
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(243, 244, 248);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.quiz-detail-header
+{
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture (same as .header) */
+    padding: 96px 36px 34px 36px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    flex-shrink: 0;
+}
+
+.quiz-detail-back-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    margin-right: 20px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.quiz-detail-back-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.quiz-detail-back-icon
+{
+    width: 34px;
+    height: 34px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.quiz-detail-header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.quiz-detail-title
+{
+    font-size: 44px;
+    -unity-font-style: bold;
+    color: white;
+    white-space: normal;
+}
+
+.quiz-detail-subtitle
+{
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 8px;
+    white-space: normal;
+}
+
+.quiz-detail-delete-button
+{
+    width: 92px;
+    height: 92px;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-width: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin-left: 20px;
+    flex-shrink: 0;
+}
+
+.quiz-detail-delete-button:hover
+{
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.quiz-detail-delete-icon
+{
+    font-size: 34px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.quiz-detail-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.quiz-detail-content
+{
+    width: 100%;
+    padding: 32px 38px 54px 38px;
+}
+
+.quiz-detail-panel
+{
+    width: 100%;
+}
+
+/* ---------- Quiz Detail: Questions tab rows ---------- */
+
+.quiz-detail-question-row
+{
+    width: 100%;
+    background-color: white;
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgb(237, 238, 242);
+    padding: 28px 30px;
+    margin-bottom: 16px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.quiz-detail-question-icon-badge
+{
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: rgb(247, 248, 250);
+    justify-content: center;
+    align-items: center;
+    margin-right: 22px;
+    flex-shrink: 0;
+}
+
+.quiz-detail-question-icon-glyph
+{
+    width: 28px;
+    height: 28px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(100, 107, 122);
+}
+
+.quiz-detail-question-main
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.quiz-detail-question-text
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+    margin-bottom: 10px;
+}
+
+.quiz-detail-question-badges-row
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.quiz-detail-badge
+{
+    background-color: transparent;
+    border-width: 1px;
+    border-color: rgb(230, 232, 238);
+    border-radius: 14px;
+    padding: 7px 15px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+}
+
+.quiz-detail-badge-type .quiz-detail-badge-label
+{
+    color: rgb(71, 85, 105);
+}
+
+.quiz-detail-badge-difficulty-easy .quiz-detail-badge-label
+{
+    color: rgb(59, 108, 79);
+}
+
+.quiz-detail-badge-difficulty-medium .quiz-detail-badge-label
+{
+    color: rgb(146, 108, 46);
+}
+
+.quiz-detail-badge-difficulty-hard .quiz-detail-badge-label
+{
+    color: rgb(158, 66, 66);
+}
+
+.quiz-detail-badge-points .quiz-detail-badge-label
+{
+    color: rgb(107, 114, 128);
+}
+
+.quiz-detail-badge-label
+{
+    font-size: 24px;
+    -unity-font-style: normal;
+    white-space: normal;
+}
+
+.quiz-detail-question-delete-button
+{
+    width: 60px;
+    height: 60px;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 18px;
+    padding: 0;
+    margin: 0;
+    margin-left: 16px;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.quiz-detail-question-delete-button:hover
+{
+    background-color: rgb(254, 238, 238);
+}
+
+.quiz-detail-question-delete-icon
+{
+    width: 30px;
+    height: 30px;
+    background-image: url("project://database/Assets/UI/Icons/delete-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(170, 176, 189);
+    transition-property: -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+}
+
+.quiz-detail-question-delete-button:hover .quiz-detail-question-delete-icon
+{
+    -unity-background-image-tint-color: rgb(220, 38, 38);
+}
+
+/* Full-width "+ Add Question" button at the bottom of the Questions tab
+   (gradient applied at runtime via C#, same green->blue as the header). */
+/* ---------- Questions tab: fixed "+ Add Question" footer ----------
+   Sibling of quiz-detail-scroll (not inside it), so it stays pinned to
+   the bottom of the screen instead of scrolling away with the question
+   list. quiz-detail-scroll (flex-grow: 1) shrinks to leave room for it,
+   so it docks below the scroll area rather than floating over content. */
+.quiz-detail-add-question-footer
+{
+    width: 100%;
+    flex-shrink: 0;
+    background-color: rgb(243, 244, 248);
+    border-top-width: 1px;
+    border-top-color: rgba(15, 23, 42, 0.06);
+    padding: 20px 38px 34px 38px;
+}
+
+.add-question-full-button
+{
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 150, 105); /* fallback, overridden by gradient texture */
+    border-radius: 22px;
+    border-width: 0;
+    padding: 20px;
+    margin: 0;
+    margin-top: 2px;
+}
+
+.add-question-full-button:hover
+{
+    opacity: 0.92;
+}
+
+.add-question-full-label
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+/* ---------- Quiz card chevron (list row now navigates to the full-screen
+   detail view instead of expanding in place) ---------- */
+
+.quiz-card-chevron
+{
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: rgb(196, 200, 214);
+    margin-left: 12px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Full-screen wizard variant (Add Question) -----------------
+   Same modal-overlay/modal-card/wizard-modal-card markup as Create Quiz,
+   but with "fullscreen-overlay"/"fullscreen-card" added so it renders as
+   its own full screen instead of a centered floating card over a dimmed
+   backdrop - same treatment as quiz-detail-view. ---------- */
+
+.fullscreen-overlay
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(243, 244, 248);
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 0;
+}
+
+.fullscreen-card
+{
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    background-color: rgb(243, 244, 248);
+    border-radius: 0;
+    padding: 90px 32px 28px 32px;
+    flex-direction: column;
+}
+
+.fullscreen-card .wizard-step-scroll
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;   /* size purely from available space, not from content -
+                         required alongside min-height below for the ScrollView
+                         to actually shrink instead of always filling/overflowing */
+    min-height: 0;   /* without this a flex item's min size defaults to its content's
+                         natural height, so the ScrollView never shrinks and ends up
+                         always acting as a scroll region even for short steps */
+    max-height: 100%; /* cap at whatever space flex-basis:0 + flex-grow:1 allocates it
+                          within the fullscreen card, so it scrolls only once a step's
+                          cards exceed that space */
+}
+
+/* #add-question-modal-card drops the shared .fullscreen-card padding so its
+   colored header banner (see #add-question-wizard-header above, which keeps
+   its own inset padding) can bleed edge-to-edge instead of sitting inside a
+   32px margin. Every other direct section restores its own left/right inset
+   - and step-1's .question-type-grid its own top/left/right/bottom inset -
+   so the rest of the wizard's content doesn't end up flush against the
+   screen edges. */
+#add-question-modal-card
+{
+    padding: 0;
+}
+
+#add-question-steps-row,
+#add-question-progress-row,
+#add-question-step-2,
+#add-question-step-3,
+#add-question-success-view
+{
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+#add-question-step-2,
+#add-question-step-3
+{
+    padding-bottom: 28px;
+}
+
+.compact #add-question-wizard-header,
+.compact #add-question-steps-row,
+.compact #add-question-progress-row,
+.compact #add-question-step-2,
+.compact #add-question-step-3,
+.compact #add-question-success-view
+{
+    padding-left: 22px;
+    padding-right: 22px;
+}
+
+.compact .fullscreen-card
+{
+    padding: 78px 22px 22px 22px;
+}
+
+.compact .quiz-detail-header
+{
+    padding: 78px 22px 20px 22px;
+}
+
+.compact .quiz-detail-content
+{
+    padding: 16px 20px 32px 20px;
+}
+
+.compact .quiz-detail-add-question-footer
+{
+    padding: 16px 20px 24px 20px;
+}
+
+.compact .new-quiz-footer
+{
+    padding: 16px 20px 24px 20px;
+}
+
+.compact .search-field-wrapper,
+.compact .search-filter-button
+{
+    height: 64px;
+    border-radius: 20px;
+}
+
+.compact .wizard-modal-card
+{
+    max-width: 100%;
+}
+
+.compact .wizard-title
+{
+    font-size: 30px;
+}
+
+.compact .question-type-card
+{
+    width: 100%;
+}
+
+.compact .image-based-system-card
+{
+    width: 100%;
+    margin-bottom: 14px;
+}
+
+.compact .image-based-system-row
+{
+    flex-direction: column;
+}
+
+.compact .quiz-overview-stat-card
+{
+    width: 100%;
+}
+
+.compact .calendar-day-button
+{
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    font-size: 21px;
 }

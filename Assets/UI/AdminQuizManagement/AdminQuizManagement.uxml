@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
+    <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;type=3#AdminQuizManagement"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
@@ -9,232 +9,500 @@
                             <ui:VisualElement name="back-icon" class="back-icon"/>
                         </ui:Button>
                         <ui:VisualElement name="header-text" class="header-text">
-                            <ui:Label text="Quiz Management" class="header-title"/>
+                            <ui:Label text="My Quizzes" class="header-title"/>
                             <ui:Label text="Create and manage quizzes" class="header-subtitle"/>
                         </ui:VisualElement>
-                        <ui:Button name="new-quiz-button" class="new-quiz-button">
-                            <ui:Label text="+" class="new-quiz-plus"/>
-                            <ui:Label text="New Quiz" class="new-quiz-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stats-row" class="stats-row">
+                        <ui:VisualElement name="total-quizzes-stat-card" class="stat-card stat-card-left">
+                            <ui:Label name="total-quizzes-value-label" text="0" class="stat-value"/>
+                            <ui:Label text="Quizzes" class="stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="total-questions-stat-card" class="stat-card stat-card-mid">
+                            <ui:Label name="total-questions-value-label" text="0" class="stat-value"/>
+                            <ui:Label text="Questions" class="stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="categories-stat-card" class="stat-card stat-card-right">
+                            <ui:Label name="categories-value-label" text="0" class="stat-value"/>
+                            <ui:Label text="Categories" class="stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="body-content" class="body-content">
+                    <ui:VisualElement name="search-row" class="search-row">
+                        <ui:VisualElement name="search-field-wrapper" class="search-field-wrapper">
+                            <ui:Label text="" class="search-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;type=3#search-icon&quot;); height: 51px; width: 52px;"/>
+                            <ui:TextField name="quiz-search-field" placeholder-text="Search quizzes" class="search-field"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
+                        <ui:Label text="No quizzes yet" class="empty-state-text"/>
+                        <ui:Button name="create-first-quiz-button" text="Create Your First Quiz" class="empty-state-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-no-results-state" class="quizzes-empty-state hidden">
+                        <ui:Label text="No quizzes match your search" class="empty-state-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement name="new-quiz-footer" class="new-quiz-footer">
+            <ui:Button name="new-quiz-button" class="new-quiz-full-button">
+                <ui:Label text="+" class="new-quiz-plus"/>
+                <ui:Label text="New Quiz" class="new-quiz-label"/>
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement name="quiz-detail-view" class="quiz-detail-view hidden">
+            <ui:VisualElement name="quiz-detail-header" class="quiz-detail-header">
+                <ui:Button name="quiz-detail-back-button" class="quiz-detail-back-button">
+                    <ui:VisualElement class="quiz-detail-back-icon"/>
+                </ui:Button>
+                <ui:VisualElement class="quiz-detail-header-text">
+                    <ui:Label name="quiz-detail-title-label" text="" class="quiz-detail-title"/>
+                    <ui:Label name="quiz-detail-subtitle-label" text="" class="quiz-detail-subtitle"/>
+                </ui:VisualElement>
+                <ui:Button name="quiz-detail-delete-button" class="quiz-detail-delete-button">
+                    <ui:Label class="quiz-detail-delete-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/delete-icon.png?fileID=2800000&amp;type=3#delete-icon&quot;); width: 56px; height: 56px;"/>
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:ScrollView name="quiz-detail-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="quiz-detail-scroll screen-scroll">
+                <ui:VisualElement class="quiz-detail-content">
+                    <ui:VisualElement name="quiz-detail-tab-row" class="quiz-tab-row">
+                        <ui:Button name="quiz-detail-tab-overview-button" text="Overview" class="quiz-tab-button"/>
+                        <ui:Button name="quiz-detail-tab-questions-button" text="Questions" class="quiz-tab-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quiz-detail-overview-panel" class="quiz-detail-panel">
+                        <ui:VisualElement class="quiz-overview-grid">
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-time-limit"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-time-limit-value" text="15 minutes" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Time Limit" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-target"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-passing-score-value" text="70%" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Passing Score" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-attempt"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-max-attempts-value" text="3 Attempts" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Max Attempts" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-deadline"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-deadline-value" text="None" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Deadline" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="quiz-overview-totals-grid">
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-total-questions"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-total-questions-value" text="0" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Total Questions" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="quiz-overview-stat-card">
+                                <ui:VisualElement class="quiz-overview-stat-icon-badge">
+                                    <ui:VisualElement class="quiz-overview-stat-icon quiz-overview-stat-icon-total-points"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="quiz-overview-stat-text">
+                                    <ui:Label name="quiz-detail-total-points-value" text="0" class="quiz-overview-stat-value"/>
+                                    <ui:Label text="Total Points" class="quiz-overview-stat-label"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="quiz-overview-types-card">
+                            <ui:Label text="Question Types" class="quiz-overview-types-title"/>
+                            <ui:VisualElement name="quiz-detail-question-types-row" class="quiz-overview-types-row"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="quiz-detail-questions-panel" class="quiz-detail-panel hidden">
+                        <ui:VisualElement name="quiz-detail-questions-list" class="questions-list"/>
+                        <ui:Label name="quiz-detail-questions-empty-label" text="No questions yet" class="questions-empty-label hidden"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:VisualElement name="quiz-detail-add-question-footer" class="quiz-detail-add-question-footer hidden">
+                <ui:Button name="quiz-detail-add-question-button" class="add-question-full-button">
+                    <ui:Label text="+ Add Question" class="add-question-full-label"/>
+                </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="create-quiz-modal-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="create-quiz-modal-card" class="modal-card wizard-modal-card fullscreen-card">
+                <ui:VisualElement name="create-quiz-wizard-header" class="wizard-header">
+                    <ui:Button name="create-quiz-wizard-back-button" class="wizard-back-button">
+                        <ui:VisualElement class="wizard-back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement class="wizard-header-text-col">
+                        <ui:Label name="create-quiz-modal-title" text="Create New Quiz" class="wizard-title"/>
+                        <ui:Label name="create-quiz-step-label" text="Basic Info, Settings &amp; Availability" class="wizard-step-label"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="create-quiz-progress-row" class="wizard-progress-row" style="padding-right: 32px; padding-left: 32px;">
+                    <ui:VisualElement name="create-quiz-progress-1" class="wizard-progress-segment wizard-progress-segment-last"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="create-quiz-step-1" class="wizard-step wizard-step-static">
+                    <ui:Label text="Quiz Title" class="field-label field-label-spaced"/>
+                    <ui:TextField name="quiz-title-field" class="text-field" placeholder-text="Enter quiz title"/>
+                    <ui:Label name="quiz-title-error" text="" class="field-error hidden"/>
+                    <ui:VisualElement class="field-label-row field-label-spaced">
+                        <ui:Label text="Category" class="field-label"/>
+                        <ui:Label text="Type to create your own" class="field-hint"/>
+                    </ui:VisualElement>
+                    <ui:TextField name="quiz-category-field" class="text-field" placeholder-text="e.g. Science, History, General Knowledge"/>
+                    <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
+                    <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
+                    <ui:TextField name="quiz-time-limit-custom-field" value="10" tooltip="Custom time limit, in minutes" class="text-field field-label-spaced hidden"/>
+                    <ui:Label text="Passing Score" class="field-label field-label-spaced"/>
+                    <ui:VisualElement class="percent-field-wrapper">
+                        <ui:TextField name="quiz-passing-score-field" value="70" class="text-field percent-field"/>
+                        <ui:Label text="%" class="percent-suffix"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Maximum Attempts" class="field-label field-label-spaced"/>
+                    <ui:DropdownField name="quiz-max-attempts-dropdown" class="dropdown-field"/>
+                    <ui:VisualElement class="field-label-row field-label-spaced">
+                        <ui:Label text="Set Deadline" class="field-label"/>
+                        <ui:Label text="Optional cut-off" class="field-hint"/>
+                    </ui:VisualElement>
+                    <ui:Button name="quiz-deadline-selector-button" class="deadline-selector-button field-label-spaced">
+                        <ui:VisualElement class="deadline-selector-icon"/>
+                        <ui:Label name="quiz-deadline-selector-label" text="Select date and time" class="deadline-selector-label"/>
+                        <ui:Label name="quiz-deadline-selector-chevron" text="⌄" class="deadline-selector-chevron"/>
+                    </ui:Button>
+                    <ui:Label name="quiz-deadline-empty-hint" text="No deadline set — quiz stays open indefinitely." class="field-hint field-label-spaced"/>
+                    <ui:Label name="quiz-deadline-error" text="" class="field-error hidden"/>
+                    <ui:Label name="create-quiz-status-label" text="" class="status-label hidden"/>
+                    <ui:VisualElement class="wizard-button-row">
+                        <ui:Button name="create-quiz-cancel-button" text="Cancel" class="modal-cancel-button wizard-half-button"/>
+                        <ui:Button name="create-quiz-submit-button" class="modal-submit-button wizard-half-button wizard-half-button-last">
+                            <ui:Label name="create-quiz-submit-label" text="Create Quiz" class="modal-submit-label"/>
                         </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="stats-row" class="stats-row">
-                    <ui:VisualElement name="total-quizzes-stat-card" class="stat-card stat-card-left">
-                        <ui:Label name="total-quizzes-value-label" text="0" class="stat-value"/>
-                        <ui:Label text="Total Quizzes" class="stat-label"/>
+                <ui:VisualElement name="create-quiz-success-view" class="success-view hidden">
+                    <ui:VisualElement class="success-icon-circle">
+                        <ui:Label text="✓" class="success-icon-check"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="total-questions-stat-card" class="stat-card stat-card-mid">
-                        <ui:Label name="total-questions-value-label" text="0" class="stat-value"/>
-                        <ui:Label text="Total Questions" class="stat-label"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="categories-stat-card" class="stat-card stat-card-right">
-                        <ui:Label name="categories-value-label" text="0" class="stat-value"/>
-                        <ui:Label text="Categories" class="stat-label"/>
-                    </ui:VisualElement>
+                    <ui:Label text="Quiz created" class="success-title"/>
+                    <ui:Label name="create-quiz-success-subtitle" text="Quiz is ready. Add your first question or come back later." class="success-subtitle"/>
+                    <ui:Button name="create-quiz-success-add-question-button" text="+ Add First Question" class="modal-submit-button"/>
+                    <ui:Button name="create-quiz-success-finish-button" text="Finish Later" class="modal-cancel-button"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
-                    <ui:Label text="No quizzes yet" class="empty-state-text"/>
-                    <ui:Button name="create-first-quiz-button" text="Create Your First Quiz" class="empty-state-button"/>
-                </ui:VisualElement>
-                <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
-            </ui:VisualElement>
-        </ui:ScrollView>
-        <ui:VisualElement name="create-quiz-modal-overlay" class="modal-overlay hidden">
-            <ui:VisualElement name="create-quiz-modal-card" class="modal-card">
-                <ui:VisualElement class="modal-header-row">
-                    <ui:VisualElement class="modal-header-text-col">
-                        <ui:Label name="create-quiz-modal-title" text="Create New Quiz" class="modal-title"/>
-                        <ui:Label text="Add a new quiz to the system" class="modal-subtitle"/>
-                    </ui:VisualElement>
-                    <ui:Button name="create-quiz-close-button" text="✕" class="modal-close-button"/>
-                </ui:VisualElement>
-                <ui:Label text="Quiz Title" class="field-label field-label-spaced"/>
-                <ui:TextField name="quiz-title-field" class="text-field"/>
-                <ui:Label name="quiz-title-error" text="" class="field-error hidden"/>
-                <ui:Label text="Category" class="field-label field-label-spaced"/>
-                <ui:TextField name="quiz-category-field" class="text-field"/>
-                <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
-                <ui:VisualElement class="two-column-row">
-                    <ui:VisualElement class="two-column-item two-column-item-left">
-                        <ui:Label text="Max Attempts" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-max-attempts-field" value="3" class="text-field"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="two-column-item two-column-item-right">
-                        <ui:Label text="Passing Score (%)" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-passing-score-field" value="70" class="text-field"/>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
-                <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
-                <ui:TextField name="quiz-time-limit-custom-field" value="10" class="text-field field-label-spaced hidden" tooltip="Custom time limit, in minutes"/>
-                <ui:VisualElement name="quiz-deadline-toggle-row" class="toggle-row field-label-spaced">
-                    <ui:Toggle name="quiz-deadline-enabled-toggle" label="Set a Deadline" class="deadline-toggle"/>
-                </ui:VisualElement>
-                <ui:VisualElement name="quiz-deadline-fields-row" class="hidden">
-                    <ui:Label text="Deadline Date" class="field-label field-label-spaced"/>
-                    <ui:VisualElement class="three-column-row">
-                        <ui:DropdownField name="quiz-deadline-month-dropdown" class="dropdown-field three-column-item three-column-item-left"/>
-                        <ui:DropdownField name="quiz-deadline-day-dropdown" class="dropdown-field three-column-item three-column-item-mid"/>
-                        <ui:DropdownField name="quiz-deadline-year-dropdown" class="dropdown-field three-column-item three-column-item-right"/>
-                    </ui:VisualElement>
-                    <ui:Label text="Deadline Time" class="field-label field-label-spaced"/>
-                    <ui:VisualElement class="three-column-row">
-                        <ui:DropdownField name="quiz-deadline-hour-dropdown" class="dropdown-field three-column-item three-column-item-left" tooltip="Hour"/>
-                        <ui:DropdownField name="quiz-deadline-minute-dropdown" class="dropdown-field three-column-item three-column-item-mid" tooltip="Minute"/>
-                        <ui:DropdownField name="quiz-deadline-ampm-dropdown" class="dropdown-field three-column-item three-column-item-right" tooltip="AM/PM"/>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:Label name="quiz-deadline-error" text="" class="field-error hidden"/>
-                <ui:Label name="create-quiz-status-label" text="" class="status-label hidden"/>
-                <ui:Button name="create-quiz-submit-button" class="modal-submit-button">
-                    <ui:Label name="create-quiz-submit-label" text="Create Quiz" class="modal-submit-label"/>
-                </ui:Button>
-                <ui:Button name="create-quiz-cancel-button" text="Cancel" class="modal-cancel-button"/>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="add-question-modal-overlay" class="modal-overlay hidden">
-            <ui:VisualElement name="add-question-modal-card" class="modal-card">
-                <ui:VisualElement class="modal-header-row">
-                    <ui:VisualElement class="modal-header-text-col">
-                        <ui:Label text="Add Question" class="modal-title"/>
-                        <ui:Label text="Create a new question for this quiz" class="modal-subtitle"/>
-                    </ui:VisualElement>
-                    <ui:Button name="add-question-close-button" text="✕" class="modal-close-button"/>
-                </ui:VisualElement>
-                <ui:Label text="Question" name="question-text-label" class="field-label field-label-spaced"/>
-                <ui:TextField name="question-text-field" multiline="true" class="text-field text-area"/>
-                <ui:Label name="question-text-error" text="" class="field-error hidden"/>
-                <ui:Label text="Question Type" class="field-label field-label-spaced"/>
-                <ui:DropdownField name="question-type-dropdown" class="dropdown-field"/>
-
-                <!-- Multiple Choice / Multiple Identification: shared answer-choice fields (typed once, reused for the correct-answer picker below) -->
-                <ui:VisualElement name="options-container" class="options-container hidden">
-                    <ui:Label text="Answer Choices" class="field-label field-label-spaced"/>
-                    <ui:VisualElement class="option-row">
-                        <ui:Label text="A" class="option-letter-badge"/>
-                        <ui:TextField name="option-1-field" class="text-field option-field"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="option-row">
-                        <ui:Label text="B" class="option-letter-badge"/>
-                        <ui:TextField name="option-2-field" class="text-field option-field"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="option-row">
-                        <ui:Label text="C" class="option-letter-badge"/>
-                        <ui:TextField name="option-3-field" class="text-field option-field"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="option-row">
-                        <ui:Label text="D" class="option-letter-badge"/>
-                        <ui:TextField name="option-4-field" class="text-field option-field"/>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-
-                <!-- Multiple Choice: single correct answer via radio buttons (A/B/C/D) -->
-                <ui:VisualElement name="mc-correct-answer-container" class="correct-answer-container hidden">
-                    <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
-                    <ui:VisualElement class="correct-answer-choice-row">
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mc-correct-a-toggle" class="radio-toggle"/>
-                            <ui:Label text="A" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mc-correct-b-toggle" class="radio-toggle"/>
-                            <ui:Label text="B" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mc-correct-c-toggle" class="radio-toggle"/>
-                            <ui:Label text="C" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mc-correct-d-toggle" class="radio-toggle"/>
-                            <ui:Label text="D" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:Label name="mc-correct-answer-error" text="" class="field-error hidden"/>
-                </ui:VisualElement>
-
-                <!-- Multiple Identification: one or more correct answers via checkboxes (A/B/C/D) -->
-                <ui:VisualElement name="mi-correct-answer-container" class="correct-answer-container hidden">
-                    <ui:Label text="Correct Answer(s)" class="field-label field-label-spaced"/>
-                    <ui:VisualElement class="correct-answer-choice-row">
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mi-correct-a-toggle" class="checkbox-toggle"/>
-                            <ui:Label text="A" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mi-correct-b-toggle" class="checkbox-toggle"/>
-                            <ui:Label text="B" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mi-correct-c-toggle" class="checkbox-toggle"/>
-                            <ui:Label text="C" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="correct-answer-choice">
-                            <ui:Toggle name="mi-correct-d-toggle" class="checkbox-toggle"/>
-                            <ui:Label text="D" class="correct-answer-choice-label"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:Label name="mi-correct-answer-error" text="" class="field-error hidden"/>
-                </ui:VisualElement>
-
-                <!-- True or False: no typing, just pick from a dropdown -->
-                <ui:VisualElement name="true-false-container" class="hidden">
-                    <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
-                    <ui:DropdownField name="true-false-answer-dropdown" class="dropdown-field"/>
-                </ui:VisualElement>
-
-                <!-- Enumeration: answers added one at a time instead of one big textbox -->
-                <ui:VisualElement name="enumeration-container" class="hidden">
-                    <ui:Label text="Answers" class="field-label field-label-spaced"/>
-                    <ui:ScrollView name="enumeration-answers-list" class="enumeration-answers-list" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto"/>
-                    <ui:Button name="enumeration-add-answer-button" class="add-answer-button">
-                        <ui:Label text="+" class="add-answer-plus"/>
-                        <ui:Label text="Add Answer" class="add-answer-label"/>
+        <ui:VisualElement name="add-question-modal-overlay" class="modal-overlay fullscreen-overlay hidden">
+            <ui:VisualElement name="add-question-modal-card" class="modal-card wizard-modal-card fullscreen-card">
+                <ui:VisualElement name="add-question-wizard-header" class="wizard-header">
+                    <ui:Button name="add-question-wizard-back-button" class="wizard-back-button">
+                        <ui:VisualElement class="wizard-back-icon"/>
                     </ui:Button>
-                    <ui:Label name="enumeration-answer-error" text="" class="field-error hidden"/>
+                    <ui:VisualElement class="wizard-header-text-col">
+                        <ui:Label text="Add Question" class="wizard-title"/>
+                        <ui:Label name="add-question-step-label" text="Step 1 of 3 · Question type" class="wizard-step-label"/>
+                    </ui:VisualElement>
+                    <ui:Button name="add-question-cancel-link-button" text="Cancel" class="wizard-cancel-link"/>
                 </ui:VisualElement>
-
-                <!-- Image-Based: anatomy system -> structure, with a live preview -->
-                <ui:VisualElement name="image-based-container" class="hidden">
-                    <ui:Label text="Anatomy System" class="field-label field-label-spaced"/>
-                    <ui:DropdownField name="image-based-system-dropdown" class="dropdown-field"/>
-                    <ui:Label text="Structure" class="field-label field-label-spaced"/>
-                    <!-- Structure picking moved out of this modal - opens a dedicated 3D
-                         model viewer screen instead of an in-modal chip list. That screen
-                         isn't implemented yet (see OnImageBasedView3DButtonClicked). -->
-                    <ui:Button name="image-based-view-3d-button" class="view-3d-model-button">
-                        <ui:Label text="⬡" class="view-3d-model-icon"/>
-                        <ui:Label text="View 3D Model" class="view-3d-model-label"/>
-                    </ui:Button>
-                    <ui:Label text="Preview" class="field-label field-label-spaced"/>
-                    <ui:VisualElement name="image-based-preview" class="image-based-preview">
-                        <ui:VisualElement name="image-based-preview-icon" class="image-based-preview-icon"/>
-                        <ui:Label name="image-based-preview-label" text="Select a structure" class="image-based-preview-label"/>
+                <ui:VisualElement name="add-question-steps-row" class="wizard-steps-row">
+                    <ui:VisualElement name="add-question-step-item-1" class="wizard-step-item">
+                        <ui:VisualElement name="add-question-step-circle-1" class="wizard-step-circle">
+                            <ui:Label name="add-question-step-circle-label-1" text="1" class="wizard-step-circle-label"/>
+                        </ui:VisualElement>
+                        <ui:Label name="add-question-step-item-label-1" text="Question Type" class="wizard-step-item-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="add-question-step-item-2" class="wizard-step-item">
+                        <ui:VisualElement name="add-question-step-circle-2" class="wizard-step-circle">
+                            <ui:Label name="add-question-step-circle-label-2" text="2" class="wizard-step-circle-label"/>
+                        </ui:VisualElement>
+                        <ui:Label name="add-question-step-item-label-2" text="Q&amp;A" class="wizard-step-item-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="add-question-step-item-3" class="wizard-step-item wizard-step-item-last">
+                        <ui:VisualElement name="add-question-step-circle-3" class="wizard-step-circle">
+                            <ui:Label name="add-question-step-circle-label-3" text="3" class="wizard-step-circle-label"/>
+                        </ui:VisualElement>
+                        <ui:Label name="add-question-step-item-label-3" text="Points" class="wizard-step-item-label"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
-                <!-- Identification: simple free-text correct answer (also doubles as the underlying
-                     data field for every other type - see AdminQuizManagementController) -->
-                <ui:VisualElement name="identification-container">
-                    <ui:Label text="Correct Answer" name="correct-answer-label" class="field-label field-label-spaced"/>
-                    <ui:TextField name="correct-answer-field" class="text-field"/>
-                    <ui:Label name="correct-answer-error" text="" class="field-error hidden"/>
+                <ui:VisualElement name="add-question-progress-row" class="wizard-progress-row">
+                    <ui:VisualElement name="add-question-progress-1" class="wizard-progress-segment"/>
+                    <ui:VisualElement name="add-question-progress-2" class="wizard-progress-segment"/>
+                    <ui:VisualElement name="add-question-progress-3" class="wizard-progress-segment wizard-progress-segment-last"/>
                 </ui:VisualElement>
-
-                <ui:VisualElement class="two-column-row">
-                    <ui:VisualElement class="two-column-item two-column-item-left">
-                        <ui:Label text="Difficulty" class="field-label field-label-spaced"/>
-                        <ui:DropdownField name="difficulty-dropdown" class="dropdown-field"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="two-column-item two-column-item-right">
-                        <ui:Label text="Points" class="field-label field-label-spaced"/>
-                        <ui:TextField name="question-points-field" value="10" class="text-field"/>
+                <ui:VisualElement name="add-question-step-1" class="wizard-step">
+                    <ui:VisualElement name="question-type-grid" class="question-type-grid">
+                        <ui:Button name="qtype-card-multiple-choice" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--multiple-choice"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Multiple Choice" class="question-type-card-title"/>
+                            <ui:Label text="One correct option" class="question-type-card-subtitle"/>
+                        </ui:Button>
+                        <ui:Button name="qtype-card-true-false" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--true-false"/>
+                            </ui:VisualElement>
+                            <ui:Label text="True or False" class="question-type-card-title"/>
+                            <ui:Label text="Two-option check" class="question-type-card-subtitle"/>
+                        </ui:Button>
+                        <ui:Button name="qtype-card-identification" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--identification"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Identification" class="question-type-card-title"/>
+                            <ui:Label text="Short typed answer" class="question-type-card-subtitle"/>
+                        </ui:Button>
+                        <ui:Button name="qtype-card-enumeration" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--enumeration"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Enumeration" class="question-type-card-title"/>
+                            <ui:Label text="List several answers" class="question-type-card-subtitle"/>
+                        </ui:Button>
+                        <ui:Button name="qtype-card-multiple-identification" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--multiple-id"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Multiple ID" class="question-type-card-title"/>
+                            <ui:Label text="Several correct options" class="question-type-card-subtitle"/>
+                        </ui:Button>
+                        <ui:Button name="qtype-card-image-based" class="question-type-card">
+                            <ui:VisualElement class="question-type-icon-badge">
+                                <ui:VisualElement class="question-type-icon question-type-icon--image-based"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Image Based" class="question-type-card-title"/>
+                            <ui:Label text="Point to a structure" class="question-type-card-subtitle"/>
+                        </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="add-question-status-label" text="" class="status-label hidden"/>
-                <ui:Button name="add-question-submit-button" class="modal-submit-button">
-                    <ui:Label text="Add Question" class="modal-submit-label"/>
-                </ui:Button>
-                <ui:Button name="add-question-cancel-button" text="Cancel" class="modal-cancel-button"/>
+                <ui:VisualElement name="add-question-step-2" class="wizard-step hidden">
+                    <ui:Label text="Question, options and correct answer — all on this screen" class="wizard-step-banner"/>
+                    <ui:Label text="Question" name="question-text-label" class="field-label field-label-spaced"/>
+                    <ui:TextField name="question-text-field" multiline="true" placeholder-text="Type your question here..." class="text-field text-area"/>
+                    <ui:Label name="question-text-error" text="" class="field-error hidden"/>
+                    <ui:VisualElement name="options-container" class="options-container hidden">
+                        <ui:Label text="Answer Options &amp; Correct Answer" class="field-label field-label-spaced"/>
+                        <ui:VisualElement class="option-row">
+                            <ui:Label text="A" class="option-letter-badge"/>
+                            <ui:TextField name="option-1-field" placeholder-text="Enter option A" class="text-field option-field"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="option-row">
+                            <ui:Label text="B" class="option-letter-badge"/>
+                            <ui:TextField name="option-2-field" placeholder-text="Enter option B" class="text-field option-field"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="option-row">
+                            <ui:Label text="C" class="option-letter-badge"/>
+                            <ui:TextField name="option-3-field" placeholder-text="Enter option C" class="text-field option-field"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="option-row">
+                            <ui:Label text="D" class="option-letter-badge"/>
+                            <ui:TextField name="option-4-field" placeholder-text="Enter option D" class="text-field option-field"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="mc-correct-answer-container" class="correct-answer-container hidden">
+                        <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
+                        <ui:VisualElement class="correct-answer-choice-row">
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mc-correct-a-toggle" class="radio-toggle"/>
+                                <ui:Label text="A" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mc-correct-b-toggle" class="radio-toggle"/>
+                                <ui:Label text="B" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mc-correct-c-toggle" class="radio-toggle"/>
+                                <ui:Label text="C" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mc-correct-d-toggle" class="radio-toggle"/>
+                                <ui:Label text="D" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label name="mc-correct-answer-error" text="" class="field-error hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="mi-correct-answer-container" class="correct-answer-container hidden">
+                        <ui:VisualElement class="field-label-row field-label-spaced">
+                            <ui:Label text="Answer Options &amp; Correct Answer" class="field-label"/>
+                            <ui:Label text="Check all correct" class="field-hint"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="correct-answer-choice-row">
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mi-correct-a-toggle" class="checkbox-toggle"/>
+                                <ui:Label text="A" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mi-correct-b-toggle" class="checkbox-toggle"/>
+                                <ui:Label text="B" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mi-correct-c-toggle" class="checkbox-toggle"/>
+                                <ui:Label text="C" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="correct-answer-choice">
+                                <ui:Toggle name="mi-correct-d-toggle" class="checkbox-toggle"/>
+                                <ui:Label text="D" class="correct-answer-choice-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label name="mi-correct-answer-error" text="" class="field-error hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="true-false-container" class="hidden">
+                        <ui:Label text="Correct Answer" class="field-label field-label-spaced"/>
+                        <ui:VisualElement name="true-false-button-row" class="true-false-button-row">
+                            <ui:Button name="true-false-true-button" text="True" class="true-false-button"/>
+                            <ui:Button name="true-false-false-button" text="False" class="true-false-button true-false-button-last"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="enumeration-container" class="hidden">
+                        <ui:VisualElement class="field-label-row field-label-spaced">
+                            <ui:Label text="Correct Answers" class="field-label"/>
+                            <ui:Label name="enumeration-answer-count-label" text="0 added" class="field-hint"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="enumeration-add-row">
+                            <ui:TextField name="enumeration-new-answer-field" placeholder-text="Add a correct answer" class="text-field enumeration-new-answer-field"/>
+                            <ui:Button name="enumeration-add-answer-button" class="enumeration-add-button">
+                                <ui:Label text="+" class="enumeration-add-icon"/>
+                            </ui:Button>
+                        </ui:VisualElement>
+                        <ui:ScrollView name="enumeration-answers-list" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" class="enumeration-answers-list"/>
+                        <ui:Label name="enumeration-answer-error" text="" class="field-error hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="image-based-container" class="hidden">
+                        <ui:VisualElement class="field-label-row field-label-spaced">
+                            <ui:Label text="Anatomical System" class="field-label"/>
+                            <ui:Label text="Skeletal, Muscular or Cardiovascular only" class="field-hint"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="image-based-system-row" class="image-based-system-row">
+                            <ui:Button name="image-based-system-skeletal-button" class="image-based-system-card">
+                                <ui:Label text="🦦" class="image-based-system-icon"/>
+                                <ui:Label text="Skeletal" class="image-based-system-label"/>
+                            </ui:Button>
+                            <ui:Button name="image-based-system-muscular-button" class="image-based-system-card">
+                                <ui:Label text="💪" class="image-based-system-icon"/>
+                                <ui:Label text="Muscular" class="image-based-system-label"/>
+                            </ui:Button>
+                            <ui:Button name="image-based-system-cardiovascular-button" class="image-based-system-card">
+                                <ui:Label text="❤" class="image-based-system-icon"/>
+                                <ui:Label text="Cardiovascular" class="image-based-system-label"/>
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="identification-container">
+                        <ui:Label text="Correct Answer" name="correct-answer-label" class="field-label field-label-spaced"/>
+                        <ui:TextField name="correct-answer-field" placeholder-text="Type the correct answer" class="text-field"/>
+                        <ui:Label name="correct-answer-error" text="" class="field-error hidden"/>
+                    </ui:VisualElement>
+                    <ui:Button name="add-question-step2-next-button" text="Next" class="modal-submit-button wizard-next-button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="add-question-step-3" class="wizard-step hidden">
+                    <ui:Label text="Difficulty" class="field-label field-label-spaced"/>
+                    <ui:VisualElement name="difficulty-button-row" class="difficulty-button-row">
+                        <ui:Button name="difficulty-easy-button" text="Easy" class="difficulty-button"/>
+                        <ui:Button name="difficulty-medium-button" text="Medium" class="difficulty-button"/>
+                        <ui:Button name="difficulty-hard-button" text="Hard" class="difficulty-button difficulty-button-last"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Points" class="field-label field-label-spaced"/>
+                    <ui:TextField name="question-points-field" value="10" class="text-field"/>
+                    <ui:Label name="add-question-status-label" text="" class="status-label hidden"/>
+                    <ui:VisualElement class="wizard-button-row">
+                        <ui:Button name="add-question-step3-back-button" text="Back" class="modal-cancel-button wizard-half-button"/>
+                        <ui:Button name="add-question-submit-button" class="modal-submit-button wizard-half-button wizard-half-button-last">
+                            <ui:Label text="Add Question" class="modal-submit-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="add-question-success-view" class="success-view hidden">
+                    <ui:VisualElement class="success-icon-circle">
+                        <ui:Label text="✓" class="success-icon-check"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Question added" class="success-title"/>
+                    <ui:Label text="It&apos;s now part of this quiz." class="success-subtitle"/>
+                    <ui:Button name="add-question-success-add-another-button" text="+ Add Another Question" class="modal-submit-button"/>
+                    <ui:Button name="add-question-success-done-button" text="Done" class="modal-cancel-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Declared here - as a top-level sibling of screen-root's other children/overlays,
+             rather than nested inside #create-quiz-step-1 - so it floats the same way Unity's
+             own unity-base-dropdown__container-outer does: attached at the panel level instead
+             of a local ancestor, so it is never clipped by #create-quiz-step-1's overflow:hidden
+             (that section is a fixed, non-scrolling area, so a nested panel could get cut off
+             whenever the calendar didn't fit inside that step's own bounds) and always paints on
+             top of the wizard/modal content beneath it, since it's the LAST sibling here. Its
+             left/top/width are computed at runtime in PositionDeadlinePanel() from the selector
+             button's world bounds converted into this element's parent (#screen-root) local
+             space, the same way Unity computes a dropdown's outer container position from its
+             source control. -->
+        <ui:VisualElement name="quiz-deadline-picker-panel" class="deadline-picker-panel hidden">
+            <ui:ScrollView name="quiz-deadline-picker-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" class="deadline-picker-scroll">
+                <ui:VisualElement name="quiz-deadline-picker-content" class="deadline-picker-content">
+                    <ui:VisualElement class="calendar-nav-row">
+                        <ui:Button name="calendar-prev-month-button" text="‹" class="calendar-nav-button"/>
+                        <ui:Label name="calendar-month-year-label" text="" class="calendar-month-year-label"/>
+                        <ui:Button name="calendar-next-month-button" text="›" class="calendar-nav-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="calendar-weekday-row" class="calendar-weekday-row"/>
+                    <ui:VisualElement name="calendar-grid" class="calendar-grid"/>
+                    <ui:VisualElement class="calendar-time-row">
+                        <ui:VisualElement class="calendar-time-grid-row">
+                            <ui:VisualElement class="calendar-time-col">
+                                <ui:Label text="Hour" class="field-label field-label-spaced"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="calendar-time-col">
+                                <ui:Label text="Minute" class="field-label field-label-spaced"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="calendar-time-col calendar-time-col-last calendar-grid-cell-empty"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="calendar-time-grid-row calendar-time-grid-row-last">
+                            <ui:VisualElement class="calendar-time-col">
+                                <ui:DropdownField name="quiz-deadline-hour-dropdown" class="dropdown-field"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="calendar-time-col">
+                                <ui:DropdownField name="quiz-deadline-minute-dropdown" class="dropdown-field"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="calendar-time-col calendar-time-col-last calendar-ampm-col">
+                                <ui:VisualElement class="ampm-toggle-row">
+                                    <ui:Button name="calendar-am-button" text="AM" class="ampm-button ampm-button-left"/>
+                                    <ui:Button name="calendar-pm-button" text="PM" class="ampm-button ampm-button-right"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="wizard-button-row">
+                        <ui:Button name="quiz-deadline-clear-button" text="Clear" class="modal-cancel-button wizard-half-button"/>
+                        <ui:Button name="quiz-deadline-set-button" text="Set Deadline" binding-path="" class="modal-submit-button wizard-half-button wizard-half-button-last" style="font-size: 32px; color: rgb(255, 255, 255);"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:VisualElement name="quiz-delete-confirm-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="quiz-delete-confirm-card" class="modal-card confirm-card">
+                <ui:VisualElement class="confirm-icon-circle">
+                    <ui:Label text="!" class="confirm-icon-mark"/>
+                </ui:VisualElement>
+                <ui:Label text="Delete this quiz?" class="confirm-title"/>
+                <ui:Label name="quiz-delete-confirm-subtitle" text="This will permanently delete the quiz and all of its questions. This action cannot be undone." class="confirm-subtitle"/>
+                <ui:Button name="quiz-delete-confirm-button" text="Delete Quiz" class="modal-delete-button"/>
+                <ui:Button name="quiz-delete-cancel-button" text="Cancel" class="modal-cancel-button"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
