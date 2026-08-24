@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -17,8 +18,11 @@ namespace Anatomia3D.UI.Quiz
     /// Data comes from QuizService.Instance.FetchQuiz(); the finished attempt is written
     /// via QuizService.Instance.SubmitQuizAttempt().
     ///
-    /// Image-based questions are intentionally skipped here - Jeysi has a separate plan
-    /// for that type, so this screen leaves a placeholder and never scores it.
+    /// Image-based questions are answered with a typed text field, same as
+    /// Identification - the difference is the "View on 3D Model" button, which sends
+    /// the student to the reused Student Anatomy Screen to see the highlighted
+    /// structure (see AnatomyQuizHighlightController) without revealing its name, then
+    /// back here via ResumeInProgressQuiz to type the answer.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class StudentQuizGameplayController : MonoBehaviour
@@ -385,12 +389,7 @@ namespace Anatomia3D.UI.Quiz
                     BuildMultiSelect(q);
                     break;
                 case QuestionTypeSlugs.ImageBased:
-                    // TODO(Jeysi): image-based question type is handled by a separate
-                    // flow - not built here. Leaving a placeholder so the screen still
-                    // renders something sane if one slips into a quiz.
-                    var placeholder = new Label("Image-based question - handled separately.");
-                    placeholder.AddToClassList("helper-text");
-                    _answerContainer.Add(placeholder);
+                    BuildImageBased(q);
                     break;
                 default:
                     Debug.LogWarning($"[QuizGameplay] Unknown question type slug '{q.QuestionTypeSlug}'.");
@@ -537,6 +536,54 @@ namespace Anatomia3D.UI.Quiz
             }
         }
 
+        /// <summary>"View on 3D Model" + a typed-answer field. The 3D view lives on the
+        /// reused Student Anatomy Screen (see AnatomyQuizHighlightController), never
+        /// embedded here - this screen is 2D UI Toolkit only. The button is a round
+        /// trip: leaving and coming back resumes this exact attempt via
+        /// UIManager.ShowStudentAnatomyScreenForQuizHighlight / ShowStudentQuizGameplayResume,
+        /// it never restarts the quiz.</summary>
+        private void BuildImageBased(QuizService.QuestionRecord q)
+        {
+            var viewButton = new Button(() => OnViewOnModelClicked(q)) { text = "🦴  View on 3D Model" };
+            viewButton.AddToClassList("view-model-button");
+            _answerContainer.Add(viewButton);
+
+            var helper = new Label("Tap above to see the highlighted structure, then type its name below.");
+            helper.AddToClassList("helper-text");
+            _answerContainer.Add(helper);
+
+            var field = new TextField { multiline = false };
+            field.AddToClassList("answer-text-field");
+            field.textEdition.placeholder = "Type the structure's name...";
+            field.value = _answers.TryGetValue(_currentIndex, out var stored) ? (string)stored : string.Empty;
+
+            field.RegisterValueChangedCallback(evt =>
+            {
+                _answers[_currentIndex] = evt.newValue;
+                RefreshActionButtonState();
+            });
+
+            _answerContainer.Add(field);
+        }
+
+        private void OnViewOnModelClicked(QuizService.QuestionRecord q)
+        {
+            if (string.IsNullOrEmpty(q.AnatomySystemKey) || string.IsNullOrEmpty(q.StructureKey))
+            {
+                Debug.LogWarning("[QuizGameplay] Image-based question is missing AnatomySystemKey/StructureKey - " +
+                                  "cannot open the 3D model. This question may have been saved before that metadata existed.");
+                return;
+            }
+
+            if (!Enum.TryParse<AnatomySystem>(q.AnatomySystemKey, out var system))
+            {
+                Debug.LogWarning($"[QuizGameplay] Unknown anatomy system '{q.AnatomySystemKey}' on an Image-Based question.");
+                return;
+            }
+
+            UIManager.Instance.ShowStudentAnatomyScreenForQuizHighlight(system, q.StructureKey);
+        }
+
         // ---------------------------------------------------------------
         // Navigation / submit
         // ---------------------------------------------------------------
@@ -601,8 +648,6 @@ namespace Anatomia3D.UI.Quiz
             for (int i = 0; i < _quiz.Questions.Count; i++)
             {
                 var q = _quiz.Questions[i];
-                if (q.QuestionTypeSlug == QuestionTypeSlugs.ImageBased)
-                    continue; // scored separately, not part of this flow
 
                 _answers.TryGetValue(i, out var answer);
                 if (IsAnswerCorrect(q, answer))
@@ -684,6 +729,10 @@ namespace Anatomia3D.UI.Quiz
         ///  - Enumeration / MultipleIdentification: comma-separated list of correct
         ///    values, e.g. "Skin, Hair, Nails" - see UpdateCorrectAnswerHint in
         ///    AdminQuizManagementController for the exact placeholder shown to admins.
+        ///  - ImageBased: free text against CorrectAnswer, all whitespace stripped and
+        ///    case-insensitive (see NormalizeForComparison) - CorrectAnswer is always
+        ///    the picked structure's displayName (never its internal StructureKey),
+        ///    set by AdminQuizManagementController's teacher structure picker.
         /// </summary>
         private static bool IsAnswerCorrect(QuizService.QuestionRecord q, object answer)
         {
@@ -697,6 +746,15 @@ namespace Anatomia3D.UI.Quiz
                 case QuestionTypeSlugs.Identification:
                     return answer is string typed &&
                            string.Equals(typed.Trim(), q.CorrectAnswer?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                case QuestionTypeSlugs.ImageBased:
+                    // Structure display names sometimes get typed back with extra/odd
+                    // spacing ("Left  Femur", a stray trailing space, etc.) - collapse
+                    // all whitespace runs to a single space (in addition to trimming
+                    // and ignoring case) before comparing, so that never costs a
+                    // student a correct answer.
+                    return answer is string imageBasedTyped &&
+                           string.Equals(NormalizeForComparison(imageBasedTyped), NormalizeForComparison(q.CorrectAnswer), StringComparison.OrdinalIgnoreCase);
 
                 case QuestionTypeSlugs.Enumeration:
                     {
@@ -724,9 +782,38 @@ namespace Anatomia3D.UI.Quiz
             return raw.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
         }
 
+        // Strips ALL whitespace (not just collapsing runs of it) before comparing, so
+        // "Frontal Bone", "frontalbone", and "Frontal  Bone " all compare equal -
+        // spacing shouldn't be what costs a student a correct answer here. Used for
+        // Image-Based answer matching - see IsAnswerCorrect.
+        private static string NormalizeForComparison(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            return Regex.Replace(raw, @"\s+", "");
+        }
+
         // ---------------------------------------------------------------
         // Timer (single countdown for the whole quiz, per QuizRecord.TimeLimitMinutes)
         // ---------------------------------------------------------------
+
+        /// <summary>Repaints the current question and resumes the countdown on the SAME
+        /// in-progress attempt - called via UIManager.ShowStudentQuizGameplayResume when
+        /// returning from the Anatomy Screen's "View on 3D Model" round trip. Deliberately
+        /// does nothing (not even log) if there's no attempt in progress, since a resume
+        /// call always follows an active LoadQuiz in normal use; the guard just protects
+        /// against a stray call reaching here first.</summary>
+        public void ResumeInProgressQuiz()
+        {
+            if (_quiz == null) return;
+
+            RenderQuestion(_currentIndex);
+
+            if (_quiz.HasTimeLimit && _timeRemaining > 0f && !_timerRunning)
+            {
+                _timerRunning = true;
+                _timerRoutine = StartCoroutine(TimerLoop());
+            }
+        }
 
         private void StartTimer(int seconds)
         {

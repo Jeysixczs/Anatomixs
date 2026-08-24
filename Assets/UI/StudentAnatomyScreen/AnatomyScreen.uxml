@@ -8,6 +8,7 @@
                 <ui:Label text="SKELETAL SYSTEM" name="AppSubtitle" class="app-subtitle"/>
             </ui:VisualElement>
             <ui:Label name="PlayModeProgressLabel" text="" class="play-mode-progress-label"/>
+            <ui:Label name="TeacherSelectionModeLabel" text="SELECT A STRUCTURE FOR YOUR QUESTION" class="teacher-selection-mode-label hidden"/>
         </ui:VisualElement>
         <ui:VisualElement name="SearchBar" class="search-bar">
             <ui:Label text="🔍" name="SearchIcon" class="search-icon" style="-unity-font-definition: initial; background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;guid=46917629dafc20049adaebe048c8263a&amp;type=3#search-icon&quot;); height: 51px; width: 48px;"/>
@@ -44,6 +45,17 @@
                 <ui:Button name="PlayModeSubmitButton" class="play-mode-submit-btn">
                     <ui:Label text="SUBMIT" class="play-mode-btn-label"/>
                     <ui:Label text="→" class="play-mode-btn-icon"/>
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="TeacherSelectionControls" class="teacher-selection-controls hidden">
+                <ui:Button name="TeacherSelectStructureButton" class="teacher-select-structure-btn">
+                    <ui:Label text="SELECT THIS STRUCTURE" class="teacher-select-structure-btn-label"/>
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="QuizHighlightControls" class="quiz-highlight-controls hidden">
+                <ui:Button name="LocateStructureButton" class="locate-structure-btn">
+                    <ui:Label text="🎯" class="locate-structure-btn-icon"/>
+                    <ui:Label text="LOCATE STRUCTURE" class="locate-structure-btn-label"/>
                 </ui:Button>
             </ui:VisualElement>
             <ui:VisualElement name="AudioRow" class="audio-row">

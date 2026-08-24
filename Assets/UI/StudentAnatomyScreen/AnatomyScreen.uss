@@ -757,6 +757,117 @@
     letter-spacing: 1px;
 }
 
+/* ===== Teacher Selection Mode (Admin Quiz Management's Image-Based picker) ===== */
+
+.teacher-selection-mode-label {
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-left: 12px;
+    -unity-text-align: middle-left;
+}
+
+.teacher-selection-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 26px;
+    padding-right: 30px;
+    padding-top: 14px;
+    padding-bottom: 30px;
+    background-color: rgb(244, 247, 252);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.teacher-select-structure-btn {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 22px;
+    margin: 0;
+    border-radius: 28px;
+    flex-shrink: 0;
+    background-color: rgb(37, 99, 235);
+    border-width: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.teacher-select-structure-btn:hover {
+    background-color: rgb(29, 82, 199);
+    scale: 1.02 1.02;
+}
+
+.teacher-select-structure-btn:disabled {
+    background-color: rgb(180, 190, 210);
+}
+
+.teacher-select-structure-btn-label {
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(255, 255, 255);
+    letter-spacing: 1px;
+}
+
+/* ===== Quiz Highlight Mode (student Image-Based "View on 3D Model") ===== */
+
+.quiz-highlight-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 26px;
+    padding-right: 30px;
+    padding-top: 14px;
+    padding-bottom: 30px;
+    background-color: rgb(244, 247, 252);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.locate-structure-btn {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 22px;
+    margin: 0;
+    border-radius: 28px;
+    flex-shrink: 0;
+    background-color: rgb(16, 137, 118);
+    border-width: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.locate-structure-btn:hover {
+    background-color: rgb(12, 110, 95);
+    scale: 1.02 1.02;
+}
+
+.locate-structure-btn:disabled {
+    background-color: rgb(180, 190, 210);
+}
+
+.locate-structure-btn-icon {
+    font-size: 20px;
+    margin-right: 8px;
+}
+
+.locate-structure-btn-label {
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(255, 255, 255);
+    letter-spacing: 1px;
+}
+
 .play-mode-letter-row {
     flex-direction: row;
     flex-wrap: wrap;

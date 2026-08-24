@@ -499,7 +499,7 @@ namespace Anatomia3D.UI
             if (isFirstPaint || last.IsArchived != classroom.IsArchived)
             {
                 refs.Card.EnableInClassList("classroom-card-archived", classroom.IsArchived);
-                refs.ViewButton.text = classroom.IsArchived ? "Archived" : "View Classroom";
+                refs.ViewButton.text = classroom.IsArchived ? "Locked" : "View Classroom";
                 refs.ViewButton.EnableInClassList("view-classroom-button-disabled", classroom.IsArchived);
                 refs.ViewButton.SetEnabled(!classroom.IsArchived);
 

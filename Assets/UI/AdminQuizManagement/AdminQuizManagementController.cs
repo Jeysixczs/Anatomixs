@@ -133,6 +133,14 @@ namespace Anatomia3D.UI
             public string CorrectAnswer;
             public string Difficulty; // "easy" | "medium" | "hard"
             public int Points;
+
+            // Image-Based only (QuestionTypeSlug == TypeImageBased) - see
+            // AnatomyTeacherSelectionController.TeacherStructureSelectionResult.
+            // Empty/null for every other question type.
+            public string AnatomySystemKey;
+            public string AnatomySystemDisplayName;
+            public string StructureKey;
+            public string StructureDisplayName;
         }
 
         /// <summary>Plain data for a single quiz, including its questions.</summary>
@@ -384,14 +392,23 @@ namespace Anatomia3D.UI
         private Dictionary<string, Button> _imageBasedSystemButtons;
         private string _selectedImageBasedSystem;
 
-        private static readonly Dictionary<string, List<string>> AnatomySystemStructures = new Dictionary<string, List<string>>
-        {
-            { "Skeletal", new List<string> { "Femur", "Tibia", "Fibula", "Humerus", "Radius", "Ulna", "Skull", "Pelvis", "Scapula", "Sternum" } },
-            { "Muscular", new List<string> { "Biceps Brachii", "Triceps Brachii", "Deltoid", "Quadriceps", "Hamstrings", "Gastrocnemius", "Trapezius", "Rectus Abdominis" } },
-            { "Cardiovascular", new List<string> { "Heart", "Aorta", "Pulmonary Artery", "Superior Vena Cava", "Inferior Vena Cava", "Carotid Artery" } },
-        };
+        // The teacher's actual structure pick, made on the reused Student Anatomy
+        // Screen (see OpenAnatomyScreenForStructureSelection) - never hardcoded and
+        // never auto-selected. StructureKey is BoneDatabase.json's internal id;
+        // StructureDisplayName is the human-readable name and is what CorrectAnswer
+        // must equal for Image-Based questions (see StageQuestionFromStep2).
+        private string _imageBasedSelectedSystemKey;
+        private string _imageBasedSelectedSystemDisplayName;
+        private string _imageBasedSelectedStructureKey;
+        private string _imageBasedSelectedStructureDisplayName;
 
-        private static readonly List<string> AnatomySystemDisplayChoices = new List<string>(AnatomySystemStructures.Keys);
+        private VisualElement _imageBasedSelectedStructurePanel;
+        private Label _imageBasedSelectedStructureNameLabel;
+        private Label _imageBasedSelectedStructureSystemLabel;
+        private Button _imageBasedChangeStructureButton;
+        private Label _imageBasedStructureError;
+
+        private static readonly List<string> AnatomySystemDisplayChoices = new List<string> { "Skeletal", "Muscular", "Cardiovascular" };
 
         private static readonly Dictionary<string, string> AnatomySystemNoun = new Dictionary<string, string>
         {
@@ -400,11 +417,22 @@ namespace Anatomia3D.UI
             { "Cardiovascular", "structure" },
         };
 
-        /// <summary>Selected via RefreshImageBasedStructureChoices whenever the system
-        /// changes - the teacher no longer picks the exact structure in this modal (see
-        /// the class doc comment); a real picker can replace this once a 3D viewer screen
-        /// exists to report a chosen structure back into this field.</summary>
-        private string _imageBasedSelectedStructure;
+        // The AnatomyTeacherSelectionController living on the Student Anatomy
+        // Screen's GameObject (same GameObject as UIManager - see that class's own
+        // header comment). Subscribed to once; the subscription is intentionally
+        // never removed in OnDisable, because the teacher's selection event fires
+        // while THIS controller is disabled (the Anatomy Screen is the active
+        // screen at that moment) - see OnTeacherStructureSelected.
+        private AnatomyTeacherSelectionController _anatomyTeacherSelection;
+
+        // Set right before navigating to the Anatomy Screen for a structure pick, so
+        // the next OnEnable (when UIManager.ShowScreen destroys and rebuilds this
+        // entire screen's UI tree) knows to reopen the Add Question modal at Step 2
+        // for this same quiz/question instead of the normal fresh-open reset. Plain
+        // fields on this persistent MonoBehaviour survive that rebuild even though
+        // every VisualElement reference queried before it does not.
+        private bool _resumeAddQuestionOnNextEnable;
+        private QuizData _pendingResumeQuiz;
 
         private VisualElement _addQuestionStep3;
         private Button _difficultyEasyButton;
@@ -478,8 +506,36 @@ namespace Anatomia3D.UI
             RefreshStats();
 
             CloseCreateQuizModal();
-            CloseAddQuestionModal();
             CloseQuizDeleteConfirm();
+
+            // Returning from the Student Anatomy Screen's teacher structure picker
+            // (see OpenAnatomyScreenForStructureSelection) - reopen the Add Question
+            // modal on the same quiz/question instead of the normal fresh-open reset
+            // below, which would otherwise silently discard everything the teacher
+            // was doing. Handles both a confirmed pick and a plain Back/cancel.
+            if (_resumeAddQuestionOnNextEnable && _pendingResumeQuiz != null)
+            {
+                _resumeAddQuestionOnNextEnable = false;
+                ResumeAddQuestionModalForImageBased(_pendingResumeQuiz);
+            }
+            else
+            {
+                CloseAddQuestionModal();
+            }
+
+            if (_anatomyTeacherSelection == null)
+                _anatomyTeacherSelection = GetComponent<AnatomyTeacherSelectionController>();
+
+            if (_anatomyTeacherSelection != null)
+            {
+                // Intentionally never unsubscribed in OnDisable - the teacher's
+                // selection event fires while this controller is disabled (the
+                // Anatomy Screen is the active screen at that moment). The -=
+                // before += just guards against a duplicate handler if OnEnable
+                // runs again before this GameObject is destroyed.
+                _anatomyTeacherSelection.OnTeacherStructureSelected -= OnTeacherStructureSelected;
+                _anatomyTeacherSelection.OnTeacherStructureSelected += OnTeacherStructureSelected;
+            }
 
             // First time this screen opens this session -> fetch. Every mutation
             // this screen makes (create/delete quiz, add question) already patches
@@ -563,6 +619,8 @@ namespace Anatomia3D.UI
                     kvp.Value?.UnregisterCallback<ClickEvent>(OnImageBasedSystemButtonClicked);
                 }
             }
+
+            _imageBasedChangeStructureButton?.UnregisterCallback<ClickEvent>(OnImageBasedChangeStructureClicked);
 
             _enumerationAddAnswerButton?.UnregisterCallback<ClickEvent>(OnEnumerationAddAnswerClicked);
 
@@ -801,6 +859,11 @@ namespace Anatomia3D.UI
                 { "Muscular", _imageBasedSystemMuscularButton },
                 { "Cardiovascular", _imageBasedSystemCardiovascularButton },
             };
+            _imageBasedSelectedStructurePanel = _screenRoot.Q<VisualElement>("image-based-selected-structure-panel");
+            _imageBasedSelectedStructureNameLabel = _screenRoot.Q<Label>("image-based-selected-structure-name");
+            _imageBasedSelectedStructureSystemLabel = _screenRoot.Q<Label>("image-based-selected-structure-system");
+            _imageBasedChangeStructureButton = _screenRoot.Q<Button>("image-based-change-structure-button");
+            _imageBasedStructureError = _screenRoot.Q<Label>("image-based-structure-error");
 
             _addQuestionStep3 = _screenRoot.Q<VisualElement>("add-question-step-3");
             _difficultyEasyButton = _screenRoot.Q<Button>("difficulty-easy-button");
@@ -946,6 +1009,8 @@ namespace Anatomia3D.UI
                     kvp.Value?.RegisterCallback<ClickEvent>(OnImageBasedSystemButtonClicked);
                 }
             }
+
+            _imageBasedChangeStructureButton?.RegisterCallback<ClickEvent>(OnImageBasedChangeStructureClicked);
 
             _enumerationAddAnswerButton?.RegisterCallback<ClickEvent>(OnEnumerationAddAnswerClicked);
 
@@ -2105,7 +2170,7 @@ namespace Anatomia3D.UI
 
             _selectedImageBasedSystem = AnatomySystemDisplayChoices[0];
             RefreshImageBasedSystemButtons();
-            RefreshImageBasedStructureChoices(_selectedImageBasedSystem);
+            ClearImageBasedSelection();
 
             _selectedDifficulty = "medium";
             RefreshDifficultyButtons();
@@ -2129,6 +2194,27 @@ namespace Anatomia3D.UI
         {
             _addQuestionModalOverlay?.AddToClassList("hidden");
             _quizPendingQuestion = null;
+            _resumeAddQuestionOnNextEnable = false;
+            _pendingResumeQuiz = null;
+        }
+
+        /// <summary>Reopens the Add Question modal after returning from the Student
+        /// Anatomy Screen's teacher structure picker, resuming on the same quiz at
+        /// Step 2 with Image-Based selected and whatever structure was (or wasn't)
+        /// picked - never the fresh-open reset OpenAddQuestionModal does.</summary>
+        private void ResumeAddQuestionModalForImageBased(QuizData quiz)
+        {
+            _quizPendingQuestion = quiz;
+
+            _selectedQuestionTypeSlug = TypeImageBased;
+            RefreshQuestionTypeCards();
+            UpdateAddQuestionFieldsVisibility(TypeImageBased);
+
+            RefreshImageBasedSystemButtons();
+            RefreshImageBasedSelectedStructurePanel();
+
+            _addQuestionModalOverlay?.RemoveFromClassList("hidden");
+            SetAddQuestionWizardStep(2);
         }
 
         private void OnAddQuestionCancelClicked(ClickEvent evt) => CloseAddQuestionModal();
@@ -2346,9 +2432,14 @@ namespace Anatomia3D.UI
             string system = _imageBasedSystemButtons.FirstOrDefault(kvp => kvp.Value == target).Key;
             if (system == null) return;
 
+            // Switching systems invalidates any structure already picked for the
+            // previous system - never carry a Skeletal pick over onto Muscular, etc.
+            if (system != _selectedImageBasedSystem) ClearImageBasedSelection();
+
             _selectedImageBasedSystem = system;
             RefreshImageBasedSystemButtons();
-            RefreshImageBasedStructureChoices(system);
+
+            OpenAnatomyScreenForStructureSelection(system);
         }
 
         private void RefreshImageBasedSystemButtons()
@@ -2360,17 +2451,74 @@ namespace Anatomia3D.UI
             }
         }
 
-        /// <summary>Picks a default structure for the chosen system so CorrectAnswer keeps
-        /// working with no explicit structure picker in this modal. The teacher's real pick
-        /// will come from a 3D viewer screen once one exists, which would report the chosen
-        /// structure back into _imageBasedSelectedStructure.</summary>
-        private void RefreshImageBasedStructureChoices(string system)
+        private void OnImageBasedChangeStructureClicked(ClickEvent evt)
         {
-            var structures = AnatomySystemStructures.TryGetValue(system ?? string.Empty, out var list)
-                ? list
-                : AnatomySystemStructures[AnatomySystemDisplayChoices[0]];
+            OpenAnatomyScreenForStructureSelection(_selectedImageBasedSystem ?? AnatomySystemDisplayChoices[0]);
+        }
 
-            _imageBasedSelectedStructure = structures.Count > 0 ? structures[0] : null;
+        /// <summary>Opens the existing Student Anatomy Screen (see
+        /// UIManager.ShowStudentAnatomyScreenForTeacherSelection /
+        /// AnatomyTeacherSelectionController) for the given system, in teacher
+        /// selection mode, so the teacher can tap the actual structure from the 3D
+        /// model instead of typing/picking from a hardcoded list. Marks this modal to
+        /// resume at Step 2 the moment the teacher returns (see OnEnable).</summary>
+        private void OpenAnatomyScreenForStructureSelection(string systemKey)
+        {
+            if (_quizPendingQuestion == null || string.IsNullOrEmpty(systemKey)) return;
+            if (!Enum.TryParse<AnatomySystem>(systemKey, out var anatomySystem))
+            {
+                Debug.LogWarning($"[AdminQuizManagementController] Unknown anatomy system '{systemKey}' - cannot open the Anatomy Screen.");
+                return;
+            }
+
+            _resumeAddQuestionOnNextEnable = true;
+            _pendingResumeQuiz = _quizPendingQuestion;
+
+            UIManager.Instance.ShowStudentAnatomyScreenForTeacherSelection(anatomySystem);
+        }
+
+        /// <summary>Called via AnatomyTeacherSelectionController.OnTeacherStructureSelected
+        /// the instant the teacher taps "SELECT THIS STRUCTURE" - fires while this
+        /// controller is disabled (the Anatomy Screen is still the active screen), so
+        /// this only ever stores the pick; the resumed modal picks it up in OnEnable
+        /// via RefreshImageBasedSelectedStructurePanel.</summary>
+        private void OnTeacherStructureSelected(AnatomyTeacherSelectionController.TeacherStructureSelectionResult result)
+        {
+            if (result == null) return;
+
+            _selectedImageBasedSystem = result.SystemKey;
+            _imageBasedSelectedSystemKey = result.SystemKey;
+            _imageBasedSelectedSystemDisplayName = result.SystemDisplayName;
+            _imageBasedSelectedStructureKey = result.StructureKey;
+            _imageBasedSelectedStructureDisplayName = result.StructureDisplayName;
+        }
+
+        private void ClearImageBasedSelection()
+        {
+            _imageBasedSelectedSystemKey = null;
+            _imageBasedSelectedSystemDisplayName = null;
+            _imageBasedSelectedStructureKey = null;
+            _imageBasedSelectedStructureDisplayName = null;
+            RefreshImageBasedSelectedStructurePanel();
+        }
+
+        /// <summary>Shows the "Selected Structure" summary + Change Structure button
+        /// once a structure has been picked (plan section 10), otherwise shows the
+        /// "please select a structure" prompt in its place.</summary>
+        private void RefreshImageBasedSelectedStructurePanel()
+        {
+            bool hasSelection = !string.IsNullOrEmpty(_imageBasedSelectedStructureDisplayName);
+
+            _imageBasedSelectedStructurePanel?.EnableInClassList("hidden", !hasSelection);
+
+            if (hasSelection)
+            {
+                if (_imageBasedSelectedStructureNameLabel != null)
+                    _imageBasedSelectedStructureNameLabel.text = _imageBasedSelectedStructureDisplayName;
+                if (_imageBasedSelectedStructureSystemLabel != null)
+                    _imageBasedSelectedStructureSystemLabel.text = _imageBasedSelectedSystemDisplayName;
+                ClearError(_imageBasedStructureError);
+            }
         }
 
         // ---------------- Difficulty: three buttons instead of a dropdown ----------------
@@ -2506,15 +2654,21 @@ namespace Anatomia3D.UI
                 case TypeImageBased:
                 {
                     string system = _selectedImageBasedSystem ?? AnatomySystemDisplayChoices[0];
-                    string structure = _imageBasedSelectedStructure;
 
-                    if (string.IsNullOrEmpty(structure))
+                    // The teacher must have actually tapped a structure on the 3D
+                    // model - never silently fall back to the first/any structure
+                    // (plan section 12).
+                    if (string.IsNullOrEmpty(_imageBasedSelectedStructureDisplayName))
                     {
+                        SetError(_imageBasedStructureError, "Please select a structure from the anatomy model.");
                         valid = false;
                     }
                     else
                     {
-                        correctAnswer = structure;
+                        ClearError(_imageBasedStructureError);
+                        // MUST be the displayName, never the internal structureKey -
+                        // see the plan's section 7.
+                        correctAnswer = _imageBasedSelectedStructureDisplayName;
                         string noun = AnatomySystemNoun.TryGetValue(system ?? string.Empty, out var n) ? n : "structure";
                         if (string.IsNullOrEmpty(questionText)) questionText = $"What is the name of the highlighted {noun}?";
                     }
@@ -2580,6 +2734,14 @@ namespace Anatomia3D.UI
             };
 
             if (_stagedOptions != null) question.Options.AddRange(_stagedOptions);
+
+            if (typeSlug == TypeImageBased)
+            {
+                question.AnatomySystemKey = _imageBasedSelectedSystemKey;
+                question.AnatomySystemDisplayName = _imageBasedSelectedSystemDisplayName;
+                question.StructureKey = _imageBasedSelectedStructureKey;
+                question.StructureDisplayName = _imageBasedSelectedStructureDisplayName;
+            }
 
             var quiz = _quizPendingQuestion;
             if (string.IsNullOrEmpty(quiz.QuizId))
@@ -2676,6 +2838,10 @@ namespace Anatomia3D.UI
                 CorrectAnswer = record.CorrectAnswer,
                 Difficulty = record.Difficulty,
                 Points = record.Points,
+                AnatomySystemKey = record.AnatomySystemKey,
+                AnatomySystemDisplayName = record.AnatomySystemDisplayName,
+                StructureKey = record.StructureKey,
+                StructureDisplayName = record.StructureDisplayName,
             };
         }
 
@@ -2689,6 +2855,10 @@ namespace Anatomia3D.UI
                 CorrectAnswer = data.CorrectAnswer,
                 Difficulty = data.Difficulty,
                 Points = data.Points,
+                AnatomySystemKey = data.AnatomySystemKey,
+                AnatomySystemDisplayName = data.AnatomySystemDisplayName,
+                StructureKey = data.StructureKey,
+                StructureDisplayName = data.StructureDisplayName,
             };
         }
 

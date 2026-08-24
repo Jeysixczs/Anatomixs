@@ -656,7 +656,7 @@ namespace Anatomia3D.UI
         {
             IsArchived = archived;
             _archivedBadgeLabel?.EnableInClassList("hidden", !archived);
-            if (_archiveButton != null) _archiveButton.text = archived ? "Unarchive" : "Archive";
+            if (_archiveButton != null) _archiveButton.text = archived ? "Locked" : "Lock";
         }
 
         private void OnArchiveButtonClicked(ClickEvent evt)
@@ -667,13 +667,13 @@ namespace Anatomia3D.UI
             {
                 if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Restore Classroom";
                 if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Students will be able to access this classroom again. Continue?";
-                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Unarchive";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Unlocked";
             }
             else
             {
-                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Archive Classroom";
-                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Are you sure you want to archive this classroom? Archived classrooms will no longer accept student access.";
-                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Archive";
+                if (_archiveDialogTitleLabel != null) _archiveDialogTitleLabel.text = "Lock Classroom";
+                if (_archiveDialogMessageLabel != null) _archiveDialogMessageLabel.text = "Are you sure you want to lock this classroom? Locked classrooms will no longer accept student access.";
+                if (_archiveDialogConfirmButton != null) _archiveDialogConfirmButton.text = "Lock";
             }
 
             _archiveDialogOverlay.RemoveFromClassList("hidden");
