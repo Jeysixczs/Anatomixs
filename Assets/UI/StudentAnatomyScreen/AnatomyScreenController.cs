@@ -495,7 +495,7 @@ public class AnatomyScreenController : MonoBehaviour
         ResetRuntimeState();
 
         //low
-        OfflineTextToSpeech.prewarm();
+        
 
         // --- Info panel ---
         _infoPanel = _root.Q<VisualElement>("InfoPanel");

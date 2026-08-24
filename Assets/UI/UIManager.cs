@@ -3,6 +3,7 @@ using System.Collections;
 using Anatomia3D.Backend;
 using Anatomia3D.UI.Quiz;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.UI
@@ -90,8 +91,10 @@ namespace Anatomia3D.UI
         private AboutAnatomiaController _aboutAnatomiaController;
 
 
+     
         private void Awake()
         {
+            OfflineTextToSpeech.InitializeOnStartup();
             if (Instance == null)
             {
                 Instance = this;
@@ -128,12 +131,42 @@ namespace Anatomia3D.UI
             // login flow is unchanged.
           
             StartCoroutine(DecideInitialScreen());
-
-
+          
+           
         }
 
-        
-        
+        /// <summary>Android's hardware back button and the gesture-nav back
+        /// swipe both surface as the Escape key. UI Toolkit has no built-in
+        /// "close keyboard on back" behavior the way native Android views
+        /// do, so on gesture nav in particular the OS can otherwise
+        /// intercept the gesture for the IME with Unity never seeing it, or
+        /// see it and fall through to screen navigation while the keyboard
+        /// stays open. Checking TouchScreenKeyboard.visible first and
+        /// returning early makes back-to-close-keyboard the higher-priority
+        /// action and stops it from also triggering screen navigation in the
+        /// same press. Only handles the keyboard for now - this is NOT a
+        /// general back-stack/back-navigation handler.
+        ///
+        /// Uses Keyboard.current from the new Input System package, NOT
+        /// UnityEngine.Input.GetKeyDown - this project's Active Input
+        /// Handling (Project Settings > Player) is set to "Input System
+        /// Package (New)", under which the legacy Input class never
+        /// receives events at all, so Input.GetKeyDown would silently
+        /// always return false here.</summary>
+        private void Update()
+        {
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                if (TouchScreenKeyboard.visible)
+                {
+                    CloseKeyboard();
+                    return;
+                }
+            }
+        }
+     
+
+
 
         private IEnumerator DecideInitialScreen()
         {
@@ -528,10 +561,16 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            // UI Toolkit doesn't release focus (or close the on-screen keyboard)
+            // just because the focused element is about to be removed from the
+            // tree. Force a blur here so the keyboard actually closes and no
+            // stale focus state carries over to the next screen.
+            CloseKeyboard();
+
             if (_root != null)
             {
                 _root.Clear();
-                _root.styleSheets.Clear();
+                _root.styleSheets.Clear();  
             }
 
             // Disable all controllers
@@ -548,6 +587,69 @@ namespace Anatomia3D.UI
 
             Debug.Log($"[UIManager] Showing {controller?.GetType().Name}");
         }
+
+        /// <summary>
+        /// Blurs whatever element currently has keyboard focus (e.g. a TextField
+        /// left focused on the current screen) and closes the mobile on-screen
+        /// keyboard if one is open. UI Toolkit does not do this automatically -
+        /// not on tree rebuild, and not just because a button was clicked - so
+        /// call this explicitly.
+        ///
+        /// ShowScreen() already calls this on every screen transition, so you
+        /// don't need to call it yourself when navigating to another screen.
+        /// Call it directly from a controller when a "Done"/"Save"/"Submit"
+        /// action should close the keyboard WITHOUT necessarily leaving the
+        /// current screen (e.g. StudentEditProfileController staying on-screen
+        /// after a pending email change, or AnatomyPlayModeController's letter-box
+        /// Submit).
+        /// </summary>
+        public void CloseKeyboard()
+        {
+            if (_root?.panel?.focusController != null)
+            {
+                var focused = _root.panel.focusController.focusedElement as VisualElement;
+                focused?.Blur();
+            }
+
+            // Blur() alone is not reliable on real Android devices when focus
+            // is dropped by script (e.g. navigating away) rather than the user
+            // tapping somewhere else on screen - the IME window can be left
+            // open even though UI Toolkit's own focus state is correctly
+            // cleared. Ask Android's InputMethodManager directly as a backup.
+            ForceHideAndroidKeyboard();
+        }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private void ForceHideAndroidKeyboard()
+        {
+            try
+            {
+                using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+                {
+                    if (activity == null) return;
+
+                    using (var view = activity.Call<AndroidJavaObject>("getCurrentFocus"))
+                    {
+                        if (view == null) return; // nothing focused - IME wasn't open on the native side
+
+                        using (var inputMethodManager = activity.Call<AndroidJavaObject>("getSystemService", "input_method"))
+                        using (var windowToken = view.Call<AndroidJavaObject>("getWindowToken"))
+                        {
+                            inputMethodManager?.Call<bool>("hideSoftInputFromWindow", windowToken, 0);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // Never let a keyboard-close side effect break navigation.
+                Debug.LogWarning($"[UIManager] ForceHideAndroidKeyboard failed: {e.Message}");
+            }
+        }
+#else
+        private void ForceHideAndroidKeyboard() { }
+#endif
 
         private IEnumerator InitializeControllerAfterUI(MonoBehaviour controller, Action onReady = null)
         {

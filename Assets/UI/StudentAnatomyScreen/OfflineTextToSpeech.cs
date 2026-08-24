@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -18,6 +19,7 @@ using UnityEngine;
 /// </summary>
 public static class OfflineTextToSpeech
 {
+    public static object Instance { get; internal set; }
 #if UNITY_ANDROID && !UNITY_EDITOR
     private static AndroidJavaObject _tts;
 
@@ -187,10 +189,14 @@ public static class OfflineTextToSpeech
 #endif
     }
 
-    public static void prewarm()
+    public static void InitializeOnStartup()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
         EnsureInitialized();
+        Debug.Log("[OfflineTextToSpeech] Android TTS initialization started on startup.");
 #endif
+        Debug.Log("[OfflineTextToSpeech] Initialized on startup.");
     }
+
+
 }
