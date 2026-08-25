@@ -5,7 +5,9 @@ using Anatomia3D.UI.Quiz;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
+using UnityEngine.Android;
 
+    
 namespace Anatomia3D.UI
 {
     public class UIManager : MonoBehaviour
@@ -106,6 +108,13 @@ namespace Anatomia3D.UI
                 return;
             }
 
+#if UNITY_ANDROID
+            if (!Permission.HasUserAuthorizedPermission("android.permission.POST_NOTIFICATIONS"))
+            {
+                Permission.RequestUserPermission("android.permission.POST_NOTIFICATIONS");
+            }
+#endif
+
             _uiDocument = GetComponent<UIDocument>();
             if (_uiDocument == null)
             {
@@ -155,8 +164,12 @@ namespace Anatomia3D.UI
         /// always return false here.</summary>
         private void Update()
         {
+
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
+                Debug.Log($"[UIManager] Back pressed. TouchScreenKeyboard.visible={TouchScreenKeyboard.visible}, " +
+                          $"focusedElement={_root?.panel?.focusController?.focusedElement?.GetType().Name ?? "null"}");
+
                 if (TouchScreenKeyboard.visible)
                 {
                     CloseKeyboard();
@@ -167,8 +180,7 @@ namespace Anatomia3D.UI
      
 
 
-
-        private IEnumerator DecideInitialScreen()
+private IEnumerator DecideInitialScreen()
         {
             bool offline = Application.internetReachability == NetworkReachability.NotReachable;
 

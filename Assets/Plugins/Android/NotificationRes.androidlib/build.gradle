@@ -1,0 +1,18 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.anatomia3d.notificationres'
+    compileSdkVersion 33
+
+    defaultConfig {
+        minSdkVersion 33
+        targetSdkVersion 33
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+        }
+    }
+}

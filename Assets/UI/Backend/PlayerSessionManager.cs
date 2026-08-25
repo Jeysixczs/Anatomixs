@@ -873,6 +873,15 @@ namespace Anatomia3D.Backend
 
             _studentListener = Db.Collection("students").Document(uid)
                 .Listen(snapshot => ApplyIncomingSnapshot(uid, snapshot));
+
+            // Every session-start path (LoginStudent, LoginWithGoogle, account creation,
+            // and TryRestoreSessionOffline) funnels through here, so this is the one place
+            // that needs to trigger FCM topic reconciliation - see
+            // ClassroomService.SyncClassroomSubscriptions() / FCMNotificationService.
+            // Fire-and-forget and non-blocking: if there's no connectivity yet (e.g. right
+            // after an offline restore) this silently no-ops rather than failing loudly,
+            // same as the listener above just sitting and waiting for a connection.
+            ClassroomService.Instance?.SyncClassroomSubscriptions();
         }
 
         private void StopStudentListener()

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Used by com.google.firebase.messaging.default_notification_color
+         in AndroidManifest.xml. Change the hex value to match your app's
+         brand/accent color if you want - this only tints the small status
+         bar notification icon, not the app itself. -->
+    <color name="notification_color">#FF4285F4</color>
+</resources>
