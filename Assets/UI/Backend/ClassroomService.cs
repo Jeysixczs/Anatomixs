@@ -90,8 +90,33 @@ namespace Anatomia3D.Backend
                         return;
                     }
 
+                    // Announcement push notifications are topic-based (see FCMNotificationService) -
+                    // subscribe as soon as membership is confirmed. Best-effort: a failure here
+                    // (e.g. no network) must never block the join itself, since Firestore membership
+                    // is already committed - SyncClassroomSubscriptions() below covers the student
+                    // catching back up on next launch if this call is missed.
+                    FCMNotificationService.Instance?.SubscribeToClassroom(classroomId);
+
                     onComplete?.Invoke(true, null);
                 });
+            });
+        }
+
+        /// <summary>Reconciles this student's FCM topic subscriptions against every classroom
+        /// they're currently enrolled in. Call this once after sign-in (e.g. from wherever
+        /// StudentClassroomHubController first calls FetchMyClassrooms()) so a student who
+        /// joined classrooms on another device, or whose subscription silently failed, still
+        /// ends up subscribed - FCMNotificationService.SyncSubscriptions() is idempotent, so
+        /// calling this on every login is safe and cheap (no Firestore writes, just FCM topic
+        /// calls skipped for classrooms already tracked locally).</summary>
+        public void SyncClassroomSubscriptions()
+        {
+            if (FCMNotificationService.Instance == null) return;
+
+            FetchMyClassrooms(classrooms =>
+            {
+                var ids = classrooms.ConvertAll(c => c.ClassroomId);
+                FCMNotificationService.Instance.SyncSubscriptions(ids);
             });
         }
 
