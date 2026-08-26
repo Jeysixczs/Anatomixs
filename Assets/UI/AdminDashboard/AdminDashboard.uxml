@@ -42,6 +42,7 @@
                         <ui:Label text="No classrooms yet" class="empty-state-text"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="classrooms-list" class="classrooms-list hidden"/>
+                    <ui:Button name="classrooms-view-all-button" text="View All Classrooms" class="view-all-button hidden"/>
                 </ui:VisualElement>
                 <ui:Label text="Quick Actions" class="section-title section-title-spaced"/>
                 <ui:VisualElement name="quick-actions-row" class="quick-actions-row">
@@ -71,5 +72,25 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="classrooms-view-all-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="classrooms-view-all-card" class="modal-card view-all-card">
+                <ui:VisualElement name="view-all-header" class="view-all-header">
+                    <ui:Label text="All Classrooms" class="view-all-title"/>
+                    <ui:Button name="classrooms-view-all-close-button" text="✕" class="view-all-close-button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="view-all-search-row" class="view-all-search-row">
+                    <ui:VisualElement name="view-all-search-field-wrapper" class="view-all-search-field-wrapper">
+                        <ui:Label text="" class="view-all-search-icon icon-search"/>
+                        <ui:TextField name="classrooms-view-all-search-field" placeholder-text="Search classrooms" class="view-all-search-field"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:ScrollView name="classrooms-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="view-all-scroll">
+                    <ui:VisualElement name="classrooms-view-all-no-results" class="view-all-no-results hidden">
+                        <ui:Label text="No classrooms match your search" class="empty-state-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="classrooms-view-all-list" class="classrooms-list view-all-list"/>
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

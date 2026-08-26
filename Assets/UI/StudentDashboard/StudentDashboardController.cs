@@ -43,6 +43,12 @@ namespace Anatomia3D.UI
         private Button _joinClassroomButton;
 
         private VisualElement _recentActivityList;
+        private Button _recentActivityViewAllButton;
+
+        private VisualElement _recentActivityViewAllOverlay;
+        private Button _recentActivityViewAllCloseButton;
+        private VisualElement _recentActivityViewAllList;
+        private VisualElement _recentActivityViewAllNoResults;
 
         // ---------------- Recent Activity cache ----------------
         // Recent Activity used to be re-fetched from Firestore (2 reads) and fully
@@ -58,6 +64,14 @@ namespace Anatomia3D.UI
         private bool _activityDirty = true;
         private readonly List<ActivityEntry> _cachedActivity = new List<ActivityEntry>();
         private readonly Dictionary<string, ActivityRowRefs> _activityRowsByKey = new Dictionary<string, ActivityRowRefs>();
+
+        /// <summary>Whoever _cachedActivity (and the rows currently on screen) belong to.
+        /// Compared by reference against PlayerSessionManager.CurrentStudent on every
+        /// OnEnable/profile-change so a different student signing in on the same device
+        /// - without this GameObject being destroyed in between - can never paint from
+        /// the previous student's cached Recent Activity. See
+        /// InvalidateActivityCacheIfStudentChanged().</summary>
+        private PlayerSessionManager.StudentProfile _cachedActivityStudent;
 
         private void OnEnable()
         {
@@ -98,6 +112,11 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
             PopulateDashboard();
+
+            // Must run before the cache-paint below: if a different student signed in
+            // since _cachedActivity was last populated, this clears it out so we never
+            // instantly repaint someone else's Recent Activity.
+            InvalidateActivityCacheIfStudentChanged();
 
             // Repaint instantly from whatever we already have cached (no blank flash,
             // no GameObject churn), then only hit the network if something that could
@@ -141,6 +160,12 @@ namespace Anatomia3D.UI
             // only touches label text / a fill width - no GameObject churn.
             PopulateDashboard();
 
+            // Usually this event means the same student just submitted a quiz, but if it
+            // ever fires because a different student signed in instead, this makes sure
+            // the stale cache/rows get thrown out rather than mixed with the new student's
+            // data.
+            InvalidateActivityCacheIfStudentChanged();
+
             // A profile change here always means a quiz was just submitted (points/
             // quizzesCompleted/badgesEarned only move that way), which is exactly a
             // new Recent Activity row - refresh that feed too instead of waiting for
@@ -159,6 +184,35 @@ namespace Anatomia3D.UI
             _activityDirty = true;
         }
 
+        /// <summary>Clears _cachedActivity, the rows built from it, and the View All
+        /// overlay whenever PlayerSessionManager.CurrentStudent no longer matches whoever
+        /// the cache currently belongs to (_cachedActivityStudent) - e.g. Student A signs
+        /// out and Student B signs in on the same device while this GameObject stays
+        /// alive. Reference equality is enough here: PlayerSessionManager mutates the
+        /// same StudentProfile instance in place for point/level changes on the same
+        /// student (see ApplyQuizAttemptResult), so the reference only ever changes when
+        /// the signed-in student actually changes. Safe/cheap to call on every OnEnable
+        /// and profile-change - it's a no-op reference compare for the common case where
+        /// the student hasn't changed.</summary>
+        private void InvalidateActivityCacheIfStudentChanged()
+        {
+            var currentStudent = PlayerSessionManager.Instance?.CurrentStudent;
+            if (ReferenceEquals(currentStudent, _cachedActivityStudent)) return;
+
+            _cachedActivityStudent = currentStudent;
+            _cachedActivity.Clear();
+            _activityLoaded = false;
+            _activityDirty = true;
+
+            foreach (var refs in _activityRowsByKey.Values) refs.Item.RemoveFromHierarchy();
+            _activityRowsByKey.Clear();
+            _recentActivityList?.Clear();
+
+            _recentActivityViewAllList?.Clear();
+            _recentActivityViewAllButton?.AddToClassList("hidden");
+            CloseViewAllActivityOverlay();
+        }
+
         private void UnregisterCallbacks()
         {
             if (_screenRoot == null) return;
@@ -170,6 +224,9 @@ namespace Anatomia3D.UI
             _badgesButton?.UnregisterCallback<ClickEvent>(OnBadgesClicked);
             _progressButton?.UnregisterCallback<ClickEvent>(OnProgressClicked);
             _joinClassroomButton?.UnregisterCallback<ClickEvent>(OnJoinClassroomClicked);
+            _recentActivityViewAllButton?.UnregisterCallback<ClickEvent>(OnViewAllActivityClicked);
+            _recentActivityViewAllCloseButton?.UnregisterCallback<ClickEvent>(OnCloseViewAllActivityClicked);
+            _recentActivityViewAllOverlay?.UnregisterCallback<ClickEvent>(OnViewAllActivityOverlayBackdropClicked);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
 
@@ -211,6 +268,12 @@ namespace Anatomia3D.UI
             _joinClassroomButton = _screenRoot.Q<Button>("join-classroom-button");
 
             _recentActivityList = _screenRoot.Q<VisualElement>("recent-activity-list");
+            _recentActivityViewAllButton = _screenRoot.Q<Button>("recent-activity-view-all-button");
+
+            _recentActivityViewAllOverlay = _screenRoot.Q<VisualElement>("recent-activity-view-all-overlay");
+            _recentActivityViewAllCloseButton = _screenRoot.Q<Button>("recent-activity-view-all-close-button");
+            _recentActivityViewAllList = _screenRoot.Q<VisualElement>("recent-activity-view-all-list");
+            _recentActivityViewAllNoResults = _screenRoot.Q<VisualElement>("recent-activity-view-all-no-results");
 
             Debug.Log($"[StudentDashboardController] Found Explore3D: {_explore3DButton != null}, Header: {_header != null}");
         }
@@ -224,6 +287,9 @@ namespace Anatomia3D.UI
             if (_badgesButton != null) _badgesButton.RegisterCallback<ClickEvent>(OnBadgesClicked);
             if (_progressButton != null) _progressButton.RegisterCallback<ClickEvent>(OnProgressClicked);
             if (_joinClassroomButton != null) _joinClassroomButton.RegisterCallback<ClickEvent>(OnJoinClassroomClicked);
+            _recentActivityViewAllButton?.RegisterCallback<ClickEvent>(OnViewAllActivityClicked);
+            _recentActivityViewAllCloseButton?.RegisterCallback<ClickEvent>(OnCloseViewAllActivityClicked);
+            _recentActivityViewAllOverlay?.RegisterCallback<ClickEvent>(OnViewAllActivityOverlayBackdropClicked);
 
             // Re-evaluate the compact layout whenever the panel is resized
             if (_screenRoot != null)
@@ -326,9 +392,34 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            FetchMergedActivity(recentActivityMaxItems, merged =>
+            {
+                if (merged.Count > recentActivityMaxItems)
+                {
+                    merged.RemoveRange(recentActivityMaxItems, merged.Count - recentActivityMaxItems);
+                }
+
+                _cachedActivity.Clear();
+                _cachedActivity.AddRange(merged);
+                _activityLoaded = true;
+                _activityDirty = false;
+
+                RenderRecentActivity(_cachedActivity);
+            });
+        }
+
+        /// <summary>Fetches QuizService.FetchRecentActivity() + ClassroomService.FetchRecentJoins()
+        /// (2 reads), merges them into one timeline, and hands the sorted result back via
+        /// `onComplete`. Shared by the dashboard's capped preview (PopulateRecentActivity,
+        /// recentActivityMaxItems) and the "View All" overlay's much larger fetch
+        /// (FetchAllRecentActivity, recentActivityViewAllMaxItems) so both read from the
+        /// same merge/sort logic instead of drifting apart.</summary>
+        private void FetchMergedActivity(int maxItems, Action<List<ActivityEntry>> onComplete)
+        {
             if (QuizService.Instance == null || ClassroomService.Instance == null)
             {
                 Debug.LogWarning("[StudentDashboardController] QuizService/ClassroomService.Instance is null - cannot load Recent Activity.");
+                onComplete(new List<ActivityEntry>());
                 return;
             }
 
@@ -341,18 +432,7 @@ namespace Anatomia3D.UI
                 if (pending > 0) return;
 
                 merged.Sort((a, b) => b.OccurredAt.CompareTo(a.OccurredAt));
-                const int maxItems = recentActivityMaxItems;
-                if (merged.Count > maxItems)
-                {
-                    merged.RemoveRange(maxItems, merged.Count - maxItems);
-                }
-
-                _cachedActivity.Clear();
-                _cachedActivity.AddRange(merged);
-                _activityLoaded = true;
-                _activityDirty = false;
-
-                RenderRecentActivity(_cachedActivity);
+                onComplete(merged);
             }
 
             QuizService.Instance.FetchRecentActivity(activities =>
@@ -372,7 +452,7 @@ namespace Anatomia3D.UI
                     });
                 }
                 OnPartComplete();
-            }, maxItems: recentActivityMaxItems);
+            }, maxItems: maxItems);
 
             ClassroomService.Instance.FetchRecentJoins(joins =>
             {
@@ -388,7 +468,19 @@ namespace Anatomia3D.UI
                     });
                 }
                 OnPartComplete();
-            }, maxItems: recentActivityMaxItems);
+            }, maxItems: maxItems);
+        }
+
+        /// <summary>Called when "View All" is opened. The dashboard's own cache
+        /// (_cachedActivity) is capped to recentActivityMaxItems for the inline preview,
+        /// so re-using it here would silently cut the overlay off at the same small cap.
+        /// Instead this does its own fetch with a much higher cap so View All actually
+        /// shows the student's full recent history.</summary>
+        private void FetchAllRecentActivity()
+        {
+            if (PlayerSessionManager.Instance?.CurrentStudent == null) return;
+
+            FetchMergedActivity(recentActivityViewAllMaxItems, RefreshActivityViewAllList);
         }
 
         /// <summary>Display-only shape a Recent Activity row is built from, after
@@ -419,7 +511,21 @@ namespace Anatomia3D.UI
             public bool HasPointsLabel;
         }
 
+        /// <summary>Cap used for the dashboard's own inline preview fetch/cache
+        /// (_cachedActivity). Kept small since only the first MaxDashboardActivityItems
+        /// of it are ever shown inline anyway.</summary>
         private const int recentActivityMaxItems = 8;
+
+        /// <summary>Cap used only for the "View All" overlay's own fetch
+        /// (FetchAllRecentActivity) - deliberately much higher than
+        /// recentActivityMaxItems so View All isn't silently limited to the same small
+        /// window as the dashboard preview.</summary>
+        private const int recentActivityViewAllMaxItems = 200;
+
+        /// <summary>Max activity rows shown inline on the dashboard before they're
+        /// truncated - "View All" (now always visible beside the section title whenever
+        /// there's any activity) is what shows the rest.</summary>
+        private const int MaxDashboardActivityItems = 5;
         private static readonly Color classroomJoinedColor = new Color(0.851f, 0.467f, 0.024f); // rgb(217,119,6)
 
         /// <summary>Diffs `entries` against the rows already on screen (keyed by
@@ -432,7 +538,22 @@ namespace Anatomia3D.UI
         {
             if (_recentActivityList == null) return;
 
-            bool hasEntries = entries != null && entries.Count > 0;
+            bool hasAnyEntries = entries != null && entries.Count > 0;
+
+            _recentActivityViewAllButton?.EnableInClassList("hidden", !hasAnyEntries);
+
+            // If the feed emptied out while the overlay happened to be open, close it
+            // rather than leave it showing a stale list.
+            if (!hasAnyEntries) CloseViewAllActivityOverlay();
+
+            // Only the first MaxDashboardActivityItems entries are diffed/rendered inline -
+            // "View All" fetches its own, much less capped list separately (see
+            // FetchAllRecentActivity), so it isn't limited to what's cached here.
+            var inlineEntries = hasAnyEntries && entries.Count > MaxDashboardActivityItems
+                ? entries.GetRange(0, MaxDashboardActivityItems)
+                : entries;
+
+            bool hasEntries = inlineEntries != null && inlineEntries.Count > 0;
 
             if (!hasEntries)
             {
@@ -447,6 +568,8 @@ namespace Anatomia3D.UI
                     empty.AddToClassList("activity-empty-label");
                     _recentActivityList.Add(empty);
                 }
+
+                SyncViewAllOverlayWithLatestData(entries);
                 return;
             }
 
@@ -456,11 +579,11 @@ namespace Anatomia3D.UI
 
             var incomingKeys = new HashSet<string>();
 
-            for (int i = 0; i < entries.Count; i++)
+            for (int i = 0; i < inlineEntries.Count; i++)
             {
-                var entry = entries[i];
+                var entry = inlineEntries[i];
                 incomingKeys.Add(entry.Key);
-                bool isLast = i == entries.Count - 1;
+                bool isLast = i == inlineEntries.Count - 1;
 
                 if (!_activityRowsByKey.TryGetValue(entry.Key, out var refs))
                 {
@@ -472,7 +595,7 @@ namespace Anatomia3D.UI
                     ApplyActivityItemContent(refs, entry, isLast);
                 }
 
-                // Keep list order in sync with `entries` - Insert() on an already-parented
+                // Keep list order in sync with `inlineEntries` - Insert() on an already-parented
                 // element just moves it, so unaffected rows elsewhere aren't touched.
                 if (_recentActivityList.IndexOf(refs.Item) != i)
                 {
@@ -480,7 +603,8 @@ namespace Anatomia3D.UI
                 }
             }
 
-            // Drop rows for events that fell off the feed (older than the 8 most recent).
+            // Drop rows for events that fell off the inline feed (aged out, or now only
+            // reachable via View All since the cap dropped them).
             List<string> staleKeys = null;
             foreach (var key in _activityRowsByKey.Keys)
             {
@@ -493,6 +617,49 @@ namespace Anatomia3D.UI
                     _activityRowsByKey[key].Item.RemoveFromHierarchy();
                     _activityRowsByKey.Remove(key);
                 }
+            }
+
+            SyncViewAllOverlayWithLatestData(entries);
+        }
+
+        /// <summary>Keeps the View All overlay's contents current whenever the dashboard's
+        /// activity data changes. If the overlay is already open, it's showing a fuller,
+        /// uncapped fetch (see FetchAllRecentActivity) - refresh it with another full
+        /// fetch instead of overwriting it with the dashboard's small capped cache. If
+        /// it's closed, just reseed it from the cache so it paints instantly the next
+        /// time it's opened, before that open's own fetch resolves.</summary>
+        private void SyncViewAllOverlayWithLatestData(List<ActivityEntry> fallbackEntries)
+        {
+            bool overlayOpen = _recentActivityViewAllOverlay != null && !_recentActivityViewAllOverlay.ClassListContains("hidden");
+            if (overlayOpen)
+            {
+                FetchAllRecentActivity();
+            }
+            else
+            {
+                RefreshActivityViewAllList(fallbackEntries);
+            }
+        }
+
+        /// <summary>Rebuilds recent-activity-view-all-list from the given activity feed.
+        /// No diffing here - it's only (re)built on open, on a fresh View All fetch
+        /// completing, or when the dashboard's own data changes, so a full rebuild is
+        /// cheap.</summary>
+        private void RefreshActivityViewAllList(List<ActivityEntry> entries)
+        {
+            if (_recentActivityViewAllList == null) return;
+
+            var source = entries ?? new List<ActivityEntry>();
+            bool hasResults = source.Count > 0;
+
+            _recentActivityViewAllNoResults?.EnableInClassList("hidden", hasResults);
+
+            _recentActivityViewAllList.Clear();
+            for (int i = 0; i < source.Count; i++)
+            {
+                bool isLast = i == source.Count - 1;
+                var refs = BuildActivityItem(source[i], isLast);
+                _recentActivityViewAllList.Add(refs.Item);
             }
         }
 
@@ -632,6 +799,38 @@ namespace Anatomia3D.UI
 
             UIManager.Instance.ShowJoinClassroom();
 
+        }
+
+        private void OnViewAllActivityClicked(ClickEvent evt)
+        {
+            // Paint instantly with whatever's already cached (usually the same rows as
+            // the dashboard preview) so the overlay never opens blank, then replace it
+            // with a fresh, much less capped fetch so View All shows the student's full
+            // recent history rather than being limited to the dashboard's small cache.
+            RefreshActivityViewAllList(_cachedActivity);
+            _recentActivityViewAllOverlay?.RemoveFromClassList("hidden");
+            FetchAllRecentActivity();
+        }
+
+        private void OnCloseViewAllActivityClicked(ClickEvent evt)
+        {
+            CloseViewAllActivityOverlay();
+        }
+
+        /// <summary>Tapping the dimmed backdrop closes the overlay, same as the close
+        /// button - but only when the tap actually landed on the backdrop itself, not on
+        /// the card or anything inside it (ClickEvent bubbles up from children).</summary>
+        private void OnViewAllActivityOverlayBackdropClicked(ClickEvent evt)
+        {
+            if (evt.target == _recentActivityViewAllOverlay)
+            {
+                CloseViewAllActivityOverlay();
+            }
+        }
+
+        private void CloseViewAllActivityOverlay()
+        {
+            _recentActivityViewAllOverlay?.AddToClassList("hidden");
         }
 
         // ---------------- Responsive layout ----------------

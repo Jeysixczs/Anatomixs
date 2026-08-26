@@ -70,7 +70,10 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="recent-activity-card" class="recent-activity-card">
-                    <ui:Label text="Recent Activity" class="section-title"/>
+                    <ui:VisualElement name="recent-activity-header" class="recent-activity-header">
+                        <ui:Label text="Recent Activity" class="section-title recent-activity-title"/>
+                        <ui:Button name="recent-activity-view-all-button" text="View All" class="view-all-inline-button hidden"/>
+                    </ui:VisualElement>
                     <ui:VisualElement name="recent-activity-list" class="recent-activity-list">
                         <ui:VisualElement class="activity-item">
                             <ui:VisualElement class="activity-icon" style="background-color: rgb(37, 99, 235);"/>
@@ -108,5 +111,19 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="recent-activity-view-all-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="recent-activity-view-all-card" class="modal-card view-all-card">
+                <ui:VisualElement name="recent-activity-view-all-header" class="view-all-header">
+                    <ui:Label text="Recent Activity" class="view-all-title"/>
+                    <ui:Button name="recent-activity-view-all-close-button" text="✕" class="view-all-close-button"/>
+                </ui:VisualElement>
+                <ui:ScrollView name="recent-activity-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="view-all-scroll">
+                    <ui:VisualElement name="recent-activity-view-all-no-results" class="view-all-no-results hidden">
+                        <ui:Label text="No recent activity yet" class="activity-time"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="recent-activity-view-all-list" class="recent-activity-list view-all-list"/>
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
