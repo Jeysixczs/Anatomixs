@@ -24,7 +24,7 @@ namespace Anatomia3D.UI
         private VisualElement _joinclassroomcard;
 
         private Button _menuButton;
-        private Button _logoutButton;
+        private Button _notificationButton;
         private Label _studentNameLabel;
 
         private Label _currentLevelLabel;
@@ -164,7 +164,7 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _menuButton?.UnregisterCallback<ClickEvent>(OnProfileClicked);
-            _logoutButton?.UnregisterCallback<ClickEvent>(OnLogoutClicked);
+            _notificationButton?.UnregisterCallback<ClickEvent>(OnNotificationClicked);
             _explore3DButton?.UnregisterCallback<ClickEvent>(OnExplore3DClicked);
             _classroomHubButton?.UnregisterCallback<ClickEvent>(OnClassroomHubClicked);
             _badgesButton?.UnregisterCallback<ClickEvent>(OnBadgesClicked);
@@ -192,7 +192,7 @@ namespace Anatomia3D.UI
             _joinclassroomcard = _screenRoot.Q<VisualElement>("join-classroom-icon-box");
 
             _menuButton = _screenRoot.Q<Button>("menu-button");
-            _logoutButton = _screenRoot.Q<Button>("logout-button");
+            _notificationButton = _screenRoot.Q<Button>("notification-button");
             _studentNameLabel = _screenRoot.Q<Label>("student-name-label");
 
             _currentLevelLabel = _screenRoot.Q<Label>("current-level-label");
@@ -218,7 +218,7 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             if (_menuButton != null) _menuButton.RegisterCallback<ClickEvent>(OnProfileClicked);
-            if (_logoutButton != null) _logoutButton.RegisterCallback<ClickEvent>(OnLogoutClicked);
+            if (_notificationButton != null) _notificationButton.RegisterCallback<ClickEvent>(OnNotificationClicked);
             if (_explore3DButton != null) _explore3DButton.RegisterCallback<ClickEvent>(OnExplore3DClicked);
             if (_classroomHubButton != null) _classroomHubButton.RegisterCallback<ClickEvent>(OnClassroomHubClicked);
             if (_badgesButton != null) _badgesButton.RegisterCallback<ClickEvent>(OnBadgesClicked);
@@ -602,11 +602,9 @@ namespace Anatomia3D.UI
             UIManager.Instance.ShowStudentProfile();
         }
 
-        private void OnLogoutClicked(ClickEvent evt)
+        private void OnNotificationClicked(ClickEvent evt)
         {
-            Debug.Log("[DashboardController] Logout tapped.");
-            PlayerSessionManager.Instance?.LogoutStudent();
-            UIManager.Instance?.ShowStudentLogin();
+            UIManager.Instance.ShowStudentNotifications(UIManager.Instance.ShowStudentDashboard);
         }
 
         private void OnExplore3DClicked(ClickEvent evt)

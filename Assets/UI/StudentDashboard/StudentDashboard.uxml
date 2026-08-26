@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/StudentDashboard/StudentDashboard.uss?fileID=7433441132597879392&amp;guid=aae9f4de504d9f240900c8a586fb8998&amp;type=3"/>
+    <Style src="project://database/Assets/UI/StudentDashboard/StudentDashboard.uss?fileID=7433441132597879392&amp;guid=aae9f4de504d9f240900c8a586fb8998&amp;type=3#StudentDashboard"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll" style="flex-grow: 1; width: 100%; height: 100%; padding: 0; margin: 0;">
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="width: 100%; flex-direction: column; padding: 0; margin: 0;">
@@ -10,7 +10,7 @@
                             <ui:Label text="Welcome back!" class="welcome-title"/>
                             <ui:Label name="student-name-label" text="Jeysi" class="welcome-subtitle"/>
                         </ui:VisualElement>
-                        <ui:Button name="logout-button" class="icon-button icon-logout" style="width: 70px; height: 70px;"/>
+                        <ui:Button name="notification-button" class="icon-button icon-logout" style="width: 73px; height: 85px; background-image: url(&quot;project://database/Assets/UI/Icons/notification-icon.png?fileID=2800000&amp;guid=2ec670fa8b34f0344ab02290e1015ebc&amp;type=3#notification-icon&quot;);"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="level-card" class="level-card" style="margin-top: 20px; margin-bottom: 20px;">
                         <ui:VisualElement class="level-row">
@@ -39,20 +39,13 @@
                         <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
                         <ui:Label text="Quizzes Completed" class="stat-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="level-stat-card" class="stat-card stat-card-right">
-                        <ui:VisualElement class="stat-icon stat-icon-orange icon-target" style="background-image: url(&quot;project://database/Assets/UI/Icons/targets-icon.png?fileID=2800000&amp;guid=610a11ae98f929648acdeb473e7a2764&amp;type=3#targets-icon&quot;);"/>
-                        <ui:Label name="level-value-label" text="5" class="stat-value"/>
-                        <ui:Label text="Current Level" class="stat-label"/>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced" style="margin-top: 20px;">
                     <ui:VisualElement name="points-card" class="stat-card stat-card-left">
                         <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-black-icon.png?fileID=2800000&amp;guid=86cf8116800ab33499fdcb875badace8&amp;type=3#trophy-black-icon&quot;);"/>
                         <ui:Label name="points-value-label" text="1250" class="stat-value"/>
                         <ui:Label text="Total Points" class="stat-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="empty" class="stat-card stat-card-left" style="border-left-color: rgba(0, 5, 0, 0); border-right-color: rgba(0, 5, 0, 0); border-top-color: rgba(0, 5, 0, 0); border-bottom-color: rgba(0, 5, 0, 0); background-color: rgba(255, 255, 255, 0);"/>
                 </ui:VisualElement>
+                <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced" style="margin-top: 20px;"/>
                 <ui:VisualElement name="quick-actions-card" class="quick-actions-card">
                     <ui:Label text="Quick Actions" class="section-title"/>
                     <ui:VisualElement class="actions-row">

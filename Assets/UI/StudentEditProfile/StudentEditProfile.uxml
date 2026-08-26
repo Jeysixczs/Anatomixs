@@ -57,7 +57,7 @@
                 </ui:VisualElement>
                 <ui:Label name="status-label" text="" class="status-label hidden"/>
                 <ui:Button name="save-changes-button" class="save-changes-submit-button">
-                    <ui:VisualElement name="save-changes-icon" class="save-changes-icon"/>
+                    <ui:VisualElement name="save-changes-icon" class="save-changes-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); background-color: rgba(255, 255, 255, 0); width: 50px; height: 50px; -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                     <ui:Label text="Save Changes" class="save-changes-label"/>
                 </ui:Button>
             </ui:VisualElement>

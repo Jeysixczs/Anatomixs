@@ -271,7 +271,7 @@ namespace Anatomia3D.UI
             // TODO: navigate to Notification settings.
             Debug.Log("[StudentProfileController] Notifications tapped.");
 
-            UIManager.Instance.ShowStudentNotifications();
+            UIManager.Instance.ShowStudentNotifications(UIManager.Instance.ShowStudentProfile);
         }
 
         private void OnAboutClicked(ClickEvent evt)
@@ -311,13 +311,7 @@ namespace Anatomia3D.UI
 
             _headerGradientTexture = BuildGradientTexture(gradientStart, gradientEnd);
             _header.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _quizzesBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _levelBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _pointsBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _logoutBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _editprofileBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _notificationBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _aboutBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
+           
         }
 
         private Texture2D BuildGradientTexture(Color start, Color end)

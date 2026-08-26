@@ -1,9 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/StudentProgress/StudentProgress.uss"/>
+    <Style src="project://database/Assets/UI/StudentProgress/StudentProgress.uss?fileID=7433441132597879392&amp;guid=eef620edd27aa1648b4818bae109a5a6&amp;type=3#StudentProgress"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-
         <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <!-- ================= HEADER (gradient applied at runtime via C#) ================= -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
@@ -15,10 +13,7 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-
-                <!-- ================= LEVEL PROGRESS CARD ================= -->
                 <ui:VisualElement name="level-progress-card" class="level-progress-card">
                     <ui:Label text="Level Progress" class="section-title"/>
                     <ui:VisualElement name="level-row" class="level-row">
@@ -36,29 +31,22 @@
                     </ui:VisualElement>
                     <ui:Label name="points-to-next-label" text="250 points to next level" class="level-caption"/>
                 </ui:VisualElement>
-
-                <!-- ================= LEVEL ROADMAP CARD ================= -->
-                <!-- Populated at runtime by StudentProgressController from the admin's
-                     gamificationSettings/config levels, so it always matches whatever
-                     the admin has configured (title + points required per level). -->
                 <ui:VisualElement name="level-roadmap-card" class="level-roadmap-card">
                     <ui:Label text="Level Roadmap" class="section-title"/>
                     <ui:Label text="Points needed for every level" class="level-roadmap-subtitle"/>
                     <ui:VisualElement name="level-roadmap-list" class="level-roadmap-list"/>
                 </ui:VisualElement>
-
-                <!-- ================= STATS GRID ================= -->
                 <ui:VisualElement name="stats-row-1" class="stats-row">
                     <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
-                        <ui:VisualElement class="stat-icon stat-icon-blue icon-book">
-                            <ui:Label text="&#128218;" class="stat-icon-glyph"/>
+                        <ui:VisualElement class="stat-icon stat-icon-blue icon-book" style="background-color: rgb(241, 243, 247); background-image: none;">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-iconss.png?fileID=2800000&amp;guid=b237e436295e3424a8c43029c5256670&amp;type=3#quiz-iconss&quot;); height: 31px; width: 31px;"/>
                         </ui:VisualElement>
                         <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
                         <ui:Label text="Quizzes Completed" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="avg-score-card" class="stat-card stat-card-right">
-                        <ui:VisualElement class="stat-icon stat-icon-green icon-target">
-                            <ui:Label text="&#127919;" class="stat-icon-glyph"/>
+                        <ui:VisualElement class="stat-icon stat-icon-green icon-target" style="background-image: none; background-color: rgb(241, 243, 247);">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/target-iconss.png?fileID=2800000&amp;guid=6a89be03f5b863346b3f6b8ad74c290e&amp;type=3#target-iconss&quot;); height: 44px; width: 39px;"/>
                         </ui:VisualElement>
                         <ui:Label name="avg-score-value-label" text="87%" class="stat-value"/>
                         <ui:Label text="Avg. Score" class="stat-label"/>
@@ -66,28 +54,24 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced">
                     <ui:VisualElement name="points-card" class="stat-card stat-card-left">
-                        <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy">
-                            <ui:Label text="&#127942;" class="stat-icon-glyph"/>
+                        <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy" style="background-image: none; background-color: rgb(241, 243, 247);">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/total-points-icon.png?fileID=2800000&amp;guid=14939b5fcc2af964eace266874971dbc&amp;type=3#total-points-icon&quot;); height: 45px; width: 40px;"/>
                         </ui:VisualElement>
                         <ui:Label name="points-value-label" text="1250" class="stat-value"/>
                         <ui:Label text="Total Points" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="badges-card" class="stat-card stat-card-right">
-                        <ui:VisualElement class="stat-icon stat-icon-gold icon-badge">
-                            <ui:Label text="&#127894;" class="stat-icon-glyph"/>
+                        <ui:VisualElement class="stat-icon stat-icon-gold icon-badge" style="background-color: rgb(241, 243, 247); background-image: none;">
+                            <ui:Label text="🎖" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon-black.png?fileID=2800000&amp;guid=1fbb05f85ac3e064c8b6c0f8431da21b&amp;type=3#reward-icon-black&quot;); color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgb(0, 0, 0); height: 42px; width: 47px;"/>
                         </ui:VisualElement>
                         <ui:Label name="badges-value-label" text="3" class="stat-value"/>
                         <ui:Label text="Badges Earned" class="stat-label"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
-                <!-- ================= TAB TOGGLE ================= -->
                 <ui:VisualElement name="tab-toggle" class="tab-toggle">
                     <ui:Button name="weekly-tab-button" text="Weekly Activity" class="tab-button tab-button-active"/>
                     <ui:Button name="performance-tab-button" text="Performance" class="tab-button"/>
                 </ui:VisualElement>
-
-                <!-- ================= WEEKLY ACTIVITY PANEL ================= -->
                 <ui:VisualElement name="weekly-activity-panel" class="tab-panel">
                     <ui:VisualElement name="weekly-chart-card" class="weekly-chart-card">
                         <ui:Label text="Points This Week" class="section-title"/>
@@ -134,12 +118,9 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
-                <!-- ================= PERFORMANCE PANEL ================= -->
                 <ui:VisualElement name="performance-panel" class="tab-panel hidden">
                     <ui:VisualElement name="category-card" class="category-card">
                         <ui:Label text="Progress by Category" class="section-title"/>
-
                         <ui:VisualElement name="category-skeletal" class="category-item">
                             <ui:VisualElement class="category-header-row">
                                 <ui:Label text="Skeletal" class="category-name"/>
@@ -152,7 +133,6 @@
                                 <ui:Label name="category-skeletal-percent" text="85%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-
                         <ui:VisualElement name="category-muscular" class="category-item">
                             <ui:VisualElement class="category-header-row">
                                 <ui:Label text="Muscular" class="category-name"/>
@@ -165,7 +145,6 @@
                                 <ui:Label name="category-muscular-percent" text="78%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-
                         <ui:VisualElement name="category-nervous" class="category-item">
                             <ui:VisualElement class="category-header-row">
                                 <ui:Label text="Nervous" class="category-name"/>
@@ -178,7 +157,6 @@
                                 <ui:Label name="category-nervous-percent" text="92%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-
                         <ui:VisualElement name="category-cardiovascular" class="category-item category-item-last">
                             <ui:VisualElement class="category-header-row">
                                 <ui:Label text="Cardiovascular" class="category-name"/>
@@ -191,10 +169,8 @@
                                 <ui:Label name="category-cardiovascular-percent" text="70%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-
                     </ui:VisualElement>
                 </ui:VisualElement>
-
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

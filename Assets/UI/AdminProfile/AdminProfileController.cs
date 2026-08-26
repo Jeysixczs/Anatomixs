@@ -306,12 +306,7 @@ namespace Anatomia3D.UI
 
             _headerGradientTexture = BuildGradientTexture(gradientStart, gradientEnd);
             _header.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _classroomsBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _studentsBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _quizzesBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _editprofileBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _aboutBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
-            _logoutBackground.style.backgroundImage = new StyleBackground(_headerGradientTexture);
+          
 
         }
 
