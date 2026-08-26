@@ -889,11 +889,6 @@
     "baseName": "Anterior deep temporal artery",
     "description": "One of two deep temporal arteries arising from the pterygoid part of the right maxillary artery. It ascends between temporalis and the pericranium to supply the anterior portion of the temporalis muscle and anastomoses with the lacrimal artery via small branches that perforate the zygomatic bone."
   },
-  "?x.r": {
-    "displayName": "Right ?x",
-    "baseName": "?x",
-    "description": "This entry's label ('?x.r') is a placeholder and does not correspond to a named anatomical structure in standard nomenclature. Given its position in the database alongside the anterior/posterior deep temporal and maxillary artery entries, it may represent an unlabeled small branch of the maxillary artery (e.g., a pterygoid or masseteric branch), but this cannot be confirmed without consulting the original source data, so no description has been written to avoid inventing anatomical content."
-  },
   "Maxillary artery.l": {
     "displayName": "Left Maxillary artery",
     "baseName": "Maxillary artery",
@@ -903,11 +898,6 @@
     "displayName": "Left Anterior deep temporal artery",
     "baseName": "Anterior deep temporal artery",
     "description": "One of two deep temporal arteries arising from the pterygoid part of the left maxillary artery. It ascends between temporalis and the pericranium to supply the anterior portion of the temporalis muscle and anastomoses with the lacrimal artery via small branches that perforate the zygomatic bone."
-  },
-  "?x.l": {
-    "displayName": "Left ?x",
-    "baseName": "?x",
-    "description": "This entry's label ('?x.l') is a placeholder and does not correspond to a named anatomical structure in standard nomenclature. Given its position in the database alongside the anterior/posterior deep temporal and maxillary artery entries, it may represent an unlabeled small branch of the maxillary artery (e.g., a pterygoid or masseteric branch), but this cannot be confirmed without consulting the original source data, so no description has been written to avoid inventing anatomical content."
   },
   "External carotid artery.r": {
     "displayName": "Right External carotid artery",

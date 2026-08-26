@@ -25,6 +25,18 @@ namespace Anatomia3D.Backend
     /// </summary>
     public class AnatomyPlayModeLocalStorage : MonoBehaviour
     {
+        // Singleton, same convention as FirebaseBootstrap/QuizService/
+        // AdminGamificationService - lets other screens (e.g.
+        // StudentProgressController) read this student's local Play Mode
+        // progress without needing an Inspector-wired reference to whatever
+        // GameObject AnatomyPlayModeController happens to live on.
+        public static AnatomyPlayModeLocalStorage Instance { get; private set; }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
         [Serializable]
         private class RecordListWrapper
         {
@@ -109,6 +121,18 @@ namespace Anatomia3D.Backend
         }
 
         public bool TryGetRecord(string key, out PlayModeAnswerRecord record) => _byKey.TryGetValue(key, out record);
+
+        /// <summary>Every record for the currently-loaded student, as saved
+        /// (correct answers only - see SaveAnswer/HandleIncorrectAnswer,
+        /// incorrect attempts are never written here). Used by
+        /// StudentProgressController's Weekly Activity Panel to fold Play
+        /// Mode points into the same Mon-Sun chart as Quiz points, keyed by
+        /// each record's own timestampUtc/pointsEarned - no new tracking
+        /// list, just a read of what's already stored.</summary>
+        public IReadOnlyList<PlayModeAnswerRecord> GetAllRecords()
+        {
+            return _byKey.Values.ToList();
+        }
 
         /// <summary>Saves a correct answer to local storage immediately -
         /// this is the offline-first write: it always succeeds regardless

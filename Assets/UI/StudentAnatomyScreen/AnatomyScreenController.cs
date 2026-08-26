@@ -483,6 +483,21 @@ public class AnatomyScreenController : MonoBehaviour
     private readonly List<VisualElement> _boneElements = new List<VisualElement>();
     private readonly Dictionary<VisualElement, BoneInfo> _dataByElement = new Dictionary<VisualElement, BoneInfo>();
 
+    // Singleton, same convention as FirebaseBootstrap/QuizService/
+    // AnatomyPlayModeLocalStorage - lets other screens (e.g.
+    // StudentProgressController) query GetSelectableStructureCount/Keys
+    // below without needing this screen to be open. Set in Awake (not
+    // OnEnable) because modelRoot/databaseJson data for every configured
+    // AnatomySystemConfig is available the whole time this component's
+    // GameObject exists, regardless of which system is currently active or
+    // whether this screen is presently shown.
+    public static AnatomyScreenController Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void OnEnable()
     {
         _root = GetComponent<UIDocument>().rootVisualElement;
@@ -2749,6 +2764,72 @@ public class AnatomyScreenController : MonoBehaviour
         if (info == null) return false;
         return _boneDatabaseService.TryGetEntry(info.boneName, out entry);
     }
+
+    // ===================================================================
+    // ===== Cross-system structure lookup (Student Progress Tracker) ====
+    // ===================================================================
+    // Everything below exists so StudentProgressController's Performance
+    // Panel can compute "completed / actual total" per anatomy system
+    // WITHOUT this screen being open and without requiring `system` to be
+    // the currently active one. Every configured AnatomySystemConfig's
+    // modelRoot Transform hierarchy exists in the scene the whole time
+    // this component's GameObject does (ResolveAnatomySystem only
+    // SetActive(false)s the inactive ones - it never destroys them), so
+    // the exact same matching rules PopulateBoneDataFromSkeleton uses for
+    // the active system can be re-run here, on demand, for any system.
+    // This deliberately mutates no runtime state (boneData,
+    // _boneTransformsByName, etc.) - it's a pure read.
+
+    /// <summary>Every structure name that is actually selectable for
+    /// `system` - i.e. every BoneDatabase.json entry for that system with
+    /// a matching GameObject (or a GameObject with its own mesh) anywhere
+    /// under that system's configured modelRoot. Uses the identical
+    /// matching/dedup rules as PopulateBoneDataFromSkeleton, so this is
+    /// always the same "total" Play Mode itself reaches 100% against for
+    /// `system` - never a raw BoneDatabase.json entry count, which can
+    /// differ from what's actually reachable in the model (see the
+    /// unmatched-entry warning in PopulateBoneDataFromSkeleton). Returns
+    /// an empty set if `system` has no configured entry, or its
+    /// modelRoot/databaseJson aren't assigned.</summary>
+    public HashSet<string> GetSelectableStructureKeys(AnatomySystem system)
+    {
+        var result = new HashSet<string>();
+
+        var config = anatomySystems.Find(c => c != null && c.system == system);
+        if (config == null || config.modelRoot == null || config.databaseJson == null)
+        {
+            Debug.LogWarning($"[AnatomyScreenController] GetSelectableStructureKeys: no usable 'Anatomy Systems' entry for '{system}' - returning an empty set.");
+            return result;
+        }
+
+        var systemDatabase = new BoneDatabaseService();
+        systemDatabase.Load(config.databaseJson.text);
+
+        var descendants = new List<Transform>();
+        CollectDescendants(config.modelRoot, descendants);
+
+        foreach (var t in descendants)
+        {
+            string rawName = t.name;
+            if (result.Contains(rawName)) continue; // duplicate GameObject name - keep only the first, same rule PopulateBoneDataFromSkeleton uses.
+
+            bool found = systemDatabase.TryGetEntry(rawName, out _);
+            var meshFilter = t.GetComponent<MeshFilter>();
+            bool hasOwnMesh = meshFilter != null && meshFilter.sharedMesh != null;
+
+            if (!found && !hasOwnMesh) continue; // organizational/group node, not a real structure.
+
+            result.Add(rawName);
+        }
+
+        return result;
+    }
+
+    /// <summary>How many structures are actually selectable for `system` -
+    /// GetSelectableStructureKeys(system).Count. This is the denominator
+    /// StudentProgressController's Performance Panel uses internally for
+    /// its percentage - it must never be shown to the student directly.</summary>
+    public int GetSelectableStructureCount(AnatomySystem system) => GetSelectableStructureKeys(system).Count;
 
     /// <summary>Overwrites the Info Panel's title through the same
     /// auto-fit path (FitTitleLabel) normal bone titles use, so Play
