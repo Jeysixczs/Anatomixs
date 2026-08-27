@@ -235,6 +235,15 @@
     overflow: hidden;
 }
 
+/* Where the Info Panel first opens when Play Mode starts - overrides
+   .info-panel's default top (58%) for that moment only. Left/width/height
+   are untouched, and this is only ever applied once, on activation - see
+   AnatomyPlayModeController.ActivatePlayMode / AnatomyScreenController.
+   SetInfoPanelPlayModeStartPosition. */
+.info-panel.play-mode-start-pos {
+    top: 50%;
+}
+
 .info-panel.minimized .body,
 .info-panel.minimized .audio-row,
 .info-panel.minimized .resize-handle {
@@ -868,26 +877,45 @@
     letter-spacing: 1px;
 }
 
+/* Wraps whole word-groups (.letter-word-group), not individual letter
+   boxes - each group is laid out with flex-wrap: nowrap so a word's own
+   boxes never split across lines (see .letter-word-group below), while
+   this row's flex-wrap: wrap lets a whole group drop to the next line
+   once it no longer fits. Long answers grow the row downward instead of
+   shrinking anything - the parent .body ScrollView already scrolls
+   vertically, so there's nothing extra to do for very long names. */
 .play-mode-letter-row {
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    margin-top: 26px;
+    margin-top: 22px;
     margin-left: 8px;
     margin-right: 8px;
 }
 
+/* One word of the answer - its letter boxes stay glued together
+   (flex-wrap: nowrap) and the group itself is the atomic unit that
+   .play-mode-letter-row wraps by. The right/bottom margins are what
+   create the "gap instead of a box" look for spaces between words. */
+.letter-word-group {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    margin-right: 18px;
+    margin-bottom: 14px;
+}
+
 .letter-box {
-    width: 46px;
-    height: 56px;
-    margin-right: 8px;
-    margin-bottom: 8px;
+    width: 42px;
+    height: 52px;
+    margin-right: 6px;
+    flex-shrink: 0;
 }
 
 .letter-box > .unity-text-field__input {
     -unity-text-align: middle-center;
-    font-size: 24px;
+    font-size: 22px;
     -unity-font-style: bold;
     border-radius: 8px;
     border-width: 2px;
@@ -901,9 +929,13 @@
     border-color: rgb(34, 160, 110);
 }
 
-.letter-box-space {
-    width: 20px;
-    height: 56px;
+/* The box currently focused for typing - a stronger version of the
+   default green so it's easy to spot at a glance which letter is
+   active, especially once the answer spans several wrapped rows. */
+.letter-box-active > .unity-text-field__input {
+    border-color: rgb(34, 197, 130);
+    border-width: 3px;
+    background-color: rgba(34, 197, 130, 0.08);
 }
 
 .play-mode-completion-panel {
@@ -933,4 +965,193 @@
     width: auto;
     padding-left: 24px;
     padding-right: 24px;
+}
+
+/* ===== Controls Guide (floating "how to use the controls" help) ===== */
+
+/* Floating "?" button, pinned to BodyArea's own bottom-right corner
+   (BodyArea is position:relative) so it sits directly above
+   BottomToolbar - the guide it opens explains that toolbar specifically. */
+.controls-guide-fab {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    padding: 0;
+    margin: 0;
+    background-color: rgba(255, 255, 255, 0.92);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.08);
+    justify-content: center;
+    align-items: center;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.controls-guide-fab:hover {
+    background-color: rgb(255, 255, 255);
+    scale: 1.05 1.05;
+}
+
+.controls-guide-fab-icon {
+    color: rgb(34, 160, 110);
+    font-size: 40px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+/* Full-screen dimmed backdrop + centered floating card, same stacking
+   trick as .play-mode-completion-panel: this is the LAST child of
+   Screen in the UXML, so it draws above everything else, including the
+   bottom toolbar and info panel. */
+.controls-guide-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 48px;
+}
+
+.controls-guide-backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+}
+
+.controls-guide-card {
+    width: 100%;
+    max-width: 640px;
+    max-height: 100%;
+    background-color: rgb(255, 255, 255);
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.controls-guide-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 32px;
+    padding-right: 20px;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    background-color: rgb(34, 197, 130);
+    flex-shrink: 0;
+}
+
+.controls-guide-title {
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    -unity-font-style: bold;
+    white-space: normal;
+    flex-shrink: 1;
+}
+
+.controls-guide-close-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 24px;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.controls-guide-close-button:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.controls-guide-body {
+    flex-shrink: 1;
+    padding-left: 32px;
+    padding-right: 32px;
+    padding-top: 28px;
+    padding-bottom: 12px;
+}
+
+.controls-guide-row {
+    flex-direction: row;
+    margin-bottom: 26px;
+}
+
+.controls-guide-row-icon {
+    width: 64px;
+    flex-shrink: 0;
+    align-items: center;
+    padding-top: 2px;
+}
+
+.controls-guide-row-icon-img {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+}
+
+.controls-guide-row-text {
+    flex-direction: column;
+    flex-shrink: 1;
+}
+
+.controls-guide-row-title {
+    color: rgb(30, 40, 38);
+    font-size: 26px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+.controls-guide-row-desc {
+    color: rgb(110, 120, 118);
+    font-size: 24px;
+    white-space: normal;
+    -unity-paragraph-spacing: 6px;
+}
+
+.controls-guide-divider {
+    border-top-width: 1px;
+    border-top-color: rgba(0, 0, 0, 0.08);
+    margin-top: 4px;
+    margin-bottom: 22px;
+    padding-top: 22px;
+}
+
+.controls-guide-note {
+    color: rgb(150, 160, 158);
+    font-size: 21px;
+    white-space: normal;
+    margin-bottom: 22px;
+}
+
+.controls-guide-gotit-button {
+    align-self: stretch;
+    margin: 24px 32px 32px 32px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    border-radius: 24px;
+    background-color: rgb(34, 197, 130);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 26px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.controls-guide-gotit-button:hover {
+    background-color: rgb(30, 178, 116);
 }

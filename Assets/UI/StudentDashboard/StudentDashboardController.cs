@@ -18,7 +18,7 @@ namespace Anatomia3D.UI
 
         private UIDocument _document;
         private VisualElement _root;
-        private VisualElement _screenRoot; // ADD THIS
+        private VisualElement _screenRoot;
 
         private VisualElement _header;
         private VisualElement _joinclassroomcard;
@@ -49,6 +49,13 @@ namespace Anatomia3D.UI
         private Button _recentActivityViewAllCloseButton;
         private VisualElement _recentActivityViewAllList;
         private VisualElement _recentActivityViewAllNoResults;
+
+        // Tracked so it can be destroyed before building a new one and on
+        // OnDisable, the same pattern StudentProgressController's
+        // _headerGradientTexture already uses - otherwise every OnEnable
+        // (this screen is re-opened constantly via the Back button) leaks
+        // another 64x1 Texture2D that never gets freed.
+        private Texture2D _gradientTexture;
 
         // ---------------- Recent Activity cache ----------------
         // Recent Activity used to be re-fetched from Firestore (2 reads) and fully
@@ -150,7 +157,12 @@ namespace Anatomia3D.UI
                 PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
             }
 
-            // Clean up gradient texture if needed
+            // Clean up gradient texture
+            if (_gradientTexture != null)
+            {
+                Destroy(_gradientTexture);
+                _gradientTexture = null;
+            }
         }
 
         private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
@@ -274,6 +286,12 @@ namespace Anatomia3D.UI
             _recentActivityViewAllCloseButton = _screenRoot.Q<Button>("recent-activity-view-all-close-button");
             _recentActivityViewAllList = _screenRoot.Q<VisualElement>("recent-activity-view-all-list");
             _recentActivityViewAllNoResults = _screenRoot.Q<VisualElement>("recent-activity-view-all-no-results");
+
+            if (_joinclassroomcard == null || _joinClassroomButton == null)
+            {
+                Debug.LogWarning("[StudentDashboardController] 'join-classroom-icon-box'/'join-classroom-button' " +
+                    "not found in UXML - the join-classroom gradient will be skipped for whichever is missing.");
+            }
 
             Debug.Log($"[StudentDashboardController] Found Explore3D: {_explore3DButton != null}, Header: {_header != null}");
         }
@@ -849,10 +867,21 @@ namespace Anatomia3D.UI
         private void ApplyGradients()
         {
             if (_header == null) return;
-            var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
-            _header.style.backgroundImage = new StyleBackground(horizontal);
-            _joinclassroomcard.style.backgroundImage = new StyleBackground(horizontal);
-            _joinClassroomButton.style.backgroundImage = new StyleBackground(horizontal);
+
+            if (_gradientTexture != null)
+            {
+                Destroy(_gradientTexture);
+            }
+
+            _gradientTexture = BuildGradientTexture(gradientStart, gradientEnd, true);
+            _header.style.backgroundImage = new StyleBackground(_gradientTexture);
+
+            // Both are logged as missing (not fatal) in QueryElements() - guard here so a
+            // missing card/button just skips its gradient instead of throwing and aborting
+            // the rest of OnEnable() (WireCallbacks/PopulateDashboard/PopulateRecentActivity
+            // would otherwise never run).
+            if (_joinclassroomcard != null) _joinclassroomcard.style.backgroundImage = new StyleBackground(_gradientTexture);
+            if (_joinClassroomButton != null) _joinClassroomButton.style.backgroundImage = new StyleBackground(_gradientTexture);
         }
 
         private Texture2D BuildGradientTexture(Color start, Color end, bool horizontal)

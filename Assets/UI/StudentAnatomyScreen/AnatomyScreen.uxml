@@ -15,7 +15,11 @@
             <ui:TextField name="SearchField" placeholder-text="Search bones..." class="search-field"/>
             <ui:Button name="SearchClearButton" text="✕" class="search-clear-button hidden"/>
         </ui:VisualElement>
-        <ui:VisualElement name="BodyArea" class="body-area"/>
+        <ui:VisualElement name="BodyArea" class="body-area">
+            <ui:Button name="ControlsGuideButton" class="controls-guide-fab">
+                <ui:Label text="?" class="controls-guide-fab-icon"/>
+            </ui:Button>
+        </ui:VisualElement>
         <ui:VisualElement name="InfoPanel" class="info-panel hidden">
             <ui:VisualElement name="Header" class="header">
                 <ui:VisualElement name="DragIndicator" picking-mode="Ignore" class="drag-indicator"/>
@@ -115,6 +119,83 @@
         <ui:VisualElement name="PlayModeCompletionPanel" class="play-mode-completion-panel hidden">
             <ui:Label name="PlayModeCompletionLabel" text="" class="play-mode-completion-label"/>
             <ui:Button name="PlayModeCompletionCloseButton" text="Continue" class="audio-btn play-mode-completion-close-btn"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="ControlsGuideOverlay" class="controls-guide-overlay hidden">
+            <ui:VisualElement name="ControlsGuideBackdrop" class="controls-guide-backdrop"/>
+            <ui:VisualElement name="ControlsGuideCard" class="controls-guide-card">
+                <ui:VisualElement name="ControlsGuideHeader" class="controls-guide-header">
+                    <ui:Label text="How to Use the Toolbar" class="controls-guide-title"/>
+                    <ui:Button name="ControlsGuideCloseButton" text="✕" class="controls-guide-close-button"/>
+                </ui:VisualElement>
+                <ui:ScrollView name="ControlsGuideBody" mode="Vertical" class="controls-guide-body">
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/reset-icon.png?fileID=2800000&amp;guid=e7a8a30d7164699418de34067dd22b69&amp;type=3#reset-icon&quot;); -unity-background-image-tint-color: rgb(34, 160, 110); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Reset" class="controls-guide-row-title"/>
+                            <ui:Label text="Puts the model and camera back to their starting position and rotation, and clears the current selection." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/Isolate-icon.png?fileID=2800000&amp;guid=96c3718f85fbb3642aa083033ca8dc42&amp;type=3#Isolate-icon&quot;); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Isolate" class="controls-guide-row-title"/>
+                            <ui:Label text="Hides every other structure so only the one you've selected stays visible - useful for studying a single part on its own." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/hide-icon.png?fileID=2800000&amp;guid=e906549f2d19035478ae238930b629f0&amp;type=3#hide-icon&quot;); -unity-background-image-tint-color: rgb(55, 55, 55); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Hide" class="controls-guide-row-title"/>
+                            <ui:Label text="Toggles the selected structure's visibility on and off, so you can see what's underneath or behind it." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/undo-icon.png?fileID=2800000&amp;guid=3afd37646364bc1438477ec32824e233&amp;type=3#undo-icon&quot;); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Undo" class="controls-guide-row-title"/>
+                            <ui:Label text="Steps back through your last Isolate/Hide changes, one at a time." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-divider"/>
+                    <ui:Label text="During a quiz, these also appear:" class="controls-guide-note"/>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/check-icon.png?fileID=2800000&amp;guid=06723f7d3e12a85439ab9da9bbcf3a33&amp;type=3#check-icon&quot;); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Answered" class="controls-guide-row-title"/>
+                            <ui:Label text="Shows only the structures you've already identified correctly." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/ex-icon.png?fileID=2800000&amp;guid=ca0f94c61f80e3c4194692be403e874c&amp;type=3#ex-icon&quot;); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Unanswered" class="controls-guide-row-title"/>
+                            <ui:Label text="Shows only the structures you haven't identified yet." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="controls-guide-row">
+                        <ui:VisualElement class="controls-guide-row-icon">
+                            <ui:VisualElement class="controls-guide-row-icon-img" style="background-image: url(&quot;project://database/Assets/UI/Icons/random-icon.png?fileID=2800000&amp;guid=25cdf87d28c14ea4fb4503785b6832aa&amp;type=3#random-icon&quot;); width: 44px; height: 44px;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="controls-guide-row-text">
+                            <ui:Label text="Random" class="controls-guide-row-title"/>
+                            <ui:Label text="Jumps you to a random structure you haven't answered yet." class="controls-guide-row-desc"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:Button name="ControlsGuideGotItButton" text="Got it" class="controls-guide-gotit-button"/>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
