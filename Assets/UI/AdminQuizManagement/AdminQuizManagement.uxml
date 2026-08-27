@@ -392,23 +392,23 @@
                         </ui:VisualElement>
                         <ui:VisualElement name="image-based-system-row" class="image-based-system-row">
                             <ui:Button name="image-based-system-skeletal-button" class="image-based-system-card">
-                                <ui:Label text="🦦" class="image-based-system-icon"/>
+                                <ui:Label text="" class="image-based-system-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/skeletal-icon.png?fileID=2800000&amp;guid=a878f77ac2da4604db13714f0bd5c975&amp;type=3#skeletal-icon&quot;); width: 50px; height: 50px;"/>
                                 <ui:Label text="Skeletal" class="image-based-system-label"/>
                             </ui:Button>
                             <ui:Button name="image-based-system-muscular-button" class="image-based-system-card">
-                                <ui:Label text="💪" class="image-based-system-icon"/>
+                                <ui:Label text="" class="image-based-system-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/muscular-icon.png?fileID=2800000&amp;guid=2358eafd81f4ffc4190b33f7e5688089&amp;type=3#muscular-icon&quot;); width: 50px; height: 50px;"/>
                                 <ui:Label text="Muscular" class="image-based-system-label"/>
                             </ui:Button>
                             <ui:Button name="image-based-system-cardiovascular-button" class="image-based-system-card">
-                                <ui:Label text="❤" class="image-based-system-icon"/>
+                                <ui:Label text="" class="image-based-system-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/cardio-icon.png?fileID=2800000&amp;guid=1bee86df8abcc184a9e0a4b21bd9d619&amp;type=3#cardio-icon&quot;); width: 50px; height: 50px;"/>
                                 <ui:Label text="Cardiovascular" class="image-based-system-label"/>
                             </ui:Button>
                         </ui:VisualElement>
-                        <ui:VisualElement name="image-based-selected-structure-panel" class="image-based-selected-structure-panel hidden">
+                        <ui:VisualElement name="image-based-selected-structure-panel" class="image-based-selected-structure-panel hidden" style="border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255);">
                             <ui:Label text="Selected Structure" class="field-label"/>
                             <ui:Label name="image-based-selected-structure-name" text="" class="image-based-selected-structure-name"/>
                             <ui:Label name="image-based-selected-structure-system" text="" class="image-based-selected-structure-system"/>
-                            <ui:Button name="image-based-change-structure-button" text="Change Structure" class="image-based-change-structure-button"/>
+                            <ui:Button name="image-based-change-structure-button" text="Change Structure" class="image-based-change-structure-button" style="border-left-color: rgb(160, 166, 178); border-right-color: rgb(160, 166, 178); border-top-color: rgb(160, 166, 178); border-bottom-color: rgb(160, 166, 178);"/>
                         </ui:VisualElement>
                         <ui:Label name="image-based-structure-error" text="" class="field-error hidden"/>
                     </ui:VisualElement>

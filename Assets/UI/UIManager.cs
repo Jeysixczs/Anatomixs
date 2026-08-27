@@ -475,9 +475,28 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        public void ShowStudentNotifications()
+        /// <summary>Screen to return to when the Notifications back button is
+        /// tapped. Set by ShowStudentNotifications() to whichever screen opened
+        /// it (Dashboard, Profile, ...); defaults to Dashboard if none was
+        /// given, since that's the original/most common entry point.</summary>
+        private Action _notificationsReturnAction;
+
+        /// <param name="returnAction">Call this to go back to the screen that's
+        /// opening Notifications, e.g. pass ShowStudentProfile from Profile's
+        /// notification bell. Defaults to ShowStudentDashboard when omitted.</param>
+        public void ShowStudentNotifications(Action returnAction = null)
         {
+            _notificationsReturnAction = returnAction ?? ShowStudentDashboard;
             ShowScreen(studentNotificationsScreen, _studentNotificationsController);
+        }
+
+        /// <summary>Called by StudentNotificationsController's back button -
+        /// returns to whichever screen opened Notifications.</summary>
+        public void ReturnFromStudentNotifications()
+        {
+            var action = _notificationsReturnAction ?? ShowStudentDashboard;
+            _notificationsReturnAction = null;
+            action();
         }
 
         // ADMIN SCREENS

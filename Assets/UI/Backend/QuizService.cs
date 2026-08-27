@@ -1342,6 +1342,22 @@ namespace Anatomia3D.Backend
             });
         }
 
+        /// <summary>Points + timestamp only, one entry per quizAttempts doc for
+        /// the signed-in student - for StudentProgressController's Weekly
+        /// Activity Panel, which merges this with Anatomy Play Mode's local
+        /// records into a single points-per-day chart. Reuses the exact same
+        /// FetchStudentAttempts query FetchProgressData already runs (the
+        /// project's one source of truth for a student's quiz points) rather
+        /// than adding a second quizAttempts read, so nothing here can ever
+        /// double-count against FetchProgressData's own numbers.</summary>
+        public void FetchStudentAttemptPoints(Action<List<(float points, DateTime completedAtUtc)>> onComplete)
+        {
+            FetchStudentAttempts(attempts =>
+            {
+                onComplete?.Invoke(attempts.Select(a => (a.PointsPlusBonus, a.CompletedAtUtc)).ToList());
+            });
+        }
+
         // ==================================================================
         // Admin: classroom-scoped analytics report (AdminAnalyticsReportsController)
         // ==================================================================

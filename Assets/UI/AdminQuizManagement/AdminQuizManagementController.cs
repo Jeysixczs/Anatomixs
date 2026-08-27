@@ -2168,7 +2168,12 @@ namespace Anatomia3D.UI
 
             ResetEnumerationAnswers();
 
-            _selectedImageBasedSystem = AnatomySystemDisplayChoices[0];
+            // No anatomical system is pre-picked on a fresh open - the teacher must
+            // actually tap Skeletal/Muscular/Cardiovascular themselves before any card
+            // shows as selected. (OpenAnatomyScreenForStructureSelection and the Step 2
+            // validation both already fall back to AnatomySystemDisplayChoices[0] on
+            // their own if the teacher tries to proceed without picking one.)
+            _selectedImageBasedSystem = null;
             RefreshImageBasedSystemButtons();
             ClearImageBasedSelection();
 

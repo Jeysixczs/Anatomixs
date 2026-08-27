@@ -39,6 +39,10 @@ namespace Anatomia3D.UI
         [Header("Password rules")]
         [SerializeField] private int minPasswordLength = 6;
 
+        [Header("Email verification live-update")]
+        [Tooltip("While this screen is open and the email is unverified, poll Firebase this often (seconds) so the badge updates the moment the student clicks the link in their inbox - no need to reopen the screen.")]
+        [SerializeField] private float verificationPollIntervalSeconds = 4f;
+
         private static readonly Regex EmailRegex =
             new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
@@ -64,6 +68,9 @@ namespace Anatomia3D.UI
         private Label _cardSubtitle;
         private VisualElement _verifyEmailWarning;
 
+        private Button _changePasswordButton;
+        private VisualElement _passwordOverlay;
+        private VisualElement _passwordOverlayBackdrop;
         private Button _togglePasswordVisibilityButton;
         private TextField _currentPasswordField;
         private Label _currentPasswordError;
@@ -71,6 +78,7 @@ namespace Anatomia3D.UI
         private Label _newPasswordError;
         private TextField _confirmPasswordField;
         private Label _confirmPasswordError;
+        private Button _closePasswordCardButton;
 
         private Label _statusLabel;
         private Button _saveChangesButton;
@@ -118,9 +126,11 @@ namespace Anatomia3D.UI
             UpdatePasswordVisibility();
             ClearAllErrors();
             SetStatus(string.Empty);
+            ClosePasswordOverlay();
 
             RefreshVerificationBadge();
             UpdatePendingEmailHint();
+            StartVerificationPolling();
 
             if (PlayerSessionManager.Instance != null)
             {
@@ -132,6 +142,7 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            StopVerificationPolling();
 
             if (PlayerSessionManager.Instance != null)
             {
@@ -147,6 +158,9 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _changePasswordButton?.UnregisterCallback<ClickEvent>(OnChangePasswordClicked);
+            _passwordOverlayBackdrop?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
+            _closePasswordCardButton?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _togglePasswordVisibilityButton?.UnregisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
             _verifyEmailButton?.UnregisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.UnregisterCallback<ClickEvent>(OnSaveChangesClicked);
@@ -179,6 +193,10 @@ namespace Anatomia3D.UI
             _verifyEmailWarning = _screenRoot.Q<VisualElement>("verify-email-warning");
 
 
+            _changePasswordButton = _screenRoot.Q<Button>("change-password-button");
+            _passwordOverlay = _screenRoot.Q<VisualElement>("password-overlay");
+            _passwordOverlayBackdrop = _screenRoot.Q<VisualElement>("password-overlay-backdrop");
+
             _togglePasswordVisibilityButton = _screenRoot.Q<Button>("toggle-password-visibility-button");
             _currentPasswordField = _screenRoot.Q<TextField>("current-password-field");
             _currentPasswordError = _screenRoot.Q<Label>("current-password-error");
@@ -186,6 +204,7 @@ namespace Anatomia3D.UI
             _newPasswordError = _screenRoot.Q<Label>("new-password-error");
             _confirmPasswordField = _screenRoot.Q<TextField>("confirm-password-field");
             _confirmPasswordError = _screenRoot.Q<Label>("confirm-password-error");
+            _closePasswordCardButton = _screenRoot.Q<Button>("close-password-card-button");
 
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
@@ -196,6 +215,9 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _changePasswordButton?.RegisterCallback<ClickEvent>(OnChangePasswordClicked);
+            _passwordOverlayBackdrop?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
+            _closePasswordCardButton?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _togglePasswordVisibilityButton?.RegisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
             _verifyEmailButton?.RegisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.RegisterCallback<ClickEvent>(OnSaveChangesClicked);
@@ -222,6 +244,31 @@ namespace Anatomia3D.UI
         {
             Debug.Log("[StudentEditProfileController] Navigating back to profile");
             UIManager.Instance.ShowStudentProfile();
+        }
+
+        private void OnChangePasswordClicked(ClickEvent evt)
+        {
+            OpenPasswordOverlay();
+        }
+
+        private void OnClosePasswordOverlayClicked(ClickEvent evt)
+        {
+            ClosePasswordOverlay();
+        }
+
+        /// <summary>Reveals the password-card, floated over the whole screen
+        /// with a dimmed backdrop behind it (like a modal).</summary>
+        private void OpenPasswordOverlay()
+        {
+            _passwordOverlay?.RemoveFromClassList("hidden");
+        }
+
+        /// <summary>Hides the floating password-card overlay. Does not clear
+        /// the password fields - only OnSaveComplete does that, so an
+        /// in-progress edit survives closing/reopening the overlay.</summary>
+        private void ClosePasswordOverlay()
+        {
+            _passwordOverlay?.AddToClassList("hidden");
         }
 
         private void OnTogglePasswordVisibilityClicked(ClickEvent evt)
@@ -275,6 +322,45 @@ namespace Anatomia3D.UI
             PlayerSessionManager.Instance.RefreshEmailVerificationStatus(isVerified =>
             {
                 UpdateVerifyBadge(isVerified);
+                if (isVerified) StopVerificationPolling();
+            });
+        }
+
+        /// <summary>Live-updates the verification badge while this screen is
+        /// open: repeatedly re-checks Firebase so that if the student clicks
+        /// the verification link in their inbox (e.g. on their phone or in
+        /// another tab) the badge flips to "Verified" without them needing to
+        /// leave and reopen this screen. No-ops (and stops itself) once the
+        /// email is already verified, since there's nothing left to watch for.</summary>
+        private void StartVerificationPolling()
+        {
+            CancelInvoke(nameof(PollEmailVerificationStatus));
+
+            if (PlayerSessionManager.Instance == null || PlayerSessionManager.Instance.IsEmailVerified)
+            {
+                return;
+            }
+
+            InvokeRepeating(nameof(PollEmailVerificationStatus), verificationPollIntervalSeconds, verificationPollIntervalSeconds);
+        }
+
+        private void StopVerificationPolling()
+        {
+            CancelInvoke(nameof(PollEmailVerificationStatus));
+        }
+
+        private void PollEmailVerificationStatus()
+        {
+            if (PlayerSessionManager.Instance == null)
+            {
+                StopVerificationPolling();
+                return;
+            }
+
+            PlayerSessionManager.Instance.RefreshEmailVerificationStatus(isVerified =>
+            {
+                UpdateVerifyBadge(isVerified);
+                if (isVerified) StopVerificationPolling();
             });
         }
 
@@ -438,6 +524,7 @@ namespace Anatomia3D.UI
             _currentPasswordField.value = string.Empty;
             _newPasswordField.value = string.Empty;
             _confirmPasswordField.value = string.Empty;
+            ClosePasswordOverlay();
 
             if (emailChanged)
             {

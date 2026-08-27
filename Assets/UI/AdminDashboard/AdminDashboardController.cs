@@ -156,6 +156,13 @@ namespace Anatomia3D.UI
 
         private VisualElement _classroomsEmptyState;
         private VisualElement _classroomsList;
+        private Button _classroomsViewAllButton;
+
+        private VisualElement _classroomsViewAllOverlay;
+        private Button _classroomsViewAllCloseButton;
+        private VisualElement _classroomsViewAllList;
+        private TextField _classroomsViewAllSearchField;
+        private VisualElement _classroomsViewAllNoResults;
 
         private Button _manageQuizzesButton;
         private Button _viewAnalyticsButton;
@@ -178,6 +185,10 @@ namespace Anatomia3D.UI
         private readonly Dictionary<string, VisualElement> _activityRowsById = new Dictionary<string, VisualElement>();
         private bool _hasRenderedActivityOnce;
         private const int MaxRecentActivityItems = 8;
+
+        /// <summary>Max classroom cards shown inline on the dashboard before "View All" is
+        /// used instead. Full list still renders in classrooms-view-all-list.</summary>
+        private const int MaxDashboardClassroomItems = 5;
 
         private ListenerRegistration _classroomsListener;
         private QuizService.ActivityListenerHandle _activityListenerHandle;
@@ -263,6 +274,10 @@ namespace Anatomia3D.UI
             _profileButton?.UnregisterCallback<ClickEvent>(OnProfileClicked);
             _createClassroomButton?.UnregisterCallback<ClickEvent>(OnCreateClassroomClicked);
             _createFirstClassroomButton?.UnregisterCallback<ClickEvent>(OnCreateClassroomClicked);
+            _classroomsViewAllButton?.UnregisterCallback<ClickEvent>(OnViewAllClassroomsClicked);
+            _classroomsViewAllCloseButton?.UnregisterCallback<ClickEvent>(OnCloseViewAllClassroomsClicked);
+            _classroomsViewAllOverlay?.UnregisterCallback<ClickEvent>(OnViewAllOverlayBackdropClicked);
+            _classroomsViewAllSearchField?.UnregisterValueChangedCallback(OnClassroomsViewAllSearchChanged);
             _manageQuizzesButton?.UnregisterCallback<ClickEvent>(OnManageQuizzesClicked);
             _viewAnalyticsButton?.UnregisterCallback<ClickEvent>(OnViewAnalyticsClicked);
             _gamificationButton?.UnregisterCallback<ClickEvent>(OnGamificationClicked);
@@ -293,6 +308,13 @@ namespace Anatomia3D.UI
 
             _classroomsEmptyState = _screenRoot.Q<VisualElement>("classrooms-empty-state");
             _classroomsList = _screenRoot.Q<VisualElement>("classrooms-list");
+            _classroomsViewAllButton = _screenRoot.Q<Button>("classrooms-view-all-button");
+
+            _classroomsViewAllOverlay = _screenRoot.Q<VisualElement>("classrooms-view-all-overlay");
+            _classroomsViewAllCloseButton = _screenRoot.Q<Button>("classrooms-view-all-close-button");
+            _classroomsViewAllList = _screenRoot.Q<VisualElement>("classrooms-view-all-list");
+            _classroomsViewAllSearchField = _screenRoot.Q<TextField>("classrooms-view-all-search-field");
+            _classroomsViewAllNoResults = _screenRoot.Q<VisualElement>("classrooms-view-all-no-results");
 
             _manageQuizzesButton = _screenRoot.Q<Button>("manage-quizzes-button");
             _viewAnalyticsButton = _screenRoot.Q<Button>("view-analytics-button");
@@ -310,6 +332,10 @@ namespace Anatomia3D.UI
             _profileButton?.RegisterCallback<ClickEvent>(OnProfileClicked);
             _createClassroomButton?.RegisterCallback<ClickEvent>(OnCreateClassroomClicked);
             _createFirstClassroomButton?.RegisterCallback<ClickEvent>(OnCreateClassroomClicked);
+            _classroomsViewAllButton?.RegisterCallback<ClickEvent>(OnViewAllClassroomsClicked);
+            _classroomsViewAllCloseButton?.RegisterCallback<ClickEvent>(OnCloseViewAllClassroomsClicked);
+            _classroomsViewAllOverlay?.RegisterCallback<ClickEvent>(OnViewAllOverlayBackdropClicked);
+            _classroomsViewAllSearchField?.RegisterValueChangedCallback(OnClassroomsViewAllSearchChanged);
             _manageQuizzesButton?.RegisterCallback<ClickEvent>(OnManageQuizzesClicked);
             _viewAnalyticsButton?.RegisterCallback<ClickEvent>(OnViewAnalyticsClicked);
             _gamificationButton?.RegisterCallback<ClickEvent>(OnGamificationClicked);
@@ -523,20 +549,70 @@ namespace Anatomia3D.UI
         private void RefreshClassroomsUI()
         {
             bool hasClassrooms = _currentClassrooms != null && _currentClassrooms.Count > 0;
+            bool hasOverflow = hasClassrooms && _currentClassrooms.Count > MaxDashboardClassroomItems;
 
             _classroomsEmptyState?.EnableInClassList("hidden", hasClassrooms);
             _classroomsList?.EnableInClassList("hidden", !hasClassrooms);
+            _classroomsViewAllButton?.EnableInClassList("hidden", !hasOverflow);
 
-            if (_classroomsList == null) return;
+            // If the list shrank back under the cap (or emptied out) while the overlay
+            // happened to be open, close it rather than leave it showing a stale/oversized
+            // list on top of a dashboard that no longer has an overflow to view.
+            if (!hasOverflow) CloseViewAllClassroomsOverlay();
 
-            _classroomsList.Clear();
-
-            if (!hasClassrooms) return;
-
-            foreach (var classroom in _currentClassrooms)
+            if (_classroomsList != null)
             {
-                _classroomsList.Add(BuildClassroomCard(classroom));
+                _classroomsList.Clear();
+
+                if (hasClassrooms)
+                {
+                    var inlineItems = _currentClassrooms.Count > MaxDashboardClassroomItems
+                        ? _currentClassrooms.GetRange(0, MaxDashboardClassroomItems)
+                        : _currentClassrooms;
+
+                    foreach (var classroom in inlineItems)
+                    {
+                        _classroomsList.Add(BuildClassroomCard(classroom));
+                    }
+                }
             }
+
+            RefreshViewAllList();
+        }
+
+        /// <summary>Rebuilds classrooms-view-all-list from _currentClassrooms, filtered by
+        /// whatever's currently typed into the View All search field (matches name or
+        /// code, case-insensitive). Called whenever the classroom data changes and every
+        /// time the search text changes.</summary>
+        private void RefreshViewAllList()
+        {
+            if (_classroomsViewAllList == null) return;
+
+            string query = _classroomsViewAllSearchField?.value?.Trim() ?? "";
+
+            IEnumerable<ClassroomSummary> filtered = _currentClassrooms;
+            if (!string.IsNullOrEmpty(query))
+            {
+                filtered = _currentClassrooms.Where(c =>
+                    (!string.IsNullOrEmpty(c.Name) && c.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (!string.IsNullOrEmpty(c.Code) && c.Code.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0));
+            }
+
+            var filteredList = filtered.ToList();
+            bool hasResults = filteredList.Count > 0;
+
+            _classroomsViewAllNoResults?.EnableInClassList("hidden", hasResults);
+
+            _classroomsViewAllList.Clear();
+            foreach (var classroom in filteredList)
+            {
+                _classroomsViewAllList.Add(BuildClassroomCard(classroom));
+            }
+        }
+
+        private void OnClassroomsViewAllSearchChanged(ChangeEvent<string> evt)
+        {
+            RefreshViewAllList();
         }
 
         private VisualElement BuildClassroomCard(ClassroomSummary classroom)
@@ -768,6 +844,34 @@ namespace Anatomia3D.UI
         private void OnCreateClassroomClicked(ClickEvent evt)
         {
             UIManager.Instance.ShowAdminCreateClassroom();
+        }
+
+        private void OnViewAllClassroomsClicked(ClickEvent evt)
+        {
+            if (_classroomsViewAllSearchField != null) _classroomsViewAllSearchField.value = "";
+            RefreshViewAllList();
+            _classroomsViewAllOverlay?.RemoveFromClassList("hidden");
+        }
+
+        private void OnCloseViewAllClassroomsClicked(ClickEvent evt)
+        {
+            CloseViewAllClassroomsOverlay();
+        }
+
+        /// <summary>Tapping the dimmed backdrop closes the overlay, same as the close
+        /// button - but only when the tap actually landed on the backdrop itself, not on
+        /// the card or anything inside it (ClickEvent bubbles up from children).</summary>
+        private void OnViewAllOverlayBackdropClicked(ClickEvent evt)
+        {
+            if (evt.target == _classroomsViewAllOverlay)
+            {
+                CloseViewAllClassroomsOverlay();
+            }
+        }
+
+        private void CloseViewAllClassroomsOverlay()
+        {
+            _classroomsViewAllOverlay?.AddToClassList("hidden");
         }
 
         private void OnViewClassroomDetailsClicked(ClassroomSummary classroom)

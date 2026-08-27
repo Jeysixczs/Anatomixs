@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
@@ -16,6 +18,9 @@ namespace Anatomia3D.UI
     ///  - A simple "compact" breakpoint toggle for smaller phone screens
     ///  - Exposes SetProgressData() / SetWeeklyPoints() / SetCategoryProgress() so
     ///    gameplay/session code can push real values in instead of the mock data.
+    ///  - Refreshes the Performance Panel (Anatomy Play Mode completion by system,
+    ///    percentage only) and the Weekly Activity Panel (total points/day from Quiz +
+    ///    Anatomy Play Mode) from real data - see RefreshProgressUI().
     ///
     /// NOTE: Add a call to UIManager for this screen, e.g.:
     ///   [SerializeField] private VisualTreeAsset studentProgressScreen;
@@ -75,7 +80,11 @@ namespace Anatomia3D.UI
             "bar-mon", "bar-tue", "bar-wed", "bar-thu", "bar-fri", "bar-sat", "bar-sun"
         };
 
-        // Category rows
+        // Category rows - Anatomy Play Mode systems only (Skeletal/Muscular/
+        // Cardiovascular). The "-count" labels are kept queried (existing
+        // UXML/USS is untouched - see the plan's section 12) but are hidden
+        // at runtime: Anatomy Play Mode completion is reported as a
+        // percentage only, never a "X quizzes"-style count.
         private VisualElement _categorySkeletalFill;
         private Label _categorySkeletalPercent;
         private Label _categorySkeletalCount;
@@ -84,13 +93,17 @@ namespace Anatomia3D.UI
         private Label _categoryMuscularPercent;
         private Label _categoryMuscularCount;
 
-        private VisualElement _categoryNervousFill;
-        private Label _categoryNervousPercent;
-        private Label _categoryNervousCount;
-
         private VisualElement _categoryCardiovascularFill;
         private Label _categoryCardiovascularPercent;
         private Label _categoryCardiovascularCount;
+
+        // Nervous isn't supported by Anatomy Play Mode - its whole row is
+        // hidden rather than populated with invented data (see the plan's
+        // section 1). Kept as a "category-nervous" element reference only
+        // (no fill/percent/count needed since nothing is ever written into
+        // it), so the row can be trivially re-enabled if Nervous is added
+        // to Anatomy Play Mode later.
+        private VisualElement _categoryNervousRow;
 
         // Both PopulateLevelProgress() and PopulateProgressExtras() used to re-hit
         // Firestore on every single OnEnable, even though this data only ever changes
@@ -151,10 +164,25 @@ namespace Anatomia3D.UI
             // screen (or OnStudentProfileChanged) last populated them - nothing to redo
             // just because the student navigated back here.
 
+            // Anatomy Play Mode performance and the weekly points chart are
+            // refreshed every time this screen opens (see the plan's
+            // section 14: "screen opens" / "returns after Play Mode" are
+            // both just this OnEnable firing again) - RefreshProgressUI()
+            // itself decides what actually needs a Firebase/Firestore call
+            // vs. a local-only read, so this never adds unconditional
+            // network traffic beyond what already happened here before.
+            RefreshProgressUI();
+
             if (PlayerSessionManager.Instance != null)
             {
                 PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
                 PlayerSessionManager.Instance.OnStudentProfileChanged += OnStudentProfileChanged;
+            }
+
+            if (AnatomyPlayModeSyncService.Instance != null)
+            {
+                AnatomyPlayModeSyncService.Instance.OnSyncCompleted -= OnAnatomySyncCompleted;
+                AnatomyPlayModeSyncService.Instance.OnSyncCompleted += OnAnatomySyncCompleted;
             }
         }
 
@@ -167,6 +195,11 @@ namespace Anatomia3D.UI
                 PlayerSessionManager.Instance.OnStudentProfileChanged -= OnStudentProfileChanged;
             }
 
+            if (AnatomyPlayModeSyncService.Instance != null)
+            {
+                AnatomyPlayModeSyncService.Instance.OnSyncCompleted -= OnAnatomySyncCompleted;
+            }
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
@@ -177,11 +210,26 @@ namespace Anatomia3D.UI
         /// <summary>A quiz submission is the only thing that moves points/quizzesCompleted/
         /// badgesEarned, which is everything both PopulateLevelProgress() and
         /// PopulateProgressExtras() depend on - so this is the one signal that actually
-        /// warrants a fresh read, instead of polling on every OnEnable.</summary>
+        /// warrants a fresh read, instead of polling on every OnEnable. New quiz points
+        /// also affect the Weekly Activity Panel, so refresh that here too (see the
+        /// plan's section 14: "new quiz/gamification points become available").</summary>
         private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
         {
             PopulateLevelProgress();
             PopulateProgressExtras();
+            RefreshWeeklyActivity();
+        }
+
+        /// <summary>Fires once AnatomyPlayModeSyncService finishes uploading and/or
+        /// downloading+merging progress - local completed structures may have just
+        /// grown (progress synced down from another device) and pending Play Mode
+        /// points may have just been confirmed, so both panels are refreshed (see
+        /// the plan's section 14: "Firebase synchronization successfully updates
+        /// progress").</summary>
+        private void OnAnatomySyncCompleted()
+        {
+            RefreshAnatomyPerformance();
+            RefreshWeeklyActivity();
         }
 
         private void UnregisterCallbacks()
@@ -239,13 +287,21 @@ namespace Anatomia3D.UI
             _categoryMuscularPercent = _screenRoot.Q<Label>("category-muscular-percent");
             _categoryMuscularCount = _screenRoot.Q<Label>("category-muscular-count");
 
-            _categoryNervousFill = _screenRoot.Q<VisualElement>("category-nervous-fill");
-            _categoryNervousPercent = _screenRoot.Q<Label>("category-nervous-percent");
-            _categoryNervousCount = _screenRoot.Q<Label>("category-nervous-count");
-
             _categoryCardiovascularFill = _screenRoot.Q<VisualElement>("category-cardiovascular-fill");
             _categoryCardiovascularPercent = _screenRoot.Q<Label>("category-cardiovascular-percent");
             _categoryCardiovascularCount = _screenRoot.Q<Label>("category-cardiovascular-count");
+
+            // Nervous isn't supported by Anatomy Play Mode - hide the whole
+            // row (see the plan's section 1) rather than deleting it from
+            // the UXML, so re-enabling it later is a one-line change.
+            _categoryNervousRow = _screenRoot.Q<VisualElement>("category-nervous");
+            _categoryNervousRow?.AddToClassList("hidden");
+
+            // The Performance Panel shows a percentage only - never a
+            // "X quizzes"/"X structures" count (see the plan's section 2/3).
+            _categorySkeletalCount?.AddToClassList("hidden");
+            _categoryMuscularCount?.AddToClassList("hidden");
+            _categoryCardiovascularCount?.AddToClassList("hidden");
 
             Debug.Log($"[StudentProgressController] Found back button: {_backButton != null}, tabs: {_weeklyTabButton != null}/{_performanceTabButton != null}");
         }
@@ -270,11 +326,10 @@ namespace Anatomia3D.UI
         /// the Level Roadmap list below it so the student can see the points required for
         /// every level - not just the next one.
         ///
-        /// Note: avg score, badges-earned count, the weekly chart and the category breakdown
-        /// aren't wired up here - PlayerSessionManager.StudentProfile doesn't track those yet
-        /// (no avgScorePercent/badgesEarned fields, no per-day or per-category rollups), so
-        /// those parts of the screen are left as-is. Call SetWeeklyPoints()/SetCategoryProgress()
-        /// /SetProgressData() directly once that data is available.</summary>
+        /// Note: avg score and badges-earned count aren't wired up here - see
+        /// PopulateProgressExtras(). The weekly chart and the category breakdown aren't
+        /// wired up here either - see RefreshWeeklyActivity()/RefreshAnatomyPerformance(),
+        /// called together from RefreshProgressUI().</summary>
         private void PopulateLevelProgress()
         {
             var student = PlayerSessionManager.Instance?.CurrentStudent;
@@ -315,16 +370,23 @@ namespace Anatomia3D.UI
             });
         }
 
-        /// <summary>Fills in the parts PopulateLevelProgress() above leaves alone: average
-        /// score, badges-earned count, the weekly bar chart and the per-category breakdown.
-        /// All come from QuizService.FetchProgressData(), which already aggregates the
-        /// student's quizAttempts for exactly this purpose.</summary>
+        /// <summary>Fills in the two stat-card values PopulateLevelProgress() above
+        /// leaves alone: average score and badges-earned count. Both come from
+        /// QuizService.FetchProgressData(), which already aggregates the student's
+        /// quizAttempts for exactly this purpose.
+        ///
+        /// The weekly chart and the Performance Panel are NOT populated here -
+        /// FetchProgressData's WeeklyPoints only ever reflected quiz points, and its
+        /// CategoryBreakdown was quiz-attempt counts, neither of which is what those
+        /// two panels are supposed to show (see the plan's sections 1/6/11). See
+        /// RefreshWeeklyActivity() and RefreshAnatomyPerformance() instead - both are
+        /// called from RefreshProgressUI().</summary>
         private void PopulateProgressExtras()
         {
             if (QuizService.Instance == null)
             {
                 Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
-                    "leaving avg score, badges, weekly chart and category breakdown as placeholders.");
+                    "leaving avg score and badges as placeholders.");
                 return;
             }
 
@@ -334,20 +396,187 @@ namespace Anatomia3D.UI
 
                 if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(result.AvgScorePercent)}%";
                 if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
-
-                SetWeeklyPoints(result.WeeklyPoints);
-
-                result.CategoryBreakdown.TryGetValue("skeletal", out var skeletal);
-                result.CategoryBreakdown.TryGetValue("muscular", out var muscular);
-                result.CategoryBreakdown.TryGetValue("nervous", out var nervous);
-                result.CategoryBreakdown.TryGetValue("cardiovascular", out var cardiovascular);
-
-                SetCategoryProgress(
-                    skeletal.quizzes, skeletal.percent01,
-                    muscular.quizzes, muscular.percent01,
-                    nervous.quizzes, nervous.percent01,
-                    cardiovascular.quizzes, cardiovascular.percent01);
             });
+        }
+
+        // ==================================================================
+        // ===== Performance Panel (Anatomy Play Mode only) ================
+        // ==================================================================
+
+        /// <summary>Refreshes both real-data panels this screen owns. Call on every
+        /// OnEnable and whenever local Play Mode progress or a Firebase sync could
+        /// have changed (see the plan's section 14) - RefreshAnatomyPerformance() is
+        /// a pure local read (offline-safe, no Firebase call), RefreshWeeklyActivity()
+        /// makes one Firestore query for the student's quiz points.</summary>
+        private void RefreshProgressUI()
+        {
+            RefreshAnatomyPerformance();
+            RefreshWeeklyActivity();
+        }
+
+        /// <summary>Populates the Performance Panel from the student's REAL Anatomy
+        /// Play Mode progress - Skeletal/Muscular/Cardiovascular only (see the plan's
+        /// section 1). Entirely local/offline: reads AnatomyPlayModeLocalStorage's
+        /// completed keys and AnatomyScreenController's per-system selectable-structure
+        /// keys, with no Firebase call and no dependency on the Anatomy screen being
+        /// open. Firebase-synced progress is already reflected here too, since
+        /// AnatomyPlayModeSyncService merges any downloaded records straight into the
+        /// same local storage this reads from (see the plan's section 4/5).</summary>
+        private void LoadAnatomyPlayModeProgress()
+        {
+            string studentId = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                Debug.LogWarning("[StudentProgressController] No signed-in student - leaving the Performance Panel as-is.");
+                return;
+            }
+
+            if (AnatomyPlayModeLocalStorage.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] AnatomyPlayModeLocalStorage.Instance is null - can't read Anatomy Play Mode progress.");
+                return;
+            }
+
+            if (AnatomyScreenController.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] AnatomyScreenController.Instance is null - can't determine actual structure totals per system.");
+                return;
+            }
+
+            // Reload from disk every time (same pattern
+            // AnatomyPlayModeController.LoadCompletedKeysFromLocalStorage uses) -
+            // local storage is the authoritative record, and this picks up anything
+            // merged down by a Firebase sync since the last read.
+            AnatomyPlayModeLocalStorage.Instance.Load(studentId);
+            var completedKeys = AnatomyPlayModeLocalStorage.Instance.GetCompletedKeys();
+
+            float skeletalPercent = CalculatePerformanceBySystem(AnatomySystem.Skeletal, completedKeys, out int skeletalCompleted, out int skeletalTotal);
+            float muscularPercent = CalculatePerformanceBySystem(AnatomySystem.Muscular, completedKeys, out int muscularCompleted, out int muscularTotal);
+            float cardioPercent = CalculatePerformanceBySystem(AnatomySystem.Cardiovascular, completedKeys, out int cardioCompleted, out int cardioTotal);
+
+            Debug.Log($"[StudentProgress] Completed Skeletal structures: {skeletalCompleted}");
+            Debug.Log($"[StudentProgress] Total Skeletal structures: {skeletalTotal}");
+            Debug.Log($"[StudentProgress] Skeletal progress: {skeletalPercent:0.00}%");
+
+            Debug.Log($"[StudentProgress] Completed Muscular structures: {muscularCompleted}");
+            Debug.Log($"[StudentProgress] Total Muscular structures: {muscularTotal}");
+            Debug.Log($"[StudentProgress] Muscular progress: {muscularPercent:0.00}%");
+
+            Debug.Log($"[StudentProgress] Completed Cardiovascular structures: {cardioCompleted}");
+            Debug.Log($"[StudentProgress] Total Cardiovascular structures: {cardioTotal}");
+            Debug.Log($"[StudentProgress] Cardiovascular progress: {cardioPercent:0.00}%");
+            // Totals/completed counts are logged for debugging only - never shown in
+            // the UI itself (see the plan's section 16).
+
+            SetCategoryProgress(skeletalPercent, muscularPercent, cardioPercent);
+        }
+
+        private void RefreshAnatomyPerformance() => LoadAnatomyPlayModeProgress();
+
+        /// <summary>completed / actual total x 100 for one anatomy system - the actual
+        /// total comes from AnatomyScreenController.GetSelectableStructureKeys(system),
+        /// the same matched-against-the-real-model source Anatomy Play Mode itself uses
+        /// (see the plan's section 2), never a hardcoded or database-only count.</summary>
+        private static float CalculatePerformanceBySystem(
+            AnatomySystem system, HashSet<string> completedKeys, out int completed, out int total)
+        {
+            var structureKeys = AnatomyScreenController.Instance.GetSelectableStructureKeys(system);
+            total = structureKeys.Count;
+
+            completed = 0;
+            foreach (var key in completedKeys)
+            {
+                if (structureKeys.Contains(key)) completed++;
+            }
+
+            return total > 0 ? (completed / (float)total) * 100f : 0f;
+        }
+
+        // ==================================================================
+        // ===== Weekly Activity Panel (all point-earning activities) =====
+        // ==================================================================
+
+        /// <summary>Populates the Weekly Activity Panel with the student's REAL total
+        /// points earned per day (Mon-Sun) from every existing point-earning activity -
+        /// currently Quiz attempts (QuizService, the project's source of truth for quiz
+        /// points) and Anatomy Play Mode (AnatomyPlayModeLocalStorage, offline-first, no
+        /// Firebase dependency). Each activity is read from its own single existing
+        /// source exactly once, so nothing here can double-count (see the plan's
+        /// section 9).</summary>
+        private void RefreshWeeklyActivity()
+        {
+            if (QuizService.Instance == null)
+            {
+                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - leaving the Weekly Activity Panel as-is.");
+                return;
+            }
+
+            QuizService.Instance.FetchStudentAttemptPoints(quizPoints =>
+            {
+                var weekly = new float[7];
+                AddPointsToWeek(weekly, quizPoints);
+
+                string studentId = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
+                if (AnatomyPlayModeLocalStorage.Instance != null && !string.IsNullOrEmpty(studentId))
+                {
+                    AnatomyPlayModeLocalStorage.Instance.Load(studentId);
+                    var anatomyPoints = AnatomyPlayModeLocalStorage.Instance.GetAllRecords()
+                        .Where(r => r.correct)
+                        .Select(r => ((float)(r.pointsEarned + r.streakBonus), ParseTimestampUtc(r.timestampUtc)));
+                    AddPointsToWeek(weekly, anatomyPoints);
+                }
+
+                Debug.Log("[StudentProgress] Weekly points:\n" +
+                    $"Mon={weekly[0]}\nTue={weekly[1]}\nWed={weekly[2]}\nThu={weekly[3]}\n" +
+                    $"Fri={weekly[4]}\nSat={weekly[5]}\nSun={weekly[6]}");
+
+                SetWeeklyPoints(weekly);
+            });
+        }
+
+        /// <summary>Buckets (points, UTC timestamp) entries into `weekly` (index 0 =
+        /// Monday .. 6 = Sunday) for the CURRENT week, converting each timestamp to the
+        /// student's local time before deciding which calendar day - and therefore which
+        /// Monday-Sunday week - it falls into (see the plan's section 8: a late-Sunday-UTC
+        /// activity must not spill into Monday just because the stored timestamp is UTC).
+        /// Entries outside the current local week are ignored, exactly like the existing
+        /// quiz-only calculation this replaces.</summary>
+        private static void AddPointsToWeek(float[] weekly, IEnumerable<(float points, DateTime completedAtUtc)> entries)
+        {
+            var nowLocal = DateTime.Now;
+            int daysSinceMonday = ((int)nowLocal.DayOfWeek + 6) % 7; // Sunday=0 in DayOfWeek -> shift so Monday=0.
+            var mondayLocal = nowLocal.Date.AddDays(-daysSinceMonday);
+            var nextMondayLocal = mondayLocal.AddDays(7);
+
+            foreach (var (points, completedAtUtc) in entries)
+            {
+                var utc = DateTime.SpecifyKind(completedAtUtc, DateTimeKind.Utc);
+                var local = utc.ToLocalTime();
+
+                if (local < mondayLocal || local >= nextMondayLocal) continue;
+
+                int dayIndex = ((int)local.DayOfWeek + 6) % 7;
+                weekly[dayIndex] += points;
+            }
+        }
+
+        /// <summary>Parses a PlayModeAnswerRecord.timestampUtc string (written via
+        /// DateTime.UtcNow.ToString("o")) back into a UTC DateTime. Falls back to
+        /// DateTime.UtcNow for a malformed/missing value rather than throwing, so one
+        /// bad record can't break the whole weekly chart.</summary>
+        private static DateTime ParseTimestampUtc(string isoUtc)
+        {
+            if (DateTime.TryParse(
+                    isoUtc,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.RoundtripKind,
+                    out var parsed))
+            {
+                return parsed.Kind == DateTimeKind.Utc ? parsed : parsed.ToUniversalTime();
+            }
+
+            Debug.LogWarning($"[StudentProgressController] Could not parse Play Mode timestamp '{isoUtc}' - using current time instead.");
+            return DateTime.UtcNow;
         }
 
         /// <summary>Element refs for one roadmap row, plus what was last painted into it,
@@ -555,25 +784,23 @@ namespace Anatomia3D.UI
             }
         }
 
-        /// <summary>Push real per-category quiz progress into the "Progress by Category" card.</summary>
-        public void SetCategoryProgress(
-            int skeletalQuizzes, float skeletalPercent01,
-            int muscularQuizzes, float muscularPercent01,
-            int nervousQuizzes, float nervousPercent01,
-            int cardiovascularQuizzes, float cardiovascularPercent01)
+        /// <summary>Push real Anatomy Play Mode completion percentages into the
+        /// "Progress by Category" card - Skeletal/Muscular/Cardiovascular only (see the
+        /// plan's section 1: Nervous isn't supported by Anatomy Play Mode, and its whole
+        /// row is hidden rather than populated - see QueryElements). Percentage only,
+        /// exactly two decimal places, never a count (see the plan's section 2/3).</summary>
+        public void SetCategoryProgress(float skeletalPercent, float muscularPercent, float cardiovascularPercent)
         {
-            ApplyCategory(_categorySkeletalFill, _categorySkeletalPercent, _categorySkeletalCount, skeletalQuizzes, skeletalPercent01);
-            ApplyCategory(_categoryMuscularFill, _categoryMuscularPercent, _categoryMuscularCount, muscularQuizzes, muscularPercent01);
-            ApplyCategory(_categoryNervousFill, _categoryNervousPercent, _categoryNervousCount, nervousQuizzes, nervousPercent01);
-            ApplyCategory(_categoryCardiovascularFill, _categoryCardiovascularPercent, _categoryCardiovascularCount, cardiovascularQuizzes, cardiovascularPercent01);
+            ApplyCategory(_categorySkeletalFill, _categorySkeletalPercent, skeletalPercent);
+            ApplyCategory(_categoryMuscularFill, _categoryMuscularPercent, muscularPercent);
+            ApplyCategory(_categoryCardiovascularFill, _categoryCardiovascularPercent, cardiovascularPercent);
         }
 
-        private void ApplyCategory(VisualElement fill, Label percentLabel, Label countLabel, int quizzes, float percent01)
+        private static void ApplyCategory(VisualElement fill, Label percentLabel, float percent)
         {
-            float pct = Mathf.Clamp01(percent01) * 100f;
-            if (fill != null) fill.style.width = new Length(pct, LengthUnit.Percent);
-            if (percentLabel != null) percentLabel.text = $"{Mathf.RoundToInt(pct)}%";
-            if (countLabel != null) countLabel.text = $"{quizzes} quizzes";
+            float clamped = Mathf.Clamp(percent, 0f, 100f);
+            if (fill != null) fill.style.width = new Length(clamped, LengthUnit.Percent);
+            if (percentLabel != null) percentLabel.text = $"{clamped:0.00}%";
         }
 
         // ---------------- Button handlers ----------------

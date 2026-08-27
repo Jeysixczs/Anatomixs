@@ -59,6 +59,17 @@ namespace Anatomia3D.Backend
     /// </summary>
     public class AnatomyPlayModeSyncService : MonoBehaviour
     {
+        // Singleton, same convention as AnatomyPlayModeLocalStorage/
+        // FirebaseBootstrap/QuizService - lets StudentProgressController
+        // subscribe to OnSyncCompleted and refresh the Performance/Weekly
+        // Activity panels without an Inspector-wired reference.
+        public static AnatomyPlayModeSyncService Instance { get; private set; }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
         [Tooltip("How often (seconds) to poll connectivity for a return-to-online transition.")]
         [SerializeField] private float pollIntervalSeconds = 5f;
 

@@ -1,14 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/StudentProfile/StudentProfile.uss?fileID=7433441132597879392&amp;guid=7a745c1bf4f217341ba6cea4252b0cbe&amp;type=3"/>
+    <Style src="project://database/Assets/UI/StudentProfile/StudentProfile.uss?fileID=7433441132597879392&amp;guid=7a745c1bf4f217341ba6cea4252b0cbe&amp;type=3#StudentProfile"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="header" class="header">
-                <ui:VisualElement name="header-top-row" class="header-top-row">
-                    <ui:Button name="back-button" class="back-button">
-                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                <ui:VisualElement name="header-top-row" class="header-top-row" style="height: 90px; width: 1054px;">
+                    <ui:Button name="back-button" class="back-button" style="height: 83px; width: 83px;">
+                        <ui:VisualElement name="back-icon" class="back-icon" style="height: 42px; width: 53px;"/>
                     </ui:Button>
                     <ui:VisualElement name="header-text" class="header-text">
-                        <ui:Label text="Profile" class="header-title"/>
+                        <ui:Label text="Profile" class="header-title" style="font-size: 50px;"/>
                         <ui:Label text="Manage your account" class="header-subtitle"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -27,23 +27,23 @@
             </ui:VisualElement>
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="stats-row" class="stats-row">
-                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
-                        <ui:VisualElement name="quizzes-background" class="stat-icon stat-icon-blue">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-icon.png?fileID=2800000&amp;guid=94d1609b9c3ba5c45a6b760d524ff279&amp;type=3#quiz-icon&quot;); height: 34px; width: 33px;"/>
+                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left" style="text-shadow: 1px 0 0 rgba(0, 0, 0, 0); -unity-text-outline-width: 0;">
+                        <ui:VisualElement name="quizzes-background" class="stat-icon stat-icon-blue" style="background-color: rgb(241, 243, 247); height: 72px; width: 81px;">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz.png?fileID=2800000&amp;guid=19b870387888dfc4d9f459d2aedfbf3a&amp;type=3#quiz&quot;); height: 51px; width: 50px;"/>
                         </ui:VisualElement>
                         <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
                         <ui:Label text="Quizzes" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="level-stat-card" class="stat-card stat-card-mid">
-                        <ui:VisualElement name="level-background" class="stat-icon stat-icon-orange">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/level-icon.png?fileID=2800000&amp;guid=cac4ec74c395c0a4dbf7a3189fe8deae&amp;type=3#level-icon&quot;); height: 46px; width: 47px;"/>
+                        <ui:VisualElement name="level-background" class="stat-icon stat-icon-orange" style="background-color: rgb(241, 243, 247); height: 69px; width: 73px;">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/level-icon-black.png?fileID=2800000&amp;guid=f5bf8603d6a565942adfc005b80d34f8&amp;type=3#level-icon-black&quot;); height: 50px; width: 51px;"/>
                         </ui:VisualElement>
                         <ui:Label name="level-value-label" text="5" class="stat-value"/>
                         <ui:Label text="Level" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="points-card" class="stat-card stat-card-right">
-                        <ui:VisualElement name="points-background" class="stat-icon stat-icon-purple">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon.png?fileID=2800000&amp;guid=775f1626d353491439de4a800cedcda0&amp;type=3#reward-icon&quot;); height: 44px; width: 41px;"/>
+                        <ui:VisualElement name="points-background" class="stat-icon stat-icon-purple" style="background-color: rgb(241, 243, 247);">
+                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon-black.png?fileID=2800000&amp;guid=1fbb05f85ac3e064c8b6c0f8431da21b&amp;type=3#reward-icon-black&quot;); height: 52px; width: 53px;"/>
                         </ui:VisualElement>
                         <ui:Label name="points-value-label" text="1250" class="stat-value"/>
                         <ui:Label text="Points" class="stat-label"/>
@@ -52,34 +52,34 @@
                 <ui:Label text="Account" class="section-title"/>
                 <ui:VisualElement name="account-menu-card" class="menu-card">
                     <ui:Button name="edit-profile-button" class="menu-item">
-                        <ui:VisualElement name="editprofile-background" class="menu-icon-box menu-icon-blue">
+                        <ui:VisualElement name="editprofile-background" class="menu-icon-box menu-icon-blue" style="background-color: rgb(241, 243, 247);">
                             <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/edit-white-icon.png?fileID=2800000&amp;guid=d7b6e690e0161be4381875bed43494c5&amp;type=3#edit-white-icon&quot;); height: 47px; width: 52px; background-color: rgba(0, 0, 0, 0); border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0);"/>
                         </ui:VisualElement>
-                        <ui:Label text="Edit Profile" class="menu-item-label"/>
+                        <ui:Label text="Edit Profile" class="menu-item-label" style="-unity-text-align: middle-left;"/>
                         <ui:VisualElement class="menu-chevron"/>
                     </ui:Button>
                     <ui:VisualElement class="menu-divider"/>
                     <ui:Button name="notifications-button" class="menu-item">
-                        <ui:VisualElement name="notifications-background" class="menu-icon-box menu-icon-orange">
-                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/notification-icon.png?fileID=2800000&amp;guid=2ec670fa8b34f0344ab02290e1015ebc&amp;type=3#notification-icon&quot;); height: 53px; width: 47px;"/>
+                        <ui:VisualElement name="notifications-background" class="menu-icon-box menu-icon-orange" style="background-color: rgb(241, 243, 247);">
+                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/bell-icon.png?fileID=2800000&amp;guid=3985c6163c357bf4aa154283b2e0e7c7&amp;type=3#bell-icon&quot;); height: 53px; width: 47px;"/>
                         </ui:VisualElement>
-                        <ui:Label text="Notifications" class="menu-item-label"/>
+                        <ui:Label text="Notifications" class="menu-item-label" style="-unity-text-align: middle-left;"/>
                         <ui:VisualElement class="menu-chevron"/>
                     </ui:Button>
                     <ui:VisualElement class="menu-divider"/>
                     <ui:Button name="about-button" class="menu-item">
-                        <ui:VisualElement name="about-background" class="menu-icon-box menu-icon-gray">
-                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/about-white-icon.png?fileID=2800000&amp;guid=98c2cf8ab000a754db61770d48a95c75&amp;type=3#about-white-icon&quot;); height: 51px; width: 47px;"/>
+                        <ui:VisualElement name="about-background" class="menu-icon-box menu-icon-gray" style="background-color: rgb(241, 243, 247); background-image: none;">
+                            <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/about-icon.png?fileID=2800000&amp;guid=2e9e1a097c300ca428328de23c6af96e&amp;type=3#about-icon&quot;); height: 45px; width: 46px;"/>
                         </ui:VisualElement>
-                        <ui:Label text="About Anatomia 3D" class="menu-item-label"/>
+                        <ui:Label text="About Anatomia 3D" class="menu-item-label" style="-unity-text-align: middle-left;"/>
                         <ui:VisualElement class="menu-chevron"/>
                     </ui:Button>
                 </ui:VisualElement>
                 <ui:Button name="logout-button" class="logout-button">
-                    <ui:VisualElement name="logout-background" class="menu-icon-box menu-icon-red">
-                        <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/exit-logo.png?fileID=2800000&amp;guid=26de3f2ef3fd2cd41b2536793a9f4398&amp;type=3#exit-logo&quot;); height: 51px; width: 52px;"/>
+                    <ui:VisualElement name="logout-background" class="menu-icon-box menu-icon-red" style="background-color: rgb(241, 243, 247);">
+                        <ui:Label text="" class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/exit-logo-black.png?fileID=2800000&amp;guid=6ce8e4b4082f75647bc78bea5e698b4f&amp;type=3#exit-logo-black&quot;); height: 51px; width: 52px;"/>
                     </ui:VisualElement>
-                    <ui:Label text="Log Out" class="logout-label"/>
+                    <ui:Label text="Log Out" class="logout-label" style="color: rgb(0, 0, 0);"/>
                 </ui:Button>
                 <ui:Label text="Anatomia 3D  v1.0.0" class="version-label"/>
             </ui:VisualElement>

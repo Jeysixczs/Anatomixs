@@ -488,8 +488,8 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentNotificationsController] Navigating back to profile");
-            UIManager.Instance.ShowStudentProfile();
+            Debug.Log("[StudentNotificationsController] Navigating back to previous screen");
+            UIManager.Instance.ReturnFromStudentNotifications();
         }
 
         private void OnMarkAllReadClicked(ClickEvent evt)
