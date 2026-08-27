@@ -28,17 +28,7 @@ public class BoneOutlineController : MonoBehaviour
     [Tooltip("A renderer whose bounds size-squared falls below this is treated as degenerate placeholder geometry (e.g. hollow sinus/air-cell volumes with no real triangles) and skipped - same threshold AnatomyScreenController.ComputeSkeletonBounds uses for the same reason.")]
     [SerializeField] private float degenerateBoundsSqrThreshold = 0.0001f;
 
-    #region OUTLINE DEBUG
-    // Optional - wire this to the camera that actually renders the model
-    // (e.g. AnatomyScreenController.modelCamera) to get frustum/culling-mask
-    // diagnostics in SetSelectedBone. Purely diagnostic: leaving this unset
-    // does not change outline behavior, it just skips the camera checks.
-    // Delete this field + region as part of removing the debug system
-    // (see OutlineDebug.cs header for full removal steps).
-    [Header("Debug (safe to remove - see OutlineDebug.cs)")]
-    [Tooltip("Camera used ONLY for the [OutlineDebug] frustum/culling-mask diagnostics below. Does not affect actual outline rendering.")]
-    [SerializeField] private Camera debugCamera;
-    #endregion
+   
 
     // The exact Renderer(s) currently registered with BoneOutlineFeature for
     // outlining. Kept here only so ClearOutline/SetSelectedBone can tell the
@@ -102,9 +92,7 @@ public class BoneOutlineController : MonoBehaviour
         // an outline behind on a GameObject that is no longer selected.
         ClearOutline();
 
-        #region OUTLINE DEBUG
-        OutlineDebug.LogSelection(selectedGameObject);
-        #endregion
+
 
         if (selectedGameObject == null) return;
 
@@ -118,24 +106,16 @@ public class BoneOutlineController : MonoBehaviour
             {
                 if (!r.enabled)
                 {
-                    Debug.Log($"[BoneOutlineController]   skip '{r.name}' - renderer disabled.");
-                    #region OUTLINE DEBUG
-                    OutlineDebug.LogRendererCandidate(r, kept: false, reason: "renderer disabled");
-                    #endregion
+                  
                     continue;
                 }
                 if (r.bounds.size.sqrMagnitude < degenerateBoundsSqrThreshold)
                 {
-                    Debug.Log($"[BoneOutlineController]   skip '{r.name}' - degenerate/zero-size bounds.");
-                    #region OUTLINE DEBUG
-                    OutlineDebug.LogRendererCandidate(r, kept: false, reason: "degenerate/zero-size bounds");
-                    #endregion
+                   
                     continue;
                 }
                 real.Add(r);
-                #region OUTLINE DEBUG
-                OutlineDebug.LogRendererCandidate(r, kept: true, reason: null);
-                #endregion
+            
             }
             return real;
         }
@@ -160,10 +140,7 @@ public class BoneOutlineController : MonoBehaviour
             // mesh on a group/joint node like a tiny vessel branch or
             // muscle pulley whose real geometry lives on a child piece).
             usedDescendantFallback = true;
-            Debug.LogWarning($"[BoneOutlineController] '{selectedGameObject.name}' has no usable MeshRenderer/SkinnedMeshRenderer " +
-                              "of its own (missing, disabled, or degenerate bounds) - falling back to a descendant search " +
-                              "(explicit exception for renderer-less/placeholder nodes only; see SetSelectedBone remarks). " +
-                              "If this GameObject is expected to have its own mesh, check the model hierarchy.");
+           
             var descendantCandidates = new List<Renderer>();
             foreach (var r in selectedGameObject.GetComponentsInChildren<Renderer>())
             {
@@ -176,36 +153,19 @@ public class BoneOutlineController : MonoBehaviour
 
         if (realRenderers.Count == 0)
         {
-            Debug.LogWarning($"[BoneOutlineController] '{selectedGameObject.name}' has no renderer with real geometry " +
-                              $"{(usedDescendantFallback ? "under it" : "of its own")} - skipping outline.");
-            #region OUTLINE DEBUG
-            OutlineDebug.LogNoRendererFound(selectedGameObject.gameObject, usedDescendantFallback);
-            #endregion
+         
             return;
         }
 
-        #region OUTLINE DEBUG
-        OutlineDebug.LogCameraChecks(realRenderers.ToArray(), debugCamera != null ? debugCamera : Camera.main);
-        #endregion
+
 
         if (BoneOutlineFeature.Instance == null)
         {
-            Debug.LogWarning("[BoneOutlineController] BoneOutlineFeature not found on the active URP Renderer - " +
-                              "add it under Renderer Features on the Universal Renderer Data asset. Skipping outline.");
-            #region OUTLINE DEBUG
-            OutlineDebug.LogFeatureInstanceMissing();
-            #endregion
+           
             return;
         }
 
-        #region OUTLINE DEBUG
-        OutlineDebug.LogMaterialAndShader("MaskMaterial", BoneOutlineFeature.Instance.settings?.maskMaterial, "BoneOutlineMask");
-        OutlineDebug.LogMaterialAndShader("CompositeMaterial", BoneOutlineFeature.Instance.settings?.compositeMaterial, "BoneOutlineComposite");
-        if (BoneOutlineFeature.Instance.settings != null)
-            OutlineDebug.LogOutlineParams(BoneOutlineFeature.Instance.settings.outlineWidthPixels,
-                                           BoneOutlineFeature.Instance.settings.outlineColor,
-                                           BoneOutlineFeature.Instance.settings.maskDownsample);
-        #endregion
+     
 
         _selectedRenderers.AddRange(realRenderers);
         BoneOutlineFeature.Instance.SetSelectedRenderers(_selectedRenderers);

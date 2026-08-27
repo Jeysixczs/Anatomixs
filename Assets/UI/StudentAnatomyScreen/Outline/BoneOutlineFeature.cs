@@ -58,11 +58,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
         [Tooltip("Renders the selection mask at 1/N screen resolution to save mobile fill-rate. 1 = full res (crispest edge), 2-3 is usually indistinguishable for a thin outline and noticeably cheaper.")]
         [Range(1, 4)] public int maskDownsample = 2;
 
-        #region OUTLINE DEBUG
-        [Header("Debug (safe to remove - see OutlineDebug.cs)")]
-        [Tooltip("DIAGNOSTIC ONLY. When on, the composite pass fills the ENTIRE silhouette (not just the thin edge) with _OutlineColor, ignoring outlineWidthPixels. Use this to answer one question: does the composite sub-pass's write reach the Game View at all? If a big solid blob appears, compositing IS reaching the display and the real bug is in the edge-detect math/width. If NOTHING appears even with this on, the composite output isn't reaching the displayed RenderTexture at all (wrong target / getting overwritten later in the frame / camera not actually being the one shown).")]
-        public bool debugFillSilhouette = false;
-        #endregion
+      
     }
 
     public Settings settings = new Settings();
@@ -115,52 +111,34 @@ public class BoneOutlineFeature : ScriptableRendererFeature
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing
         };
 
-        #region OUTLINE DEBUG
-        OutlineDebug.LogFeatureCreated(settings.maskMaterial != null, settings.compositeMaterial != null);
-        #endregion
+  
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
         if (settings.maskMaterial == null || settings.compositeMaterial == null)
         {
-            #region OUTLINE DEBUG
-            OutlineDebug.LogAddRenderPassesSkipped(
-                $"maskMaterial={(settings.maskMaterial == null ? "NULL" : "ok")}, compositeMaterial={(settings.compositeMaterial == null ? "NULL" : "ok")}");
-            #endregion
+           
             return;
         }
 
         if (_selectedRenderers.Count == 0)
         {
-            #region OUTLINE DEBUG
-            OutlineDebug.LogAddRenderPassesSkipped("nothing selected (_selectedRenderers.Count == 0) - expected/normal when no bone is selected");
-            #endregion
+           
             return; // nothing selected - skip the pass entirely, zero added cost
         }
 
         if (renderingData.cameraData.cameraType != CameraType.Game &&
             renderingData.cameraData.cameraType != CameraType.SceneView)
         {
-            #region OUTLINE DEBUG
-            OutlineDebug.LogAddRenderPassesSkipped(
-                $"camera '{renderingData.cameraData.camera?.name}' has cameraType={renderingData.cameraData.cameraType}, " +
-                "which is neither Game nor SceneView (e.g. Preview/Reflection/VR camera) - feature intentionally skips these.");
-            #endregion
+            
             return;
         }
 
         _pass.Setup(settings);
         renderer.EnqueuePass(_pass);
 
-        #region OUTLINE DEBUG
-        // Material/shader validity is already logged once per selection change
-        // by BoneOutlineController.SetSelectedBone - only log the enqueue
-        // confirmation here (throttled internally by OutlineDebug) to avoid
-        // spamming the console every single frame while a bone is selected.
-        OutlineDebug.LogAddRenderPassesRun(renderingData.cameraData.cameraType, renderingData.cameraData.camera?.name,
-                                            _selectedRenderers.Count, isActive);
-        #endregion
+     
     }
 
     protected override void Dispose(bool disposing)
@@ -219,9 +197,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
             public float outlineWidth;
             public Color outlineColor;
             public Vector2Int maskSize;
-            #region OUTLINE DEBUG
-            public bool debugFillSilhouette;
-            #endregion
+       
         }
 
         private readonly List<Renderer> _renderers;
@@ -246,12 +222,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
         {
             if (_renderers == null || _renderers.Count == 0 || _settings?.maskMaterial == null || _settings?.compositeMaterial == null)
             {
-                #region OUTLINE DEBUG
-                OutlineDebug.LogMaskPassSkipped(
-                    $"renderers={(_renderers == null ? "null" : _renderers.Count.ToString())}, " +
-                    $"maskMaterial={(_settings?.maskMaterial == null ? "NULL" : "ok")}, " +
-                    $"compositeMaterial={(_settings?.compositeMaterial == null ? "NULL" : "ok")}");
-                #endregion
+                
                 return;
             }
 
@@ -260,9 +231,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
 
             if (resourceData.isActiveTargetBackBuffer)
             {
-                #region OUTLINE DEBUG
-                OutlineDebug.LogCompositeBackBufferSkip(cameraData.cameraType, cameraData.camera?.name);
-                #endregion
+            
                 return; // nothing to composite onto if there's no offscreen camera color target
             }
 
@@ -284,9 +253,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
 
             TextureHandle maskTex = renderGraph.CreateTexture(maskDesc);
 
-            #region OUTLINE DEBUG
-            OutlineDebug.LogMaskPassRecord(_renderers.Count, maskDesc.width, maskDesc.height);
-            #endregion
+        
 
             using (var builder = renderGraph.AddUnsafePass<MaskPassData>("Bone Outline: Selection Mask", out var maskPassData, profilingSampler))
             {
@@ -320,11 +287,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
                             ctx.cmd.DrawRenderer(r, data.maskMaterial, sub, 0);
                     }
 
-                    #region OUTLINE DEBUG
-                    // UnsafeCommandBuffer (ctx.cmd here) doesn't expose RequestAsyncReadback -
-                    // unwrap to the underlying real CommandBuffer for this one debug-only call.
-                    OutlineDebug.MaybeRequestMaskReadback(CommandBufferHelpers.GetNativeCommandBuffer(ctx.cmd), data.mask);
-                    #endregion
+             
                 });
             }
 
@@ -357,9 +320,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
                 passData.outlineWidth = _settings.outlineWidthPixels;
                 passData.outlineColor = _settings.outlineColor;
                 passData.maskSize = new Vector2Int(maskDesc.width, maskDesc.height);
-                #region OUTLINE DEBUG
-                passData.debugFillSilhouette = _settings.debugFillSilhouette;
-                #endregion
+             
 
                 builder.UseTexture(passData.source, AccessFlags.Read);
                 builder.UseTexture(passData.mask, AccessFlags.Read);
@@ -381,15 +342,7 @@ public class BoneOutlineFeature : ScriptableRendererFeature
                         new Vector4(1f / Mathf.Max(1, data.maskSize.x), 1f / Mathf.Max(1, data.maskSize.y), 0, 0));
                     ctx.cmd.SetGlobalFloat("_OutlineWidth", data.outlineWidth);
                     ctx.cmd.SetGlobalColor("_OutlineColor", data.outlineColor);
-                    #region OUTLINE DEBUG
-                    ctx.cmd.SetGlobalFloat("_OutlineDebugFillMode", data.debugFillSilhouette ? 1f : 0f);
-                    if (data.debugFillSilhouette)
-                        OutlineDebug.LogDebugFillModeActive();
-                    #endregion
-
-                    #region OUTLINE DEBUG
-                    OutlineDebug.LogCompositeExecuting();
-                    #endregion
+                  
 
                     Blitter.BlitTexture(ctx.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });

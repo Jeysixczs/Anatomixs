@@ -1129,7 +1129,7 @@ public class AnatomyScreenController : MonoBehaviour
         var meshFilters = info.worldBone.GetComponentsInChildren<MeshFilter>();
         if (meshFilters.Length == 0)
         {
-            Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no MeshFilter found under '{info.boneName}' - tap-to-select won't work for this bone.");
+          //  Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no MeshFilter found under '{info.boneName}' - tap-to-select won't work for this bone.");
             return;
         }
 
@@ -1140,7 +1140,7 @@ public class AnatomyScreenController : MonoBehaviour
 
             if (IsOwnedByAnotherBone(meshFilter.transform, info))
             {
-                Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: skipping mesh '{meshFilter.name}' under '{info.boneName}' - it belongs to a separately registered bone, not this one.");
+             //   Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: skipping mesh '{meshFilter.name}' under '{info.boneName}' - it belongs to a separately registered bone, not this one.");
                 continue;
             }
 
@@ -1170,7 +1170,7 @@ public class AnatomyScreenController : MonoBehaviour
 
             _infoByCollider[collider] = info;
             registered++;
-            Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: registered collider on '{go.name}' (layer '{LayerMask.LayerToName(go.layer)}') for bone '{info.boneName}'.");
+            //Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: registered collider on '{go.name}' (layer '{LayerMask.LayerToName(go.layer)}') for bone '{info.boneName}'.");
 
             // A collider on a layer boneRaycastLayerMask doesn't include is
             // registered fine here but can never be hit by TryPickBoneAt's

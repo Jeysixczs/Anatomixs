@@ -7,8 +7,8 @@ using UnityEngine.UIElements;
 public class StudentExplore3dController : MonoBehaviour
 {
     [Header("Gradient colors (matches the mock)")]
-    [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f);
-    [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);
+    [SerializeField] private Color gradientStart = new Color(0.145f, 0.388f, 0.925f); // blue
+    [SerializeField] private Color gradientEnd = new Color(0.086f, 0.737f, 0.475f);   // green
     [SerializeField] private bool diagonalGradient = true;
     [SerializeField, Range(2, 256)] private int gradientTextureResolution = 64;
 
@@ -24,7 +24,18 @@ public class StudentExplore3dController : MonoBehaviour
     private Texture2D _headerGradientTexture;
 
     private VisualElement _header;
-  
+
+    // ===== Card image fades =====
+    // Left-edge white->transparent fade drawn over each card's body-system
+    // photo (see .card-image-fade in StudentExplore3d.uss). One shared
+    // horizontal gradient texture is generated and reused across all three,
+    // since the fade itself is identical - only the photo underneath it
+    // differs per card.
+    private VisualElement _skeletalImageFade;
+    private VisualElement _muscularImageFade;
+    private VisualElement _cardiovascularImageFade;
+    private Texture2D _cardImageFadeTexture;
+
     private Button _backButton;
     private Label _headerTitle;
 
@@ -43,7 +54,22 @@ public class StudentExplore3dController : MonoBehaviour
 
     // ===== Sync Progress =====
     private Button _syncProgressButton;
+    private Label _syncTitleLabel;
     private Label _syncStatusLabel;
+    private VisualElement _syncStatusIconBox;
+    private Label _syncStatusIcon;
+
+    // USS classes swapped onto _syncStatusIconBox / _syncStatusIcon to color
+    // the right-hand status badge per sync state (see .sync-status-icon-*
+    // rules in StudentExplore3d.uss).
+    private static readonly string[] SyncStatusIconClasses =
+    {
+        "sync-status-icon-synced",
+        "sync-status-icon-pending",
+        "sync-status-icon-failed",
+        "sync-status-icon-syncing",
+        "sync-status-icon-offline"
+    };
 
 
     private void OnEnable()
@@ -76,6 +102,7 @@ public class StudentExplore3dController : MonoBehaviour
         QueryElements();
         WireCallbacks();
         ApplyHeaderGradient();
+        ApplyCardImageFades();
     }
 
     private void OnDisable()
@@ -96,6 +123,12 @@ public class StudentExplore3dController : MonoBehaviour
             Destroy(_headerGradientTexture);
             _headerGradientTexture = null;
         }
+
+        if (_cardImageFadeTexture != null)
+        {
+            Destroy(_cardImageFadeTexture);
+            _cardImageFadeTexture = null;
+        }
     }
 
     private void QueryElements()
@@ -111,7 +144,7 @@ public class StudentExplore3dController : MonoBehaviour
         }
 
         _header = _screenRoot.Q<VisualElement>("header");
-    
+
         _backButton = _screenRoot.Q<Button>("back-button");
         _headerTitle = _screenRoot.Q<Label>("header-title");
 
@@ -121,7 +154,14 @@ public class StudentExplore3dController : MonoBehaviour
         _cardList = _screenRoot.Q<VisualElement>("card-list");
 
         _syncProgressButton = _screenRoot.Q<Button>("sync-progress-button");
+        _syncTitleLabel = _screenRoot.Q<Label>("sync-title-label");
         _syncStatusLabel = _screenRoot.Q<Label>("sync-status-label");
+        _syncStatusIconBox = _screenRoot.Q<VisualElement>("sync-status-icon-box");
+        _syncStatusIcon = _screenRoot.Q<Label>("sync-status-icon");
+
+        _skeletalImageFade = _screenRoot.Q<VisualElement>("skeletal-image-fade");
+        _muscularImageFade = _screenRoot.Q<VisualElement>("muscular-image-fade");
+        _cardiovascularImageFade = _screenRoot.Q<VisualElement>("cardiovascular-image-fade");
 
         Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
     }
@@ -182,9 +222,9 @@ public class StudentExplore3dController : MonoBehaviour
         {
             // Never lose or delete local data for pressing this while
             // offline - just tell the student why nothing happened.
-            SetSyncStatusText(
-                "No internet connection.",
-                "Your progress is safely saved locally and will sync when you are online.");
+            SetSyncTitleText("No internet connection");
+            SetSyncStatusText("Your progress is saved locally and will sync when you're online.");
+            SetSyncStatusIcon("☁", "sync-status-icon-offline");
             return;
         }
 
@@ -196,60 +236,73 @@ public class StudentExplore3dController : MonoBehaviour
         switch (state)
         {
             case PlayModeSyncState.Syncing:
-                SetSyncButtonText("⟳ Syncing...");
-                SetSyncStatusText("⟳ Syncing...", null);
+                SetSyncTitleText("Syncing...");
+                SetSyncStatusText("Uploading your progress");
+                SetSyncStatusIcon("⟳", "sync-status-icon-syncing");
                 SetSyncProgressButtonEnabled(false);
                 break;
 
             case PlayModeSyncState.Offline:
-                SetSyncButtonText("☁ Sync Progress");
-                SetSyncStatusText("Offline", "Progress is saved on this device");
+                SetSyncTitleText("Sync Progress");
+                SetSyncStatusText("Offline - progress is saved on this device");
+                SetSyncStatusIcon("☁", "sync-status-icon-offline");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
             case PlayModeSyncState.Pending:
-                SetSyncButtonText(pendingCount > 0 ? $"☁ Sync Now ({pendingCount})" : "☁ Sync Progress");
+                SetSyncTitleText("Sync Progress");
                 SetSyncStatusText(
-                    pendingCount == 1 ? "⚠ 1 answer waiting to sync" : $"⚠ {pendingCount} answers waiting to sync",
-                    null);
+                    pendingCount == 1 ? "1 answer waiting to sync" : $"{pendingCount} answers waiting to sync");
+                SetSyncStatusIcon("!", "sync-status-icon-pending");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
             case PlayModeSyncState.Failed:
-                SetSyncButtonText("⚠ Sync failed");
-                SetSyncStatusText("⚠ Sync failed", "Tap to retry");
+                SetSyncTitleText("Sync failed");
+                SetSyncStatusText("Tap to retry");
+                SetSyncStatusIcon("!", "sync-status-icon-failed");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
             case PlayModeSyncState.Synced:
             case PlayModeSyncState.Idle:
             default:
-                SetSyncButtonText("✓ Synced");
-                SetSyncStatusText("✓ Synced", "All progress is up to date");
+                SetSyncTitleText("Sync Progress");
+                SetSyncStatusText("Last synced: Just now");
+                SetSyncStatusIcon("✓", "sync-status-icon-synced");
                 SetSyncProgressButtonEnabled(true);
                 break;
         }
     }
 
-    private void SetSyncButtonText(string text)
+    private void SetSyncTitleText(string text)
     {
-        if (_syncProgressButton != null) _syncProgressButton.text = text;
+        if (_syncTitleLabel != null) _syncTitleLabel.text = text;
+    }
+
+    private void SetSyncStatusText(string text)
+    {
+        if (_syncStatusLabel != null) _syncStatusLabel.text = text;
+    }
+
+    // Swaps the glyph shown in the right-hand circular badge and its color
+    // class (one of SyncStatusIconClasses) to match the current sync state.
+    private void SetSyncStatusIcon(string glyph, string activeClass)
+    {
+        if (_syncStatusIcon != null) _syncStatusIcon.text = glyph;
+
+        if (_syncStatusIconBox == null) return;
+
+        foreach (var cls in SyncStatusIconClasses)
+        {
+            if (cls == activeClass) _syncStatusIconBox.AddToClassList(cls);
+            else _syncStatusIconBox.RemoveFromClassList(cls);
+        }
     }
 
     private void SetSyncProgressButtonEnabled(bool enabled)
     {
         if (_syncProgressButton != null) _syncProgressButton.SetEnabled(enabled);
-    }
-
-    // The status label is a single Label element (see the UXML), so a
-    // two-line state ("✓ Synced" / "All progress is up to date") is joined
-    // with a newline rather than needing a second element - USS's
-    // white-space: normal on .sync-status-label lets it wrap/break as
-    // authored.
-    private void SetSyncStatusText(string headline, string detail)
-    {
-        if (_syncStatusLabel == null) return;
-        _syncStatusLabel.text = string.IsNullOrEmpty(detail) ? headline : $"{headline}\n{detail}";
     }
 
     // Play Mode's entry point lives here (Student Explore 3D), not on the
@@ -355,11 +408,11 @@ public class StudentExplore3dController : MonoBehaviour
             return;
         }
 
-      
-        var cards = _screenRoot.Query<Button>(className: "card").ToList();
-        
 
-        
+        var cards = _screenRoot.Query<Button>(className: "card").ToList();
+
+
+
 
         foreach (var card in cards)
         {
@@ -375,7 +428,7 @@ public class StudentExplore3dController : MonoBehaviour
                 Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
                 continue; // not one of the three anatomy-system cards (e.g. none - skip)
             }
-         
+
             card.clicked += () =>
             {
                 bool playMode = _playModePickingArmed;
@@ -389,7 +442,7 @@ public class StudentExplore3dController : MonoBehaviour
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
-                 
+
                 }
             };
         }
@@ -397,8 +450,8 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnBackButtonClicked()
     {
-  
-       UIManager.Instance.ShowStudentDashboard();
+
+        UIManager.Instance.ShowStudentDashboard();
     }
 
     private void ApplyHeaderGradient()
@@ -436,5 +489,55 @@ public class StudentExplore3dController : MonoBehaviour
         _header.style.backgroundImage = new StyleBackground(_headerGradientTexture);
         _header.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
         _header.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+    }
+
+    // Builds the left-edge white->transparent horizontal gradient used by
+    // .card-image-fade (see StudentExplore3d.uss) and applies it to all
+    // three card fades. USS alone can't express a linear-gradient(), so this
+    // generates a small 1D texture once - opaque white at x=0, alpha fading
+    // to 0 at the right edge - and stretches it across each fade element.
+    //
+    // Previously this method didn't exist at all, so the fades never got a
+    // background-image: only their USS background-color (opaque white)
+    // painted, covering the body-system photo underneath completely. That
+    // background-color has to stay fully transparent in USS now, since a
+    // fade element's background-color and background-image are composited
+    // together onto its own box before that box is drawn over whatever is
+    // behind it - an opaque color there would hide the photo regardless of
+    // what this gradient does.
+    private void ApplyCardImageFades()
+    {
+        if (_cardImageFadeTexture == null)
+        {
+            int size = Mathf.Max(2, gradientTextureResolution);
+            _cardImageFadeTexture = new Texture2D(size, 1, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+                name = "CardImageFadeTexture"
+            };
+
+            for (int x = 0; x < size; x++)
+            {
+                float t = x / (float)(size - 1);
+                float alpha = 1f - t; // opaque white at left, transparent at right
+                _cardImageFadeTexture.SetPixel(x, 0, new Color(1f, 1f, 1f, alpha));
+            }
+            _cardImageFadeTexture.Apply();
+        }
+
+        ApplyCardImageFade(_skeletalImageFade);
+        ApplyCardImageFade(_muscularImageFade);
+        ApplyCardImageFade(_cardiovascularImageFade);
+    }
+
+    private void ApplyCardImageFade(VisualElement fade)
+    {
+        if (fade == null || _cardImageFadeTexture == null) return;
+
+        fade.style.backgroundColor = new StyleColor(Color.clear);
+        fade.style.backgroundImage = new StyleBackground(_cardImageFadeTexture);
+        fade.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(Length.Percent(100), Length.Percent(100)));
+        fade.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
     }
 }
