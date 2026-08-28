@@ -14,6 +14,18 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="photo-card" class="form-card">
+                    <ui:Label text="Profile Photo" class="card-title"/>
+                    <ui:VisualElement name="avatar-photo-row" class="avatar-photo-row">
+                        <ui:VisualElement name="avatar-preview" class="avatar-preview">
+                            <ui:Label name="avatar-preview-initials-label" text="?" class="avatar-preview-initials"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="avatar-photo-actions" class="avatar-photo-actions">
+                            <ui:Button name="change-photo-button" text="Change Photo" class="change-photo-button"/>
+                            <ui:Label name="avatar-status-label" text="" class="field-hint hidden"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="profile-info-card" class="form-card">
                     <ui:Label text="Profile Information" class="card-title"/>
                     <ui:Label text="Full Name" class="field-label"/>

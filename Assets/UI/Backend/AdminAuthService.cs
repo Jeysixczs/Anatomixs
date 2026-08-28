@@ -31,6 +31,13 @@ namespace Anatomia3D.Backend
             public int ClassroomCount;
             public int StudentCount;
             public int QuizzesCreated;
+
+            /// <summary>Cloudinary `secure_url` for this admin's avatar image,
+            /// mirrored from the `avatarUrl` field on admins/{uid}. Null/empty
+            /// means no avatar has been set - callers (AdminProfileController,
+            /// AdminDashboardController) fall back to initials in that case,
+            /// same convention as StudentProfile.AvatarUrl.</summary>
+            public string AvatarUrl;
         }
 
         public AdminProfile CurrentAdmin { get; private set; }
@@ -640,6 +647,42 @@ namespace Anatomia3D.Backend
             if (CurrentAdmin != null) CurrentAdmin.QuizzesCreated += delta;
         }
 
+        /// <summary>Writes a new Cloudinary avatar URL to admins/{uid}.avatarUrl and
+        /// updates CurrentAdmin once Firestore confirms it - called by
+        /// AdminEditProfileController right after CloudinaryAvatarUploadService
+        /// reports a successful upload. Deliberately a single-field UpdateAsync
+        /// rather than a full profile write, same as
+        /// PlayerSessionManager.UpdateAvatarUrl on the student side.</summary>
+        public void UpdateAvatarUrl(string avatarUrl, Action<bool, string> onComplete)
+        {
+            if (CurrentAdmin == null)
+            {
+                onComplete?.Invoke(false, "No signed-in admin.");
+                return;
+            }
+
+            string uid = CurrentAdmin.Uid;
+            Db.Collection("admins").Document(uid).UpdateAsync("avatarUrl", avatarUrl).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogWarning($"[AdminAuthService] Could not save avatarUrl for '{uid}': {task.Exception}");
+                    onComplete?.Invoke(false, "Could not save your photo. Please try again.");
+                    return;
+                }
+
+                // Stale-callback guard, same reasoning as ApplyClassroomCreated - a
+                // slow callback landing after logout/relogin should never touch a
+                // different session's cache.
+                if (CurrentAdmin != null && CurrentAdmin.Uid == uid)
+                {
+                    CurrentAdmin.AvatarUrl = avatarUrl;
+                }
+
+                onComplete?.Invoke(true, null);
+            });
+        }
+
         // ---------------- Helpers ----------------
 
         /// <summary>Fetches admins/{uid} for fullName/counts, then mirrors
@@ -665,7 +708,8 @@ namespace Anatomia3D.Backend
                     Email = Auth.CurrentUser?.Email,
                     ClassroomCount = snap.ContainsField("classroomCount") ? snap.GetValue<int>("classroomCount") : 0,
                     StudentCount = snap.ContainsField("studentCount") ? snap.GetValue<int>("studentCount") : 0,
-                    QuizzesCreated = snap.ContainsField("quizzesCreated") ? snap.GetValue<int>("quizzesCreated") : 0
+                    QuizzesCreated = snap.ContainsField("quizzesCreated") ? snap.GetValue<int>("quizzesCreated") : 0,
+                    AvatarUrl = snap.ContainsField("avatarUrl") ? snap.GetValue<string>("avatarUrl") : null
                 };
 
                 onComplete?.Invoke(true, profile, null);

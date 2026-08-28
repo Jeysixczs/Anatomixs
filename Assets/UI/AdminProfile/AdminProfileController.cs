@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Linq;
 using Anatomia3D.Backend;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.UI
@@ -53,6 +55,15 @@ namespace Anatomia3D.UI
         private Label _teacherNameLabel;
         private Label _teacherEmailLabel;
         private Label _roleBadgeLabel;
+
+        // Cloudinary avatar image state. AvatarUrl is a Cloudinary secure_url
+        // (set on the Edit Profile screen) - _loadedAvatarUrl/_avatarTexture
+        // cache the last successful download so repeated
+        // ApplyAdminProfile/SetProfileData calls don't re-download the same
+        // image. Same pattern as StudentProfileController's #avatar.
+        private string _loadedAvatarUrl;
+        private Texture2D _avatarTexture;
+        private Coroutine _avatarLoadRoutine;
 
         private Label _classroomsValueLabel;
         private Label _studentsValueLabel;
@@ -111,6 +122,18 @@ namespace Anatomia3D.UI
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
             }
         }
 
@@ -223,6 +246,7 @@ namespace Anatomia3D.UI
             _classroomCount = admin.ClassroomCount;
             _quizzesCreated = admin.QuizzesCreated;
             SetProfileData(_teacherName, _teacherEmail, _classroomCount, _studentCount, _quizzesCreated);
+            ApplyAvatar(admin.AvatarUrl);
         }
 
         /// <summary>Push real teacher data into the header summary card and stat row.</summary>
@@ -252,6 +276,104 @@ namespace Anatomia3D.UI
             if (parts.Length == 1) return parts[0].Substring(0, Mathf.Min(2, parts[0].Length)).ToUpper();
 
             return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
+        }
+
+        // ---------------- Avatar (Cloudinary) ----------------
+
+        /// <summary>Shows the admin's Cloudinary avatar image in #avatar if a URL
+        /// is set, otherwise falls back to the initials label (the pre-existing
+        /// behavior). Skips re-downloading when avatarUrl hasn't actually changed
+        /// since the last successful load, since ApplyAdminProfile/RefreshFromBackend
+        /// can be called repeatedly. Same pattern as
+        /// StudentProfileController.ApplyAvatar.</summary>
+        private void ApplyAvatar(string avatarUrl)
+        {
+            if (_avatar == null) return;
+
+            if (string.IsNullOrEmpty(avatarUrl))
+            {
+                ShowInitialsAvatar();
+                return;
+            }
+
+            if (avatarUrl == _loadedAvatarUrl && _avatarTexture != null)
+            {
+                // Already showing this exact image - nothing to do.
+                return;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+            }
+            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl));
+        }
+
+        private void ShowInitialsAvatar()
+        {
+            _avatar.style.backgroundImage = StyleKeyword.Null;
+            if (_avatarInitialsLabel != null)
+                _avatarInitialsLabel.style.display = DisplayStyle.Flex;
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
+            _loadedAvatarUrl = null;
+        }
+
+        private IEnumerator LoadAvatarImage(string avatarUrl)
+        {
+            using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                _avatarLoadRoutine = null;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[AdminProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    // Leave whatever's currently showing (initials, most likely)
+                    // rather than blanking the avatar out over a transient network hiccup.
+                    yield break;
+                }
+
+                if (_avatarTexture != null)
+                {
+                    Destroy(_avatarTexture);
+                }
+
+                _avatarTexture = DownloadHandlerTexture.GetContent(request);
+                _loadedAvatarUrl = avatarUrl;
+
+                if (_avatar == null) yield break; // screen may have been disabled while the request was in flight.
+
+                _avatar.style.backgroundImage = new StyleBackground(_avatarTexture);
+                ApplyCoverBackground(_avatar);
+
+                // Image fills the circle now - the initials fallback underneath
+                // would otherwise show through any transparent corners.
+                if (_avatarInitialsLabel != null)
+                    _avatarInitialsLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style
+        // background-* properties) - this is the ScaleAndCrop-equivalent combination:
+        // fill the element, keep aspect ratio, crop overflow, centered.
+        private static void ApplyCoverBackground(VisualElement element)
+        {
+            element.style.backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+            element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
         }
 
         // ---------------- Button handlers ----------------
