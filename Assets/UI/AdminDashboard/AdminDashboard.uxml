@@ -5,7 +5,7 @@
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="profile-button" class="header-icon-circle">
-                        <ui:Label text="" class="header-icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 70px; width: 62px;"/>
+                        <ui:Label name="profile-initials-label" text="" class="header-icon-emoji profile-avatar-initials"/>
                     </ui:Button>
                     <ui:VisualElement name="header-text" class="header-text">
                         <ui:Label text="Teacher Dashboard" class="header-title"/>

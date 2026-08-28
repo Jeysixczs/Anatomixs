@@ -480,6 +480,13 @@ public class AnatomyScreenController : MonoBehaviour
     private Button _undoButton;
     private Button _backButton;
 
+    // Controls guide (floating "how to use the controls" help) refs
+    private Button _controlsGuideButton;
+    private VisualElement _controlsGuideOverlay;
+    private VisualElement _controlsGuideBackdrop;
+    private Button _controlsGuideCloseButton;
+    private Button _controlsGuideGotItButton;
+
     private readonly List<VisualElement> _boneElements = new List<VisualElement>();
     private readonly Dictionary<VisualElement, BoneInfo> _dataByElement = new Dictionary<VisualElement, BoneInfo>();
 
@@ -645,6 +652,23 @@ public class AnatomyScreenController : MonoBehaviour
         // static "Hide" text from the UXML until the first toggle.
         if (_hideLabel != null)
             _hideLabel.text = "Hide Off";
+
+        // --- Controls guide (floating "how to use the BottomToolbar" help) ---
+        _controlsGuideButton = _root.Q<Button>("ControlsGuideButton");
+        _controlsGuideOverlay = _root.Q<VisualElement>("ControlsGuideOverlay");
+        _controlsGuideBackdrop = _root.Q<VisualElement>("ControlsGuideBackdrop");
+        _controlsGuideCloseButton = _root.Q<Button>("ControlsGuideCloseButton");
+        _controlsGuideGotItButton = _root.Q<Button>("ControlsGuideGotItButton");
+
+        if (_controlsGuideButton != null) _controlsGuideButton.clicked += OnControlsGuideButtonClicked;
+        if (_controlsGuideBackdrop != null) _controlsGuideBackdrop.RegisterCallback<ClickEvent>(OnControlsGuideCloseRequested);
+        if (_controlsGuideCloseButton != null) _controlsGuideCloseButton.clicked += CloseControlsGuide;
+        if (_controlsGuideGotItButton != null) _controlsGuideGotItButton.clicked += CloseControlsGuide;
+
+        // Force-hidden every time the screen (re)opens, in case a previous
+        // session somehow left it visible (e.g. this GameObject re-enabled
+        // without OnDisable ever running its close-side cleanup).
+        CloseControlsGuide();
 
         // --- Bone data (BoneDatabase.json) ---
         PopulateBoneDataFromSkeleton();
@@ -862,6 +886,11 @@ public class AnatomyScreenController : MonoBehaviour
         _hideButton.clicked -= OnHideClicked;
         _backButton.clicked -= OnBackClicked;
         _undoButton.clicked -= OnUndoClicked;
+
+        if (_controlsGuideButton != null) _controlsGuideButton.clicked -= OnControlsGuideButtonClicked;
+        if (_controlsGuideBackdrop != null) _controlsGuideBackdrop.UnregisterCallback<ClickEvent>(OnControlsGuideCloseRequested);
+        if (_controlsGuideCloseButton != null) _controlsGuideCloseButton.clicked -= CloseControlsGuide;
+        if (_controlsGuideGotItButton != null) _controlsGuideGotItButton.clicked -= CloseControlsGuide;
 
         if (_bodyArea != null)
         {
@@ -1100,7 +1129,7 @@ public class AnatomyScreenController : MonoBehaviour
         var meshFilters = info.worldBone.GetComponentsInChildren<MeshFilter>();
         if (meshFilters.Length == 0)
         {
-            Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no MeshFilter found under '{info.boneName}' - tap-to-select won't work for this bone.");
+          //  Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no MeshFilter found under '{info.boneName}' - tap-to-select won't work for this bone.");
             return;
         }
 
@@ -1111,7 +1140,7 @@ public class AnatomyScreenController : MonoBehaviour
 
             if (IsOwnedByAnotherBone(meshFilter.transform, info))
             {
-                Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: skipping mesh '{meshFilter.name}' under '{info.boneName}' - it belongs to a separately registered bone, not this one.");
+             //   Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: skipping mesh '{meshFilter.name}' under '{info.boneName}' - it belongs to a separately registered bone, not this one.");
                 continue;
             }
 
@@ -1141,7 +1170,7 @@ public class AnatomyScreenController : MonoBehaviour
 
             _infoByCollider[collider] = info;
             registered++;
-            Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: registered collider on '{go.name}' (layer '{LayerMask.LayerToName(go.layer)}') for bone '{info.boneName}'.");
+            //Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: registered collider on '{go.name}' (layer '{LayerMask.LayerToName(go.layer)}') for bone '{info.boneName}'.");
 
             // A collider on a layer boneRaycastLayerMask doesn't include is
             // registered fine here but can never be hit by TryPickBoneAt's
@@ -2844,6 +2873,22 @@ public class AnatomyScreenController : MonoBehaviour
         if (_descriptionLabel != null) _descriptionLabel.text = text;
     }
 
+    /// <summary>Applies (or removes) the .play-mode-start-pos USS class on
+    /// the Info Panel, which overrides its default top (58%) with 50% for
+    /// the moment Play Mode first opens it. Left/width/height are
+    /// untouched. Call with true once when Play Mode activates, and with
+    /// false when it deactivates so Explore Mode's Info Panel goes back to
+    /// falling through to the normal .info-panel default (or wherever the
+    /// player last dragged it, same as OnResetClicked's StyleKeyword.Null
+    /// behavior).</summary>
+    public void SetInfoPanelPlayModeStartPosition(bool active)
+    {
+        if (_infoPanel == null) return;
+
+        if (active) _infoPanel.AddToClassList("play-mode-start-pos");
+        else _infoPanel.RemoveFromClassList("play-mode-start-pos");
+    }
+
     /// <summary>Turns off Explore Mode's Isolate Selected Bone and Hide
     /// Mode if either is currently active, via their own existing
     /// toggle-off paths (so the undo stack / renderer-collider state they
@@ -2930,4 +2975,24 @@ public class AnatomyScreenController : MonoBehaviour
     }
 
     public void ResetView() => OnResetClicked();
+
+    // ===== Controls guide (floating "how to use the BottomToolbar" help) =====
+
+    private void OnControlsGuideButtonClicked() => OpenControlsGuide();
+
+    // Clicking anywhere on the dimmed backdrop dismisses the guide, same as
+    // the explicit close/"Got it" buttons - a click that reaches the
+    // backdrop can only have missed the card itself, since the card sits on
+    // top of it and stops the event there.
+    private void OnControlsGuideCloseRequested(ClickEvent evt) => CloseControlsGuide();
+
+    private void OpenControlsGuide()
+    {
+        _controlsGuideOverlay?.RemoveFromClassList("hidden");
+    }
+
+    private void CloseControlsGuide()
+    {
+        _controlsGuideOverlay?.AddToClassList("hidden");
+    }
 }

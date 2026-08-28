@@ -1,6 +1,9 @@
+using System;
+using System.Collections;
 using System.Text.RegularExpressions;
 using Anatomia3D.Backend;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.UI
@@ -61,6 +64,22 @@ namespace Anatomia3D.UI
         private TextField _emailField;
         private Label _emailError;
         private Label _emailPendingHint;
+
+        private VisualElement _avatarPreview;
+        private Label _avatarPreviewInitialsLabel;
+        private Button _changePhotoButton;
+        private Label _avatarStatusLabel;
+
+        // Local-only state for the photo the student just picked but hasn't
+        // saved yet. The circle preview updates immediately (optimistic, same
+        // spirit as everywhere else in this project); the actual Cloudinary
+        // upload + Firestore write only happens once Save Changes is clicked
+        // and the rest of validation passes (see FinalizeSave). Nulled out on
+        // OnDisable so leaving this screen without saving discards the pick.
+        private byte[] _pendingAvatarBytes;
+        private Texture2D _avatarPreviewTexture;
+        private string _loadedAvatarUrl;
+        private Coroutine _avatarPreviewLoadRoutine;
 
         private Label _verifyEmailStatusBadge;
         private Button _verifyEmailButton;
@@ -128,6 +147,9 @@ namespace Anatomia3D.UI
             SetStatus(string.Empty);
             ClosePasswordOverlay();
 
+            _pendingAvatarBytes = null;
+            RefreshAvatarPreview();
+
             RefreshVerificationBadge();
             UpdatePendingEmailHint();
             StartVerificationPolling();
@@ -151,6 +173,15 @@ namespace Anatomia3D.UI
 
             if (_headerGradientTexture != null) { Destroy(_headerGradientTexture); _headerGradientTexture = null; }
             if (_buttonGradientTexture != null) { Destroy(_buttonGradientTexture); _buttonGradientTexture = null; }
+
+            if (_avatarPreviewLoadRoutine != null)
+            {
+                StopCoroutine(_avatarPreviewLoadRoutine);
+                _avatarPreviewLoadRoutine = null;
+            }
+            if (_avatarPreviewTexture != null) { Destroy(_avatarPreviewTexture); _avatarPreviewTexture = null; }
+            _pendingAvatarBytes = null;
+            _loadedAvatarUrl = null;
         }
 
         private void UnregisterCallbacks()
@@ -158,6 +189,7 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _changePhotoButton?.UnregisterCallback<ClickEvent>(OnChangePhotoClicked);
             _changePasswordButton?.UnregisterCallback<ClickEvent>(OnChangePasswordClicked);
             _passwordOverlayBackdrop?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _closePasswordCardButton?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
@@ -185,6 +217,11 @@ namespace Anatomia3D.UI
             _emailField = _screenRoot.Q<TextField>("email-field");
             _emailError = _screenRoot.Q<Label>("email-error");
             _emailPendingHint = _screenRoot.Q<Label>("email-pending-hint");
+
+            _avatarPreview = _screenRoot.Q<VisualElement>("avatar-preview");
+            _avatarPreviewInitialsLabel = _screenRoot.Q<Label>("avatar-preview-initials-label");
+            _changePhotoButton = _screenRoot.Q<Button>("change-photo-button");
+            _avatarStatusLabel = _screenRoot.Q<Label>("avatar-status-label");
 
             _verifyEmailStatusBadge = _screenRoot.Q<Label>("verify-email-status-badge");
             _verifyEmailButton = _screenRoot.Q<Button>("verify-email-button");
@@ -215,6 +252,7 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _changePhotoButton?.RegisterCallback<ClickEvent>(OnChangePhotoClicked);
             _changePasswordButton?.RegisterCallback<ClickEvent>(OnChangePasswordClicked);
             _passwordOverlayBackdrop?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _closePasswordCardButton?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
@@ -249,6 +287,145 @@ namespace Anatomia3D.UI
         private void OnChangePasswordClicked(ClickEvent evt)
         {
             OpenPasswordOverlay();
+        }
+
+        // ---------------- Avatar photo ----------------
+        //
+        // Requires the free "Native Gallery for Android & iOS" asset
+        // (github.com/yasirkula/UnityNativeGallery / Asset Store) for
+        // NativeGallery.GetImageFromGallery - it handles the OS-level photo
+        // picker and runtime permission prompt on both platforms. Swap this
+        // one method for a different picker if the project ends up using
+        // something else; nothing downstream (preview/upload/save) depends
+        // on how the bytes were obtained.
+
+        private void OnChangePhotoClicked(ClickEvent evt)
+        {
+            NativeGallery.GetImageFromGallery(path =>
+            {
+                if (string.IsNullOrEmpty(path)) return; // student cancelled the picker
+
+                Texture2D picked = NativeGallery.LoadImageAtPath(path, maxSize: 1024, markTextureNonReadable: false);
+                if (picked == null)
+                {
+                    Debug.LogWarning($"[StudentEditProfileController] Could not load image at '{path}'.");
+                    SetAvatarStatus("Could not load that photo. Please try a different one.");
+                    return;
+                }
+
+                _pendingAvatarBytes = picked.EncodeToJPG(85);
+                ShowAvatarPreviewTexture(picked); // takes ownership of picked - no separate decode needed
+                SetAvatarStatus("Photo selected - tap Save Changes to upload it.");
+            }, "Select a profile photo", "image/*");
+        }
+
+        /// <summary>Loads whatever avatar the signed-in student currently has
+        /// (Cloudinary URL, same field StudentProfileController reads) into the
+        /// preview circle, or falls back to initials if there isn't one. Called
+        /// fresh every time this screen opens - see OnEnable.</summary>
+        private void RefreshAvatarPreview()
+        {
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+
+            if (_avatarPreviewInitialsLabel != null)
+                _avatarPreviewInitialsLabel.text = GetInitials(student?.FullName);
+
+            if (student == null || string.IsNullOrEmpty(student.AvatarUrl))
+            {
+                ShowAvatarInitials();
+                return;
+            }
+
+            if (_avatarPreviewLoadRoutine != null) StopCoroutine(_avatarPreviewLoadRoutine);
+            _avatarPreviewLoadRoutine = StartCoroutine(LoadAvatarPreviewFromUrl(student.AvatarUrl));
+        }
+
+        private IEnumerator LoadAvatarPreviewFromUrl(string avatarUrl)
+        {
+            using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+                _avatarPreviewLoadRoutine = null;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[StudentEditProfileController] Could not load current avatar '{avatarUrl}': {request.error}");
+                    yield break; // leave the initials fallback already showing
+                }
+
+                if (_avatarPreview == null) yield break; // screen closed while the request was in flight
+
+                if (_avatarPreviewTexture != null) Destroy(_avatarPreviewTexture);
+                _avatarPreviewTexture = DownloadHandlerTexture.GetContent(request);
+                _loadedAvatarUrl = avatarUrl;
+
+                _avatarPreview.style.backgroundImage = new StyleBackground(_avatarPreviewTexture);
+                ApplyCoverBackground(_avatarPreview);
+                if (_avatarPreviewInitialsLabel != null) _avatarPreviewInitialsLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>Immediately previews a just-picked photo using the texture
+        /// NativeGallery already decoded - no upload has happened yet at this
+        /// point (see OnChangePhotoClicked/FinalizeSave). Takes ownership of tex
+        /// (destroys the previous preview texture, keeps this one alive as
+        /// _avatarPreviewTexture until it's replaced or the screen closes).</summary>
+        private void ShowAvatarPreviewTexture(Texture2D tex)
+        {
+            if (_avatarPreview == null) { Destroy(tex); return; }
+
+            if (_avatarPreviewLoadRoutine != null) { StopCoroutine(_avatarPreviewLoadRoutine); _avatarPreviewLoadRoutine = null; }
+            if (_avatarPreviewTexture != null) Destroy(_avatarPreviewTexture);
+
+            _avatarPreviewTexture = tex;
+
+            _avatarPreview.style.backgroundImage = new StyleBackground(_avatarPreviewTexture);
+            ApplyCoverBackground(_avatarPreview);
+            if (_avatarPreviewInitialsLabel != null) _avatarPreviewInitialsLabel.style.display = DisplayStyle.None;
+        }
+
+        private void ShowAvatarInitials()
+        {
+            if (_avatarPreview != null) _avatarPreview.style.backgroundImage = StyleKeyword.Null;
+            if (_avatarPreviewInitialsLabel != null) _avatarPreviewInitialsLabel.style.display = DisplayStyle.Flex;
+
+            if (_avatarPreviewLoadRoutine != null) { StopCoroutine(_avatarPreviewLoadRoutine); _avatarPreviewLoadRoutine = null; }
+            if (_avatarPreviewTexture != null) { Destroy(_avatarPreviewTexture); _avatarPreviewTexture = null; }
+            _loadedAvatarUrl = null;
+        }
+
+        private void SetAvatarStatus(string message)
+        {
+            if (_avatarStatusLabel == null) return;
+            _avatarStatusLabel.text = message;
+            if (string.IsNullOrEmpty(message))
+                _avatarStatusLabel.AddToClassList("hidden");
+            else
+                _avatarStatusLabel.RemoveFromClassList("hidden");
+        }
+
+        // Same initials logic as StudentProfileController.GetInitials - duplicated
+        // rather than shared since the two controllers don't otherwise reference
+        // each other and this is a couple of lines.
+        // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style
+        // background-* properties) - this is the ScaleAndCrop-equivalent combination:
+        // fill the element, keep aspect ratio, crop overflow, centered.
+        private static void ApplyCoverBackground(VisualElement element)
+        {
+            element.style.backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+            element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
+        }
+
+        private string GetInitials(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return "?";
+
+            var parts = fullName.Trim().Split(' ');
+            if (parts.Length == 1) return parts[0].Substring(0, Mathf.Min(2, parts[0].Length)).ToUpper();
+
+            return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
         }
 
         private void OnClosePasswordOverlayClicked(ClickEvent evt)
@@ -498,7 +675,7 @@ namespace Anatomia3D.UI
                         if (pwSuccess)
                         {
                             Debug.Log("[StudentEditProfileController] Profile and password updated successfully.");
-                            OnSaveComplete(emailChanged, email);
+                            FinalizeSave(emailChanged, email);
                         }
                         else
                         {
@@ -511,8 +688,54 @@ namespace Anatomia3D.UI
                 else
                 {
                     Debug.Log("[StudentEditProfileController] Profile updated successfully.");
-                    OnSaveComplete(emailChanged, email);
+                    FinalizeSave(emailChanged, email);
                 }
+            });
+        }
+
+        /// <summary>Runs after the name/email/password fields (whichever applied)
+        /// have already saved successfully. Uploads any photo the student picked
+        /// this visit (see OnChangePhotoClicked) before handing off to
+        /// OnSaveComplete - kept as a separate last step since a photo upload has
+        /// nothing to do with Auth/email validation and can fail independently
+        /// without the rest of the save being rolled back.</summary>
+        private void FinalizeSave(bool emailChanged, string email)
+        {
+            if (_pendingAvatarBytes == null)
+            {
+                OnSaveComplete(emailChanged, email);
+                return;
+            }
+
+            string uid = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
+            if (CloudinaryAvatarUploadService.Instance == null || string.IsNullOrEmpty(uid))
+            {
+                Debug.LogWarning("[StudentEditProfileController] Avatar upload service unavailable - other changes were still saved.");
+                _pendingAvatarBytes = null;
+                OnSaveComplete(emailChanged, email);
+                return;
+            }
+
+            SetStatus("Saving changes... uploading photo...");
+
+            CloudinaryAvatarUploadService.Instance.UploadAvatar(_pendingAvatarBytes, uid, (uploadSuccess, avatarUrl) =>
+            {
+                _pendingAvatarBytes = null; // either way, don't retry a stale pick on a future Save click
+
+                if (!uploadSuccess)
+                {
+                    Debug.LogWarning("[StudentEditProfileController] Photo upload failed - other changes were still saved.");
+                    OnSaveComplete(emailChanged, email);
+                    return;
+                }
+
+                PlayerSessionManager.Instance.UpdateAvatarUrl(avatarUrl, (dbSuccess, dbError) =>
+                {
+                    if (!dbSuccess)
+                        Debug.LogWarning($"[StudentEditProfileController] Uploaded photo but could not save it to the profile: {dbError}");
+
+                    OnSaveComplete(emailChanged, email);
+                });
             });
         }
 

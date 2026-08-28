@@ -402,6 +402,10 @@ namespace Anatomia3D.Backend
             _playModeControlsRow?.RemoveFromClassList("hidden");
             _audioRow?.AddToClassList("hidden");
 
+            // Play Mode opens the Info Panel a bit higher (top: 50%) than
+            // Explore Mode's default (top: 58%) - see SetInfoPanelPlayModeStartPosition.
+            _screen.SetInfoPanelPlayModeStartPosition(true);
+
             UpdateProgressLabel();
         }
 
@@ -423,6 +427,9 @@ namespace Anatomia3D.Backend
 
             _playModeControlsRow?.AddToClassList("hidden");
             _audioRow?.RemoveFromClassList("hidden");
+
+            // Back to Explore Mode's own default Info Panel position.
+            _screen.SetInfoPanelPlayModeStartPosition(false);
 
             _currentQuestion = null;
             HideCompletionPanel();
@@ -653,9 +660,20 @@ namespace Anatomia3D.Backend
         //
         // Play Mode is guessed by typing directly into one box per letter
         // (Wordle-style) instead of a single free-text field. One TextField
-        // per non-space character of DisplayName; spaces become a plain
-        // gap (no TextField, nothing to type there, never a hintable
-        // position) - see the plan's section 7/9.
+        // per non-space character of DisplayName; spaces are never their
+        // own box - see the plan's section 7/9.
+        //
+        // Boxes are grouped by word (see BuildLetterBoxes) so a long
+        // answer like "LEFT COSTAL CARTILAGE OF SEVENTH RIB" wraps whole
+        // words onto new lines instead of splitting a word awkwardly
+        // across two rows of tiny boxes - each .letter-word-group is a
+        // single flex item that either fits or moves to the next line as
+        // a whole, while the boxes inside it never wrap. _letterFields /
+        // _letterFieldSourceIndex stay a flat left-to-right list exactly
+        // like before (grouping is purely visual, in which VisualElement
+        // each field is parented to) so every other method below -
+        // RevealLetterField, GatherGuessText, hint/submit/backspace
+        // navigation - needs no changes.
 
         // Rebuilds _letterRow's children from scratch for a new question.
         // Safe to call with an empty string (e.g. for the already-answered
@@ -668,15 +686,26 @@ namespace Anatomia3D.Backend
 
             _letterRow.Clear();
 
+            VisualElement currentWordGroup = null;
+
             for (int i = 0; i < displayName.Length; i++)
             {
                 char c = displayName[i];
                 if (char.IsWhiteSpace(c))
                 {
-                    var spacer = new VisualElement();
-                    spacer.AddToClassList("letter-box-space");
-                    _letterRow.Add(spacer);
+                    // Ends the current word group - the next non-space
+                    // character starts a new one. No visual element is
+                    // created for the space itself; the gap comes from
+                    // .letter-word-group's own margin in the USS.
+                    currentWordGroup = null;
                     continue;
+                }
+
+                if (currentWordGroup == null)
+                {
+                    currentWordGroup = new VisualElement();
+                    currentWordGroup.AddToClassList("letter-word-group");
+                    _letterRow.Add(currentWordGroup);
                 }
 
                 var field = new TextField { maxLength = 1, isDelayed = false };
@@ -685,8 +714,10 @@ namespace Anatomia3D.Backend
                 int fieldIndex = _letterFields.Count; // captured for the closures below
                 field.RegisterValueChangedCallback(evt => OnLetterFieldChanged(fieldIndex, evt.newValue));
                 field.RegisterCallback<KeyDownEvent>(evt => OnLetterFieldKeyDown(fieldIndex, evt), TrickleDown.TrickleDown);
+                field.RegisterCallback<FocusInEvent>(_ => field.AddToClassList("letter-box-active"));
+                field.RegisterCallback<FocusOutEvent>(_ => field.RemoveFromClassList("letter-box-active"));
 
-                _letterRow.Add(field);
+                currentWordGroup.Add(field);
                 _letterFields.Add(field);
                 _letterFieldSourceIndex.Add(i);
             }

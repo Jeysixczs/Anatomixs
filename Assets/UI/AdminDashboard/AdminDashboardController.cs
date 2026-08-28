@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.Backend;
 using Firebase.Firestore;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.UI
@@ -146,6 +148,15 @@ namespace Anatomia3D.UI
         private Label _headerSubtitleLabel;
         private Button _logoutButton;
         private Button _profileButton;
+        private Label _profileInitialsLabel;
+
+        // Cloudinary avatar state for #profile-button - same pattern as
+        // AdminProfileController's #avatar / StudentDashboardController's
+        // #profile-button: show the photo if AvatarUrl is set, otherwise
+        // fall back to initials.
+        private string _loadedAvatarUrl;
+        private Texture2D _avatarTexture;
+        private Coroutine _avatarLoadRoutine;
 
         private Label _classroomsCountLabel;
         private Label _studentsCountLabel;
@@ -194,6 +205,7 @@ namespace Anatomia3D.UI
         private QuizService.ActivityListenerHandle _activityListenerHandle;
         private IVisualElementScheduledItem _activityTimeRefreshSchedule;
         private string _lastTeacherName = "";
+        private string _lastAvatarUrl;
         private int _lastClassroomCount;
         private int _lastStudentCount;
         private float _lastAvgScorePercent;
@@ -236,7 +248,7 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
-            SetHeaderData(_lastTeacherName);
+            SetHeaderData(_lastTeacherName, _lastAvatarUrl);
             SetDashboardStats(_lastClassroomCount, _lastStudentCount, _lastAvgScorePercent);
             RefreshClassroomsUI();
             RefreshRecentActivityUI();
@@ -263,6 +275,18 @@ namespace Anatomia3D.UI
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
             }
         }
 
@@ -298,6 +322,7 @@ namespace Anatomia3D.UI
             _headerSubtitleLabel = _screenRoot.Q<Label>("header-subtitle-label");
             _logoutButton = _screenRoot.Q<Button>("logout-button");
             _profileButton = _screenRoot.Q<Button>("profile-button");
+            _profileInitialsLabel = _screenRoot.Q<Label>("profile-initials-label");
 
             _classroomsCountLabel = _screenRoot.Q<Label>("classrooms-count-label");
             _studentsCountLabel = _screenRoot.Q<Label>("students-count-label");
@@ -348,11 +373,123 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Push the signed-in teacher's name into the header subtitle.</summary>
-        public void SetHeaderData(string teacherName)
+        /// <summary>Push the signed-in teacher's name and avatar into the header.</summary>
+        public void SetHeaderData(string teacherName, string avatarUrl = null)
         {
             _lastTeacherName = teacherName ?? "";
+            _lastAvatarUrl = avatarUrl;
             if (_headerSubtitleLabel != null) _headerSubtitleLabel.text = $"Welcome back, {teacherName}";
+            ApplyAvatar(teacherName, avatarUrl);
+        }
+
+        // ---------------- Avatar (Cloudinary) ----------------
+        // Same approach as AdminProfileController's #avatar and
+        // StudentDashboardController's #profile-button: show the admin's
+        // Cloudinary photo if AvatarUrl is set, otherwise fall back to
+        // initials. Skips re-downloading when avatarUrl hasn't changed since
+        // the last successful load.
+
+        private void ApplyAvatar(string teacherName, string avatarUrl)
+        {
+            if (_profileButton == null) return;
+
+            if (_profileInitialsLabel != null)
+                _profileInitialsLabel.text = GetInitials(teacherName);
+
+            if (string.IsNullOrEmpty(avatarUrl))
+            {
+                ShowInitialsAvatar();
+                return;
+            }
+
+            if (avatarUrl == _loadedAvatarUrl && _avatarTexture != null)
+            {
+                // Already showing this exact image - nothing to do.
+                return;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+            }
+            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl));
+        }
+
+        private void ShowInitialsAvatar()
+        {
+            _profileButton.style.backgroundImage = StyleKeyword.Null;
+            if (_profileInitialsLabel != null)
+                _profileInitialsLabel.style.display = DisplayStyle.Flex;
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
+            _loadedAvatarUrl = null;
+        }
+
+        private IEnumerator LoadAvatarImage(string avatarUrl)
+        {
+            using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                _avatarLoadRoutine = null;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[AdminDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    // Leave whatever's currently showing (initials, most likely)
+                    // rather than blanking the avatar out over a transient network hiccup.
+                    yield break;
+                }
+
+                if (_avatarTexture != null)
+                {
+                    Destroy(_avatarTexture);
+                }
+
+                _avatarTexture = DownloadHandlerTexture.GetContent(request);
+                _loadedAvatarUrl = avatarUrl;
+
+                if (_profileButton == null) yield break; // screen may have been disabled while the request was in flight.
+
+                _profileButton.style.backgroundImage = new StyleBackground(_avatarTexture);
+                ApplyCoverBackground(_profileButton);
+
+                // Image fills the circle now - the initials fallback underneath
+                // would otherwise show through any transparent corners.
+                if (_profileInitialsLabel != null)
+                    _profileInitialsLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style
+        // background-* properties) - this is the ScaleAndCrop-equivalent combination:
+        // fill the element, keep aspect ratio, crop overflow, centered.
+        private static void ApplyCoverBackground(VisualElement element)
+        {
+            element.style.backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+            element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
+        }
+
+        private static string GetInitials(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return "?";
+
+            var parts = fullName.Trim().Split(' ');
+            if (parts.Length == 1) return parts[0].Substring(0, Mathf.Min(2, parts[0].Length)).ToUpper();
+
+            return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
         }
 
         /// <summary>Push real values into the three glass stat cards in the header.</summary>
@@ -399,7 +536,7 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            SetHeaderData(admin.FullName);
+            SetHeaderData(admin.FullName, admin.AvatarUrl);
 
             if (AdminClassroomService.Instance == null)
             {

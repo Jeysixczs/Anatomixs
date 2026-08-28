@@ -1,5 +1,7 @@
+using System.Collections;
 using Anatomia3D.Backend;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.UI
@@ -39,6 +41,17 @@ namespace Anatomia3D.UI
         private Button _backButton;
 
         private VisualElement _avatar;
+
+        // Cloudinary avatar image state. AvatarUrl is a Cloudinary secure_url
+        // (set on the Edit Profile screen) - _loadedAvatarUrl/_avatarTexture
+        // let ApplyStudent skip re-downloading the same image on every
+        // profile refresh (e.g. the OnStudentProfileChanged echo after a quiz
+        // updates points), and only kick off a new request when the URL
+        // actually changes.
+        private string _loadedAvatarUrl;
+        private Texture2D _avatarTexture;
+        private Coroutine _avatarLoadRoutine;
+
         private VisualElement _quizzesBackground;
         private VisualElement _levelBackground;
         private VisualElement _pointsBackground;
@@ -124,6 +137,19 @@ namespace Anatomia3D.UI
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
+            _loadedAvatarUrl = null;
         }
 
         private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
@@ -219,16 +245,19 @@ namespace Anatomia3D.UI
 
         private void ApplyStudent(PlayerSessionManager.StudentProfile student)
         {
-            SetProfileData(student.FullName, student.Email, student.Level, student.TotalPoints, student.QuizzesCompleted);
+            SetProfileData(student.FullName, student.Email, student.Level, student.TotalPoints, student.QuizzesCompleted, student.AvatarUrl);
         }
 
-        /// <summary>Push real student data into the header summary card and stat row.</summary>
+        /// <summary>Push real student data into the header summary card and stat row.
+        /// avatarUrl is optional (older/never-set profiles have none) - pass null or
+        /// empty to fall back to the initials label.</summary>
         public void SetProfileData(
             string studentName,
             string email,
             int level,
             int totalPoints,
-            int quizzesCompleted)
+            int quizzesCompleted,
+            string avatarUrl = null)
         {
             if (_studentNameLabel != null) _studentNameLabel.text = studentName;
             if (_studentEmailLabel != null) _studentEmailLabel.text = email;
@@ -239,6 +268,106 @@ namespace Anatomia3D.UI
             if (_pointsValueLabel != null) _pointsValueLabel.text = totalPoints.ToString();
 
             if (_avatarInitialsLabel != null) _avatarInitialsLabel.text = GetInitials(studentName);
+
+            ApplyAvatar(avatarUrl);
+        }
+
+        // ---------------- Avatar (Cloudinary) ----------------
+
+        /// <summary>Shows the student's Cloudinary avatar image in #avatar if a URL
+        /// is set, otherwise falls back to the initials label (the pre-existing
+        /// behavior). Skips re-downloading when avatarUrl hasn't actually changed
+        /// since the last successful load, since ApplyStudent/SetProfileData can be
+        /// called repeatedly (RefreshFromBackend, the real-time listener echo,
+        /// ApplyQuizAttemptResult's optimistic update).</summary>
+        private void ApplyAvatar(string avatarUrl)
+        {
+            if (_avatar == null) return;
+
+            if (string.IsNullOrEmpty(avatarUrl))
+            {
+                ShowInitialsAvatar();
+                return;
+            }
+
+            if (avatarUrl == _loadedAvatarUrl && _avatarTexture != null)
+            {
+                // Already showing this exact image - nothing to do.
+                return;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+            }
+            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl));
+        }
+
+        private void ShowInitialsAvatar()
+        {
+            _avatar.style.backgroundImage = StyleKeyword.Null;
+            if (_avatarInitialsLabel != null)
+                _avatarInitialsLabel.style.display = DisplayStyle.Flex;
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
+            _loadedAvatarUrl = null;
+        }
+
+        private IEnumerator LoadAvatarImage(string avatarUrl)
+        {
+            using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                _avatarLoadRoutine = null;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[StudentProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    // Leave whatever's currently showing (initials, most likely)
+                    // rather than blanking the avatar out over a transient network hiccup.
+                    yield break;
+                }
+
+                if (_avatarTexture != null)
+                {
+                    Destroy(_avatarTexture);
+                }
+
+                _avatarTexture = DownloadHandlerTexture.GetContent(request);
+                _loadedAvatarUrl = avatarUrl;
+
+                if (_avatar == null) yield break; // screen may have been disabled while the request was in flight.
+
+                _avatar.style.backgroundImage = new StyleBackground(_avatarTexture);
+                ApplyCoverBackground(_avatar);
+
+                // Image fills the circle now - the initials fallback underneath
+                // would otherwise show through any transparent corners.
+                if (_avatarInitialsLabel != null)
+                    _avatarInitialsLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style
+        // background-* properties) - this is the ScaleAndCrop-equivalent combination:
+        // fill the element, keep aspect ratio, crop overflow, centered.
+        private static void ApplyCoverBackground(VisualElement element)
+        {
+            element.style.backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+            element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
         }
 
         private string GetInitials(string fullName)

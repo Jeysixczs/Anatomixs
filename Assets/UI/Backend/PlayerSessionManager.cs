@@ -39,6 +39,13 @@ namespace Anatomia3D.Backend
             /// StudentAchievementsController / StudentClassroomDetailController's
             /// Badges tab).</summary>
             public List<string> BadgesEarned = new List<string>();
+            /// <summary>Cloudinary `secure_url` for this student's avatar image,
+            /// mirrored from the `avatarUrl` field on students/{uid}. Null/empty
+            /// means no avatar has been set - callers (StudentProfileController)
+            /// fall back to initials in that case. The upload itself (Cloudinary
+            /// unsigned upload + writing this field back to Firestore) happens on
+            /// the Edit Profile screen, not here - this class only reads it.</summary>
+            public string AvatarUrl;
             // Email/EmailVerified are NOT stored in Firestore - they're always
             // mirrored straight from Firebase Auth (Auth.CurrentUser) whenever
             // this profile is built, so there's exactly one source of truth
@@ -809,6 +816,44 @@ namespace Anatomia3D.Backend
             OnStudentProfileChanged?.Invoke(CurrentStudent);
         }
 
+        /// <summary>Writes a new Cloudinary avatar URL to students/{uid}.avatarUrl and
+        /// updates CurrentStudent once Firestore confirms it - called by
+        /// StudentEditProfileController right after CloudinaryAvatarUploadService
+        /// reports a successful upload. Deliberately a single-field UpdateAsync
+        /// rather than routing through UpdateProfile, since a photo change has none
+        /// of Email's re-auth/verification requirements.</summary>
+        public void UpdateAvatarUrl(string avatarUrl, Action<bool, string> onComplete)
+        {
+            if (CurrentStudent == null)
+            {
+                onComplete?.Invoke(false, "No signed-in student.");
+                return;
+            }
+
+            string uid = CurrentStudent.Uid;
+            Db.Collection("students").Document(uid).UpdateAsync("avatarUrl", avatarUrl).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] Could not save avatarUrl for '{uid}': {task.Exception}");
+                    onComplete?.Invoke(false, "Could not save your photo. Please try again.");
+                    return;
+                }
+
+                // Stale-callback guard, same reasoning as ApplyQuizAttemptResult - a
+                // slow callback landing after logout/relogin should never touch a
+                // different session's cache.
+                if (CurrentStudent != null && CurrentStudent.Uid == uid)
+                {
+                    CurrentStudent.AvatarUrl = avatarUrl;
+                    CacheStudent(CurrentStudent);
+                    OnStudentProfileChanged?.Invoke(CurrentStudent);
+                }
+
+                onComplete?.Invoke(true, null);
+            });
+        }
+
         // ---------------- Helpers ----------------
 
         /// <summary>Fetches students/{uid} for fullName/level/stats, then mirrors
@@ -848,7 +893,8 @@ namespace Anatomia3D.Backend
                 QuizzesCompleted = snap.ContainsField("quizzesCompleted") ? snap.GetValue<int>("quizzesCompleted") : 0,
                 BadgesEarned = snap.ContainsField("badgesEarned")
                     ? new List<string>(snap.GetValue<List<string>>("badgesEarned"))
-                    : new List<string>()
+                    : new List<string>(),
+                AvatarUrl = snap.ContainsField("avatarUrl") ? snap.GetValue<string>("avatarUrl") : null
             };
         }
 
@@ -921,6 +967,7 @@ namespace Anatomia3D.Backend
             if (a.Level != b.Level) return false;
             if (a.TotalPoints != b.TotalPoints) return false;
             if (a.QuizzesCompleted != b.QuizzesCompleted) return false;
+            if (a.AvatarUrl != b.AvatarUrl) return false;
             if (a.BadgesEarned.Count != b.BadgesEarned.Count) return false;
             for (int i = 0; i < a.BadgesEarned.Count; i++)
             {

@@ -105,13 +105,6 @@ namespace Anatomia3D.UI
         // to Anatomy Play Mode later.
         private VisualElement _categoryNervousRow;
 
-        // Both PopulateLevelProgress() and PopulateProgressExtras() used to re-hit
-        // Firestore on every single OnEnable, even though this data only ever changes
-        // as a side effect of submitting a quiz (which already fires
-        // PlayerSessionManager.OnStudentProfileChanged). _hasLoadedOnce gates the
-        // network calls to "first open" + "an actual profile change", instead of
-        // "every time this screen becomes visible".
-        private bool _hasLoadedOnce;
         private readonly Dictionary<int, LevelRoadmapRowRefs> _roadmapRowsByLevel = new Dictionary<int, LevelRoadmapRowRefs>();
 
         private void OnEnable()
@@ -154,15 +147,16 @@ namespace Anatomia3D.UI
 
             ShowWeeklyTab();
 
-            if (!_hasLoadedOnce)
-            {
-                PopulateLevelProgress();
-                PopulateProgressExtras();
-                _hasLoadedOnce = true;
-            }
-            // else: labels/roadmap already reflect the last-known values from when this
-            // screen (or OnStudentProfileChanged) last populated them - nothing to redo
-            // just because the student navigated back here.
+            // Always repopulate on open: PlayerSessionManager's students/{uid} listener
+            // stays alive for the whole session regardless of whether this screen is
+            // open, so CurrentStudent can already reflect a change (a quiz submission, a
+            // teacher edit, another device) that happened while this screen was disabled
+            // and therefore never heard OnStudentProfileChanged. Both calls are cheap
+            // (one cached read + one lightweight Firestore fetch), so there's no real
+            // cost to just always doing this on open - the same treatment
+            // RefreshProgressUI() below already gets.
+            PopulateLevelProgress();
+            PopulateProgressExtras();
 
             // Anatomy Play Mode performance and the weekly points chart are
             // refreshed every time this screen opens (see the plan's

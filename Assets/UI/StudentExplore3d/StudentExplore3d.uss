@@ -195,50 +195,98 @@
 .sync-progress-row {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    background-color: rgba(255, 255, 255, 0.14);
-    border-radius: 24px;
-    padding: 16px 22px;
-    margin-top: 20px;
+    justify-content: flex-start;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-radius: 26px;
+    padding: 18px 24px;
+    margin-top: 24px;
     box-sizing: border-box;
-}
-
-.sync-progress-button {
-    flex-shrink: 0;
-    width: auto;
-    height: 56px;
-    padding-left: 22px;
-    padding-right: 22px;
+    width: 100%;
+    height: auto;
     border-width: 0;
-    border-radius: 28px;
-    background-color: rgba(255, 255, 255, 0.22);
-    color: white;
-    font-size: 24px;
-    -unity-font-style: bold;
+    -unity-font-style: normal;
 }
 
-.sync-progress-button:hover {
-    background-color: rgba(255, 255, 255, 0.32);
+.sync-progress-row:hover {
+    background-color: rgba(255, 255, 255, 0.24);
 }
 
-.sync-progress-button:active {
-    background-color: rgba(255, 255, 255, 0.4);
+.sync-progress-row:active {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
-.sync-progress-button:disabled {
+.sync-progress-row:disabled {
     opacity: 0.7;
 }
 
-.sync-status-label {
+.sync-progress-row:focus {
+    border-width: 0;
+}
+
+/* White circular badge on the left holding the cloud glyph */
+.sync-icon-box {
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
+    background-color: rgb(255, 255, 255);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 24px;
+}
+
+.sync-icon {
+    font-size: 34px;
+    color: rgb(46, 170, 120);
+    -unity-text-align: middle-center;
+}
+
+.sync-text-col {
     flex-grow: 1;
     flex-shrink: 1;
-    margin-left: 20px;
-    font-size: 22px;
-    color: rgba(255, 255, 255, 0.9);
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sync-title-label {
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: white;
     white-space: normal;
     word-wrap: break-word;
-    -unity-text-align: middle-right;
 }
+
+.sync-status-label {
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* White circular badge on the right showing sync state (check / warning / spinner / cloud) */
+.sync-status-icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background-color: rgb(255, 255, 255);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 20px;
+}
+
+.sync-status-icon {
+    font-size: 28px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.sync-status-icon-synced .sync-status-icon { color: rgb(34, 160, 110); }
+.sync-status-icon-pending .sync-status-icon { color: rgb(224, 160, 40); }
+.sync-status-icon-failed .sync-status-icon { color: rgb(224, 60, 60); }
+.sync-status-icon-syncing .sync-status-icon { color: rgb(70, 120, 220); }
+.sync-status-icon-offline .sync-status-icon { color: rgb(140, 140, 150); }
 
 /* ---------------- SCROLL VIEW ---------------- */
 
@@ -315,13 +363,55 @@
 
 .card {
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     background-color: rgb(255, 255, 255);
     border-radius: 30px;
     padding: 30px;
     margin-bottom: 30px;
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Body-system image on the right of each card. align-items: stretch on
+   .card makes this element's height match the row's content height (driven
+   by .icon-box), then the negative top/right/bottom margins push it out
+   through the card's own padding so it bleeds flush to the top, right and
+   bottom edges - overflow: hidden on .card clips it to the rounded corners. */
+.card-image {
+    width: 240px;
+    flex-shrink: 0;
+    margin-top: -30px;
+    margin-right: -30px;
+    margin-bottom: -30px;
+    margin-left: 20px;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+/* Fades the left edge of the body-system image into the card's white
+   background so it reads as one blended photo rather than a hard-edged
+   cutout. background-image is assigned at runtime in
+   StudentExplore3dController.ApplyCardImageFades() to a white->transparent
+   horizontal gradient texture (same generated-texture approach as the
+   header's ApplyHeaderGradient), since USS has no linear-gradient(). */
+.card-image-fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Must stay fully transparent here. background-color and background-image
+       are composited onto this element's OWN box before that box is drawn
+       over the .card-image photo behind it - an opaque color would hide the
+       photo everywhere, no matter what alpha the runtime gradient image
+       uses. The white side of the fade comes entirely from the gradient
+       texture's own opaque pixels (see
+       StudentExplore3dController.ApplyCardImageFades()). */
+    background-color: rgba(255, 255, 255, 0);
+    background-repeat: no-repeat;
 }
 
 /* Reset default Unity Button chrome (border/focus outline/margin) so the
@@ -450,7 +540,8 @@
 /* ---------------- PRO TIP CARD ---------------- */
 
 .pro-tip-card {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     background-color: rgb(238, 232, 252);
     border-radius: 30px;
     padding: 30px;
@@ -459,11 +550,34 @@
     box-sizing: border-box;
 }
 
+.pro-tip-icon-box {
+    width: 90px;
+    height: 90px;
+    border-radius: 45px;
+    background-color: rgba(255, 255, 255, 0.6);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 26px;
+}
+
+.pro-tip-icon {
+    font-size: 44px;
+    -unity-text-align: middle-center;
+}
+
+.pro-tip-text-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
 .pro-tip-title {
-    font-size: 36px;
+    font-size: 34px;
     -unity-font-style: bold;
     color: rgb(90, 60, 160);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .pro-tip-text {
@@ -471,6 +585,15 @@
     color: rgb(90, 80, 120);
     white-space: normal;
     word-wrap: break-word;
+}
+
+.pro-tip-chevron {
+    font-size: 44px;
+    -unity-font-style: bold;
+    color: rgb(120, 90, 190);
+    margin-left: 16px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
 }
 
 /* ==========================================================
@@ -513,21 +636,40 @@
 }
 
 .compact .sync-progress-row {
-    padding: 12px 18px;
+    padding: 14px 18px;
     margin-top: 16px;
     border-radius: 20px;
 }
 
-.compact .sync-progress-button {
-    height: 46px;
-    padding-left: 18px;
-    padding-right: 18px;
-    font-size: 20px;
+.compact .sync-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    margin-right: 18px;
+}
+
+.compact .sync-icon {
+    font-size: 26px;
+}
+
+.compact .sync-title-label {
+    font-size: 24px;
 }
 
 .compact .sync-status-label {
     font-size: 18px;
+    margin-top: 2px;
+}
+
+.compact .sync-status-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
     margin-left: 14px;
+}
+
+.compact .sync-status-icon {
+    font-size: 22px;
 }
 
 .compact .play-mode-picker-banner {
@@ -558,6 +700,14 @@
     padding: 22px;
     border-radius: 22px;
     margin-bottom: 22px;
+}
+
+.compact .card-image {
+    width: 190px;
+    margin-top: -22px;
+    margin-right: -22px;
+    margin-bottom: -22px;
+    margin-left: 16px;
 }
 
 .compact .icon-box {
@@ -595,12 +745,27 @@
     border-radius: 22px;
 }
 
+.compact .pro-tip-icon-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 35px;
+    margin-right: 18px;
+}
+
+.compact .pro-tip-icon {
+    font-size: 34px;
+}
+
 .compact .pro-tip-title {
     font-size: 30px;
 }
 
 .compact .pro-tip-text {
     font-size: 22px;
+}
+
+.compact .pro-tip-chevron {
+    font-size: 36px;
 }
 
 /* Extra compact for very small screens */
@@ -645,17 +810,35 @@
     border-radius: 16px;
 }
 
-.compact-extra .sync-progress-button {
-    height: 38px;
-    padding-left: 14px;
-    padding-right: 14px;
-    font-size: 16px;
-    border-radius: 19px;
+.compact-extra .sync-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    margin-right: 14px;
+}
+
+.compact-extra .sync-icon {
+    font-size: 20px;
+}
+
+.compact-extra .sync-title-label {
+    font-size: 19px;
 }
 
 .compact-extra .sync-status-label {
     font-size: 15px;
+    margin-top: 2px;
+}
+
+.compact-extra .sync-status-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
     margin-left: 10px;
+}
+
+.compact-extra .sync-status-icon {
+    font-size: 18px;
 }
 
 .compact-extra .play-mode-picker-banner {
@@ -686,6 +869,14 @@
     padding: 18px;
     border-radius: 18px;
     margin-bottom: 18px;
+}
+
+.compact-extra .card-image {
+    width: 150px;
+    margin-top: -18px;
+    margin-right: -18px;
+    margin-bottom: -18px;
+    margin-left: 12px;
 }
 
 .compact-extra .icon-box {
@@ -723,10 +914,25 @@
     border-radius: 18px;
 }
 
+.compact-extra .pro-tip-icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    margin-right: 14px;
+}
+
+.compact-extra .pro-tip-icon {
+    font-size: 28px;
+}
+
 .compact-extra .pro-tip-title {
     font-size: 26px;
 }
 
 .compact-extra .pro-tip-text {
     font-size: 18px;
+}
+
+.compact-extra .pro-tip-chevron {
+    font-size: 30px;
 }

@@ -59,6 +59,10 @@
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .header-icon-circle:hover
@@ -70,6 +74,15 @@
 {
     font-size: 45px;
     -unity-text-align: middle-center;
+}
+
+/* Initials fallback for #profile-button, populated at runtime by
+   AdminDashboardController.ApplyAvatar() - shown until/unless the admin has
+   a Cloudinary avatar photo set. */
+.profile-avatar-initials
+{
+    -unity-font-style: bold;
+    color: white;
 }
 
 .header-text
