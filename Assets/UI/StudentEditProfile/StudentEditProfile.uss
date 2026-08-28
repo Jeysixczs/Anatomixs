@@ -254,6 +254,67 @@
     -unity-font-style: bold;
 }
 
+/* ---------- Avatar picker card ---------- */
+
+.avatar-picker-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.avatar-preview
+{
+    width: 159px;
+    height: 159px;
+    border-radius: 79px;
+    background-color: rgb(142, 45, 226);
+    border-width: 3px;
+    border-color: rgba(0, 0, 0, 0.06);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 37px;
+    overflow: hidden;
+}
+
+.avatar-preview-initials
+{
+    font-size: 61px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.avatar-picker-actions
+{
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.change-photo-button
+{
+    align-self: flex-start;
+    background-color: rgb(240, 241, 245);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.08);
+    border-radius: 21px;
+    padding: 18px 30px;
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: rgb(142, 45, 226);
+}
+
+.change-photo-button:hover
+{
+    background-color: rgb(230, 231, 236);
+}
+
+.change-photo-button:disabled
+{
+    color: rgb(163, 167, 183);
+}
+
 /* ---------- Email verification card ---------- */
 
 .verify-status-badge
@@ -548,6 +609,25 @@
 }
 
 .compact .change-password-button
+{
+    font-size: 24px;
+    padding: 14px 24px;
+}
+
+.compact .avatar-preview
+{
+    width: 118px;
+    height: 118px;
+    border-radius: 60px;
+    margin-right: 26px;
+}
+
+.compact .avatar-preview-initials
+{
+    font-size: 47px;
+}
+
+.compact .change-photo-button
 {
     font-size: 24px;
     padding: 14px 24px;

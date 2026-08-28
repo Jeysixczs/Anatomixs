@@ -1347,7 +1347,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   diagonalGradient: 1
   gradientTextureResolution: 64
-  syncService: {fileID: 0}
+  syncService: {fileID: 1051780052}
 --- !u!114 &1051780049
 MonoBehaviour:
   m_ObjectHideFlags: 0

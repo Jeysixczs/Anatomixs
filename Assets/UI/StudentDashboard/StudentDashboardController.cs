@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
 
@@ -23,9 +25,19 @@ namespace Anatomia3D.UI
         private VisualElement _header;
         private VisualElement _joinclassroomcard;
 
-        private Button _menuButton;
+        private Button _profile;
+        private Label _profileInitialsLabel;
         private Button _notificationButton;
         private Label _studentNameLabel;
+
+        // Cloudinary avatar state for #profile-button - same pattern as
+        // StudentProfileController's #avatar: show the photo if AvatarUrl is
+        // set, otherwise fall back to initials. Cached so repeated
+        // PopulateDashboard() calls (OnEnable, OnStudentProfileChanged) don't
+        // re-download the same image.
+        private string _loadedAvatarUrl;
+        private Texture2D _avatarTexture;
+        private Coroutine _avatarLoadRoutine;
 
         private Label _currentLevelLabel;
         private Label _nextLevelLabel;
@@ -163,6 +175,18 @@ namespace Anatomia3D.UI
                 Destroy(_gradientTexture);
                 _gradientTexture = null;
             }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
         }
 
         private void OnStudentProfileChanged(PlayerSessionManager.StudentProfile student)
@@ -229,7 +253,7 @@ namespace Anatomia3D.UI
         {
             if (_screenRoot == null) return;
 
-            _menuButton?.UnregisterCallback<ClickEvent>(OnProfileClicked);
+            _profile?.UnregisterCallback<ClickEvent>(OnProfileClicked);
             _notificationButton?.UnregisterCallback<ClickEvent>(OnNotificationClicked);
             _explore3DButton?.UnregisterCallback<ClickEvent>(OnExplore3DClicked);
             _classroomHubButton?.UnregisterCallback<ClickEvent>(OnClassroomHubClicked);
@@ -260,7 +284,8 @@ namespace Anatomia3D.UI
             _header = _screenRoot.Q<VisualElement>("header");
             _joinclassroomcard = _screenRoot.Q<VisualElement>("join-classroom-icon-box");
 
-            _menuButton = _screenRoot.Q<Button>("menu-button");
+            _profile = _screenRoot.Q<Button>("profile-button");
+            _profileInitialsLabel = _screenRoot.Q<Label>("profile-initials-label");
             _notificationButton = _screenRoot.Q<Button>("notification-button");
             _studentNameLabel = _screenRoot.Q<Label>("student-name-label");
 
@@ -298,7 +323,7 @@ namespace Anatomia3D.UI
 
         private void WireCallbacks()
         {
-            if (_menuButton != null) _menuButton.RegisterCallback<ClickEvent>(OnProfileClicked);
+            if (_profile != null) _profile.RegisterCallback<ClickEvent>(OnProfileClicked);
             if (_notificationButton != null) _notificationButton.RegisterCallback<ClickEvent>(OnNotificationClicked);
             if (_explore3DButton != null) _explore3DButton.RegisterCallback<ClickEvent>(OnExplore3DClicked);
             if (_classroomHubButton != null) _classroomHubButton.RegisterCallback<ClickEvent>(OnClassroomHubClicked);
@@ -355,6 +380,7 @@ namespace Anatomia3D.UI
                 Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
                     "falling back to raw points/quiz stats without level-progress math.");
                 SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
+                ApplyAvatar(student.FullName, student.AvatarUrl);
                 return;
             }
 
@@ -371,6 +397,8 @@ namespace Anatomia3D.UI
                     quizzesCompleted: student.QuizzesCompleted,
                     totalPoints: student.TotalPoints
                 );
+
+                ApplyAvatar(student.FullName, student.AvatarUrl);
             });
         }
 
@@ -391,6 +419,116 @@ namespace Anatomia3D.UI
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_levelValueLabel != null) _levelValueLabel.text = currentLevel.ToString();
             if (_pointsValueLabel != null) _pointsValueLabel.text = totalPoints.ToString();
+        }
+
+        // ---------------- Avatar (Cloudinary) ----------------
+        // Same approach as StudentProfileController's #avatar: show the
+        // student's Cloudinary photo if AvatarUrl is set, otherwise fall back
+        // to initials. Skips re-downloading when avatarUrl hasn't changed
+        // since the last successful load (PopulateDashboard runs on every
+        // OnEnable and OnStudentProfileChanged).
+
+        private void ApplyAvatar(string studentName, string avatarUrl)
+        {
+            if (_profile == null) return;
+
+            if (_profileInitialsLabel != null)
+                _profileInitialsLabel.text = GetInitials(studentName);
+
+            if (string.IsNullOrEmpty(avatarUrl))
+            {
+                ShowInitialsAvatar();
+                return;
+            }
+
+            if (avatarUrl == _loadedAvatarUrl && _avatarTexture != null)
+            {
+                // Already showing this exact image - nothing to do.
+                return;
+            }
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+            }
+            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl));
+        }
+
+        private void ShowInitialsAvatar()
+        {
+            _profile.style.backgroundImage = StyleKeyword.Null;
+            if (_profileInitialsLabel != null)
+                _profileInitialsLabel.style.display = DisplayStyle.Flex;
+
+            if (_avatarLoadRoutine != null)
+            {
+                StopCoroutine(_avatarLoadRoutine);
+                _avatarLoadRoutine = null;
+            }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+                _avatarTexture = null;
+            }
+            _loadedAvatarUrl = null;
+        }
+
+        private IEnumerator LoadAvatarImage(string avatarUrl)
+        {
+            using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                _avatarLoadRoutine = null;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[StudentDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    // Leave whatever's currently showing (initials, most likely)
+                    // rather than blanking the avatar out over a transient network hiccup.
+                    yield break;
+                }
+
+                if (_avatarTexture != null)
+                {
+                    Destroy(_avatarTexture);
+                }
+
+                _avatarTexture = DownloadHandlerTexture.GetContent(request);
+                _loadedAvatarUrl = avatarUrl;
+
+                if (_profile == null) yield break; // screen may have been disabled while the request was in flight.
+
+                _profile.style.backgroundImage = new StyleBackground(_avatarTexture);
+                ApplyCoverBackground(_profile);
+
+                // Image fills the circle now - the initials fallback underneath
+                // would otherwise show through any transparent corners.
+                if (_profileInitialsLabel != null)
+                    _profileInitialsLabel.style.display = DisplayStyle.None;
+            }
+        }
+
+        // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style
+        // background-* properties) - this is the ScaleAndCrop-equivalent combination:
+        // fill the element, keep aspect ratio, crop overflow, centered.
+        private static void ApplyCoverBackground(VisualElement element)
+        {
+            element.style.backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
+            element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
+            element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
+        }
+
+        private static string GetInitials(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return "?";
+
+            var parts = fullName.Trim().Split(' ');
+            if (parts.Length == 1) return parts[0].Substring(0, Mathf.Min(2, parts[0].Length)).ToUpper();
+
+            return $"{parts[0][0]}{parts[parts.Length - 1][0]}".ToUpper();
         }
 
         /// <summary>Pulls this student's merged quiz/badge/classroom-join activity from

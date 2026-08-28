@@ -1,3 +1,4 @@
+using System;
 using Anatomia3D.Backend;
 using Anatomia3D.UI;
 using UnityEngine;
@@ -198,9 +199,20 @@ public class StudentExplore3dController : MonoBehaviour
         if (syncService == null)
         {
             // No sync service assigned - leave the button/label exactly as
-            // authored in the UXML rather than guessing at a state.
+            // authored in the UXML rather than guessing at a state. This is
+            // the #1 cause of "the sync button never updates" - it fails
+            // silently otherwise, so make it loud instead.
+            Debug.LogWarning("[StudentExplore3dController] Sync Service is not assigned in the Inspector - " +
+                              "the sync button/label will stay static and never update. " +
+                              "Assign the AnatomyPlayModeSyncService from the persistent Bootstrap GameObject.");
             return;
         }
+
+        Debug.Log($"[StudentExplore3dController] Wiring sync UI to service instance {syncService.GetInstanceID()} " +
+                  $"(singleton Instance is {(AnatomyPlayModeSyncService.Instance != null ? AnatomyPlayModeSyncService.Instance.GetInstanceID().ToString() : "null")})" +
+                  (AnatomyPlayModeSyncService.Instance != null && syncService.GetInstanceID() != AnatomyPlayModeSyncService.Instance.GetInstanceID()
+                      ? " - MISMATCH: this is not the live singleton, events from the real sync service will never reach this UI!"
+                      : ""));
 
         syncService.OnStatusChanged -= HandleSyncStatusChanged;
         syncService.OnStatusChanged += HandleSyncStatusChanged;
@@ -216,6 +228,9 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnSyncProgressButtonClicked()
     {
+        Debug.Log("[StudentExplore3dController] Sync Progress button clicked " +
+                   $"(syncService assigned: {syncService != null}, online: {(syncService != null ? syncService.IsOnline.ToString() : "n/a")})");
+
         if (syncService == null) return;
 
         if (!syncService.IsOnline)
@@ -233,6 +248,8 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void HandleSyncStatusChanged(PlayModeSyncState state, int pendingCount)
     {
+        Debug.Log($"[StudentExplore3dController] Sync status changed -> {state} (pending: {pendingCount})");
+
         switch (state)
         {
             case PlayModeSyncState.Syncing:
@@ -265,14 +282,48 @@ public class StudentExplore3dController : MonoBehaviour
                 break;
 
             case PlayModeSyncState.Synced:
-            case PlayModeSyncState.Idle:
-            default:
                 SetSyncTitleText("Sync Progress");
-                SetSyncStatusText("Last synced: Just now");
+                SetSyncStatusText(FormatLastSyncedText());
                 SetSyncStatusIcon("✓", "sync-status-icon-synced");
                 SetSyncProgressButtonEnabled(true);
                 break;
+
+            case PlayModeSyncState.Idle:
+            default:
+                // Nothing evaluated yet - before RefreshStatus/RequestFullSync
+                // publish anything real. Don't claim synced/up-to-date state
+                // we don't actually know yet.
+                SetSyncTitleText("Sync Progress");
+                SetSyncStatusText("Checking sync status...");
+                SetSyncStatusIcon("⟳", "sync-status-icon-syncing");
+                SetSyncProgressButtonEnabled(false);
+                break;
         }
+    }
+
+    // Builds an accurate "Last synced: X ago" string from
+    // syncService.LastSuccessfulSyncUtc - which is only ever set the moment
+    // a real upload+download actually completed successfully (see
+    // AnatomyPlayModeSyncService.MarkSyncSucceeded), never inferred just
+    // because nothing happens to be pending right now. Falls back to "Up to
+    // date" if this device has no recorded successful sync yet (e.g. a
+    // fresh install where PendingCount is 0 because nothing's been played).
+    private string FormatLastSyncedText()
+    {
+        if (syncService == null || syncService.LastSuccessfulSyncUtc == null)
+            return "Up to date";
+
+        var elapsed = DateTime.UtcNow - syncService.LastSuccessfulSyncUtc.Value;
+
+        if (elapsed < TimeSpan.FromSeconds(45)) return "Last synced: Just now";
+        if (elapsed < TimeSpan.FromMinutes(2)) return "Last synced: 1 minute ago";
+        if (elapsed < TimeSpan.FromHours(1)) return $"Last synced: {(int)elapsed.TotalMinutes} minutes ago";
+        if (elapsed < TimeSpan.FromHours(2)) return "Last synced: 1 hour ago";
+        if (elapsed < TimeSpan.FromDays(1)) return $"Last synced: {(int)elapsed.TotalHours} hours ago";
+        if (elapsed < TimeSpan.FromDays(2)) return "Last synced: yesterday";
+        if (elapsed < TimeSpan.FromDays(30)) return $"Last synced: {(int)elapsed.TotalDays} days ago";
+
+        return $"Last synced: {syncService.LastSuccessfulSyncUtc.Value.ToLocalTime():MMM d}";
     }
 
     private void SetSyncTitleText(string text)

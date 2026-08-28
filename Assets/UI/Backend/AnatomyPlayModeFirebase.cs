@@ -27,6 +27,7 @@ namespace Anatomia3D.Backend
     public class AnatomyPlayModeFirebase : MonoBehaviour
     {
         private const string CollectionName = "anatomyPlayModeAttempts";
+        private const string SyncStatusCollectionName = "anatomyPlayModeSyncStatus";
 
         private FirebaseFirestore Db => FirebaseBootstrap.Instance != null ? FirebaseBootstrap.Instance.Db : null;
 
@@ -204,5 +205,87 @@ namespace Anatomia3D.Backend
 
         private static int GetInt(DocumentSnapshot doc, string field) =>
             doc.ContainsField(field) ? doc.GetValue<int>(field) : 0;
+
+        /// <summary>Records the UTC time this device just finished a fully-
+        /// successful sync, in a tiny per-student doc separate from the
+        /// attempt records above - so any device signed into the same
+        /// account can show an accurate "Last synced" time, not just
+        /// whatever a single device remembers locally (see the plan's
+        /// cross-device sync-status follow-up). Only
+        /// AnatomyPlayModeSyncService should call this, right after a sync
+        /// it ran itself actually completed. Fire-and-forget from the
+        /// sync flow's point of view: a failure here never fails or blocks
+        /// the sync that just happened, it only means other devices won't
+        /// see this particular timestamp until the next successful
+        /// write.</summary>
+        public void UpdateLastSyncedTimestamp(string studentId, DateTime utcTime, Action<bool> onComplete = null)
+        {
+            if (Db == null)
+            {
+                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - skipping last-synced update.");
+                onComplete?.Invoke(false);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(studentId))
+            {
+                onComplete?.Invoke(false);
+                return;
+            }
+
+            var docRef = Db.Collection(SyncStatusCollectionName).Document(studentId);
+            docRef.SetAsync(new Dictionary<string, object>
+            {
+                { "studentId", studentId },
+                { "lastSyncedUtc", Timestamp.FromDateTime(DateTime.SpecifyKind(utcTime, DateTimeKind.Utc)) }
+            }).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not update last-synced timestamp for '{studentId}': {task.Exception}");
+                    onComplete?.Invoke(false);
+                    return;
+                }
+
+                onComplete?.Invoke(true);
+            });
+        }
+
+        /// <summary>Reads the most recent "last synced" time any device has
+        /// recorded for studentId - so a device that's behind (freshly
+        /// installed, or hasn't synced in a while) can reflect sync
+        /// activity that happened elsewhere instead of only its own local
+        /// history. Purely informational: always calls onComplete, with
+        /// null (never an error) if there's no record yet or the read
+        /// fails, so callers can safely fold it into their own status
+        /// without special-casing failures.</summary>
+        public void FetchLastSyncedTimestamp(string studentId, Action<DateTime?> onComplete)
+        {
+            if (Db == null || string.IsNullOrEmpty(studentId))
+            {
+                onComplete?.Invoke(null);
+                return;
+            }
+
+            Db.Collection(SyncStatusCollectionName).Document(studentId).GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
+                    {
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    var snapshot = task.Result;
+                    if (!snapshot.ContainsField("lastSyncedUtc"))
+                    {
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    var ts = snapshot.GetValue<Timestamp>("lastSyncedUtc");
+                    onComplete?.Invoke(ts.ToDateTime());
+                });
+        }
     }
 }

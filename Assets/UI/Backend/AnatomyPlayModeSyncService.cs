@@ -96,6 +96,16 @@ namespace Anatomia3D.Backend
         /// carried.</summary>
         public int PendingCount { get; private set; }
 
+        /// <summary>UTC time of the last sync that actually completed
+        /// successfully over the network (upload succeeded and nothing was
+        /// left pending afterward) - NOT set just because RefreshStatus()
+        /// found zero pending records on disk. Persisted per-student via
+        /// PlayerPrefs so it survives app restarts; null means this device
+        /// has never completed a real sync for the current student (yet).
+        /// StudentExplore3dController reads this to show an accurate
+        /// "Last synced: X ago" instead of a blanket "Just now".</summary>
+        public DateTime? LastSuccessfulSyncUtc { get; private set; }
+
         /// <summary>Fires whenever sync status changes - state, plus how
         /// many local records are still pending. StudentExplore3dController
         /// uses this to drive the Sync button text/status label without
@@ -119,6 +129,82 @@ namespace Anatomia3D.Backend
             PlayerSessionManager.Instance != null && PlayerSessionManager.Instance.CurrentStudent != null
                 ? PlayerSessionManager.Instance.CurrentStudent.Uid
                 : null;
+
+        private const string LastSyncPrefPrefix = "PlayModeLastSyncUtc_";
+        private string _lastSyncLoadedForStudentId;
+
+        private static string SanitizeForPrefs(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "unknown";
+            var sb = new System.Text.StringBuilder(s.Length);
+            foreach (char c in s)
+                sb.Append(char.IsLetterOrDigit(c) ? c : '_');
+            return sb.ToString();
+        }
+
+        // Loads LastSuccessfulSyncUtc for studentId from PlayerPrefs the
+        // first time it's needed for that student this session (e.g. app
+        // just started, or a different student signed in) - so the very
+        // first status published can already reflect a real prior sync
+        // instead of always looking like "never synced" until one runs.
+        private void EnsureLastSyncLoaded(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId) || studentId == _lastSyncLoadedForStudentId) return;
+
+            _lastSyncLoadedForStudentId = studentId;
+            string key = LastSyncPrefPrefix + SanitizeForPrefs(studentId);
+            string stored = PlayerPrefs.GetString(key, string.Empty);
+
+            if (!string.IsNullOrEmpty(stored) &&
+                DateTime.TryParse(stored, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            {
+                LastSuccessfulSyncUtc = parsed;
+            }
+            else
+            {
+                LastSuccessfulSyncUtc = null;
+            }
+        }
+
+        private void PersistLastSyncedLocally(string studentId, DateTime utc)
+        {
+            if (string.IsNullOrEmpty(studentId)) return;
+
+            string key = LastSyncPrefPrefix + SanitizeForPrefs(studentId);
+            PlayerPrefs.SetString(key, utc.ToString("o"));
+            PlayerPrefs.Save();
+        }
+
+        // Called only when a sync genuinely completed successfully over the
+        // network (see FinishFullSync/RequestSync) - never on a locally-
+        // inferred "nothing pending" Synced state. Persists locally right
+        // away (so this device is correct even if it never gets a chance to
+        // reach Firebase again), and also best-effort pushes the same
+        // timestamp up to Firebase so other devices signed into this
+        // student's account can reflect it too - see
+        // AnatomyPlayModeFirebase.UpdateLastSyncedTimestamp.
+        private void MarkSyncSucceeded(string studentId)
+        {
+            LastSuccessfulSyncUtc = DateTime.UtcNow;
+            PersistLastSyncedLocally(studentId, LastSuccessfulSyncUtc.Value);
+
+            if (firebase != null && !string.IsNullOrEmpty(studentId))
+                firebase.UpdateLastSyncedTimestamp(studentId, LastSuccessfulSyncUtc.Value);
+        }
+
+        // Adopts a newer timestamp seen on another device (from Firebase)
+        // as our own best-known LastSuccessfulSyncUtc, if it's actually
+        // newer than what this device already knows - e.g. this device
+        // hasn't synced in a while and another device has synced more
+        // recently. Never moves LastSuccessfulSyncUtc backwards.
+        private void ReconcileLastSynced(string studentId, DateTime? remoteUtc)
+        {
+            if (remoteUtc == null) return;
+            if (LastSuccessfulSyncUtc != null && LastSuccessfulSyncUtc.Value >= remoteUtc.Value) return;
+
+            LastSuccessfulSyncUtc = remoteUtc;
+            PersistLastSyncedLocally(studentId, remoteUtc.Value);
+        }
 
         private void OnEnable()
         {
@@ -216,7 +302,10 @@ namespace Anatomia3D.Backend
 
             string studentId = CurrentStudentId;
             if (!string.IsNullOrEmpty(studentId))
+            {
                 localStorage.Load(studentId);
+                EnsureLastSyncLoaded(studentId);
+            }
 
             if (!IsOnline)
             {
@@ -243,7 +332,15 @@ namespace Anatomia3D.Backend
         /// stays 'pending' for the next try).</summary>
         public void RequestSync()
         {
-            if (_syncInProgress) return;
+            if (_syncInProgress)
+            {
+                // A sync (this one or a full sync) is already running - let
+                // the UI know rather than silently doing nothing, otherwise
+                // a tap/trigger that lands mid-sync looks like it had no
+                // effect at all.
+                PublishStatus(PlayModeSyncState.Syncing);
+                return;
+            }
             if (firebase == null || localStorage == null) return;
             if (!IsOnline)
             {
@@ -261,10 +358,16 @@ namespace Anatomia3D.Backend
             _syncInProgress = true;
             PublishStatus(PlayModeSyncState.Syncing);
 
+            string studentId = CurrentStudentId;
+
             UploadPending(pending, allSucceeded =>
             {
                 _syncInProgress = false;
-                PublishStatus(localStorage.PendingCount > 0
+                bool stillPending = localStorage.PendingCount > 0;
+                if (allSucceeded && !stillPending)
+                    MarkSyncSucceeded(studentId);
+
+                PublishStatus(stillPending
                     ? PlayModeSyncState.Failed
                     : PlayModeSyncState.Synced);
             });
@@ -288,6 +391,13 @@ namespace Anatomia3D.Backend
         {
             if (_syncInProgress)
             {
+                // Same reasoning as RequestSync(): a sync is genuinely
+                // running right now, so tell the UI that instead of leaving
+                // it showing whatever it showed before this call - e.g. a
+                // manual "Sync Progress" tap that lands while the
+                // auto-sync from screen-open is still in flight would
+                // otherwise look like it did nothing.
+                PublishStatus(PlayModeSyncState.Syncing);
                 onComplete?.Invoke(false);
                 return;
             }
@@ -309,6 +419,7 @@ namespace Anatomia3D.Backend
             // whatever this device has actually persisted, not just
             // whatever happens to already be in memory.
             localStorage.Load(studentId);
+            EnsureLastSyncLoaded(studentId);
 
             if (!IsOnline)
             {
@@ -323,35 +434,48 @@ namespace Anatomia3D.Backend
             var pending = localStorage.GetPendingRecords();
             UploadPending(pending, uploadSucceeded =>
             {
-                firebase.FetchProgress(studentId,
-                    remoteRecords =>
-                    {
-                        foreach (var record in remoteRecords)
-                            localStorage.MergeRemoteRecord(record);
+                // Pick up any newer "last synced" time another device has
+                // recorded before deciding our own, so a device that's
+                // behind reflects cross-device activity rather than only
+                // ever showing its own sync history.
+                firebase.FetchLastSyncedTimestamp(studentId, remoteUtc =>
+                {
+                    ReconcileLastSynced(studentId, remoteUtc);
 
-                        FinishFullSync(uploadSucceeded, onComplete);
-                    },
-                    _ =>
-                    {
-                        // Download failed - uploaded records are still
-                        // safely marked synced above; just skip the
-                        // merge step this time.
-                        FinishFullSync(uploadSucceeded, onComplete);
-                    });
+                    firebase.FetchProgress(studentId,
+                        remoteRecords =>
+                        {
+                            foreach (var record in remoteRecords)
+                                localStorage.MergeRemoteRecord(record);
+
+                            FinishFullSync(studentId, uploadSucceeded, onComplete);
+                        },
+                        _ =>
+                        {
+                            // Download failed - uploaded records are still
+                            // safely marked synced above; just skip the
+                            // merge step this time.
+                            FinishFullSync(studentId, uploadSucceeded, onComplete);
+                        });
+                });
             });
         }
 
-        private void FinishFullSync(bool uploadSucceeded, Action<bool> onComplete)
+        private void FinishFullSync(string studentId, bool uploadSucceeded, Action<bool> onComplete)
         {
             _syncInProgress = false;
 
             bool stillPending = localStorage.PendingCount > 0;
-            PublishStatus(!uploadSucceeded || stillPending
-                ? PlayModeSyncState.Failed
-                : PlayModeSyncState.Synced);
+            bool fullySucceeded = uploadSucceeded && !stillPending;
+            if (fullySucceeded)
+                MarkSyncSucceeded(studentId);
+
+            PublishStatus(fullySucceeded
+                ? PlayModeSyncState.Synced
+                : PlayModeSyncState.Failed);
 
             OnSyncCompleted?.Invoke();
-            onComplete?.Invoke(uploadSucceeded && !stillPending);
+            onComplete?.Invoke(fullySucceeded);
         }
 
         // Uploads pending records one at a time (rather than firing every

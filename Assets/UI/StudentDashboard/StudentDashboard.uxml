@@ -5,7 +5,9 @@
             <ui:VisualElement name="content-wrapper" class="content-wrapper" style="width: 100%; flex-direction: column; padding: 0; margin: 0;">
                 <ui:VisualElement name="header" class="header">
                     <ui:VisualElement name="header-top-row" class="header-top-row" style="margin-top: 45px; margin-bottom: 45px;">
-                        <ui:Button name="menu-button" class="icon-button icon-menu" style="width: 124px; height: 130px; background-image: url(&quot;project://database/Assets/UI/Icons/profile-icon.png?fileID=2800000&amp;guid=c67a1460b59385c4d82be69e72468ab3&amp;type=3#profile-icon&quot;);"/>
+                        <ui:Button name="profile-button" class="profile-avatar-button" style="width: 124px; height: 130px;">
+                            <ui:Label name="profile-initials-label" text="" class="profile-avatar-initials"/>
+                        </ui:Button>
                         <ui:VisualElement name="header-title-block" class="header-title-block">
                             <ui:Label text="Welcome back!" class="welcome-title"/>
                             <ui:Label name="student-name-label" text="Jeysi" class="welcome-subtitle"/>
