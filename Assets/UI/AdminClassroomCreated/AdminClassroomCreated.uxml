@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminClassroomCreated/AdminClassroomCreated.uss?fileID=7433441132597879392&amp;guid=00000000000000000000000000000004&amp;type=3#AdminClassroomCreated"/>
+    <Style src="project://database/Assets/UI/AdminClassroomCreated/AdminClassroomCreated.uss"/>
     <ui:VisualElement name="screen-root" class="screen-root">
 
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
