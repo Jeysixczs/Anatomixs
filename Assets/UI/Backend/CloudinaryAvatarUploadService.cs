@@ -37,10 +37,11 @@ namespace Anatomia3D.Backend
                  "signed presets require an API secret, which must never ship in the app.")]
         [SerializeField] private string uploadPreset;
 
-        [Tooltip("Cloudinary 'Asset folder' the preset is scoped to, purely for building " +
-                 "a stable public_id below (e.g. 'avatars/{uid}') so re-uploads overwrite " +
-                 "the old avatar instead of piling up new assets. Leave blank if your " +
-                 "preset doesn't use one.")]
+        [Tooltip("Cloudinary 'Asset folder' the preset is scoped to, purely for grouping " +
+                 "each user's avatars under a shared prefix (e.g. 'avatars/{uid}_{timestamp}'). " +
+                 "Cloudinary never overwrites existing assets on unsigned uploads, so every " +
+                 "upload still gets its own unique public_id underneath this folder. Leave " +
+                 "blank if your preset doesn't use one.")]
         [SerializeField] private string assetFolder = "avatars";
 
         private void Awake()
@@ -92,10 +93,40 @@ namespace Anatomia3D.Backend
             form.AddBinaryData("file", imageBytes, $"{studentUid}_avatar.jpg", "image/jpeg");
             form.AddField("upload_preset", uploadPreset);
 
-            // Deterministic public_id (same shape as PlayModeAnswerRecord.DocumentId) -
-            // means re-uploading a new photo overwrites this student's existing
-            // Cloudinary asset instead of accumulating a new one every time.
-            string publicId = string.IsNullOrEmpty(assetFolder) ? studentUid : $"{assetFolder}/{studentUid}";
+            // IMPORTANT: Cloudinary permanently ignores "overwrite" on UNSIGNED
+            // uploads - it is hard-coded to false server-side no matter what the
+            // request or the upload preset says (see "Cloudinary always treats
+            // overwrite as false in unsigned uploads" in Cloudinary's own Upload
+            // API reference). A previous version of this method reused a fixed,
+            // deterministic public_id ("avatars/{uid}") on the theory that
+            // re-uploading would overwrite the old asset. In practice that only
+            // "worked" for a student's/admin's FIRST ever avatar upload, when
+            // nothing existed at that public_id yet. Every upload after that hit
+            // an existing asset with the same public_id; Cloudinary responded
+            // with existing:true, HTTP 200, and the OLD asset's unchanged
+            // secure_url - so UploadAvatar reported success, but the "new" URL
+            // handed back (and then written to Firestore by the caller) was
+            // identical to the one already on file. Net effect: changing a photo
+            // silently did nothing once a photo already existed, which is why it
+            // reappeared unchanged after leaving/reopening Edit Profile or
+            // restarting the app.
+            //
+            // Fix: give every upload its own unique public_id (still scoped
+            // under this user's own asset folder, so assets stay grouped and
+            // attributable) so there is never a collision and Cloudinary always
+            // creates a brand-new asset with a genuinely new secure_url. This
+            // works no matter how the unsigned upload preset is configured.
+            //
+            // We deliberately do NOT try to delete the old Cloudinary asset from
+            // here - that requires a signed request with the API secret, which
+            // this class's whole design intentionally keeps out of the client
+            // build (see class summary above). The orphaned old asset is
+            // harmless: nothing in the app reads it once Firestore's avatarUrl
+            // has moved on to the new one.
+            string uniqueSuffix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            string publicId = string.IsNullOrEmpty(assetFolder)
+                ? $"{studentUid}_{uniqueSuffix}"
+                : $"{assetFolder}/{studentUid}_{uniqueSuffix}";
             form.AddField("public_id", publicId);
 
             using (var request = UnityWebRequest.Post(url, form))
@@ -116,6 +147,17 @@ namespace Anatomia3D.Backend
                     Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload succeeded but no secure_url in response: {request.downloadHandler.text}");
                     onComplete?.Invoke(false, null);
                     yield break;
+                }
+
+                // Belt-and-braces: with a unique public_id per upload (above) this
+                // should never happen again, but if it ever does, "existing":true
+                // means Cloudinary handed back an OLD asset's URL instead of a new
+                // one - surface that loudly rather than silently reporting success
+                // with a stale photo.
+                if (ResponseIndicatesExistingAsset(request.downloadHandler.text))
+                {
+                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Cloudinary reported 'existing: true' for '{studentUid}' - " +
+                                      "the returned secure_url may point at a pre-existing asset instead of this upload.");
                 }
 
                 onComplete?.Invoke(true, secureUrl);
@@ -140,6 +182,19 @@ namespace Anatomia3D.Backend
             }
 
             return null;
+        }
+
+        private static bool ResponseIndicatesExistingAsset(string json)
+        {
+            try
+            {
+                return MiniJson.Parse(json) is Dictionary<string, object> root &&
+                       root.TryGetValue("existing", out var value) && value is bool existing && existing;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }
