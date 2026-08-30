@@ -285,6 +285,13 @@ namespace Anatomia3D.UI
         private ListenerRegistration _rosterListener;
         private ClassroomService.AvailableQuizzesListenerHandle _availableQuizzesHandle;
 
+        /// <summary>"You're Offline" overlay with Retry / Go back to Dashboard - shown
+        /// when this screen is opened/entered offline, and toggled live if the
+        /// connection drops or comes back while it's open. Rebuilt every OnEnable
+        /// (see OfflineOverlay's own doc comment - CloneTree wipes the whole screen
+        /// tree on every UIManager.ShowScreen()).</summary>
+        private OfflineOverlay _offlineOverlay;
+
         /// <summary>Latest value from the classroom-detail listener. The roster listener's
         /// callback (leaderboard) needs LeaderboardVisible/TeacherName/Description, and
         /// LoadQuizStartEligibility needs nothing from it directly - but both fire
@@ -354,15 +361,33 @@ namespace Anatomia3D.UI
             SetScores(_lastScores);
             SetBadges(_lastBadgePoints, _lastBadges);
 
+            // Screen tree was just rebuilt (see class doc) - rebuild the overlay on
+            // top of it and re-subscribe (guard against a double-subscribe if
+            // OnEnable ever runs twice without OnDisable in between).
+            _offlineOverlay?.Dispose();
+            _offlineOverlay = new OfflineOverlay(_screenRoot, OnOfflineRetry, OnOfflineGoToDashboard);
+
+            NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            NetworkStatusMonitor.OnConnectivityChanged += OnConnectivityStatusChanged;
+
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back).
             // Only refetch if this is a DIFFERENT classroom than what's currently
             // loaded - SetClassroomIdentity() already forces a fresh load whenever
             // the student actually navigates into a classroom (same or different),
             // so this only catches the "re-enabled with nothing new to show" case,
-            // which the cache repaint above already handled.
+            // which the cache repaint above already handled. LoadClassroomContent()
+            // itself checks NetworkStatusMonitor.IsOnline and shows the offline
+            // overlay instead of fetching when offline (Scenario 1).
             if (!string.IsNullOrEmpty(_classroomId) && _classroomId != _lastLoadedClassroomId)
             {
                 LoadClassroomContent();
+            }
+            else if (!NetworkStatusMonitor.IsOnline)
+            {
+                // Re-entering the SAME classroom while offline - nothing to (re)load,
+                // but still surface the overlay rather than silently showing
+                // possibly-stale data with no way to retry.
+                _offlineOverlay.Show();
             }
         }
 
@@ -371,11 +396,48 @@ namespace Anatomia3D.UI
             UnregisterCallbacks();
             StopClassroomListeners();
 
+            NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            _offlineOverlay?.Dispose();
+            _offlineOverlay = null;
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        // ---------------- Offline handling ----------------
+
+        /// <summary>Scenario 2: student is already viewing this screen (any tab) and
+        /// the connection drops or comes back - see NetworkStatusMonitor.</summary>
+        private void OnConnectivityStatusChanged(bool isOnline)
+        {
+            if (_offlineOverlay == null) return;
+
+            if (!isOnline)
+            {
+                Debug.Log("[StudentClassroomDetailController] Connection lost - showing offline overlay.");
+                _offlineOverlay.Show();
+            }
+            else if (_offlineOverlay.IsVisible)
+            {
+                Debug.Log("[StudentClassroomDetailController] Connection restored - hiding offline overlay and reloading classroom content.");
+                _offlineOverlay.Hide();
+                LoadClassroomContent();
+            }
+        }
+
+        private void OnOfflineRetry()
+        {
+            Debug.Log("[StudentClassroomDetailController] Offline overlay Retry tapped while back online - reloading classroom content.");
+            LoadClassroomContent();
+        }
+
+        private void OnOfflineGoToDashboard()
+        {
+            Debug.Log("[StudentClassroomDetailController] Offline overlay - returning to dashboard.");
+            UIManager.Instance?.ShowStudentDashboard();
         }
 
         private void StopClassroomListeners()
@@ -541,6 +603,18 @@ namespace Anatomia3D.UI
                 Debug.LogWarning("[StudentClassroomDetailController] ClassroomService not available yet.");
                 return;
             }
+
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                // Single choke point for all three entry paths - SetClassroomIdentity()
+                // (opening a classroom card from the Hub), OnEnable() re-entering the
+                // same/different classroom, and the offline overlay's own Retry button.
+                Debug.Log("[StudentClassroomDetailController] Offline - showing offline overlay instead of loading classroom content.");
+                _offlineOverlay?.Show();
+                return;
+            }
+
+            _offlineOverlay?.Hide();
 
             // This screen is reused across classrooms (see the OnEnable comment about
             // surviving screen rebuilds), so if a student opens classroom A then quickly

@@ -937,6 +937,7 @@ namespace Anatomia3D.UI
 
         private void OnClassroomHubClicked(ClickEvent evt)
         {
+            
             UIManager.Instance.ShowStudentClassroomHub();
         }
 
