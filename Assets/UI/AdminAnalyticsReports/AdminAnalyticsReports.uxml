@@ -12,10 +12,6 @@
                             <ui:Label text="Analytics &amp; Reports" class="header-title"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="header-actions" class="header-actions">
-                            <ui:Button name="export-excel-button" class="export-button">
-                                <ui:Label text="📄" class="export-icon"/>
-                                <ui:Label text="Excel" class="export-label"/>
-                            </ui:Button>
                             <ui:Button name="export-pdf-button" class="export-button">
                                 <ui:Label text="⬇" class="export-icon"/>
                                 <ui:Label text="PDF" class="export-label"/>
@@ -24,8 +20,6 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="filters-row" class="filters-row">
-                    <!-- classroom-picker-wrapper is inserted here at runtime, before the
-                         quiz export picker, by AdminAnalyticsReportsController.BuildClassroomPicker() -->
                     <ui:DropdownField name="quiz-export-picker" class="dropdown-field quiz-export-picker"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="stats-grid" class="stats-grid">

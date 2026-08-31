@@ -139,7 +139,7 @@ namespace Anatomia3D.UI
         private VisualElement _screenRoot;
 
         private Button _backButton;
-        private Button _exportExcelButton;
+      
         private Button _exportPdfButton;
 
         private Label _activeUsersValueLabel;
@@ -290,7 +290,7 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
-            _exportExcelButton?.UnregisterCallback<ClickEvent>(OnExportExcelClicked);
+            
             _exportPdfButton?.UnregisterCallback<ClickEvent>(OnExportPdfClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
@@ -311,7 +311,7 @@ namespace Anatomia3D.UI
             }
 
             _backButton = _screenRoot.Q<Button>("back-button");
-            _exportExcelButton = _screenRoot.Q<Button>("export-excel-button");
+         
             _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
 
             _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
@@ -351,7 +351,7 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
-            _exportExcelButton?.RegisterCallback<ClickEvent>(OnExportExcelClicked);
+          
             _exportPdfButton?.RegisterCallback<ClickEvent>(OnExportPdfClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
@@ -928,12 +928,6 @@ namespace Anatomia3D.UI
             UIManager.Instance.ShowAdminDashboard();
         }
 
-        private void OnExportExcelClicked(ClickEvent evt)
-        {
-            Debug.Log("[AdminAnalyticsReportsController] Export to Excel tapped.");
-            PrepareAndExport(AdminReportExportService.ExportCsv, "Excel (CSV)");
-        }
-
         private void OnExportPdfClicked(ClickEvent evt)
         {
             Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
@@ -948,7 +942,7 @@ namespace Anatomia3D.UI
         /// point this at their own writer and label.</summary>
         private void PrepareAndExport(Func<AdminReportExportService.ReportExportData, string> exportFn, string reportLabel)
         {
-            _exportExcelButton?.SetEnabled(false);
+           
             _exportPdfButton?.SetEnabled(false);
 
             FetchSelectedQuizScoreRows(quizScoreRows =>
@@ -957,7 +951,7 @@ namespace Anatomia3D.UI
 
                 if (path == null)
                 {
-                    _exportExcelButton?.SetEnabled(true);
+                   
                     _exportPdfButton?.SetEnabled(true);
                     Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
                     return;
@@ -981,12 +975,12 @@ namespace Anatomia3D.UI
         // is friendlier than leaving the teacher wondering why nothing happened.
         private void ExportViaNativeFilePicker(string path, string reportLabel)
         {
-            _exportExcelButton?.SetEnabled(false);
+          
             _exportPdfButton?.SetEnabled(false);
 
             NativeFilePicker.ExportFile(path, success =>
             {
-                _exportExcelButton?.SetEnabled(true);
+              
                 _exportPdfButton?.SetEnabled(true);
 
                 if (success)
