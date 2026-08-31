@@ -25,12 +25,8 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="filters-row" class="filters-row">
                     <!-- classroom-picker-wrapper is inserted here at runtime, before the
-                         date filter button, by AdminAnalyticsReportsController.BuildClassroomPicker() -->
-                    <ui:Button name="date-filter-button" class="date-filter-button">
-                        <ui:Label text="📅" class="date-filter-icon"/>
-                        <ui:Label name="date-filter-label" text="Last 30 days" class="date-filter-label"/>
-                        <ui:Label text="▼" class="date-filter-chevron"/>
-                    </ui:Button>
+                         quiz export picker, by AdminAnalyticsReportsController.BuildClassroomPicker() -->
+                    <ui:DropdownField name="quiz-export-picker" class="dropdown-field quiz-export-picker"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="stats-grid" class="stats-grid">
                     <ui:VisualElement name="stats-row-1" class="stats-grid-row">
@@ -94,11 +90,6 @@
                         <ui:Label text="Score Trend" class="report-card-title"/>
                         <ui:Label text="Average quiz score over recent attempts" class="report-card-subtitle"/>
                         <ui:VisualElement name="score-trend-list" class="score-trend-list"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="topic-performance-card" class="report-card">
-                        <ui:Label text="Performance by Topic" class="report-card-title"/>
-                        <ui:Label text="Average score per subject area" class="report-card-subtitle"/>
-                        <ui:VisualElement name="topic-performance-list" class="topic-performance-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="students-panel" class="tab-panel">

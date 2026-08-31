@@ -645,12 +645,18 @@ namespace Anatomia3D.UI.Quiz
             int incorrectCount = 0;
             int pointsEarned = 0;
 
+            // Per-question right/wrong breakdown - feeds AdminAnalyticsReportsController's
+            // "Common Incorrect Answers" list via QuizService.FetchClassroomReportData.
+            // Without this, that list stays empty no matter how many attempts exist.
+            var questionResults = new List<QuizService.QuestionAttemptResult>(_quiz.Questions.Count);
+
             for (int i = 0; i < _quiz.Questions.Count; i++)
             {
                 var q = _quiz.Questions[i];
 
                 _answers.TryGetValue(i, out var answer);
-                if (IsAnswerCorrect(q, answer))
+                bool isCorrect = IsAnswerCorrect(q, answer);
+                if (isCorrect)
                 {
                     correctCount++;
                     pointsEarned += q.Points;
@@ -659,6 +665,8 @@ namespace Anatomia3D.UI.Quiz
                 {
                     incorrectCount++;
                 }
+
+                questionResults.Add(new QuizService.QuestionAttemptResult(q.QuestionText, isCorrect));
             }
 
             string quizTitle = _quiz.Title;
@@ -712,6 +720,7 @@ namespace Anatomia3D.UI.Quiz
                     });
 
                 },
+                questionResults: questionResults,
                 timeSpentSeconds: timeSpentSeconds);
         }
 

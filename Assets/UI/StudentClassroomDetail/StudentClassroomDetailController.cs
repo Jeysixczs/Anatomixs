@@ -1449,7 +1449,7 @@ namespace Anatomia3D.UI
             pointsLabel.AddToClassList("performer-points-sub");
             scoreBlock.Add(percentLabel);
             scoreBlock.Add(pointsLabel);
-
+                
             row.Add(badge);
             row.Add(avatar);
             row.Add(info);

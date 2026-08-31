@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,8 +27,7 @@ namespace Anatomia3D.UI
     ///    of the placeholder mock data below.
     ///
     /// Hook up your real reporting/export calls inside OnExportExcelClicked()
-    /// and OnExportPdfClicked(), and your real date-range picker inside
-    /// OnDateFilterClicked().
+    /// and OnExportPdfClicked().
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminAnalyticsReportsController : MonoBehaviour
@@ -91,10 +91,17 @@ namespace Anatomia3D.UI
             public string Title;
             public string Description;
 
-            public RecommendationEntry(string title, string description)
+            /// <summary>The topic/category this recommendation is about (e.g. "Skeletal
+            /// System"). Populated by BuildRecommendations so downstream consumers (like
+            /// AdminReportExportService) have the real topic without having to guess it
+            /// out of Title, or index into unrelated lists like ScoreTrend.</summary>
+            public string Topic;
+
+            public RecommendationEntry(string title, string description, string topic = null)
             {
                 Title = title;
                 Description = description;
+                Topic = topic;
             }
         }
 
@@ -135,9 +142,6 @@ namespace Anatomia3D.UI
         private Button _exportExcelButton;
         private Button _exportPdfButton;
 
-        private Button _dateFilterButton;
-        private Label _dateFilterLabel;
-
         private Label _activeUsersValueLabel;
         private Label _activeUsersDeltaLabel;
         private Label _avgScoreValueLabel;
@@ -156,7 +160,6 @@ namespace Anatomia3D.UI
         private VisualElement _mistakesPanel;
 
         private VisualElement _scoreTrendList;
-        private VisualElement _topicPerformanceList;
 
         private VisualElement _topPerformersList;
 
@@ -173,10 +176,28 @@ namespace Anatomia3D.UI
         // Classroom picker - lets the teacher pick which classroom this report covers
         // (AdminAnalyticsReportsController shows one classroom at a time, unlike
         // AdminClassroomDetailController which is already scoped to a classroomId).
-        // Lives in #filters-row, immediately to the left of the date filter button.
+        // Lives in #filters-row, immediately to the left of the quiz export picker.
         private DropdownField _classroomPicker;
         private List<AdminClassroomService.ClassroomRecord> _classrooms = new List<AdminClassroomService.ClassroomRecord>();
         private string _selectedClassroomId;
+
+        // Quiz export picker - lets the teacher pick one quiz that is both scoped to
+        // whichever classroom is selected above AND already published to it (see
+        // LoadQuizzesForClassroom); the currently-selected quiz's per-student scores
+        // are folded into the existing Excel/PDF export buttons as an extra "Quiz Scores"
+        // section (see PrepareAndExport/BuildExportData) rather than needing an export
+        // button of their own.
+        private DropdownField _quizExportPicker;
+
+        private List<QuizService.QuizRecord> _classroomQuizzes = new List<QuizService.QuizRecord>();
+        private string _selectedQuizExportId;
+
+        // Classroom roster for whichever classroom is selected - kept around so the quiz
+        // export can list every student (including ones who never attempted the selected
+        // quiz) rather than only the ones QuizService.FetchQuizScoresForClassroom finds
+        // quizAttempts docs for. Populated by LoadAnalyticsFor, same call that already
+        // fetches this classroom's ClassroomAnalytics for the Students tab.
+        private List<AdminClassroomService.StudentStat> _currentClassroomStudents = new List<AdminClassroomService.StudentStat>();
 
         private List<ScoreTrendEntry> _currentScoreTrend = new List<ScoreTrendEntry>();
         private List<TopicPerformanceEntry> _currentTopicPerformance = new List<TopicPerformanceEntry>();
@@ -184,6 +205,18 @@ namespace Anatomia3D.UI
         private StudentActivitySummary _currentStudentActivity;
         private List<MistakeEntry> _currentMistakes = new List<MistakeEntry>();
         private List<RecommendationEntry> _currentRecommendations = new List<RecommendationEntry>();
+
+        // Raw numbers behind the four overview stat cards - SetOverviewStats() only
+        // ever formatted these straight into label text, so ExportCsv()/ExportPdf()
+        // (which need the numbers, not "82%") would otherwise have nothing to read.
+        private int _currentActiveUsers;
+        private string _currentActiveUsersDelta = "+0%";
+        private int _currentAvgScorePercent;
+        private string _currentAvgScoreDelta = "+0%";
+        private int _currentQuizzesDone;
+        private string _currentQuizzesDoneDelta = "+0%";
+        private int _currentCompletionPercent;
+        private string _currentCompletionDelta = "+0%";
 
         private void OnEnable()
         {
@@ -220,9 +253,10 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
+            _quizExportPicker?.SetEnabled(false);
+
             LoadPlaceholderDataIfEmpty();
             RefreshScoreTrendUI();
-            RefreshTopicPerformanceUI();
             RefreshTopPerformersUI();
             RefreshStudentActivityUI();
             RefreshMistakesUI();
@@ -242,6 +276,13 @@ namespace Anatomia3D.UI
             // Clear this so BuildClassroomPicker() rebuilds against the new tree
             // instead of skipping itself because _classroomPicker is still non-null.
             _classroomPicker = null;
+
+            // Same reasoning as _classroomPicker above - the quiz export picker is a static
+            // UXML element, but its choices/selection are runtime state tied to whichever
+            // classroom was selected; start clean rather than carrying stale quiz choices
+            // into a freshly re-instantiated tree.
+            _classroomQuizzes.Clear();
+            _selectedQuizExportId = null;
         }
 
         private void UnregisterCallbacks()
@@ -251,11 +292,11 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _exportExcelButton?.UnregisterCallback<ClickEvent>(OnExportExcelClicked);
             _exportPdfButton?.UnregisterCallback<ClickEvent>(OnExportPdfClicked);
-            _dateFilterButton?.UnregisterCallback<ClickEvent>(OnDateFilterClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.UnregisterCallback<ClickEvent>(OnMistakesTabClicked);
             _classroomPicker?.UnregisterValueChangedCallback(OnClassroomPickerChanged);
+            _quizExportPicker?.UnregisterValueChangedCallback(OnQuizExportPickerChanged);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
 
@@ -272,9 +313,6 @@ namespace Anatomia3D.UI
             _backButton = _screenRoot.Q<Button>("back-button");
             _exportExcelButton = _screenRoot.Q<Button>("export-excel-button");
             _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
-
-            _dateFilterButton = _screenRoot.Q<Button>("date-filter-button");
-            _dateFilterLabel = _screenRoot.Q<Label>("date-filter-label");
 
             _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
             _activeUsersDeltaLabel = _screenRoot.Q<Label>("active-users-delta-label");
@@ -294,7 +332,6 @@ namespace Anatomia3D.UI
             _mistakesPanel = _screenRoot.Q<VisualElement>("mistakes-panel");
 
             _scoreTrendList = _screenRoot.Q<VisualElement>("score-trend-list");
-            _topicPerformanceList = _screenRoot.Q<VisualElement>("topic-performance-list");
 
             _topPerformersList = _screenRoot.Q<VisualElement>("top-performers-list");
 
@@ -306,6 +343,8 @@ namespace Anatomia3D.UI
             _commonMistakesList = _screenRoot.Q<VisualElement>("common-mistakes-list");
             _recommendationsList = _screenRoot.Q<VisualElement>("recommendations-list");
 
+            _quizExportPicker = _screenRoot.Q<DropdownField>("quiz-export-picker");
+
             Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
         }
 
@@ -314,10 +353,10 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _exportExcelButton?.RegisterCallback<ClickEvent>(OnExportExcelClicked);
             _exportPdfButton?.RegisterCallback<ClickEvent>(OnExportPdfClicked);
-            _dateFilterButton?.RegisterCallback<ClickEvent>(OnDateFilterClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.RegisterCallback<ClickEvent>(OnMistakesTabClicked);
+            _quizExportPicker?.RegisterValueChangedCallback(OnQuizExportPickerChanged);
 
             if (_screenRoot != null)
             {
@@ -331,6 +370,15 @@ namespace Anatomia3D.UI
         public void SetOverviewStats(int activeUsers, string activeUsersDelta, int avgScorePercent, string avgScoreDelta,
             int quizzesDone, string quizzesDoneDelta, int completionPercent, string completionDelta)
         {
+            _currentActiveUsers = activeUsers;
+            _currentActiveUsersDelta = activeUsersDelta;
+            _currentAvgScorePercent = avgScorePercent;
+            _currentAvgScoreDelta = avgScoreDelta;
+            _currentQuizzesDone = quizzesDone;
+            _currentQuizzesDoneDelta = quizzesDoneDelta;
+            _currentCompletionPercent = completionPercent;
+            _currentCompletionDelta = completionDelta;
+
             if (_activeUsersValueLabel != null) _activeUsersValueLabel.text = activeUsers.ToString();
             if (_activeUsersDeltaLabel != null) _activeUsersDeltaLabel.text = $"{activeUsersDelta} from last month";
 
@@ -344,22 +392,18 @@ namespace Anatomia3D.UI
             if (_completionDeltaLabel != null) _completionDeltaLabel.text = $"{completionDelta} from last month";
         }
 
-        /// <summary>Update the date-range filter label (e.g. "Last 7 days", "This term").</summary>
-        public void SetDateRangeLabel(string label)
-        {
-            if (_dateFilterLabel != null) _dateFilterLabel.text = label;
-        }
-
         public void SetScoreTrend(List<ScoreTrendEntry> entries)
         {
             _currentScoreTrend = entries ?? new List<ScoreTrendEntry>();
             RefreshScoreTrendUI();
         }
 
+        /// <summary>Stores per-topic scores for use in Excel/PDF exports (see BuildExportData)
+        /// and recommendations (see BuildRecommendations) - there's no more Performance by
+        /// Topic card in the UI to render this into.</summary>
         public void SetTopicPerformance(List<TopicPerformanceEntry> entries)
         {
             _currentTopicPerformance = entries ?? new List<TopicPerformanceEntry>();
-            RefreshTopicPerformanceUI();
         }
 
         public void SetTopPerformers(List<TopPerformer> performers)
@@ -417,7 +461,7 @@ namespace Anatomia3D.UI
         }
 
         /// <summary>Creates the classroom picker the first time this runs and inserts it into
-        /// #filters-row, just before the date filter button (there's no dedicated element for
+        /// #filters-row, just before the quiz export picker (there's no dedicated element for
         /// it in the .uxml), then keeps its choices in sync with _classrooms on every
         /// subsequent call. Styled with the same .dropdown-field look used in
         /// AdminQuizManagement, rather than a bespoke pill.</summary>
@@ -469,6 +513,11 @@ namespace Anatomia3D.UI
 
             AdminClassroomService.Instance?.FetchClassroomAnalytics(classroomId, analytics =>
             {
+                // Kept around (roster order, not the leaderboard's points-sorted order) so
+                // the quiz export can list every student in the classroom, including ones
+                // with no attempt at the selected quiz - see BuildQuizScoreExportRows().
+                _currentClassroomStudents = analytics.Students ?? new List<AdminClassroomService.StudentStat>();
+
                 SetTopPerformers(analytics.Leaderboard
                     .Take(10)
                     .Select(s => new TopPerformer(s.Name, s.QuizzesCompleted, s.Points, s.Level))
@@ -506,19 +555,157 @@ namespace Anatomia3D.UI
 
                 SetRecommendations(BuildRecommendations(report.TopicPerformance));
             });
+
+            LoadQuizzesForClassroom(classroomId);
         }
 
-        /// <summary>One simple recommendation: call out whichever topic is scoring lowest.
-        /// Replace/extend with real rules once you know what else you want flagged.</summary>
+        // ---------------- Quiz export picker ----------------
+
+        /// <summary>Loads the quizzes selectable for this classroom's export picker: this
+        /// admin's own quizzes that are both (a) scoped directly to classroomId or available
+        /// to every classroom (QuizRecord.ClassroomId empty - see its doc comment), AND
+        /// (b) actually published to classroomId - i.e. present in that classroom's
+        /// PublishedQuizIds (set via AdminClassroomService.SetQuizPublished, the same flag
+        /// ClassroomService.FetchAvailableQuizzes gates the student-facing list on). A quiz
+        /// the teacher hasn't published yet has no scores worth exporting, so it's excluded
+        /// here rather than only from the student-facing list. There's no "quizzes for one
+        /// classroom" query on QuizService, so this reuses FetchMyQuizzes() (already used by
+        /// Admin Quiz Management) and filters client-side, the same tradeoff BuildExportData()
+        /// elsewhere in this class makes.</summary>
+        private void LoadQuizzesForClassroom(string classroomId)
+        {
+            if (QuizService.Instance == null) return;
+
+            // Read from _classrooms (already fetched by LoadClassroomsAndData/
+            // BuildClassroomPicker) rather than issuing a fresh Firestore read just for
+            // this list - see PublishedQuizIds' doc comment on AdminClassroomService.ClassroomRecord.
+            var publishedQuizIds = _classrooms.FirstOrDefault(c => c.ClassroomId == classroomId)?.PublishedQuizIds
+                ?? new List<string>();
+
+            QuizService.Instance.FetchMyQuizzes(quizzes =>
+            {
+                _classroomQuizzes = (quizzes ?? new List<QuizService.QuizRecord>())
+                    .Where(q => (string.IsNullOrEmpty(q.ClassroomId) || q.ClassroomId == classroomId)
+                                && publishedQuizIds.Contains(q.QuizId))
+                    .ToList();
+
+                BuildQuizExportPicker();
+            });
+        }
+
+        /// <summary>Keeps the quiz export picker's choices in sync with _classroomQuizzes
+        /// (already filtered down to published-to-this-classroom quizzes by
+        /// LoadQuizzesForClassroom) - called every time the classroom selection (and
+        /// therefore the eligible quiz list) changes. Selection defaults to the first quiz,
+        /// same convention BuildClassroomPicker() uses for the classroom picker. If the
+        /// classroom has no published quizzes yet, the picker is simply disabled with no
+        /// choices - leaving it with no valid quiz selected just means the next Excel/PDF
+        /// export skips the "Quiz Scores" section - see FetchSelectedQuizScoreRows() -
+        /// there's nothing else that depends on it.</summary>
+        private void BuildQuizExportPicker()
+        {
+            if (_quizExportPicker == null) return;
+
+            _quizExportPicker.choices = _classroomQuizzes.Select(q => q.Title).ToList();
+
+            bool hasQuizzes = _classroomQuizzes.Count > 0;
+            _quizExportPicker.SetEnabled(hasQuizzes);
+
+            if (hasQuizzes)
+            {
+                _selectedQuizExportId = _classroomQuizzes[0].QuizId;
+                _quizExportPicker.SetValueWithoutNotify(_classroomQuizzes[0].Title);
+            }
+            else
+            {
+                _selectedQuizExportId = null;
+                _quizExportPicker.SetValueWithoutNotify(null);
+            }
+        }
+
+        private void OnQuizExportPickerChanged(ChangeEvent<string> evt)
+        {
+            // Match by index rather than by Title - two quizzes can share a display title,
+            // and matching on the string would silently export the wrong quiz's scores.
+            int index = _quizExportPicker.index;
+            if (index < 0 || index >= _classroomQuizzes.Count) return;
+
+            _selectedQuizExportId = _classroomQuizzes[index].QuizId;
+        }
+
+        /// <summary>Fetches the quiz export picker's currently-selected quiz's per-student
+        /// scores, joined against the classroom roster (see BuildQuizScoreExportRows) so a
+        /// student who never attempted it still gets a row - or calls back with an empty list
+        /// immediately if no classroom/quiz is selected yet. Feeds BuildExportData()'s
+        /// QuizScoreRows/QuizScoreQuizTitle so both the existing Excel and PDF export buttons
+        /// include a "Quiz Scores" section for whichever quiz is picked, without either of
+        /// them needing an export button of their own.</summary>
+        private void FetchSelectedQuizScoreRows(Action<List<QuizService.StudentQuizScoreEntry>> onComplete)
+        {
+            if (string.IsNullOrEmpty(_selectedClassroomId) || string.IsNullOrEmpty(_selectedQuizExportId) || QuizService.Instance == null)
+            {
+                onComplete(new List<QuizService.StudentQuizScoreEntry>());
+                return;
+            }
+
+            QuizService.Instance.FetchQuizScoresForClassroom(_selectedClassroomId, _selectedQuizExportId, scores =>
+            {
+                onComplete(BuildQuizScoreExportRows(scores));
+            });
+        }
+
+        /// <summary>Joins the classroom roster (_currentClassroomStudents) against a quiz's
+        /// fetched scores so every student in the classroom gets an export row - students who
+        /// never attempted the selected quiz get an Attempted = false row instead of being
+        /// silently left out.</summary>
+        private List<QuizService.StudentQuizScoreEntry> BuildQuizScoreExportRows(List<QuizService.StudentQuizScoreEntry> scores)
+        {
+            var byStudentId = (scores ?? new List<QuizService.StudentQuizScoreEntry>())
+                .ToDictionary(s => s.StudentId, s => s);
+
+            var rows = new List<QuizService.StudentQuizScoreEntry>();
+
+            foreach (var student in _currentClassroomStudents)
+            {
+                if (byStudentId.TryGetValue(student.StudentId, out var scored))
+                {
+                    rows.Add(scored);
+                }
+                else
+                {
+                    rows.Add(new QuizService.StudentQuizScoreEntry
+                    {
+                        StudentId = student.StudentId,
+                        StudentName = student.Name,
+                        Attempted = false
+                    });
+                }
+            }
+
+            return rows;
+        }
+
+        /// <summary>One simple recommendation: call out whichever topic is scoring lowest,
+        /// naming the specific quiz whose attempts are actually dragging that topic's
+        /// average down (QuizService.FetchClassroomReportData computes this per-category
+        /// breakdown). Replace/extend with real rules once you know what else you want
+        /// flagged.</summary>
         private List<RecommendationEntry> BuildRecommendations(List<QuizService.CategoryScoreSummary> topicPerformance)
         {
             var recommendations = new List<RecommendationEntry>();
             if (topicPerformance == null || topicPerformance.Count == 0) return recommendations;
 
             var weakest = topicPerformance.OrderBy(c => c.AvgScorePercent).First();
+            string topic = CapitalizeCategory(weakest.Category);
+
+            string title = !string.IsNullOrEmpty(weakest.WeakestQuizTitle)
+                ? $"Focus on {weakest.WeakestQuizTitle} ({topic})"
+                : $"Focus on {topic}";
+
             recommendations.Add(new RecommendationEntry(
-                $"Focus on {CapitalizeCategory(weakest.Category)}",
-                $"Average score is {Mathf.RoundToInt(weakest.AvgScorePercent)}% - consider adding more practice questions in this topic."));
+                title,
+                $"Average score is {Mathf.RoundToInt(weakest.AvgScorePercent)}% - consider adding more practice questions in this topic.",
+                topic));
 
             return recommendations;
         }
@@ -593,46 +780,6 @@ namespace Anatomia3D.UI
 
                 row.Add(track);
                 _scoreTrendList.Add(row);
-            }
-        }
-
-        private void RefreshTopicPerformanceUI()
-        {
-            if (_topicPerformanceList == null) return;
-
-            _topicPerformanceList.Clear();
-
-            for (int i = 0; i < _currentTopicPerformance.Count; i++)
-            {
-                var entry = _currentTopicPerformance[i];
-
-                var row = new VisualElement();
-                row.AddToClassList("topic-row");
-                if (i == _currentTopicPerformance.Count - 1) row.AddToClassList("topic-row-last");
-
-                var topRow = new VisualElement();
-                topRow.AddToClassList("topic-top-row");
-
-                var nameLabel = new Label(entry.Topic);
-                nameLabel.AddToClassList("topic-name-label");
-
-                var valueLabel = new Label($"{Mathf.RoundToInt(entry.ScorePercent)}%");
-                valueLabel.AddToClassList("topic-value-label");
-
-                topRow.Add(nameLabel);
-                topRow.Add(valueLabel);
-                row.Add(topRow);
-
-                var track = new VisualElement();
-                track.AddToClassList("topic-bar-track");
-
-                var fill = new VisualElement();
-                fill.AddToClassList("topic-bar-fill");
-                fill.style.width = new Length(Mathf.Clamp(entry.ScorePercent, 0f, 100f), LengthUnit.Percent);
-                track.Add(fill);
-
-                row.Add(track);
-                _topicPerformanceList.Add(row);
             }
         }
 
@@ -784,25 +931,122 @@ namespace Anatomia3D.UI
         private void OnExportExcelClicked(ClickEvent evt)
         {
             Debug.Log("[AdminAnalyticsReportsController] Export to Excel tapped.");
-
-            // TODO: hook up your real report export, e.g.:
-            // AdminReportsService.Instance.ExportToExcel(currentDateRange);
+            PrepareAndExport(AdminReportExportService.ExportCsv, "Excel (CSV)");
         }
 
         private void OnExportPdfClicked(ClickEvent evt)
         {
             Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
-
-            // TODO: hook up your real report export, e.g.:
-            // AdminReportsService.Instance.ExportToPdf(currentDateRange);
+            PrepareAndExport(AdminReportExportService.ExportPdf, "PDF");
         }
 
-        private void OnDateFilterClicked(ClickEvent evt)
+        /// <summary>Shared by both export buttons. First fetches the quiz export picker's
+        /// currently-selected quiz's scores (if any - see FetchSelectedQuizScoreRows), so the
+        /// exported file includes a "Quiz Scores" section for that quiz alongside the usual
+        /// analytics report, then hands the finished file to the native share/save dialog.
+        /// exportFn is AdminReportExportService.ExportCsv or ExportPdf - both buttons just
+        /// point this at their own writer and label.</summary>
+        private void PrepareAndExport(Func<AdminReportExportService.ReportExportData, string> exportFn, string reportLabel)
         {
-            Debug.Log("[AdminAnalyticsReportsController] Date range filter tapped.");
+            _exportExcelButton?.SetEnabled(false);
+            _exportPdfButton?.SetEnabled(false);
 
-            // TODO: show a real date-range picker and call SetDateRangeLabel() +
-            // reload analytics data for the chosen range.
+            FetchSelectedQuizScoreRows(quizScoreRows =>
+            {
+                string path = exportFn(BuildExportData(quizScoreRows));
+
+                if (path == null)
+                {
+                    _exportExcelButton?.SetEnabled(true);
+                    _exportPdfButton?.SetEnabled(true);
+                    Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
+                    return;
+                }
+
+                ExportViaNativeFilePicker(path, reportLabel);
+            });
+        }
+
+        // Hands a just-generated report file to NativeFilePicker so the teacher gets
+        // the real OS share/save dialog (Android's "Save As"/Storage Access Framework
+        // picker, or iOS's share sheet) instead of the file just sitting silently in
+        // Application.temporaryCachePath. Shared by both export buttons since the
+        // hand-off/cleanup logic is identical - only the label used in the log lines
+        // and the source file differ.
+        //
+        // Disables both export buttons for the duration of the native dialog so a
+        // second tap can't queue a second picker session on top of one already open -
+        // NativeFilePicker.IsFilePickerBusy() would just silently no-op that second
+        // call anyway (its callback fires with false), so re-enabling promptly here
+        // is friendlier than leaving the teacher wondering why nothing happened.
+        private void ExportViaNativeFilePicker(string path, string reportLabel)
+        {
+            _exportExcelButton?.SetEnabled(false);
+            _exportPdfButton?.SetEnabled(false);
+
+            NativeFilePicker.ExportFile(path, success =>
+            {
+                _exportExcelButton?.SetEnabled(true);
+                _exportPdfButton?.SetEnabled(true);
+
+                if (success)
+                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} report exported successfully.");
+                else
+                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} export was cancelled or failed.");
+
+                // The hand-off is done either way (the OS now has its own copy on
+                // success; on cancel/failure there's nothing left to retry from this
+                // exact temp file - a fresh export regenerates it) - see
+                // AdminReportExportService.CleanUpExportedFile's doc comment.
+                AdminReportExportService.CleanUpExportedFile(path);
+            });
+        }
+
+        /// <summary>Snapshots everything currently on screen (real data if a classroom has
+        /// loaded, placeholder data otherwise) into the shape AdminReportExportService needs.
+        /// quizScoreRows is whatever FetchSelectedQuizScoreRows() resolved with - empty if no
+        /// quiz is selected, in which case the exported file's "Quiz Scores" section is
+        /// simply omitted (see AdminReportExportService.ExportCsv/ExportPdf).</summary>
+        private AdminReportExportService.ReportExportData BuildExportData(List<QuizService.StudentQuizScoreEntry> quizScoreRows)
+        {
+            string classroomName = null;
+            if (!string.IsNullOrEmpty(_selectedClassroomId))
+            {
+                var match = _classrooms.FirstOrDefault(c => c.ClassroomId == _selectedClassroomId);
+                classroomName = match?.Name;
+            }
+
+            string quizScoreTitle = null;
+            if (!string.IsNullOrEmpty(_selectedQuizExportId))
+            {
+                var quiz = _classroomQuizzes.FirstOrDefault(q => q.QuizId == _selectedQuizExportId);
+                quizScoreTitle = quiz?.Title;
+            }
+
+            return new AdminReportExportService.ReportExportData
+            {
+                ClassroomName = classroomName,
+                DateRangeLabel = null,
+
+                ActiveUsers = _currentActiveUsers,
+                ActiveUsersDelta = _currentActiveUsersDelta,
+                AvgScorePercent = _currentAvgScorePercent,
+                AvgScoreDelta = _currentAvgScoreDelta,
+                QuizzesDone = _currentQuizzesDone,
+                QuizzesDoneDelta = _currentQuizzesDoneDelta,
+                CompletionPercent = _currentCompletionPercent,
+                CompletionDelta = _currentCompletionDelta,
+
+                TopPerformers = _currentTopPerformers,
+                StudentActivity = _currentStudentActivity,
+                ScoreTrend = _currentScoreTrend,
+                TopicPerformance = _currentTopicPerformance,
+                Mistakes = _currentMistakes,
+                Recommendations = _currentRecommendations,
+
+                QuizScoreQuizTitle = quizScoreTitle,
+                QuizScoreRows = quizScoreRows ?? new List<QuizService.StudentQuizScoreEntry>()
+            };
         }
 
         // ---------------- Responsive layout ----------------
@@ -873,7 +1117,7 @@ namespace Anatomia3D.UI
             {
                 _currentRecommendations = new List<RecommendationEntry>
                 {
-                    new RecommendationEntry("Focus on Skeletal System", "Add more practice questions about bone count and structure"),
+                    new RecommendationEntry("Focus on Cell Biology Quiz (Skeletal System)", "Add more practice questions about bone count and structure", "Skeletal System"),
                 };
             }
 

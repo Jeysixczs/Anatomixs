@@ -1375,6 +1375,12 @@ namespace Anatomia3D.Backend
         {
             public string Category;
             public float AvgScorePercent;
+
+            /// <summary>Title of the quiz with the lowest average score among attempts in
+            /// this category - i.e. the quiz actually dragging this topic's average down.
+            /// Empty if no attempt in this category had a quizId. Populated by
+            /// FetchClassroomReportData.</summary>
+            public string WeakestQuizTitle = "";
         }
 
         /// <summary>One row in the "Common Incorrect Answers" list - a question text plus how
@@ -1416,6 +1422,7 @@ namespace Anatomia3D.Backend
 
                     var byQuiz = new Dictionary<string, (string title, List<float> percents)>();
                     var byCategory = new Dictionary<string, List<float>>();
+                    var byCategoryQuiz = new Dictionary<string, Dictionary<string, (string title, List<float> percents)>>();
                     var mistakeCounts = new Dictionary<string, (string category, int count)>();
 
                     foreach (var doc in task.Result.Documents)
@@ -1443,6 +1450,21 @@ namespace Anatomia3D.Backend
                             }
                             percents.Add(percent);
                             byCategory[category] = percents;
+                        }
+
+                        if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(quizId))
+                        {
+                            if (!byCategoryQuiz.TryGetValue(category, out var quizzesInCategory))
+                            {
+                                quizzesInCategory = new Dictionary<string, (string title, List<float> percents)>();
+                                byCategoryQuiz[category] = quizzesInCategory;
+                            }
+                            if (!quizzesInCategory.TryGetValue(quizId, out var quizInCategoryEntry))
+                            {
+                                quizInCategoryEntry = (quizName, new List<float>());
+                            }
+                            quizInCategoryEntry.percents.Add(percent);
+                            quizzesInCategory[quizId] = quizInCategoryEntry;
                         }
 
                         if (doc.ContainsField("questionResults"))
@@ -1480,10 +1502,19 @@ namespace Anatomia3D.Backend
 
                     foreach (var kvp in byCategory)
                     {
+                        string weakestQuizTitle = "";
+                        if (byCategoryQuiz.TryGetValue(kvp.Key, out var quizzesInCategory) && quizzesInCategory.Count > 0)
+                        {
+                            weakestQuizTitle = quizzesInCategory.Values
+                                .OrderBy(q => q.percents.Count > 0 ? q.percents.Average() : 0f)
+                                .First().title;
+                        }
+
                         result.TopicPerformance.Add(new CategoryScoreSummary
                         {
                             Category = kvp.Key,
-                            AvgScorePercent = kvp.Value.Count > 0 ? kvp.Value.Average() : 0f
+                            AvgScorePercent = kvp.Value.Count > 0 ? kvp.Value.Average() : 0f,
+                            WeakestQuizTitle = weakestQuizTitle
                         });
                     }
 
@@ -1565,6 +1596,90 @@ namespace Anatomia3D.Backend
                     result.CompletionDeltaPercent = result.CompletionPercent - lastCompletion;
 
                     onComplete?.Invoke(result);
+                });
+        }
+
+        /// <summary>One row in a per-quiz score export - see FetchQuizScoresForClassroom.
+        /// A student who never attempted the quiz is never returned by that method (it only
+        /// knows about quizAttempts docs that exist); callers that need the full classroom
+        /// roster - including students who never attempted - should join this against
+        /// AdminClassroomService.FetchClassroomAnalytics's Students list and fill in
+        /// Attempted = false rows themselves, the same way
+        /// AdminAnalyticsReportsController.BuildQuizScoreExportRows() does.</summary>
+        [Serializable]
+        public class StudentQuizScoreEntry
+        {
+            public string StudentId;
+            public string StudentName;
+            public bool Attempted;
+            public int ScoreCorrect;
+            public int ScoreTotal;
+            public float PercentScore;
+        }
+
+        /// <summary>Every student's BEST (highest-percent, ties broken by most recent
+        /// completedAt) attempt at quizId within classroomId - one entry per studentId who
+        /// has actually attempted it. Used by the classroom quiz export picker on
+        /// AdminAnalyticsReportsController.
+        ///
+        /// Excludes auto-recorded "Missed" docs (see RecordMissedAttempt) - those are
+        /// 0%/0-total placeholders for a deadline passing with no attempt, not a real score,
+        /// and letting one win "best" would misrepresent a student who genuinely never
+        /// tried as having tried and scored 0.</summary>
+        public void FetchQuizScoresForClassroom(string classroomId, string quizId, Action<List<StudentQuizScoreEntry>> onComplete)
+        {
+            var result = new List<StudentQuizScoreEntry>();
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(quizId))
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .WhereEqualTo("quizId", quizId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    var bestByStudent = new Dictionary<string, StudentQuizScoreEntry>();
+                    var bestCompletedAt = new Dictionary<string, DateTime>();
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed") continue;
+
+                        string studentId = doc.ContainsField("studentId") ? doc.GetValue<string>("studentId") : "";
+                        if (string.IsNullOrEmpty(studentId)) continue;
+
+                        string studentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student";
+                        int scoreCorrect = doc.ContainsField("scoreCorrect") ? doc.GetValue<int>("scoreCorrect") : 0;
+                        int scoreTotal = doc.ContainsField("scoreTotal") ? doc.GetValue<int>("scoreTotal") : 0;
+                        float percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f;
+                        DateTime completedAt = doc.ContainsField("completedAt")
+                            ? doc.GetValue<Timestamp>("completedAt").ToDateTime()
+                            : DateTime.MinValue;
+
+                        bool isNewBest = !bestByStudent.TryGetValue(studentId, out var existing)
+                            || percent > existing.PercentScore
+                            || (percent == existing.PercentScore && completedAt > bestCompletedAt[studentId]);
+
+                        if (!isNewBest) continue;
+
+                        bestByStudent[studentId] = new StudentQuizScoreEntry
+                        {
+                            StudentId = studentId,
+                            StudentName = studentName,
+                            Attempted = true,
+                            ScoreCorrect = scoreCorrect,
+                            ScoreTotal = scoreTotal,
+                            PercentScore = percent
+                        };
+                        bestCompletedAt[studentId] = completedAt;
+                    }
+
+                    onComplete?.Invoke(bestByStudent.Values.ToList());
                 });
         }
 
