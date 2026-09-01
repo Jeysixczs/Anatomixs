@@ -443,6 +443,57 @@ namespace Anatomia3D.Backend
 
         // ---------------- Students / Analytics / Leaderboard ----------------
 
+        /// <summary>Call from AdminClassroomDetailController's Students tab remove-student
+        /// action, after the teacher confirms the "Remove Student" dialog. Removes the
+        /// student from THIS classroom only: deletes their `members/{studentId}` doc,
+        /// pulls their id out of the classroom's `memberIds` array, and decrements
+        /// `studentCount` - all in one transaction so the count can't drift out of sync
+        /// with the member doc actually being gone.
+        ///
+        /// This does not touch the student's account, their other classrooms, or their
+        /// past quizAttempts docs (those stay as history) - it only removes their
+        /// membership/points/progress *for this classroom*. If the student re-joins later
+        /// with the same classroom code, they'll start over in this classroom at 0
+        /// points/quizzes, same as any brand-new member.</summary>
+        public void UnenrollStudent(string classroomId, string studentId, Action<bool, string> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(studentId))
+            {
+                onComplete?.Invoke(false, "Missing classroom or student id.");
+                return;
+            }
+
+            var classroomRef = Db.Collection("classrooms").Document(classroomId);
+            var memberRef = classroomRef.Collection("members").Document(studentId);
+
+            Db.RunTransactionAsync(async transaction =>
+            {
+                var memberSnap = await transaction.GetSnapshotAsync(memberRef);
+                if (!memberSnap.Exists)
+                {
+                    // Already removed (e.g. a double-tap, or removed from another device) -
+                    // nothing left to do here, but don't touch memberIds/studentCount again
+                    // since that would double-decrement.
+                    return;
+                }
+
+                transaction.Delete(memberRef);
+                transaction.Update(classroomRef, new Dictionary<string, object>
+                {
+                    { "memberIds", FieldValue.ArrayRemove(studentId) },
+                    { "studentCount", FieldValue.Increment(-1) }
+                });
+            }).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    onComplete?.Invoke(false, "Could not remove student from classroom.");
+                    return;
+                }
+                onComplete?.Invoke(true, null);
+            });
+        }
+
         /// <summary>
         /// Call when opening AdminClassroomDetailController's Students or Analytics tab
         /// (or right after SetClassroomData(), to have both ready before either tab is

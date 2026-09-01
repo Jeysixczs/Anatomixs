@@ -46,6 +46,14 @@ namespace Anatomia3D.UI
     /// roster/analytics rollups (Students + Analytics tabs) are likewise
     /// backed by AdminClassroomService - see LoadClassroomContent() /
     /// LoadQuizzesTab().
+    ///
+    /// The header stats (students-value-label / avg-score-value-label /
+    /// quizzes-done-value-label) are seeded from whatever SetClassroomData()
+    /// was called with (usually a placeholder from the dashboard - see
+    /// AdminDashboardController.OnViewClassroomDetailsClicked), then
+    /// overwritten with the real, live-computed values once
+    /// LoadClassroomContent()'s FetchClassroomAnalytics() call resolves - see
+    /// the end of that callback.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class AdminClassroomDetailController : MonoBehaviour
@@ -103,6 +111,24 @@ namespace Anatomia3D.UI
         private VisualElement _studentsListCard;
         private VisualElement _studentsList;
         private Button _copyClassroomCodeButton;
+
+        // Unenroll-student confirmation dialog. Mirrors the archive dialog's
+        // overlay/title/message/cancel/confirm shape (see the Archive block below) -
+        // add matching elements to the uxml with these ids if they're not there yet:
+        // unenroll-dialog-overlay, unenroll-dialog-title-label,
+        // unenroll-dialog-message-label, unenroll-dialog-cancel-button,
+        // unenroll-dialog-confirm-button.
+        private VisualElement _unenrollDialogOverlay;
+        private Label _unenrollDialogTitleLabel;
+        private Label _unenrollDialogMessageLabel;
+        private Button _unenrollDialogCancelButton;
+        private Button _unenrollDialogConfirmButton;
+
+        // Which student the dialog is currently asking to remove - set by
+        // OnRemoveStudentClicked(), read by OnUnenrollDialogConfirmClicked(), cleared once
+        // the dialog closes either way.
+        private string _pendingUnenrollStudentId;
+        private string _pendingUnenrollStudentName;
 
         // Quizzes tab
         private VisualElement _quizzesEmptyState;
@@ -228,6 +254,9 @@ namespace Anatomia3D.UI
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
             SetArchived(IsArchived);
             _archiveDialogOverlay?.AddToClassList("hidden");
+            _unenrollDialogOverlay?.AddToClassList("hidden");
+            _pendingUnenrollStudentId = null;
+            _pendingUnenrollStudentName = null;
             RefreshAnnouncementsUI();
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
@@ -257,6 +286,9 @@ namespace Anatomia3D.UI
             _archiveButton?.UnregisterCallback<ClickEvent>(OnArchiveButtonClicked);
             _archiveDialogCancelButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
             _archiveDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
+
+            _unenrollDialogCancelButton?.UnregisterCallback<ClickEvent>(OnUnenrollDialogCancelClicked);
+            _unenrollDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnUnenrollDialogConfirmClicked);
 
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
@@ -312,6 +344,12 @@ namespace Anatomia3D.UI
             _studentsList = _screenRoot.Q<VisualElement>("students-list");
             _copyClassroomCodeButton = _screenRoot.Q<Button>("copy-classroom-code-button");
 
+            _unenrollDialogOverlay = _screenRoot.Q<VisualElement>("unenroll-dialog-overlay");
+            _unenrollDialogTitleLabel = _screenRoot.Q<Label>("unenroll-dialog-title-label");
+            _unenrollDialogMessageLabel = _screenRoot.Q<Label>("unenroll-dialog-message-label");
+            _unenrollDialogCancelButton = _screenRoot.Q<Button>("unenroll-dialog-cancel-button");
+            _unenrollDialogConfirmButton = _screenRoot.Q<Button>("unenroll-dialog-confirm-button");
+
             _quizzesEmptyState = _screenRoot.Q<VisualElement>("quizzes-empty-state");
             _quizzesCard = _screenRoot.Q<VisualElement>("quizzes-card");
             _quizzesList = _screenRoot.Q<VisualElement>("quizzes-list");
@@ -344,6 +382,9 @@ namespace Anatomia3D.UI
             _archiveDialogCancelButton?.RegisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
             _archiveDialogConfirmButton?.RegisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
 
+            _unenrollDialogCancelButton?.RegisterCallback<ClickEvent>(OnUnenrollDialogCancelClicked);
+            _unenrollDialogConfirmButton?.RegisterCallback<ClickEvent>(OnUnenrollDialogConfirmClicked);
+
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
@@ -369,6 +410,12 @@ namespace Anatomia3D.UI
         /// AdminClassroomCreatedController.OnGoToDashboardClicked - need to pass the
         /// classroom's Firestore doc id, i.e. AdminClassroomService.ClassroomRecord.
         /// ClassroomId, as the new first argument).
+        ///
+        /// avgScorePercent/quizzesDone here are typically just placeholders (the caller
+        /// usually doesn't have the real numbers yet) - LoadClassroomContent() overwrites
+        /// students-value-label / avg-score-value-label / quizzes-done-value-label with
+        /// live values from FetchClassroomAnalytics() a moment later, once that fetch
+        /// resolves.
         /// </summary>
         public void SetClassroomData(string classroomId, string classroomName, string classroomCode, int studentCount, float avgScorePercent, int quizzesDone)
         {
@@ -394,8 +441,9 @@ namespace Anatomia3D.UI
 
         /// <summary>Pulls publishedQuizIds + leaderboardVisible + the quiz library (for the
         /// Quizzes tab), announcements (for the Announcements tab), and the roster/
-        /// leaderboard/rollup stats (for the Students and Analytics tabs) - all from
-        /// Firestore, replacing the old in-memory mock data.</summary>
+        /// leaderboard/rollup stats (for the Students and Analytics tabs, and now also
+        /// the header stats - see the end of the FetchClassroomAnalytics callback below)
+        /// - all from Firestore, replacing the old in-memory mock data.</summary>
         private void LoadClassroomContent()
         {
             if (string.IsNullOrEmpty(_classroomId))
@@ -437,12 +485,19 @@ namespace Anatomia3D.UI
             {
                 SetAnalyticsOverview(analytics.TotalPointsEarned, analytics.TotalQuizzesCompleted, analytics.AvgScorePercent, analytics.ActiveStudents);
                 SetLeaderboard(analytics.Leaderboard.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
-                SetStudents(analytics.Students.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
+                SetStudents(analytics.Students.ConvertAll(s => (s.StudentId, s.Name, s.Points, s.QuizzesCompleted)));
 
+                // Header stats: SetClassroomData() seeded these with whatever the caller
+                // had on hand (often a placeholder - e.g. AdminDashboardController passes
+                // 0f/0 today, see OnViewClassroomDetailsClicked). Now that the real,
+                // live-computed analytics are in, overwrite the header with those instead.
+                // analytics.Students.Count comes straight off the classroom's `members`
+                // subcollection (the same source SetStudents()/SetLeaderboard() just used),
+                // so it can't drift from what the Students tab is showing.
                 if (_studentsValueLabel != null) _studentsValueLabel.text = analytics.Students.Count.ToString("N0");
                 if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(analytics.AvgScorePercent)}%";
                 if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = analytics.TotalQuizzesCompleted.ToString("N0");
-            }); 
+            });
         }
 
         /// <summary>Rebuilds the Quizzes tab's list from scratch with one row per quiz in
@@ -513,8 +568,10 @@ namespace Anatomia3D.UI
             }
         }
 
-        /// <summary>Push the full student roster into the Students tab (empty state if the list is empty/null).</summary>
-        public void SetStudents(List<(string name, int points, int quizzesCompleted)> students)
+        /// <summary>Push the full student roster into the Students tab (empty state if the
+        /// list is empty/null). Each row now carries studentId (needed for the remove-
+        /// student action - see BuildStudentRow() / OnRemoveStudentClicked()).</summary>
+        public void SetStudents(List<(string studentId, string name, int points, int quizzesCompleted)> students)
         {
             bool hasStudents = students != null && students.Count > 0;
 
@@ -528,8 +585,8 @@ namespace Anatomia3D.UI
 
             for (int i = 0; i < students.Count; i++)
             {
-                var (name, points, quizzesCompleted) = students[i];
-                _studentsList.Add(BuildStudentRow(name, points, quizzesCompleted, i == students.Count - 1));
+                var (studentId, name, points, quizzesCompleted) = students[i];
+                _studentsList.Add(BuildStudentRow(studentId, name, points, quizzesCompleted, i == students.Count - 1));
             }
         }
 
@@ -713,6 +770,72 @@ namespace Anatomia3D.UI
             });
         }
 
+        // ---------------- Unenroll student ----------------
+
+        /// <summary>Tapping "Remove" on a student row - populates and shows the confirmation
+        /// dialog rather than removing immediately, since this deletes the student's
+        /// progress in this classroom and can't be undone from here.</summary>
+        private void OnRemoveStudentClicked(string studentId, string studentName)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || string.IsNullOrEmpty(studentId) || _unenrollDialogOverlay == null) return;
+
+            _pendingUnenrollStudentId = studentId;
+            _pendingUnenrollStudentName = studentName;
+
+            if (_unenrollDialogTitleLabel != null) _unenrollDialogTitleLabel.text = "Remove Student";
+            if (_unenrollDialogMessageLabel != null) _unenrollDialogMessageLabel.text =
+                $"Remove {studentName} from this classroom? Their points and quiz history in this classroom will be lost. This can't be undone.";
+            if (_unenrollDialogConfirmButton != null) _unenrollDialogConfirmButton.text = "Remove";
+
+            _unenrollDialogOverlay.RemoveFromClassList("hidden");
+        }
+
+        private void OnUnenrollDialogCancelClicked(ClickEvent evt)
+        {
+            _unenrollDialogOverlay?.AddToClassList("hidden");
+            _pendingUnenrollStudentId = null;
+            _pendingUnenrollStudentName = null;
+        }
+
+        private void OnUnenrollDialogConfirmClicked(ClickEvent evt)
+        {
+            _unenrollDialogOverlay?.AddToClassList("hidden");
+
+            if (string.IsNullOrEmpty(_classroomId) || string.IsNullOrEmpty(_pendingUnenrollStudentId) || AdminClassroomService.Instance == null)
+            {
+                _pendingUnenrollStudentId = null;
+                _pendingUnenrollStudentName = null;
+                return;
+            }
+
+            string studentId = _pendingUnenrollStudentId;
+            string studentName = _pendingUnenrollStudentName;
+            _pendingUnenrollStudentId = null;
+            _pendingUnenrollStudentName = null;
+
+            _unenrollDialogConfirmButton?.SetEnabled(false);
+
+            AdminClassroomService.Instance.UnenrollStudent(_classroomId, studentId, (success, error) =>
+            {
+                _unenrollDialogConfirmButton?.SetEnabled(true);
+
+                if (!success)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not remove student {studentId}: {error}");
+                    return;
+                }
+
+                Debug.Log($"[AdminClassroomDetailController] Removed student \"{studentName}\" ({studentId}) from classroom {_classroomId}");
+
+                // Re-pull everything from Firestore rather than just deleting the row
+                // locally - removing a student changes the header stats, the Analytics
+                // tab's totals, and the Leaderboard, not just the Students list, and
+                // LoadClassroomContent() already knows how to refresh all of that in
+                // one call (see FetchClassroomAnalytics()'s callback).
+                LoadClassroomContent();
+            });
+        }
+
         // ---------------- Announcements ----------------
 
         /// <summary>
@@ -891,7 +1014,7 @@ namespace Anatomia3D.UI
             return row;
         }
 
-        private VisualElement BuildStudentRow(string name, int points, int quizzesCompleted, bool isLast)
+        private VisualElement BuildStudentRow(string studentId, string name, int points, int quizzesCompleted, bool isLast)
         {
             var row = new VisualElement();
             row.AddToClassList("student-row");
@@ -918,6 +1041,14 @@ namespace Anatomia3D.UI
             row.Add(avatar);
             row.Add(info);
             row.Add(pointsLabel);
+
+            // Built at runtime like the announcement card's Delete button - no uxml
+            // dependency for the button itself, just the confirmation dialog's elements
+            // (see the "Unenroll-student confirmation dialog" fields above).
+            var removeButton = new Button(() => OnRemoveStudentClicked(studentId, name)) { text = "Remove" };
+            removeButton.AddToClassList("student-remove-button");
+            row.Add(removeButton);
+
             return row;
         }
 

@@ -143,5 +143,15 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="unenroll-dialog-overlay" class="dialog-overlay hidden">
+            <ui:VisualElement name="unenroll-dialog-card" class="dialog-card">
+                <ui:Label name="unenroll-dialog-title-label" text="Remove Student" class="dialog-title"/>
+                <ui:Label name="unenroll-dialog-message-label" text="Remove this student from this classroom? Their points and quiz history in this classroom will be lost. This can&apos;t be undone." class="dialog-message"/>
+                <ui:VisualElement name="unenroll-dialog-button-row" class="dialog-button-row">
+                    <ui:Button name="unenroll-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
+                    <ui:Button name="unenroll-dialog-confirm-button" text="Remove" class="dialog-button dialog-button-danger"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
