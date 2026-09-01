@@ -67,9 +67,9 @@ namespace Anatomia3D.Backend
         [Serializable]
         public class GamificationSettings
         {
-            public int EasyPoints = 10;
-            public int MediumPoints = 20;
-            public int HardPoints = 30;
+            public int EasyPoints = 1;
+            public int MediumPoints = 2;
+            public int HardPoints = 5;
             public List<LevelEntry> Levels = new List<LevelEntry>();
             public List<BadgeEntry> Badges = new List<BadgeEntry>();
         }
@@ -396,13 +396,15 @@ namespace Anatomia3D.Backend
             return new List<LevelEntry>
             {
                 new LevelEntry { LevelNumber = 1, Title = "Novice", PointsRequired = 0 },
-                new LevelEntry { LevelNumber = 2, Title = "Learner", PointsRequired = 100 },
-                new LevelEntry { LevelNumber = 3, Title = "Student", PointsRequired = 300 },
-                new LevelEntry { LevelNumber = 4, Title = "Scholar", PointsRequired = 600 },
-                new LevelEntry { LevelNumber = 5, Title = "Expert", PointsRequired = 1000 },
-                new LevelEntry { LevelNumber = 6, Title = "Master", PointsRequired = 1500 },
-                new LevelEntry { LevelNumber = 7, Title = "Guru", PointsRequired = 2100 },
-                new LevelEntry { LevelNumber = 8, Title = "Legend", PointsRequired = 2800 },
+                new LevelEntry { LevelNumber = 2, Title = "Learner", PointsRequired = 120 },
+                new LevelEntry { LevelNumber = 3, Title = "Student", PointsRequired = 276 },
+                new LevelEntry { LevelNumber = 4, Title = "Scholar", PointsRequired = 479 },
+                new LevelEntry { LevelNumber = 5, Title = "Expert", PointsRequired = 743 },
+                new LevelEntry { LevelNumber = 6, Title = "Master", PointsRequired = 1086 },
+                new LevelEntry { LevelNumber = 7, Title = "Guru", PointsRequired = 1532 },
+                new LevelEntry { LevelNumber = 8, Title = "Legend", PointsRequired = 2112 },
+                new LevelEntry { LevelNumber = 9, Title = "Sage", PointsRequired = 2866 },
+                new LevelEntry { LevelNumber = 10, Title = "Mythic", PointsRequired = 3846 },
             };
         }
 
@@ -413,9 +415,9 @@ namespace Anatomia3D.Backend
         {
             return new GamificationSettings
             {
-                EasyPoints = 10,
-                MediumPoints = 20,
-                HardPoints = 30,
+                EasyPoints = 1,
+                MediumPoints = 2,
+                HardPoints = 5,
                 Badges = new List<BadgeEntry>
                 {
                     new BadgeEntry { BadgeId = "beginner", Name = "Beginner", IconEmoji = "\U0001F31F", PointsRequired = 100 },

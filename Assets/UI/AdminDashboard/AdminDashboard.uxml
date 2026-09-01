@@ -24,10 +24,6 @@
                         <ui:Label name="students-count-label" text="0" class="glass-stat-value"/>
                         <ui:Label text="Students" class="glass-stat-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="avg-score-stat-card" class="glass-stat-card glass-stat-card-right">
-                        <ui:Label name="avg-score-value-label" text="85%" class="glass-stat-value"/>
-                        <ui:Label text="Avg Score" class="glass-stat-label"/>
-                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Button name="create-classroom-button" class="create-classroom-header-button">
                     <ui:Label text="+" class="create-classroom-plus"/>

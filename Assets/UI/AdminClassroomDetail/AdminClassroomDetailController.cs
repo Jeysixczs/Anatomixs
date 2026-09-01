@@ -438,7 +438,11 @@ namespace Anatomia3D.UI
                 SetAnalyticsOverview(analytics.TotalPointsEarned, analytics.TotalQuizzesCompleted, analytics.AvgScorePercent, analytics.ActiveStudents);
                 SetLeaderboard(analytics.Leaderboard.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
                 SetStudents(analytics.Students.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
-            });
+
+                if (_studentsValueLabel != null) _studentsValueLabel.text = analytics.Students.Count.ToString("N0");
+                if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(analytics.AvgScorePercent)}%";
+                if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = analytics.TotalQuizzesCompleted.ToString("N0");
+            }); 
         }
 
         /// <summary>Rebuilds the Quizzes tab's list from scratch with one row per quiz in

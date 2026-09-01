@@ -52,8 +52,10 @@ namespace Anatomia3D.UI
     ///  - Each question row shows its Q# / difficulty / type badges, matching
     ///    the mock, with its own delete button
     ///  - Difficulty picked in the Add Question wizard (Step 3) drives the
-    ///    question's point value directly via DifficultyToPoints - Easy = 1,
-    ///    Medium = 2, Hard = 5 (see ApplyPointsForSelectedDifficulty). The
+    ///    question's point value directly via PointsForDifficulty, which reads
+    ///    this teacher's own configured Easy/Medium/HardPoints from
+    ///    AdminGamificationService (falling back to DefaultDifficultyToPoints
+    ///    until that fetch completes - see ApplyPointsForSelectedDifficulty). The
     ///    points field itself is locked (SetEnabled(false)) so its displayed
     ///    value can never drift from whatever difficulty is actually selected.
     ///  - Applies the green->blue gradient at runtime to the header, "New
@@ -99,18 +101,48 @@ namespace Anatomia3D.UI
             { TypeImageBased, "question-type-icon--image-based" },
         };
 
-        /// <summary>Difficulty -> points awarded for a question of that difficulty.
-        /// Easy = 1, Medium = 2, Hard = 5. This is the single source of truth for
-        /// point values - see ApplyPointsForSelectedDifficulty (keeps the Step 3
-        /// points field in sync as a read-only display) and
-        /// OnAddQuestionSubmitClicked (reads from here directly when building the
-        /// QuestionData that actually gets persisted).</summary>
-        private static readonly Dictionary<string, int> DifficultyToPoints = new Dictionary<string, int>
+        /// <summary>Fallback difficulty -> points if AdminGamificationService hasn't
+        /// returned this teacher's configured values yet (e.g. this screen was opened
+        /// before FetchSettings' callback fired). Once real settings arrive, PointsForDifficulty
+        /// reads EasyPoints/MediumPoints/HardPoints from there instead - see
+        /// AdminGamificationService.GamificationSettings, which is exactly what
+        /// AdminGamificationSettingsController.OnSaveChangesClicked() writes via
+        /// SaveSettings(). This keeps question points in sync with whatever the teacher
+        /// has actually configured, rather than a value fixed in this file.</summary>
+        private static readonly Dictionary<string, int> DefaultDifficultyToPoints = new Dictionary<string, int>
         {
             { "easy", 1 },
             { "medium", 2 },
             { "hard", 5 },
         };
+
+        /// <summary>This teacher's points-per-difficulty (+ badges/levels, unused here),
+        /// fetched once in OnEnable via AdminGamificationService. Null until that fetch
+        /// completes, in which case PointsForDifficulty falls back to
+        /// DefaultDifficultyToPoints.</summary>
+        private AdminGamificationService.GamificationSettings _gamificationSettings;
+
+        /// <summary>Single source of truth for "how many points is a question of this
+        /// difficulty worth" - see ApplyPointsForSelectedDifficulty (keeps the Step 3
+        /// points field in sync as a read-only display) and OnAddQuestionSubmitClicked
+        /// (reads from here directly when building the QuestionData that actually gets
+        /// persisted). Reads the signed-in teacher's own configured
+        /// Easy/Medium/HardPoints from AdminGamificationService.CurrentSettings once
+        /// loaded, falling back to DefaultDifficultyToPoints until then.</summary>
+        private int PointsForDifficulty(string difficulty)
+        {
+            if (_gamificationSettings != null)
+            {
+                switch (difficulty)
+                {
+                    case "easy": return _gamificationSettings.EasyPoints;
+                    case "medium": return _gamificationSettings.MediumPoints;
+                    case "hard": return _gamificationSettings.HardPoints;
+                }
+            }
+
+            return DefaultDifficultyToPoints.TryGetValue(difficulty ?? "", out var fallback) ? fallback : 1;
+        }
 
         // Deadline date/time. UI Toolkit runtime has no DateTimePicker - that's
         // UnityEditor.UIElements only - so the deadline picker is a hand-built
@@ -533,6 +565,25 @@ namespace Anatomia3D.UI
 
             RefreshQuizzesUI();
             RefreshStats();
+
+            // Pull this teacher's configured Easy/Medium/HardPoints (Gamification
+            // Settings) so question points reflect what they actually set, not a
+            // value hardcoded in this file. Paint from CurrentSettings immediately if
+            // AdminGamificationService already has one cached (e.g. FetchSettings ran
+            // earlier this session, such as from opening Gamification Settings), then
+            // refresh once the live fetch below completes - ApplyPointsForSelectedDifficulty
+            // re-reads PointsForDifficulty each time, so an Add Question modal that's
+            // already open picks up the corrected value automatically.
+            if (AdminGamificationService.Instance?.CurrentSettings != null)
+            {
+                _gamificationSettings = AdminGamificationService.Instance.CurrentSettings;
+                ApplyPointsForSelectedDifficulty();
+            }
+            AdminGamificationService.Instance?.FetchSettings(settings =>
+            {
+                _gamificationSettings = settings;
+                ApplyPointsForSelectedDifficulty();
+            });
 
             CloseCreateQuizModal();
             CloseQuizDeleteConfirm();
@@ -2236,8 +2287,8 @@ namespace Anatomia3D.UI
             RefreshImageBasedSystemButtons();
             ClearImageBasedSelection();
 
-            // Difficulty defaults to "medium", which also seeds the (now read-only)
-            // points field via DifficultyToPoints - see ApplyPointsForSelectedDifficulty.
+            // Difficulty defaults to "easy", which also seeds the (now read-only)
+            // points field via PointsForDifficulty - see ApplyPointsForSelectedDifficulty.
             _selectedDifficulty = "easy";
             RefreshDifficultyButtons();
             ApplyPointsForSelectedDifficulty();
@@ -2619,14 +2670,16 @@ namespace Anatomia3D.UI
         }
 
         /// <summary>Syncs the (read-only) points field to whatever _selectedDifficulty
-        /// currently is, via DifficultyToPoints (Easy = 1, Medium = 2, Hard = 5). Called
-        /// on modal open and every time a difficulty button is clicked, so the displayed
-        /// value is always exactly what OnAddQuestionSubmitClicked will persist - the
-        /// field itself is disabled (see OpenAddQuestionModal) purely for display, since
-        /// points are no longer teacher-editable.</summary>
+        /// currently is, via PointsForDifficulty (this teacher's configured
+        /// Easy/Medium/HardPoints, from Gamification Settings). Called on modal open
+        /// and every time a difficulty button is clicked, so the displayed value is
+        /// always exactly what OnAddQuestionSubmitClicked will persist - the field
+        /// itself is disabled (see OpenAddQuestionModal) purely for display, since
+        /// points are no longer teacher-editable here (they're editable in
+        /// Gamification Settings instead).</summary>
         private void ApplyPointsForSelectedDifficulty()
         {
-            int points = DifficultyToPoints.TryGetValue(_selectedDifficulty, out var p) ? p : 1;
+            int points = PointsForDifficulty(_selectedDifficulty);
             if (_questionPointsField != null)
             {
                 _questionPointsField.value = points.ToString();
@@ -2814,10 +2867,11 @@ namespace Anatomia3D.UI
 
             string typeSlug = _selectedQuestionTypeSlug ?? TypeMultipleChoice;
 
-            // Points are derived from the selected difficulty (Easy = 1, Medium = 2,
-            // Hard = 5) - read straight from DifficultyToPoints rather than from
+            // Points are derived from the selected difficulty, using this teacher's
+            // configured Easy/Medium/HardPoints (Gamification Settings) via
+            // PointsForDifficulty - read straight from there rather than from
             // _questionPointsField, which is now a disabled/display-only mirror of it.
-            int points = DifficultyToPoints.TryGetValue(_selectedDifficulty, out var mappedPoints) ? mappedPoints : 2;
+            int points = PointsForDifficulty(_selectedDifficulty);
 
             var question = new QuestionData
             {

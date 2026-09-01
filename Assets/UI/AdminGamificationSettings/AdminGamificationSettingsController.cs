@@ -177,9 +177,13 @@ namespace Anatomia3D.UI
         // above get destroyed and re-queried fresh every OnEnable (UI is rebuilt
         // each time), so without this a re-enable that skips LoadSettings() would
         // show blank/default fields instead of what was actually loaded/saved.
-        private int _lastEasyPoints = 10;
-        private int _lastMediumPoints = 20;
-        private int _lastHardPoints = 30;
+        // Matches AdminGamificationService.DefaultPointsAndBadges() (Easy=1,
+        // Medium=2, Hard=5) - the same fallback used server-side for a teacher
+        // with no saved config yet - so this screen's placeholder never disagrees
+        // with what a brand-new teacher's quizzes actually award.
+        private int _lastEasyPoints = 1;
+        private int _lastMediumPoints = 2;
+        private int _lastHardPoints = 5;
 
         private void OnEnable()
         {
