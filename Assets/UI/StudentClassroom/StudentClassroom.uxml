@@ -47,7 +47,7 @@
                     </ui:VisualElement>
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
                     <ui:Button name="join-classroom-submit-button" class="join-submit-button">
-                        <ui:VisualElement class="join-submit-icon icon-people" style="background-image: url(&quot;project://database/Assets/UI/Icons/userclassroom-icon.png?fileID=2800000&amp;guid=c62a1173899cbf746950a52e454c7190&amp;type=3#userclassroom-icon&quot;); height: 60px; width: 61px;"/>
+                        <ui:VisualElement class="join-submit-icon icon-people" style="background-image: url(&quot;project://database/Assets/UI/Icons/users-icon.png?fileID=2800000&amp;guid=283e313d0909bc04882c7217209f7b5f&amp;type=3#users-icon&quot;); height: 60px; width: 61px;"/>
                         <ui:Label text="Join Classroom" class="join-submit-label"/>
                     </ui:Button>
                 </ui:VisualElement>

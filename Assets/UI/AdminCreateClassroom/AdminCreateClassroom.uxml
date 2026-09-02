@@ -45,7 +45,7 @@
                     </ui:VisualElement>
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
                     <ui:Button name="create-classroom-button" class="create-classroom-button">
-                        <ui:VisualElement name="create-classroom-icon" class="create-classroom-icon"/>
+                        <ui:VisualElement name="create-classroom-icon" class="create-classroom-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); height: 49px; width: 49px; background-color: rgba(255, 255, 255, 0);"/>
                         <ui:Label text="Create Classroom" class="create-classroom-label"/>
                     </ui:Button>
                 </ui:VisualElement>

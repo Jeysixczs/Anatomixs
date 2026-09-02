@@ -1,32 +1,23 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminClassroomCreated/AdminClassroomCreated.uss"/>
+    <Style src="project://database/Assets/UI/AdminClassroomCreated/AdminClassroomCreated.uss?fileID=7433441132597879392&amp;guid=b46e043b2793f9d44a999c57f0affb35&amp;type=3#AdminClassroomCreated"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-
-               
                 <ui:VisualElement name="checkmark-circle" class="checkmark-circle">
                     <ui:VisualElement name="checkmark-icon" class="checkmark-icon"/>
                 </ui:VisualElement>
                 <ui:Label text="Classroom Created!" class="success-title"/>
                 <ui:Label text="Share this code with your students" class="success-subtitle"/>
-
-                
                 <ui:VisualElement name="code-card" class="code-card">
                     <ui:Label text="Classroom Code" class="code-card-label"/>
-
                     <ui:VisualElement name="code-display-box" class="code-display-box">
                         <ui:Label name="classroom-code-label" text="C29V3SC5" class="code-display-text"/>
                     </ui:VisualElement>
-
                     <ui:Button name="copy-code-button" class="copy-code-button">
-                        <ui:VisualElement name="copy-code-icon" class="copy-code-icon"/>
+                        <ui:VisualElement name="copy-code-icon" class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-icon.png?fileID=2800000&amp;guid=efea9607a1058144f9b78865cdeecaca&amp;type=3#copy-icon&quot;); height: 34px; width: 33px; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0);"/>
                         <ui:Label name="copy-code-label" text="Copy Code" class="copy-code-label"/>
                     </ui:Button>
-
                     <ui:VisualElement name="code-card-divider" class="code-card-divider"/>
-
                     <ui:VisualElement name="classroom-name-row" class="detail-row">
                         <ui:Label text="Classroom Name:" class="detail-label"/>
                         <ui:Label name="classroom-name-value-label" text="Anatomy 101" class="detail-value"/>
@@ -36,15 +27,11 @@
                         <ui:Label name="students-value-label" text="0" class="detail-value"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
-            
                 <ui:VisualElement name="tip-box" class="tip-box">
-                    <ui:Label text="&#128161;" class="tip-icon"/>
+                    <ui:Label text="💡" class="tip-icon"/>
                     <ui:Label name="tip-text-label" text="Tip: Students can join your classroom by entering this code in their app. You can always find this code in your classroom details." class="tip-text"/>
                 </ui:VisualElement>
-
                 <ui:Button name="go-to-dashboard-button" text="Go to Dashboard" class="go-to-dashboard-button"/>
-
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

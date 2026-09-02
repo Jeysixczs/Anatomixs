@@ -440,12 +440,11 @@ private IEnumerator DecideInitialScreen()
             int correctCount,
             int incorrectCount,
             int pointsEarned,
-            int pointsPossible,
-            int bonusXp)
+            int pointsPossible)
         {
             ShowScreen(studentQuizResultScreen, _studentQuizResultController, () =>
             {
-                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp);
+                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible);
             });
         }
 

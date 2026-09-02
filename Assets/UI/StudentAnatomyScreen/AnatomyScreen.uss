@@ -967,6 +967,89 @@
     padding-right: 24px;
 }
 
+/* ===== No Hints Left popup (daily per-system hint limit reached) =====
+   Deliberately distinct from .play-mode-completion-panel above: that one
+   is a celebration (quiz finished), this one is a "come back later"
+   notice, so it gets its own amber/hourglass identity instead of
+   borrowing the completion panel's plain white celebratory card. The
+   close button still uses the app's primary green so it reads as the
+   one clear action, consistent with play-btn/letter-box-active elsewhere. */
+.no-hints-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(20, 30, 28, 0.55);
+    justify-content: center;
+    align-items: center;
+}
+
+.no-hints-card {
+    background-color: rgb(255, 255, 255);
+    border-radius: 28px;
+    padding: 36px 32px 28px 32px;
+    max-width: 420px;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.no-hints-icon-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    background-color: rgba(255, 176, 32, 0.16);
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.no-hints-icon {
+    font-size: 32px;
+    -unity-text-align: middle-center;
+}
+
+.no-hints-title {
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: rgb(40, 50, 48);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-bottom: 8px;
+}
+
+.no-hints-message {
+    font-size: 15px;
+    color: rgb(110, 120, 118);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 340px;
+    margin-bottom: 24px;
+}
+
+.no-hints-close-btn {
+    width: auto;
+    min-width: 140px;
+    height: 48px;
+    border-radius: 24px;
+    background-color: rgb(34, 197, 130);
+    color: rgb(255, 255, 255);
+    border-width: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    padding-left: 28px;
+    padding-right: 28px;
+    margin: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.no-hints-close-btn:hover {
+    background-color: rgb(30, 178, 116);
+    scale: 1.03 1.03;
+}
+
 /* ===== Controls Guide (floating "how to use the controls" help) ===== */
 
 /* Floating "?" button, pinned to BodyArea's own bottom-right corner

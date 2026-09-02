@@ -135,6 +135,14 @@ namespace Anatomia3D.UI
                 // read on every open; a points/badgesEarned change is instead caught
                 // live via OnStudentProfileChanged below and recomputed from
                 // _lastConfiguredBadges without touching Firestore at all.
+                //
+                // QueryElements() above just re-queried _totalPointsLabel/_badgesEarnedLabel
+                // (fresh Label instances if this screen's tree was rebuilt) - RenderBadges()
+                // alone only repaints the badge-list, so the summary card needs its own
+                // repaint here too or it shows blank/stale text on every re-open after the
+                // first.
+                int earnedCount = _lastBadges.Count(b => b.Earned);
+                SetSummaryData(_lastTotalPoints, earnedCount, _lastBadges.Count);
                 RenderBadges();
             }
             else

@@ -293,7 +293,11 @@ namespace Anatomia3D.UI.Quiz
             // into gameplay (classroom detail's Start button, deep links, etc.) routes
             // through LoadQuiz(), so enforcing the deadline/attempts check here means it
             // can't be bypassed by skipping some other screen's pre-check.
-            QuizService.Instance.CheckAttemptEligibility(quizId, (checkOk, checkError, eligibility) =>
+            //
+            // classroomId is passed through here so attempts are scoped to this specific
+            // classroom - the same quiz can be published into multiple classrooms, and an
+            // attempt used up in one must not block starting it in another.
+            QuizService.Instance.CheckAttemptEligibility(classroomId, quizId, (checkOk, checkError, eligibility) =>
             {
                 //if (!checkOk)
                 //{
@@ -693,7 +697,6 @@ namespace Anatomia3D.UI.Quiz
                 incorrectCount,
                 pointsEarned,
                 _quiz.PointsPossible,
-                bonusXp: 0,
                 (success, error, result) =>
                 {
                     if (!success)
@@ -716,7 +719,7 @@ namespace Anatomia3D.UI.Quiz
                     PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
                     {
                         UIManager.Instance.ShowStudentQuizResult(
-                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp: 0);
+                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible);
                     });
 
                 },

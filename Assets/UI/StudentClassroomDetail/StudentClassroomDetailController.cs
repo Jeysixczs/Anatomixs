@@ -215,18 +215,18 @@ namespace Anatomia3D.UI
             public string QuizTitle;
             public string CompletedDateText;
             public bool Passed;
-            public int ScoreCorrect;
-            public int ScoreTotal;
+            public int PointsEarned;
+            public int PointsPossible;
             public string TimeText;
             public int Attempt;
 
-            public ScoreHistoryInfo(string quizTitle, string completedDateText, bool passed, int scoreCorrect, int scoreTotal, string timeText, int attempt)
+            public ScoreHistoryInfo(string quizTitle, string completedDateText, bool passed, int pointsEarned, int pointsPossible, string timeText, int attempt)
             {
                 QuizTitle = quizTitle;
                 CompletedDateText = completedDateText;
                 Passed = passed;
-                ScoreCorrect = scoreCorrect;
-                ScoreTotal = scoreTotal;
+                PointsEarned = pointsEarned;
+                PointsPossible = pointsPossible;
                 TimeText = timeText;
                 Attempt = attempt;
             }
@@ -636,7 +636,7 @@ namespace Anatomia3D.UI
 
                 SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
                     s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
-                    s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
+                    s.PointsEarned, s.PointsPossible, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
             });
         }
 
@@ -670,7 +670,7 @@ namespace Anatomia3D.UI
             _availableQuizzesHandle = ClassroomService.Instance.ListenToAvailableQuizzes(classroomId, quizzes =>
             {
                 if (classroomId != _lastLoadedClassroomId) return;
-                LoadQuizStartEligibility(quizzes, () => classroomId != _lastLoadedClassroomId);
+                LoadQuizStartEligibility(classroomId, quizzes, () => classroomId != _lastLoadedClassroomId);
             });
         }
 
@@ -805,8 +805,12 @@ namespace Anatomia3D.UI
         /// re-runs as the real enforcement point when Start is actually tapped) so the button
         /// can already show "Deadline Expired" / "No More Attempts" and be disabled up front,
         /// instead of only failing after the student taps it.
+        ///
+        /// classroomId scopes the eligibility check to THIS classroom - the same quiz can be
+        /// published into more than one classroom, and an attempt used up in one classroom
+        /// must not show as "No More Attempts" here for a different classroom.
         /// </summary>
-        private void LoadQuizStartEligibility(List<ClassroomService.QuizSummary> quizzes, Func<bool> isStale)
+        private void LoadQuizStartEligibility(string classroomId, List<ClassroomService.QuizSummary> quizzes, Func<bool> isStale)
         {
             if (quizzes == null || quizzes.Count == 0)
             {
@@ -830,7 +834,7 @@ namespace Anatomia3D.UI
                 var q = quizzes[i];
                 int index = i;
 
-                QuizService.Instance.CheckAttemptEligibility(q.QuizId, (checkOk, checkError, eligibility) =>
+                QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
                 {
                     var block = QuizStartBlock.None;
                     if (checkOk && eligibility != null && !eligibility.CanStart)
@@ -1443,7 +1447,7 @@ namespace Anatomia3D.UI
 
             var scoreBlock = new VisualElement();
             scoreBlock.AddToClassList("performer-score-block");
-            var percentLabel = new Label($"{Mathf.RoundToInt(performer.ScorePercent)}%");
+            var percentLabel = new Label($"{performer.ScorePercent.ToString("0.#")}%");
             percentLabel.AddToClassList("performer-score-percent");
             var pointsLabel = new Label($"{performer.Points:N0} pts");
             pointsLabel.AddToClassList("performer-points-sub");
@@ -1494,10 +1498,10 @@ namespace Anatomia3D.UI
 
             var midRow = new VisualElement();
             midRow.AddToClassList("score-mid-row");
-            var fractionLabel = new Label($"Score: {score.ScoreCorrect} / {score.ScoreTotal}");
+            var fractionLabel = new Label($"Score: {score.PointsEarned} / {score.PointsPossible}");
             fractionLabel.AddToClassList("score-fraction-label");
-            float percent = score.ScoreTotal > 0 ? (score.ScoreCorrect / (float)score.ScoreTotal) * 100f : 0f;
-            var percentLabel = new Label($"{Mathf.RoundToInt(percent)}%");
+            float percent = score.PointsPossible > 0 ? (score.PointsEarned / (float)score.PointsPossible) * 100f : 0f;
+            var percentLabel = new Label($"{percent.ToString("0.#")}%");
             percentLabel.AddToClassList("score-percent-label");
             percentLabel.AddToClassList(score.Passed ? "score-percent-label-passed" : "score-percent-label-failed");
             midRow.Add(fractionLabel);

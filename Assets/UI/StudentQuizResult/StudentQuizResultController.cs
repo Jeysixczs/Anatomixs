@@ -63,11 +63,11 @@ namespace Anatomia3D.UI
         private VisualElement _pointsProgressFill;
 
         private Label _pointsMiniValueLabel;
-        private Label _bonusMiniValueLabel;
+
 
         private Button _backToDashboardButton;
-        private Button _retryButton;
-        private Button _shareButton;
+        private Button _backToClassroomHubButton;
+    
 
         // Cached from the last SetResult() call so Retry can reference the quiz.
         private string _lastQuizName;
@@ -135,10 +135,9 @@ namespace Anatomia3D.UI
         {
             if (_screenRoot == null) return;
 
-            _backToDashboardButton?.UnregisterCallback<ClickEvent>(OnBackToDashboardClicked);
-            _retryButton?.UnregisterCallback<ClickEvent>(OnRetryClicked);
-            _shareButton?.UnregisterCallback<ClickEvent>(OnShareClicked);
+            _backToDashboardButton?.UnregisterCallback<ClickEvent>(OnBackToDashboardClicked);      
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            _backToClassroomHubButton?.UnregisterCallback<ClickEvent>(OnBackToClassroomHubClicked);
         }
 
         private void QueryElements()
@@ -165,11 +164,10 @@ namespace Anatomia3D.UI
             _pointsProgressFill = _screenRoot.Q<VisualElement>("points-progress-fill");
 
             _pointsMiniValueLabel = _screenRoot.Q<Label>("points-mini-value-label");
-            _bonusMiniValueLabel = _screenRoot.Q<Label>("bonus-mini-value-label");
+      
 
             _backToDashboardButton = _screenRoot.Q<Button>("back-to-dashboard-button");
-            _retryButton = _screenRoot.Q<Button>("retry-button");
-            _shareButton = _screenRoot.Q<Button>("share-button");
+            _backToClassroomHubButton = _screenRoot.Q<Button>("back-to-classroom-button");
 
             Debug.Log($"[StudentQuizResultController] Found back-to-dashboard: {_backToDashboardButton != null}, header: {_header != null}");
         }
@@ -181,19 +179,13 @@ namespace Anatomia3D.UI
                 _backToDashboardButton.RegisterCallback<ClickEvent>(OnBackToDashboardClicked);
             }
 
-            if (_retryButton != null)
-            {
-                _retryButton.RegisterCallback<ClickEvent>(OnRetryClicked);
-            }
-
-            if (_shareButton != null)
-            {
-                _shareButton.RegisterCallback<ClickEvent>(OnShareClicked);
-            }
-
             if (_screenRoot != null)
             {
                 _screenRoot.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            }
+            if (_backToClassroomHubButton != null)
+            {
+                _backToClassroomHubButton.RegisterCallback<ClickEvent>(OnBackToClassroomHubClicked);
             }
         }
 
@@ -209,16 +201,21 @@ namespace Anatomia3D.UI
             int correctCount,
             int incorrectCount,
             int pointsEarned,
-            int pointsPossible,
-            int bonusXp)
+            int pointsPossible)
         {
             _lastQuizName = quizName;
 
+            // Score percentage must be weighted by each question's point value, not by
+            // how many questions were answered correctly. pointsEarned/pointsPossible
+            // already reflect the real per-question point weights - correctCount/total
+            // are only used for the "X correct / Y incorrect / Z total" counters below.
             int total = correctCount + incorrectCount;
-            float percent = total > 0 ? (correctCount / (float)total) * 100f : 0f;
+            float percent = pointsPossible > 0 ? (pointsEarned / (float)pointsPossible) * 100f : 0f;
 
             if (_quizNameLabel != null) _quizNameLabel.text = quizName;
-            if (_scorePercentLabel != null) _scorePercentLabel.text = $"{Mathf.RoundToInt(percent)}%";
+            // "0.#" shows a decimal only when there is one (87.5% stays 87.5%, 100% stays 100%)
+            // instead of rounding away a real fractional score like 87.5 -> 88.
+            if (_scorePercentLabel != null) _scorePercentLabel.text = $"{percent.ToString("0.#")}%";
             if (_correctCountLabel != null) _correctCountLabel.text = correctCount.ToString();
             if (_incorrectCountLabel != null) _incorrectCountLabel.text = incorrectCount.ToString();
             if (_totalCountLabel != null) _totalCountLabel.text = total.ToString();
@@ -231,7 +228,7 @@ namespace Anatomia3D.UI
             }
 
             if (_pointsMiniValueLabel != null) _pointsMiniValueLabel.text = $"+{pointsEarned}";
-            if (_bonusMiniValueLabel != null) _bonusMiniValueLabel.text = $"+{bonusXp}";
+    
 
             ApplyGradientForScore(percent);
         }
@@ -244,22 +241,10 @@ namespace Anatomia3D.UI
             UIManager.Instance.ShowStudentDashboard();
         }
 
-        private void OnRetryClicked(ClickEvent evt)
+        private void OnBackToClassroomHubClicked(ClickEvent evt)
         {
-            Debug.Log($"[StudentQuizResultController] Retry tapped for: {_lastQuizName ?? _quizNameLabel?.text}");
-
-            // TODO: replace with your real quiz-restart call, e.g.:
-            // QuizManager.Instance.RetryLastQuiz();
-            // For now, send the student back to quiz selection so they can start again.
-            UIManager.Instance.ShowStudentQuizSelection();
-        }
-
-        private void OnShareClicked(ClickEvent evt)
-        {
-            Debug.Log("[StudentQuizResultController] Share tapped.");
-
-            // TODO: hook up a native share sheet here, e.g.:
-            // NativeShare.Instance.ShareText($"I scored {_scorePercentLabel.text} on {_quizNameLabel.text}!");
+            Debug.Log("[StudentQuizResultController] Navigating back to classroom");
+            UIManager.Instance.ShowStudentClassroomHub();
         }
 
         // ---------------- Responsive layout ----------------
@@ -277,14 +262,21 @@ namespace Anatomia3D.UI
 
         private void ApplyGradientForCurrentScore()
         {
+            // Re-derive from the points label ("X / Y"), not from correct/total question
+            // counts - those are unweighted and would misclassify the score tier for a
+            // quiz whose questions carry different point values.
             float percent = 0f;
 
-            if (_correctCountLabel != null && _totalCountLabel != null &&
-                int.TryParse(_correctCountLabel.text, out int correct) &&
-                int.TryParse(_totalCountLabel.text, out int total) &&
-                total > 0)
+            if (_pointsEarnedValueLabel != null)
             {
-                percent = (correct / (float)total) * 100f;
+                var parts = _pointsEarnedValueLabel.text.Split('/');
+                if (parts.Length == 2 &&
+                    float.TryParse(parts[0].Trim(), out float earned) &&
+                    float.TryParse(parts[1].Trim(), out float possible) &&
+                    possible > 0f)
+                {
+                    percent = (earned / possible) * 100f;
+                }
             }
 
             ApplyGradientForScore(percent);

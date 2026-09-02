@@ -12,8 +12,8 @@ namespace Anatomia3D.Backend
     /// (student), and the progress-tracker aggregation query. This is the
     /// "AdminQuizService" / "QuizService" referenced in the TODOs inside
     /// AdminQuizManagementController (OnCreateQuizSubmitClicked /
-    /// OnAddQuestionSubmitClicked), StudentQuizSelectionController,
-    /// StudentQuizResultController and StudentProgressController.
+    /// OnAddQuestionSubmitClicked), StudentQuizResultController and
+    /// StudentProgressController.
     ///
     /// Schema note: FIRESTORE_SCHEMA.md's `quizzes/{quizId}` doc didn't include
     /// a time limit or passing score, since AdminQuizManagementController's
@@ -443,14 +443,12 @@ namespace Anatomia3D.Backend
         // ClassroomService.FetchAvailableQuizzes() -> the classroom's publishedQuizIds
         // array (set via AdminClassroomService.SetQuizPublished /
         // AdminClassroomDetailController's Quizzes tab). There's no separate
-        // "browse all quizzes" screen, so no quiz-listing method belongs here -
-        // StudentQuizSelectionController is reached per-quiz from that tab and only
-        // needs FetchQuizStats() below for the specific quiz being started.
+        // "browse all quizzes" screen, so no quiz-listing method belongs here.
 
-        // NEW: nothing previously fetched a single quiz's full question list -
-        // FetchQuizStats() only returns past-attempt aggregates. StudentQuizGameplayController
-        // needs the actual QuizRecord (with Questions) once the student taps "Start", so
-        // this reads quizzes/{quizId} directly and reuses ToQuizRecord() like the admin path.
+        // NEW: nothing previously fetched a single quiz's full question list.
+        // StudentQuizGameplayController needs the actual QuizRecord (with Questions) once
+        // the student taps "Start", so this reads quizzes/{quizId} directly and reuses
+        // ToQuizRecord() like the admin path.
         /// <summary>Call when starting gameplay (StudentQuizGameplayController) - fetches
         /// the full quiz doc, including its questions, right before the student begins.</summary>
         public void FetchQuiz(string quizId, Action<bool, string, QuizRecord> onComplete)
@@ -483,7 +481,6 @@ namespace Anatomia3D.Backend
             int incorrectCount,
             int pointsEarned,
             int pointsPossible,
-            int bonusXp,
             Action<bool, string, AttemptResult> onComplete,
             int passingScorePercent = 70,
             List<QuestionAttemptResult> questionResults = null,
@@ -496,7 +493,12 @@ namespace Anatomia3D.Backend
             // changed while the student was on the gameplay screen (CheckAttemptEligibility()
             // is also run up-front by StudentQuizGameplayController.LoadQuiz(), which is what
             // normally stops a student from getting this far in the first place).
-            CheckAttemptEligibility(quizId, (checkOk, checkError, eligibility) =>
+            //
+            // classroomId is passed through here (not just quizId) because the same quiz doc
+            // can be published into multiple classrooms' publishedQuizIds - attempts must be
+            // scoped to student + classroom + quiz, or a used-up attempt in one classroom would
+            // incorrectly block the student from ever starting that quiz in another classroom.
+            CheckAttemptEligibility(classroomId, quizId, (checkOk, checkError, eligibility) =>
             {
                 if (checkOk && eligibility != null && !eligibility.CanStart)
                 {
@@ -508,7 +510,7 @@ namespace Anatomia3D.Backend
                 int maxAttempts = eligibility?.MaxAttempts ?? 0;
 
                 SubmitQuizAttemptInternal(quizId, quizName, category, classroomId, correctCount, incorrectCount,
-                    pointsEarned, pointsPossible, bonusXp, attemptNumber, maxAttempts, onComplete,
+                    pointsEarned, pointsPossible, attemptNumber, maxAttempts, onComplete,
                     passingScorePercent, questionResults, timeSpentSeconds);
             });
         }
@@ -522,7 +524,6 @@ namespace Anatomia3D.Backend
             int incorrectCount,
             int pointsEarned,
             int pointsPossible,
-            int bonusXp,
             int attemptNumber,
             int maxAttempts,
             Action<bool, string, AttemptResult> onComplete,
@@ -543,8 +544,16 @@ namespace Anatomia3D.Backend
             var classroomRef = string.IsNullOrEmpty(classroomId) ? null : Db.Collection("classrooms").Document(classroomId);
             var levelsRef = AdminGamificationService.Instance.LevelsRef;
 
-            int total = correctCount + incorrectCount;
-            float percent = total > 0 ? (correctCount / (float)total) * 100f : 0f;
+            // IMPORTANT: percent must reflect the weighted point value of each question,
+            // not the raw count of correct vs. incorrect answers. A quiz's questions can
+            // carry different point values (see QuestionRecord.Points / QuizRecord.PointsPossible
+            // above), so "3 of 5 correct" is NOT the same as "60%" unless every question is
+            // worth the same amount. pointsEarned/pointsPossible (passed in by the caller,
+            // computed from the actual per-question point values during gameplay) are the
+            // only correct inputs to this formula. correctCount/incorrectCount are kept
+            // purely for "X of Y questions correct" display purposes elsewhere and must
+            // never be used to derive the score percentage.
+            float percent = pointsPossible > 0 ? (pointsEarned / (float)pointsPossible) * 100f : 0f;
 
             Db.RunTransactionAsync(async transaction =>
             {
@@ -572,7 +581,7 @@ namespace Anatomia3D.Backend
                     ? studentSnap.GetValue<List<string>>("badgesEarned")
                     : new List<string>();
 
-                int newTotalPoints = currentTotalPoints + pointsEarned + bonusXp;
+                int newTotalPoints = currentTotalPoints + pointsEarned;
                 var settings = AdminGamificationService.ToSettings(configSnap, levelsSnap);
                 var levelInfo = AdminGamificationService.ComputeLevelProgress(settings, newTotalPoints);
                 var newBadgeIds = AdminGamificationService.ComputeNewlyEarnedBadges(settings, newTotalPoints, existingBadges);
@@ -598,7 +607,6 @@ namespace Anatomia3D.Backend
                     { "timeSpentSeconds", timeSpentSeconds },
                     { "pointsEarned", pointsEarned },
                     { "pointsPossible", pointsPossible },
-                    { "bonusXp", bonusXp },
                     { "percent", percent },
                     { "passed", percent >= passingScorePercent },
                     { "status", "Completed" },
@@ -665,7 +673,7 @@ namespace Anatomia3D.Backend
                 // own points, so the level shown here always matches the student's real
                 // level everywhere else.
                 ClassroomService.Instance?.RecordQuizCompletion(
-                    classroomId, pointsEarned + bonusXp, percent, result.NewLevel);
+                    classroomId, pointsEarned, percent, result.NewLevel);
 
                 if (result.NewlyEarnedBadgeIds.Count > 0)
                 {
@@ -699,8 +707,18 @@ namespace Anatomia3D.Backend
         /// If the deadline has already passed and the student never attempted the quiz, this
         /// also fire-and-forgets a "Missed" quizAttempts doc (score 0) so it shows up in the
         /// student's history and the teacher's records without requiring a scheduled job.
+        ///
+        /// <paramref name="classroomId"/> IS PART OF THE ATTEMPT IDENTITY, alongside studentId
+        /// and quizId. The same quiz doc can be published into more than one classroom's
+        /// publishedQuizIds (see AdminClassroomService.SetQuizPublished) - it's still one quizId
+        /// shared across classrooms, not a separate copy per classroom. Without filtering by
+        /// classroomId here, a student who used up their attempt on this quiz in Classroom A
+        /// would incorrectly show 0 attempts remaining when the same quiz is later published
+        /// into Classroom B, even though they've never attempted it there. Pass the classroom
+        /// the student is viewing/launching the quiz from (the same value that gets attached to
+        /// the quizAttempts doc on submit - see SubmitQuizAttemptInternal).
         /// </summary>
-        public void CheckAttemptEligibility(string quizId, Action<bool, string, AttemptEligibility> onComplete)
+        public void CheckAttemptEligibility(string classroomId, string quizId, Action<bool, string, AttemptEligibility> onComplete)
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
@@ -718,6 +736,7 @@ namespace Anatomia3D.Backend
                 Db.Collection("quizAttempts")
                     .WhereEqualTo("studentId", student.Uid)
                     .WhereEqualTo("quizId", quizId)
+                    .WhereEqualTo("classroomId", classroomId)
                     .GetSnapshotAsync()
                     .ContinueWithOnMainThread(attemptsTask =>
                     {
@@ -742,7 +761,7 @@ namespace Anatomia3D.Backend
                         {
                             if (attemptsUsed == 0 && !alreadyRecordedMissed)
                             {
-                                RecordMissedAttempt(quiz, student.Uid);
+                                RecordMissedAttempt(quiz, student.Uid, classroomId);
                             }
 
                             onComplete?.Invoke(true, null, new AttemptEligibility
@@ -782,8 +801,13 @@ namespace Anatomia3D.Backend
         }
 
         /// <summary>Fire-and-forget: writes a `status: "Missed", score: 0` quizAttempts doc for a
-        /// student who never attempted the quiz before its deadline passed.</summary>
-        private void RecordMissedAttempt(QuizRecord quiz, string studentUid)
+        /// student who never attempted the quiz before its deadline passed. classroomId is the
+        /// classroom this eligibility check was scoped to - NOT quiz.ClassroomId (the quiz doc's
+        /// own classroomId field from creation time), since a quiz published into a classroom
+        /// other than the one it was created in must record its "Missed" doc against the
+        /// classroom the student actually missed it in, or that classroom's own attempt/history
+        /// tracking would silently lose the record.</summary>
+        private void RecordMissedAttempt(QuizRecord quiz, string studentUid, string classroomId)
         {
             var attemptRef = Db.Collection("quizAttempts").Document();
             attemptRef.SetAsync(new Dictionary<string, object>
@@ -793,7 +817,7 @@ namespace Anatomia3D.Backend
                 { "quizName", quiz.Title },
                 { "quizTitle", quiz.Title },
                 { "category", quiz.Category },
-                { "classroomId", quiz.ClassroomId },
+                { "classroomId", classroomId },
                 { "correctCount", 0 },
                 { "incorrectCount", 0 },
                 { "scoreCorrect", 0 },
@@ -801,7 +825,6 @@ namespace Anatomia3D.Backend
                 { "timeSpentSeconds", 0 },
                 { "pointsEarned", 0 },
                 { "pointsPossible", quiz.PointsPossible },
-                { "bonusXp", 0 },
                 { "percent", 0f },
                 { "status", "Missed" },
                 { "score", 0 },
@@ -1007,13 +1030,12 @@ namespace Anatomia3D.Backend
 
                             string quizName = doc.ContainsField("quizName") ? doc.GetValue<string>("quizName") : "a quiz";
                             int pointsEarned = doc.ContainsField("pointsEarned") ? doc.GetValue<int>("pointsEarned") : 0;
-                            int bonusXp = doc.ContainsField("bonusXp") ? doc.GetValue<int>("bonusXp") : 0;
 
                             results.Add(new ActivityRecord
                             {
                                 Type = ActivityType.QuizCompleted,
                                 Title = $"Completed '{quizName}' Quiz",
-                                PointsDelta = pointsEarned + bonusXp,
+                                PointsDelta = pointsEarned,
                                 OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp(),
                                 DocId = doc.Id
                             });
@@ -1098,7 +1120,7 @@ namespace Anatomia3D.Backend
                                 results.Add(new ActivityRecord
                                 {
                                     Type = ActivityType.QuizCompleted,
-                                    Title = $"{studentName} completed '{quizName}' ({Mathf.RoundToInt(percent)}%)",
+                                    Title = $"{studentName} completed '{quizName}' ({percent.ToString("0.#")}%)",
                                     PointsDelta = 0,
                                     OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
                                 });
@@ -1229,7 +1251,7 @@ namespace Anatomia3D.Backend
                 ScoreTotal = scoreTotal,
                 ScorePercent = percent,
                 Status = status,
-                Title = $"{studentName} completed '{quizTitle}' ({Mathf.RoundToInt(percent)}%)",
+                Title = $"{studentName} completed '{quizTitle}' ({percent.ToString("0.#")}%)",
                 PointsDelta = 0,
                 OccurredAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp()
             };
@@ -1254,36 +1276,6 @@ namespace Anatomia3D.Backend
                 }
             }
             return string.Join(" ", parts);
-        }
-
-        /// <summary>Call when showing StudentQuizSelectionController - feeds SetQuizStats() directly.</summary>
-        public void FetchQuizStats(string quizId, Action<bool, string, int, int, float> onComplete)
-        {
-            var student = PlayerSessionManager.Instance.CurrentStudent;
-            if (student == null) { onComplete?.Invoke(false, "Not signed in.", 0, 0, 0f); return; }
-            Db.Collection("quizAttempts")
-                .WhereEqualTo("studentId", student.Uid)
-                .WhereEqualTo("quizId", quizId)
-                .GetSnapshotAsync()
-                .ContinueWithOnMainThread(task =>
-                {
-                    if (task.IsCanceled || task.IsFaulted)
-                    {
-                        onComplete?.Invoke(false, "Could not fetch quiz stats.", 0, 0, 0f);
-                        return;
-                    }
-                    var attempts = task.Result.Documents.Select(doc => new
-                    {
-                        CorrectCount = doc.ContainsField("correctCount") ? doc.GetValue<int>("correctCount") : 0,
-                        IncorrectCount = doc.ContainsField("incorrectCount") ? doc.GetValue<int>("incorrectCount") : 0,
-                        Percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f
-                    }).ToList();
-                    int totalAttempts = attempts.Count;
-                    int totalCorrect = attempts.Sum(a => a.CorrectCount);
-                    int totalIncorrect = attempts.Sum(a => a.IncorrectCount);
-                    float avgPercent = totalAttempts > 0 ? attempts.Average(a => a.Percent) : 0f;
-                    onComplete?.Invoke(true, null, totalAttempts, totalCorrect + totalIncorrect, avgPercent);
-                });
         }
 
         /// <summary>Call when showing StudentProgressController - feeds SetProgressData() /
@@ -1354,7 +1346,7 @@ namespace Anatomia3D.Backend
         {
             FetchStudentAttempts(attempts =>
             {
-                onComplete?.Invoke(attempts.Select(a => (a.PointsPlusBonus, a.CompletedAtUtc)).ToList());
+                onComplete?.Invoke(attempts.Select(a => (a.Points, a.CompletedAtUtc)).ToList());
             });
         }
 
@@ -1719,7 +1711,7 @@ namespace Anatomia3D.Backend
         {
             public string Category;
             public float Percent;
-            public float PointsPlusBonus;
+            public float Points;
             public DateTime CompletedAtUtc;
         }
 
@@ -1743,8 +1735,7 @@ namespace Anatomia3D.Backend
                             {
                                 Category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "",
                                 Percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f,
-                                PointsPlusBonus = (doc.ContainsField("pointsEarned") ? doc.GetValue<int>("pointsEarned") : 0)
-                                    + (doc.ContainsField("bonusXp") ? doc.GetValue<int>("bonusXp") : 0),
+                                Points = doc.ContainsField("pointsEarned") ? doc.GetValue<int>("pointsEarned") : 0,
                                 CompletedAtUtc = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt").ToDateTime() : DateTime.UtcNow
                             });
                         }
@@ -1768,7 +1759,7 @@ namespace Anatomia3D.Backend
                 if (attempt.CompletedAtUtc >= mondayStart && attempt.CompletedAtUtc < nextMonday)
                 {
                     int dayIndex = ((int)attempt.CompletedAtUtc.DayOfWeek + 6) % 7;
-                    points[dayIndex] += attempt.PointsPlusBonus;
+                    points[dayIndex] += attempt.Points;
                 }
             }
 

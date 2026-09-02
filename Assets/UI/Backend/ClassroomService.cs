@@ -937,8 +937,8 @@ namespace Anatomia3D.Backend
             public string QuizTitle;
             public Timestamp CompletedAt;
             public bool Passed;
-            public int ScoreCorrect;
-            public int ScoreTotal;
+            public int PointsEarned;
+            public int PointsPossible;
             public int TimeSpentSeconds;
             public int Attempt;
         }
@@ -982,16 +982,16 @@ namespace Anatomia3D.Backend
                         int attemptNumber = task.Result.Documents.Count();
                         foreach (var doc in task.Result.Documents)
                         {
-                            int scoreCorrect = doc.ContainsField("scoreCorrect") ? doc.GetValue<int>("scoreCorrect") : 0;
-                            int scoreTotal = doc.ContainsField("scoreTotal") ? doc.GetValue<int>("scoreTotal") : 0;
+                            int pointsEarned = doc.ContainsField("pointsEarned") ? doc.GetValue<int>("pointsEarned") : 0;
+                            int pointsPossible = doc.ContainsField("pointsPossible") ? doc.GetValue<int>("pointsPossible") : 0;
 
                             results.Add(new ScoreRecord
                             {
                                 QuizTitle = doc.ContainsField("quizTitle") ? doc.GetValue<string>("quizTitle") : "Quiz",
                                 CompletedAt = doc.ContainsField("completedAt") ? doc.GetValue<Timestamp>("completedAt") : Timestamp.GetCurrentTimestamp(),
                                 Passed = doc.ContainsField("passed") && doc.GetValue<bool>("passed"),
-                                ScoreCorrect = scoreCorrect,
-                                ScoreTotal = scoreTotal,
+                                PointsEarned = pointsEarned,
+                                PointsPossible = pointsPossible,
                                 TimeSpentSeconds = doc.ContainsField("timeSpentSeconds") ? doc.GetValue<int>("timeSpentSeconds") : 0,
                                 Attempt = attemptNumber--
                             });

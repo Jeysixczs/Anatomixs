@@ -129,6 +129,9 @@ namespace Anatomia3D.Backend
         private VisualElement _completionPanel;
         private Label _completionLabel;
         private Button _completionCloseButton;
+        private VisualElement _noHintsPanel;
+        private Label _noHintsLabel;
+        private Button _noHintsCloseButton;
         private VisualElement _playModeControlsRow;
         private VisualElement _audioRow;
 
@@ -196,6 +199,7 @@ namespace Anatomia3D.Backend
             if (_hintButton != null) _hintButton.clicked -= OnHintClicked;
             if (_submitButton != null) _submitButton.clicked -= OnSubmitClicked;
             if (_completionCloseButton != null) _completionCloseButton.clicked -= HideCompletionPanel;
+            if (_noHintsCloseButton != null) _noHintsCloseButton.clicked -= HideNoHintsPanel;
 
             // Leaving the screen entirely - don't leave Play Mode's
             // Isolate Answered visibility rule stuck active underneath
@@ -257,6 +261,9 @@ namespace Anatomia3D.Backend
             _completionPanel = _root.Q<VisualElement>("PlayModeCompletionPanel");
             _completionLabel = _root.Q<Label>("PlayModeCompletionLabel");
             _completionCloseButton = _root.Q<Button>("PlayModeCompletionCloseButton");
+            _noHintsPanel = _root.Q<VisualElement>("NoHintsPanel");
+            _noHintsLabel = _root.Q<Label>("NoHintsLabel");
+            _noHintsCloseButton = _root.Q<Button>("NoHintsCloseButton");
             _playModeControlsRow = _root.Q<VisualElement>("PlayModeControls");
             _audioRow = _root.Q<VisualElement>("AudioRow");
 
@@ -310,6 +317,15 @@ namespace Anatomia3D.Backend
             {
                 _completionCloseButton.clicked -= HideCompletionPanel;
                 _completionCloseButton.clicked += HideCompletionPanel;
+            }
+
+            if (_noHintsPanel != null)
+                _noHintsPanel.AddToClassList("hidden");
+
+            if (_noHintsCloseButton != null)
+            {
+                _noHintsCloseButton.clicked -= HideNoHintsPanel;
+                _noHintsCloseButton.clicked += HideNoHintsPanel;
             }
 
             _uiWired = true;
@@ -853,6 +869,13 @@ namespace Anatomia3D.Backend
             // active system, no hint is granted and no letter is revealed.
             if (localStorage == null || !localStorage.TryUseHint(CurrentStudentId, _screen.CurrentSystem, out var hintRecord))
             {
+                // TryUseHint only fails for one reason: today's per-system
+                // hint limit is already used up (see its doc comment) - so
+                // getting here always means "no hints left", never some
+                // other kind of failure. Tell the student when they'll get
+                // more, since the button no longer explains itself by going
+                // disabled/greyed-out (see RefreshHintButtonState).
+                ShowNoHintsPopup();
                 RefreshHintButtonState();
                 return;
             }
@@ -907,7 +930,33 @@ namespace Anatomia3D.Backend
 
             bool limitReached = localStorage.GetHintCountToday(_screen.CurrentSystem) >= AnatomyPlayModeLocalStorage.MaxHintsPerSystemPerDay;
             _hintButton.text = limitReached ? "No more hints" : "Hint";
-            _hintButton.SetEnabled(!limitReached);
+
+            // Deliberately left enabled even at the limit (unlike the old
+            // SetEnabled(!limitReached)) - a disabled button can't be
+            // tapped, so it could never explain itself. Leaving it enabled
+            // lets OnHintClicked's TryUseHint failure path show
+            // ShowNoHintsPopup() with the reset time instead of the button
+            // just going dead with no explanation.
+            _hintButton.SetEnabled(true);
+        }
+
+        // Builds and shows the "no hints left today" popup, filling in the
+        // exact local time hints reset - hints reset at local midnight
+        // (see AnatomyPlayModeLocalStorage.GetHintCountToday, which compares
+        // DateTime.Now.Date), so that's the time shown here.
+        private void ShowNoHintsPopup()
+        {
+            if (_noHintsPanel == null || _noHintsLabel == null) return;
+
+            DateTime nextResetLocal = DateTime.Now.Date.AddDays(1);
+            _noHintsLabel.text =
+                $"You've used all your hints for this system today. They'll refresh at {nextResetLocal:h:mm tt} ({nextResetLocal:MMM d}).";
+            _noHintsPanel.RemoveFromClassList("hidden");
+        }
+
+        private void HideNoHintsPanel()
+        {
+            _noHintsPanel?.AddToClassList("hidden");
         }
 
         // ===== Answer submission =====
