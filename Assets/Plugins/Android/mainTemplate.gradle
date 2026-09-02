@@ -6,6 +6,7 @@ apply from: '../shared/common.gradle'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 // Android Resolver Dependencies Start
+    implementation 'androidx.biometric:biometric:1.1.0' // Packages/com.ishix.nativebiometricauth/Editor/NativeBiometricAuthDependencies.xml:3
     implementation 'com.google.android.gms:play-services-auth:16+' // Assets/GoogleSignIn/Editor/GoogleSignInDependencies.xml:10
     implementation 'com.google.android.gms:play-services-base:18.10.0' // Assets/Firebase/Editor/AppDependencies.xml:20
     implementation 'com.google.firebase:firebase-analytics:23.2.0' // Assets/Firebase/Editor/MessagingDependencies.xml:18

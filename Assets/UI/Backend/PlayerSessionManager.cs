@@ -7,6 +7,7 @@ using Firebase.Auth;
 using Firebase.Extensions;
 using Firebase.Firestore;
 using Google;
+using NativeBiometricAuth;
 using UnityEngine;
 
 
@@ -71,6 +72,100 @@ namespace Anatomia3D.Backend
 
         private const string SessionCacheFileName = "student_session_cache.json";
         private string SessionCacheFilePath => Path.Combine(Application.persistentDataPath, SessionCacheFileName);
+
+        // ---------------- Biometric login ----------------
+        //
+        // Biometrics here are a LOCK SCREEN on top of the Firebase session that's
+        // already persisted on-device (Auth.CurrentUser survives an app restart -
+        // see TryRestoreSessionOffline above), not a replacement for the
+        // email/password or Google sign-in flows. A student still has to sign in
+        // normally at least once per device; after that, a successful biometric
+        // check just unlocks the profile that's already cached locally instead of
+        // asking for the password again.
+        //
+        // The opt-in flag is stored per-uid so a shared/lab device doesn't offer
+        // "sign in with biometrics" for a different student than whoever's
+        // fingerprint/face is enrolled on that device, and so logging out (which
+        // clears the cached profile) doesn't leave a stale flag pointing at data
+        // that no longer exists.
+
+        private const string BiometricEnabledPrefKeyPrefix = "biometric_login_enabled_";
+        private static string BiometricPrefKeyForUid(string uid) => BiometricEnabledPrefKeyPrefix + uid;
+
+        /// <summary>True only when there's a Firebase user already persisted on this
+        /// device AND that student has previously been through a successful
+        /// password/Google login here with biometric hardware available (see
+        /// SetCurrentStudentAndListen). StudentLoginController should check this
+        /// before showing a "Sign in with biometrics" button - showing it any other
+        /// time would just fail, since there's nothing local to unlock yet.</summary>
+        public bool IsBiometricLoginAvailable
+        {
+            get
+            {
+                if (FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) return false;
+                var user = Auth.CurrentUser;
+                if (user == null) return false;
+                return PlayerPrefs.GetInt(BiometricPrefKeyForUid(user.UserId), 0) == 1;
+            }
+        }
+
+        /// <summary>Turns the per-device biometric opt-in on/off for whoever's
+        /// currently signed in. Called automatically after a successful login (see
+        /// SetCurrentStudentAndListen); exposed publicly too in case you want to add
+        /// an explicit toggle (e.g. in profile/account settings) instead of relying
+        /// on the automatic opt-in.</summary>
+        public void SetBiometricLoginEnabled(bool enabled)
+        {
+            if (Auth.CurrentUser == null) return;
+            PlayerPrefs.SetInt(BiometricPrefKeyForUid(Auth.CurrentUser.UserId), enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>Call from StudentLoginController's biometric button. Requires the
+        /// OS-level biometric/device-credential check to succeed BEFORE touching any
+        /// session state - only then does this restore the profile from cache
+        /// (same as TryRestoreSessionOffline) and kick off a background refresh so
+        /// stale cached points/level get corrected the moment there's connectivity,
+        /// without making the student wait for a network round-trip just to see
+        /// their dashboard.</summary>
+        public void LoginWithBiometrics(Action<bool, string> onComplete)
+        {
+            if (!IsBiometricLoginAvailable)
+            {
+                onComplete?.Invoke(false, "Biometric sign-in isn't set up on this device yet. Please sign in with your password.");
+                return;
+            }
+
+            Biometric.Authenticate(
+                allowDeviceCredential: true,
+                onSuccess: () =>
+                {
+                    if (TryRestoreSessionOffline())
+                    {
+                        RefreshCurrentStudent();
+                        onComplete?.Invoke(true, null);
+                    }
+                    else
+                    {
+                        onComplete?.Invoke(false, "Could not restore your session. Please sign in with your password.");
+                    }
+                },
+                onFailure: reason =>
+                {
+                    // TEMP diagnostic logging - remove once biometric login is
+                    // confirmed working end-to-end on target devices. The generic
+                    // message below is what the student sees either way; this is
+                    // purely so `adb logcat -s Unity` shows WHY the OS-level check
+                    // failed (no hardware, nothing enrolled, user cancelled,
+                    // lockout, etc.) instead of us having to guess.
+                    Debug.Log($"[PlayerSessionManager] Biometric authentication failed: {reason}");
+
+                    bool offline = Application.internetReachability == NetworkReachability.NotReachable;
+                    onComplete?.Invoke(false, offline
+                        ? "Biometric authentication failed. Please try again once your device recognizes you, or reconnect to sign in with your password."
+                        : "Biometric authentication failed. Please sign in with your password.");
+                });
+        }
 
         private void CacheStudent(StudentProfile profile)
         {
@@ -747,6 +842,14 @@ namespace Anatomia3D.Backend
         {
             CancelInvoke(nameof(PollPendingEmailConfirmation));
             StopStudentListener();
+
+            // Clear the biometric opt-in for this uid before signing out, while
+            // Auth.CurrentUser (and therefore its UserId) is still available -
+            // otherwise a signed-out device would still have IsBiometricLoginAvailable
+            // pointing at cached data that ClearCachedStudent is about to delete.
+            var uid = Auth.CurrentUser?.UserId;
+            if (uid != null) PlayerPrefs.DeleteKey(BiometricPrefKeyForUid(uid));
+
             Auth.SignOut();
             try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
@@ -911,6 +1014,53 @@ namespace Anatomia3D.Backend
             CacheStudent(profile);
             OnStudentProfileChanged?.Invoke(CurrentStudent);
             StartStudentListener(profile.Uid);
+
+            // Opt this device+account into biometric sign-in the moment there's a
+            // real, freshly-authenticated session to unlock later - but only if
+            // this device can actually do a biometric/device-credential check at
+            // all, so we don't set a flag that IsBiometricLoginAvailable would
+            // then advertise on hardware that can't back it up.
+            bool biometricAvailable = Biometric.IsAvailable(allowDeviceCredential: true);
+            if (biometricAvailable)
+            {
+                // IsAvailable() only checks hardware/enrollment capability - it does NOT
+                // flip the plugin's own internal "active" flag, which Authenticate()
+                // requires to be on (this is exactly what BiometricFailureReason.Inactive
+                // was telling us: we'd never called SetActive). Do that here.
+                //
+                // authenticate: false is deliberate - SetActive's default is `true`,
+                // which per the plugin's README triggers its OWN biometric prompt
+                // immediately to "verify the user before enabling". We don't want
+                // that here: the student just proved who they are via password/Google
+                // a moment ago, so prompting again right now would be a redundant,
+                // confusing double-auth. Only persist our own opt-in flag once
+                // SetActive confirms success, so IsBiometricLoginAvailable never
+                // advertises a button that would just fail again on the next login.
+                Biometric.SetActive(
+                    value: true,
+                    allowDeviceCredential: true,
+                    authenticate: false,
+                    onSuccess: () =>
+                    {
+                        SetBiometricLoginEnabled(true);
+                    },
+                    onFailure: reason =>
+                    {
+                        Debug.LogWarning($"[PlayerSessionManager] Biometric.SetActive(true) onFailure fired: {reason} - biometric opt-in not enabled this login.");
+                    });
+
+                // Confirmed via logcat: with authenticate:false, neither onSuccess nor
+                // onFailure above ever fires - there's nothing for the plugin to verify
+                // or report back on, since authenticate:false skips the OS prompt
+                // entirely. Those callbacks appear to only apply to the authenticate:true
+                // path. So don't depend on them - read the plugin's own synchronous
+                // Biometric.IsActive property right after the call instead, and persist
+                // our opt-in flag from that ground truth.
+                if (Biometric.IsActive)
+                {
+                    SetBiometricLoginEnabled(true);
+                }
+            }
         }
 
         private void StartStudentListener(string uid)

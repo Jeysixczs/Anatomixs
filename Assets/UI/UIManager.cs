@@ -190,8 +190,12 @@ private IEnumerator DecideInitialScreen()
                 // running on this exact frame. This does NOT wait for network -
                 // Auth becomes ready from Firebase's own on-device persisted state,
                 // which doesn't require a connection - it just hasn't finished
-                // initializing yet. Give it a short window before concluding
-                // there's nothing to restore.
+                // initializing yet. Give it a short window so the Login screen's
+                // biometric button (see
+                // StudentLoginController.UpdateBiometricButtonVisibility /
+                // PlayerSessionManager.IsBiometricLoginAvailable) reflects the real
+                // Auth.CurrentUser state the moment it's shown, instead of coming
+                // up hidden just because Firebase was a beat slow to initialize.
                 float timeout = 3f;
                 float elapsed = 0f;
                 while ((FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) && elapsed < timeout)
@@ -201,18 +205,16 @@ private IEnumerator DecideInitialScreen()
                 }
             }
 
-            bool restoredOffline = offline && PlayerSessionManager.Instance != null
-                                             && PlayerSessionManager.Instance.TryRestoreSessionOffline();
-
-            if (restoredOffline)
-            {
-                Debug.Log("[UIManager] Offline at launch with a cached student session - skipping Login, opening Student Explore 3D.");
-                ShowStudentExplore3d();
-            }
-            else
-            {
-                ShowStudentLogin();
-            }
+            // Being offline no longer skips straight to the dashboard on its own -
+            // that bypassed any check at all. Login is always shown; a student who
+            // was previously signed in on this device still gets in fast, but only
+            // via a real biometric/device-credential check (the "Sign in with
+            // biometrics" button), not silently. Typing a password still requires
+            // connectivity either way (Firebase Auth needs a network round-trip),
+            // so biometrics is what actually lets an offline student back in - see
+            // PlayerSessionManager.LoginWithBiometrics, which is what restores the
+            // cached profile once that check succeeds.
+            ShowStudentLogin();
         }
 
 
