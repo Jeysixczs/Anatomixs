@@ -76,40 +76,7 @@
                         <ui:Label text="Recent Activity" class="section-title recent-activity-title"/>
                         <ui:Button name="recent-activity-view-all-button" text="View All" class="view-all-inline-button hidden"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="recent-activity-list" class="recent-activity-list">
-                        <ui:VisualElement class="activity-item">
-                            <ui:VisualElement class="activity-icon" style="background-color: rgb(37, 99, 235);"/>
-                            <ui:VisualElement class="activity-content">
-                                <ui:Label text="Completed &apos;Skeletal System&apos; Quiz" class="activity-title"/>
-                                <ui:Label text="2 hours ago" class="activity-time"/>
-                            </ui:VisualElement>
-                            <ui:Label text="+50" class="activity-points"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="activity-item">
-                            <ui:VisualElement class="activity-icon" style="background-color: rgb(217, 119, 6);"/>
-                            <ui:VisualElement class="activity-content">
-                                <ui:Label text="Explored 3D Heart Model" class="activity-title"/>
-                                <ui:Label text="Yesterday" class="activity-time"/>
-                            </ui:VisualElement>
-                            <ui:Label text="+30" class="activity-points"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="activity-item">
-                            <ui:VisualElement class="activity-icon" style="background-color: rgb(147, 51, 234);"/>
-                            <ui:VisualElement class="activity-content">
-                                <ui:Label text="Earned &apos;Anatomy Novice&apos; Badge" class="activity-title"/>
-                                <ui:Label text="2 days ago" class="activity-time"/>
-                            </ui:VisualElement>
-                            <ui:Label text="+100" class="activity-points"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="activity-item activity-item-last">
-                            <ui:VisualElement class="activity-icon" style="background-color: rgb(22, 163, 74);"/>
-                            <ui:VisualElement class="activity-content">
-                                <ui:Label text="Reached Level 5" class="activity-title"/>
-                                <ui:Label text="3 days ago" class="activity-time"/>
-                            </ui:VisualElement>
-                            <ui:Label text="+200" class="activity-points"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
+                    <ui:VisualElement name="recent-activity-list" class="recent-activity-list"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>

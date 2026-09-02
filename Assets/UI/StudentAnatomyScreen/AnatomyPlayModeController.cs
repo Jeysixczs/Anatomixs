@@ -11,7 +11,7 @@ namespace Anatomia3D.Backend
     /// Student Explore 3D -> Play Mode gameplay: the anatomy guessing game.
     ///
     /// This script owns ONLY Play Mode state (current question, hints,
-    /// points, streak, completedKeys, progress, Isolate Answered). It never
+    /// points, completedKeys, progress, Isolate Answered). It never
     /// duplicates selection, outline, camera-focus, or hide/restore logic -
     /// all of that stays in AnatomyScreenController and is reused through
     /// the small public API at the bottom of that class:
@@ -45,32 +45,8 @@ namespace Anatomia3D.Backend
     public class AnatomyPlayModeController : MonoBehaviour
     {
         [Header("Points")]
-        [Tooltip("Points awarded for a correct answer with 0 hints used.")]
-        [SerializeField] private int pointsNoHints = 100;
-        [Tooltip("Points awarded for a correct answer with exactly 1 hint used.")]
-        [SerializeField] private int points1Hint = 60;
-        [Tooltip("Points awarded for a correct answer with exactly 2 hints used.")]
-        [SerializeField] private int points2Hints = 30;
-        [Tooltip("Points awarded for a correct answer with 3+ hints used (the minimum).")]
-        [SerializeField] private int points3PlusHints = 10;
-
-        [Header("Streak Bonuses")]
-        [Tooltip("Streak count -> bonus points awarded on top of the question's points " +
-                 "the moment the streak reaches that count. Suggested: 3->25, 5->50, 10->100.")]
-        [SerializeField]
-        private List<StreakBonus> streakBonuses = new List<StreakBonus>
-        {
-            new StreakBonus { streakCount = 3, bonusPoints = 25 },
-            new StreakBonus { streakCount = 5, bonusPoints = 50 },
-            new StreakBonus { streakCount = 10, bonusPoints = 100 },
-        };
-
-        [Serializable]
-        public class StreakBonus
-        {
-            public int streakCount;
-            public int bonusPoints;
-        }
+        [Tooltip("Points awarded for every correct answer, regardless of how many hints were used.")]
+        [SerializeField] private int pointsPerCorrectAnswer = 1;
 
         [Header("Firebase")]
         [Tooltip("Optional. If assigned, incorrect attempts are logged via this script directly, " +
@@ -98,8 +74,6 @@ namespace Anatomia3D.Backend
         private readonly HashSet<string> _completedKeys = new HashSet<string>();
         private AnatomyScreenController.BoneInfo _currentQuestion;
         private int _currentHints;
-        private int _currentStreak;
-        private int _highestStreak;
         private int _totalPoints;
         private int _correctAnswers;
         private int _incorrectAnswers;
@@ -141,8 +115,6 @@ namespace Anatomia3D.Backend
 
         public bool IsPlayModeActive => _isPlayModeActive;
         public int TotalPoints => _totalPoints;
-        public int CurrentStreak => _currentStreak;
-        public int HighestStreak => _highestStreak;
         public IReadOnlyCollection<string> CompletedKeys => _completedKeys;
 
         // ===== UI refs (queried from the same root AnatomyScreenController uses) =====
@@ -476,7 +448,7 @@ namespace Anatomia3D.Backend
 
         /// <summary>Re-reads _completedKeys from local storage and updates
         /// every part of the UI that depends on it, WITHOUT resetting the
-        /// current question, points, or streak - the safe "refresh, don't
+        /// current question or points - the safe "refresh, don't
         /// restart" path the plan's section 7 asks for so a Sync Progress
         /// download that merges in structures answered on another device
         /// shows up immediately if Play Mode is already open. Newly-merged
@@ -879,24 +851,18 @@ namespace Anatomia3D.Backend
             // in case of a stale/queued click.
             if (_completedKeys.Contains(info.boneName)) return;
 
-            int questionPoints = PointsForHints(_currentHints);
-            _currentStreak++;
-            _highestStreak = Mathf.Max(_highestStreak, _currentStreak);
+            int questionPoints = pointsPerCorrectAnswer;
 
-            int streakBonus = StreakBonusFor(_currentStreak);
-
-            _totalPoints += questionPoints + streakBonus;
+            _totalPoints += questionPoints;
             _correctAnswers++;
             _completedKeys.Add(info.boneName);
 
             _screen.SetInfoPanelTitle(entry.displayName);
-            _screen.SetInfoPanelDescription(streakBonus > 0
-                ? $"Correct! +{questionPoints} points (+{streakBonus} streak bonus)."
-                : $"Correct! +{questionPoints} points.");
+            _screen.SetInfoPanelDescription($"Correct! +{questionPoints} points.");
             SetGuessUiEnabled(false);
             _letterRow?.AddToClassList("hidden");
 
-            SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints, streakBonus);
+            SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints);
 
             // Isolate Answered is live - a newly-completed key should
             // immediately become visible if the player has it toggled on.
@@ -917,7 +883,7 @@ namespace Anatomia3D.Backend
         // regardless of connectivity; Firebase is then attempted (via the
         // sync service if one is assigned, so retries stay idempotent) but
         // is never required for the answer itself to be accepted.
-        private void SaveCorrectAnswer(string key, string displayName, int pointsEarned, int streakBonus)
+        private void SaveCorrectAnswer(string key, string displayName, int pointsEarned)
         {
             string studentId = CurrentStudentId;
             if (localStorage == null || string.IsNullOrEmpty(studentId))
@@ -925,12 +891,12 @@ namespace Anatomia3D.Backend
                 // No offline storage available (or no signed-in student) -
                 // fall back to the original direct-to-Firebase save so Play
                 // Mode still works, just without offline/restore support.
-                firebase?.SaveAnswer(key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+                firebase?.SaveAnswer(key, displayName, true, _currentHints, pointsEarned);
                 return;
             }
 
             var record = localStorage.SaveAnswer(
-                studentId, key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+                studentId, key, displayName, true, _currentHints, pointsEarned);
 
             if (syncService != null)
             {
@@ -950,35 +916,18 @@ namespace Anatomia3D.Backend
 
         private void HandleIncorrectAnswer()
         {
-            _currentStreak = 0;
             _incorrectAnswers++;
 
             if (_screen.TryGetBoneDatabaseEntry(_currentQuestion, out var entry))
             {
                 _screen.SetInfoPanelDescription("Not quite - try again.");
 
-                firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0, 0, 0);
+                firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0);
             }
 
             ClearUnrevealedLetterFields();
             FocusLetterField(0);
             // Structure stays visible, another attempt is allowed - guess UI stays enabled.
-        }
-
-        private int PointsForHints(int hints)
-        {
-            if (hints <= 0) return pointsNoHints;
-            if (hints == 1) return points1Hint;
-            if (hints == 2) return points2Hints;
-            return points3PlusHints;
-        }
-
-        private int StreakBonusFor(int streak)
-        {
-            int total = 0;
-            foreach (var b in streakBonuses)
-                if (b.streakCount == streak) total += b.bonusPoints;
-            return total;
         }
 
         // ===== Progress / completion =====
@@ -999,7 +948,7 @@ namespace Anatomia3D.Backend
             {
                 _completionLabel.text =
                     $"ANATOMY COMPLETE!\nYou identified {_completedKeys.Count} / {total} structures\n" +
-                    $"Total Points: {_totalPoints}\nHighest Streak: {_highestStreak}";
+                    $"Total Points: {_totalPoints}";
                 _completionPanel.RemoveFromClassList("hidden");
             }
         }

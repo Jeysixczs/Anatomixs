@@ -516,7 +516,7 @@ namespace Anatomia3D.UI
                     AnatomyPlayModeLocalStorage.Instance.Load(studentId);
                     var anatomyPoints = AnatomyPlayModeLocalStorage.Instance.GetAllRecords()
                         .Where(r => r.correct)
-                        .Select(r => ((float)(r.pointsEarned + r.streakBonus), ParseTimestampUtc(r.timestampUtc)));
+                        .Select(r => ((float)r.pointsEarned, ParseTimestampUtc(r.timestampUtc)));
                     AddPointsToWeek(weekly, anatomyPoints);
                 }
 

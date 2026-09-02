@@ -20,6 +20,11 @@ namespace Anatomia3D.Backend
     /// the Firestore instance, PlayerSessionManager for the signed-in
     /// student's uid - never its own auth or its own Firestore instance.
     ///
+    /// Correct, points-earning answers also credit students/{uid}.totalPoints
+    /// - the same field QuizService's quiz-scoring writes to - so Play Mode
+    /// points count toward the student's overall Total Points/level. See
+    /// SaveAnswer and SyncRecord for how each avoids double-crediting.
+    ///
     /// Attach anywhere on the persistent Bootstrap GameObject (same one as
     /// FirebaseBootstrap/PlayerSessionManager), and assign it to
     /// AnatomyPlayModeController's "Firebase" field in the Inspector.
@@ -31,14 +36,28 @@ namespace Anatomia3D.Backend
 
         private FirebaseFirestore Db => FirebaseBootstrap.Instance != null ? FirebaseBootstrap.Instance.Db : null;
 
+        /// <summary>Saves one Play Mode attempt and, if it's a correct
+        /// answer that earned points, credits those points to the
+        /// student's students/{uid}.totalPoints in the SAME atomic batch -
+        /// the same field QuizService.SubmitQuizAttemptInternal adds quiz
+        /// points to, so Play Mode points show up in Total Points/level
+        /// everywhere that field is already read (dashboard, leaderboard,
+        /// etc.) with no separate reconciliation step. PlayerSessionManager's
+        /// existing students/{uid} listener (see StartStudentListener)
+        /// picks up the change automatically - nothing here needs to poke
+        /// CurrentStudent directly.
+        ///
+        /// This method has no retry path (it's only used for incorrect
+        /// attempts, and for correct-answer fallback when no local storage
+        /// is assigned - see AnatomyPlayModeController.SaveCorrectAnswer),
+        /// so unlike SyncRecord below it doesn't need an idempotency guard
+        /// against being called twice for the same attempt.</summary>
         public void SaveAnswer(
             string key,
             string displayName,
             bool correct,
             int hintsUsed,
-            int pointsEarned,
-            int streak,
-            int streakBonus)
+            int pointsEarned)
         {
             if (Db == null)
             {
@@ -54,7 +73,7 @@ namespace Anatomia3D.Backend
             }
 
             var docRef = Db.Collection(CollectionName).Document();
-            docRef.SetAsync(new Dictionary<string, object>
+            var answerData = new Dictionary<string, object>
             {
                 { "studentId", student.Uid },
                 { "key", key },
@@ -62,14 +81,30 @@ namespace Anatomia3D.Backend
                 { "correct", correct },
                 { "hintsUsed", hintsUsed },
                 { "pointsEarned", pointsEarned },
-                { "streak", streak },
-                { "streakBonus", streakBonus },
                 { "timestamp", Timestamp.GetCurrentTimestamp() }
-            }).ContinueWithOnMainThread(task =>
+            };
+
+            bool awardsPoints = correct && pointsEarned > 0;
+            if (!awardsPoints)
+            {
+                docRef.SetAsync(answerData).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer for '{key}': {task.Exception}");
+                    }
+                });
+                return;
+            }
+
+            var batch = Db.StartBatch();
+            batch.Set(docRef, answerData);
+            batch.Update(Db.Collection("students").Document(student.Uid), "totalPoints", FieldValue.Increment(pointsEarned));
+            batch.CommitAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer for '{key}': {task.Exception}");
+                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer/points for '{key}': {task.Exception}");
                 }
             });
         }
@@ -85,7 +120,29 @@ namespace Anatomia3D.Backend
         ///
         /// onComplete is invoked with true only once Firestore confirms the
         /// write; the sync service uses that (and only that) to decide when
-        /// it's safe to mark the local record 'synced'.</summary>
+        /// it's safe to mark the local record 'synced'.
+        ///
+        /// If the record is a correct, points-earning answer, this also
+        /// credits pointsEarned to students/{uid}.totalPoints - the same
+        /// field QuizService adds quiz points to, so Play Mode points feed
+        /// Total Points/level everywhere that's already read, and
+        /// PlayerSessionManager's live students/{uid} listener picks up the
+        /// change with no extra wiring needed here.
+        ///
+        /// Crediting points is wrapped in the SAME transaction as the
+        /// existence check below, NOT a plain increment, because - unlike
+        /// the document overwrite this method is named for - "+= points"
+        /// is not naturally safe to repeat. A retry (e.g. the write
+        /// actually reached Firestore but the app lost connectivity before
+        /// hearing back, so the sync service reasonably retries later)
+        /// must overwrite the same document without crediting the points a
+        /// second time. Reading the document inside the transaction first
+        /// and only incrementing when it doesn't already exist gives that
+        /// guarantee: the very first successful write for a given
+        /// student+structure awards the points, and every write after that
+        /// (retry or otherwise) is a no-op on points, exactly mirroring the
+        /// "overwrites rather than duplicates" guarantee the deterministic
+        /// DocumentId already gives the answer doc itself.</summary>
         public void SyncRecord(PlayModeAnswerRecord record, Action<bool> onComplete)
         {
             if (record == null || string.IsNullOrEmpty(record.key))
@@ -102,7 +159,7 @@ namespace Anatomia3D.Backend
             }
 
             var docRef = Db.Collection(CollectionName).Document(record.DocumentId);
-            docRef.SetAsync(new Dictionary<string, object>
+            var answerData = new Dictionary<string, object>
             {
                 { "studentId", record.studentId },
                 { "key", record.key },
@@ -110,14 +167,47 @@ namespace Anatomia3D.Backend
                 { "correct", record.correct },
                 { "hintsUsed", record.hintsUsed },
                 { "pointsEarned", record.pointsEarned },
-                { "streak", record.streak },
-                { "streakBonus", record.streakBonus },
                 { "timestamp", Timestamp.GetCurrentTimestamp() }
+            };
+
+            bool awardsPoints = record.correct && record.pointsEarned > 0 && !string.IsNullOrEmpty(record.studentId);
+            if (!awardsPoints)
+            {
+                docRef.SetAsync(answerData).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record for '{record.key}': {task.Exception}");
+                        onComplete?.Invoke(false);
+                        return;
+                    }
+
+                    onComplete?.Invoke(true);
+                });
+                return;
+            }
+
+            var studentRef = Db.Collection("students").Document(record.studentId);
+
+            Db.RunTransactionAsync(async transaction =>
+            {
+                var existingSnap = await transaction.GetSnapshotAsync(docRef);
+
+                transaction.Set(docRef, answerData);
+
+                if (!existingSnap.Exists)
+                {
+                    // First time this student+structure has ever been
+                    // written - safe to credit the points exactly once.
+                    transaction.Update(studentRef, "totalPoints", FieldValue.Increment(record.pointsEarned));
+                }
+
+                return true;
             }).ContinueWithOnMainThread(task =>
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record for '{record.key}': {task.Exception}");
+                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record/points for '{record.key}': {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }
@@ -187,8 +277,6 @@ namespace Anatomia3D.Backend
                             correct = true,
                             hintsUsed = GetInt(doc, "hintsUsed"),
                             pointsEarned = GetInt(doc, "pointsEarned"),
-                            streak = GetInt(doc, "streak"),
-                            streakBonus = GetInt(doc, "streakBonus"),
                             timestampUtc = DateTime.UtcNow.ToString("o")
                         };
                         record.SyncStatus = PlayModeSyncStatus.Synced; // it came FROM Firebase - it's synced by definition.

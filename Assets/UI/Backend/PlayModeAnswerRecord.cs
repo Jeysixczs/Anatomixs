@@ -28,8 +28,6 @@ namespace Anatomia3D.Backend
         public bool correct;
         public int hintsUsed;
         public int pointsEarned;
-        public int streak;
-        public int streakBonus;
         public string timestampUtc; // ISO-8601 (DateTime.UtcNow.ToString("o"))
 
         // Stored as a string (not the enum) purely so JsonUtility can

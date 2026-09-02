@@ -148,9 +148,7 @@ namespace Anatomia3D.Backend
             string displayName,
             bool correct,
             int hintsUsed,
-            int pointsEarned,
-            int streak,
-            int streakBonus)
+            int pointsEarned)
         {
             if (_byKey.TryGetValue(key, out var existing) && existing.correct)
             {
@@ -168,8 +166,6 @@ namespace Anatomia3D.Backend
                 correct = correct,
                 hintsUsed = hintsUsed,
                 pointsEarned = pointsEarned,
-                streak = streak,
-                streakBonus = streakBonus,
                 timestampUtc = DateTime.UtcNow.ToString("o"),
                 SyncStatus = PlayModeSyncStatus.Pending
             };
