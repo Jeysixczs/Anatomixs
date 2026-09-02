@@ -612,12 +612,17 @@ namespace Anatomia3D.Backend
                 _screen.SetInfoPanelDescription("Type each letter, or use a hint.");
                 _letterRow?.RemoveFromClassList("hidden");
                 BuildLetterBoxes(entry.displayName);
+                RestoreRevealedHints(info.boneName, entry.displayName);
                 SetGuessUiEnabled(true);
                 FocusLetterField(0);
+
+                // Reflect today's already-used hint count for the active
+                // system immediately - a student who hit the limit earlier
+                // (on this device or another, once synced) should see "No
+                // more hints" the instant a new question loads, not only
+                // after tapping Hint and being denied.
+                RefreshHintButtonState();
             }
-
-
-           
         }
 
         private void SetGuessUiEnabled(bool enabled)
@@ -788,6 +793,40 @@ namespace Anatomia3D.Backend
             return sb.ToString();
         }
 
+        // Re-applies every hint letter already revealed for `key` before
+        // this visit - read from AnatomyPlayModeLocalStorage, which by the
+        // time this runs already reflects whatever's been merged down from
+        // Firebase too (see AnatomyPlayModeSyncService.RequestFullSync).
+        // Called right after BuildLetterBoxes for every still-unanswered
+        // structure, so backing out and reselecting the same structure, or
+        // closing and reopening the app/tab entirely, shows exactly the
+        // letters already earned instead of a blank row. A structure with
+        // no hints used yet simply gets nothing restored - identical to
+        // how the letter row looked before this existed.
+        //
+        // Resets _revealedIndices/_currentHints first (rather than relying
+        // on OnStructureSelected's earlier reset) so this method is safe
+        // to treat as the single source of truth for "what's revealed
+        // right now" - it fully re-derives that state from storage rather
+        // than assuming it starts empty.
+        private void RestoreRevealedHints(string key, string displayName)
+        {
+            _revealedIndices.Clear();
+            _currentHints = 0;
+
+            if (localStorage == null) return;
+
+            foreach (int index in localStorage.GetRevealedIndices(key))
+            {
+                if (index < 0 || index >= displayName.Length || char.IsWhiteSpace(displayName[index]))
+                    continue; // stale/out-of-range data - skip rather than crash the letter row.
+
+                _revealedIndices.Add(index);
+                _currentHints++;
+                RevealLetterField(index, displayName[index]);
+            }
+        }
+
         // ===== Hints =====
 
         private void OnHintClicked()
@@ -805,7 +844,18 @@ namespace Anatomia3D.Backend
                     candidates.Add(i);
             }
 
-            if (candidates.Count == 0) return; // fully revealed already
+            if (candidates.Count == 0) return; // fully revealed already - never spend a daily hint on this.
+
+            // Per-system daily hint limit (3 per AnatomySystem per student
+            // per day - see AnatomyPlayModeLocalStorage.TryUseHint). Checked
+            // only once we know a hint would actually reveal something -
+            // if the student is already at the limit for the currently
+            // active system, no hint is granted and no letter is revealed.
+            if (localStorage == null || !localStorage.TryUseHint(CurrentStudentId, _screen.CurrentSystem, out var hintRecord))
+            {
+                RefreshHintButtonState();
+                return;
+            }
 
             // Pick a random not-yet-revealed position rather than always
             // the leftmost one, so hints don't just fill the word in
@@ -817,6 +867,47 @@ namespace Anatomia3D.Backend
             _hintsUsedTotal++;
 
             RevealLetterField(pickedIndex, displayName[pickedIndex]);
+
+            // Fire-and-forget sync, same pattern as SaveAnswer's direct
+            // Firebase call elsewhere in this class - the hint was already
+            // saved locally by TryUseHint above, so a failed/offline sync
+            // here never blocks or loses the hint; AnatomyPlayModeSyncService
+            // retries it later from GetPendingHintUses().
+            firebase?.SyncHintUse(hintRecord, _ => { });
+
+            // Persist WHICH letter this hint revealed (not just that a hint
+            // was spent) - separate from hintRecord above, which only
+            // counts toward the daily per-system limit. This is what lets
+            // RestoreRevealedHints bring the letter row back exactly as
+            // it's left, whether the student backs out and reselects this
+            // structure or closes and reopens the app entirely. Same
+            // fire-and-forget sync pattern as SyncHintUse: saved locally
+            // first (always succeeds), Firebase attempted after but never
+            // required - a failed/offline sync just leaves it 'pending'
+            // for AnatomyPlayModeSyncService to retry later.
+            if (localStorage != null)
+            {
+                var revealedRecord = localStorage.SaveRevealedIndex(CurrentStudentId, _currentQuestion.boneName, pickedIndex);
+                firebase?.SyncRevealedHint(revealedRecord, _ => { });
+            }
+
+            RefreshHintButtonState();
+        }
+
+        // Re-evaluates whether the Hint button should be enabled for the
+        // currently active system, and updates its label accordingly.
+        // Called after every hint use, and whenever a new question is set
+        // up (OnStructureSelected) so a student who already hit today's
+        // limit on this system sees "No more hints" immediately on
+        // opening a new, unanswered question - not only after tapping
+        // Hint and being denied.
+        private void RefreshHintButtonState()
+        {
+            if (_hintButton == null || _screen == null || localStorage == null) return;
+
+            bool limitReached = localStorage.GetHintCountToday(_screen.CurrentSystem) >= AnatomyPlayModeLocalStorage.MaxHintsPerSystemPerDay;
+            _hintButton.text = limitReached ? "No more hints" : "Hint";
+            _hintButton.SetEnabled(!limitReached);
         }
 
         // ===== Answer submission =====
@@ -856,6 +947,7 @@ namespace Anatomia3D.Backend
             _totalPoints += questionPoints;
             _correctAnswers++;
             _completedKeys.Add(info.boneName);
+            CleanupRevealedHints(info.boneName);
 
             _screen.SetInfoPanelTitle(entry.displayName);
             _screen.SetInfoPanelDescription($"Correct! +{questionPoints} points.");
@@ -912,6 +1004,28 @@ namespace Anatomia3D.Backend
                     if (success) localStorage.MarkSynced(key);
                 });
             }
+        }
+
+        // Once a structure is correctly answered, its revealed-hint
+        // letters are no longer needed - it's never asked again, so
+        // there's nothing left for RestoreRevealedHints to restore.
+        // Removes the local records immediately (always succeeds,
+        // regardless of connectivity) and best-effort deletes their
+        // Firestore docs too, so the remote collection doesn't grow
+        // forever with data for structures that are already done. A
+        // failed/offline delete is harmless: MergeRemoteRevealedHint
+        // already skips restoring hints for any key this device has
+        // correctly answered, so an orphaned doc is silently ignored
+        // rather than causing stale letters to reappear later.
+        private void CleanupRevealedHints(string key)
+        {
+            if (localStorage == null) return;
+
+            var removed = localStorage.ClearRevealedHints(key);
+            if (firebase == null) return;
+
+            foreach (var record in removed)
+                firebase.DeleteRevealedHint(record, _ => { });
         }
 
         private void HandleIncorrectAnswer()
