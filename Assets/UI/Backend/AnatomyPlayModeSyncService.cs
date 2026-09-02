@@ -349,7 +349,9 @@ namespace Anatomia3D.Backend
             }
 
             var pending = localStorage.GetPendingRecords();
-            if (pending.Count == 0)
+            var pendingHints = localStorage.GetPendingHintUses();
+            var pendingRevealed = localStorage.GetPendingRevealedHints();
+            if (pending.Count == 0 && pendingHints.Count == 0 && pendingRevealed.Count == 0)
             {
                 PublishStatus(PlayModeSyncState.Synced);
                 return;
@@ -360,16 +362,25 @@ namespace Anatomia3D.Backend
 
             string studentId = CurrentStudentId;
 
-            UploadPending(pending, allSucceeded =>
+            UploadPending(pending, answersSucceeded =>
             {
-                _syncInProgress = false;
-                bool stillPending = localStorage.PendingCount > 0;
-                if (allSucceeded && !stillPending)
-                    MarkSyncSucceeded(studentId);
+                UploadPendingHints(pendingHints, hintsSucceeded =>
+                {
+                    UploadPendingRevealedHints(pendingRevealed, revealedSucceeded =>
+                    {
+                        _syncInProgress = false;
+                        bool allSucceeded = answersSucceeded && hintsSucceeded && revealedSucceeded;
+                        bool stillPending = localStorage.PendingCount > 0
+                            || localStorage.GetPendingHintUses().Count > 0
+                            || localStorage.GetPendingRevealedHints().Count > 0;
+                        if (allSucceeded && !stillPending)
+                            MarkSyncSucceeded(studentId);
 
-                PublishStatus(stillPending
-                    ? PlayModeSyncState.Failed
-                    : PlayModeSyncState.Synced);
+                        PublishStatus(stillPending
+                            ? PlayModeSyncState.Failed
+                            : PlayModeSyncState.Synced);
+                    });
+                });
             });
         }
 
@@ -432,40 +443,120 @@ namespace Anatomia3D.Backend
             PublishStatus(PlayModeSyncState.Syncing);
 
             var pending = localStorage.GetPendingRecords();
-            UploadPending(pending, uploadSucceeded =>
+            var pendingHints = localStorage.GetPendingHintUses();
+            var pendingRevealed = localStorage.GetPendingRevealedHints();
+            UploadPending(pending, answersSucceeded =>
             {
-                // Pick up any newer "last synced" time another device has
-                // recorded before deciding our own, so a device that's
-                // behind reflects cross-device activity rather than only
-                // ever showing its own sync history.
-                firebase.FetchLastSyncedTimestamp(studentId, remoteUtc =>
+                UploadPendingHints(pendingHints, hintsSucceeded =>
                 {
-                    ReconcileLastSynced(studentId, remoteUtc);
+                    UploadPendingRevealedHints(pendingRevealed, revealedSucceeded =>
+                    {
+                        bool uploadSucceeded = answersSucceeded && hintsSucceeded && revealedSucceeded;
 
-                    firebase.FetchProgress(studentId,
-                        remoteRecords =>
+                        // Pick up any newer "last synced" time another device has
+                        // recorded before deciding our own, so a device that's
+                        // behind reflects cross-device activity rather than only
+                        // ever showing its own sync history.
+                        firebase.FetchLastSyncedTimestamp(studentId, remoteUtc =>
                         {
-                            foreach (var record in remoteRecords)
-                                localStorage.MergeRemoteRecord(record);
+                            ReconcileLastSynced(studentId, remoteUtc);
 
-                            FinishFullSync(studentId, uploadSucceeded, onComplete);
-                        },
-                        _ =>
-                        {
-                            // Download failed - uploaded records are still
-                            // safely marked synced above; just skip the
-                            // merge step this time.
-                            FinishFullSync(studentId, uploadSucceeded, onComplete);
+                            firebase.FetchProgress(studentId,
+                                remoteRecords =>
+                                {
+                                    foreach (var record in remoteRecords)
+                                        localStorage.MergeRemoteRecord(record);
+
+                                    MergeTodayHintUses(studentId, () =>
+                                        MergeRevealedHints(studentId, () => FinishFullSync(studentId, uploadSucceeded, onComplete)));
+                                },
+                                _ =>
+                                {
+                                    // Download failed - uploaded records are still
+                                    // safely marked synced above; just skip the
+                                    // merge step this time.
+                                    MergeTodayHintUses(studentId, () =>
+                                        MergeRevealedHints(studentId, () => FinishFullSync(studentId, uploadSucceeded, onComplete)));
+                                });
                         });
+                    });
                 });
             });
+        }
+
+        // Downloads and merges today's hint uses (local device day) across
+        // every AnatomySystem - not just whichever system happens to be
+        // active right now, since a full sync should reconcile the
+        // student's true cross-device hint count for all three systems,
+        // not only the one currently on screen. Runs one system at a time
+        // (same "don't flood Firebase at once" reasoning as UploadNext)
+        // and always calls onDone exactly once, whether or not any
+        // individual fetch failed - a failed fetch just leaves that
+        // system's local count as-is for this sync, same "never block or
+        // fail the overall sync on a download problem" reasoning as
+        // FetchProgress's failure path above.
+        private void MergeTodayHintUses(string studentId, Action onDone)
+        {
+            var systems = (AnatomySystem[])Enum.GetValues(typeof(AnatomySystem));
+            DateTime localNow = DateTime.Now;
+            DateTime localDayStart = localNow.Date;
+            DateTime localDayEnd = localDayStart.AddDays(1);
+            DateTime localDayStartUtc = localDayStart.ToUniversalTime();
+            DateTime localDayEndUtc = localDayEnd.ToUniversalTime();
+
+            MergeNextSystemHintUses(studentId, systems, 0, localDayStartUtc, localDayEndUtc, onDone);
+        }
+
+        private void MergeNextSystemHintUses(string studentId, AnatomySystem[] systems, int index, DateTime localDayStartUtc, DateTime localDayEndUtc, Action onDone)
+        {
+            if (index >= systems.Length)
+            {
+                onDone?.Invoke();
+                return;
+            }
+
+            firebase.FetchTodayHintUses(studentId, systems[index], localDayStartUtc, localDayEndUtc,
+                remoteHints =>
+                {
+                    foreach (var hint in remoteHints)
+                        localStorage.MergeRemoteHintUse(hint);
+
+                    MergeNextSystemHintUses(studentId, systems, index + 1, localDayStartUtc, localDayEndUtc, onDone);
+                },
+                _ => MergeNextSystemHintUses(studentId, systems, index + 1, localDayStartUtc, localDayEndUtc, onDone));
+        }
+
+        // Downloads and merges every revealed-letter-hint position Firebase
+        // has for studentId, across every structure - the download half of
+        // cross-device restore for hint letters (see RevealedHintRecord's
+        // class comment). Unlike MergeTodayHintUses this isn't per-system
+        // or per-day: a revealed letter matters for as long as its
+        // structure is unanswered, regardless of which day it was
+        // revealed on. Always calls onDone exactly once, whether or not
+        // the fetch failed - a failed fetch just leaves this device's
+        // revealed letters as-is for this sync, same "never block or fail
+        // the overall sync on a download problem" reasoning as
+        // FetchProgress/FetchTodayHintUses's failure paths above.
+        private void MergeRevealedHints(string studentId, Action onDone)
+        {
+            firebase.FetchRevealedHints(studentId,
+                remoteHints =>
+                {
+                    foreach (var hint in remoteHints)
+                        localStorage.MergeRemoteRevealedHint(hint);
+
+                    onDone?.Invoke();
+                },
+                _ => onDone?.Invoke());
         }
 
         private void FinishFullSync(string studentId, bool uploadSucceeded, Action<bool> onComplete)
         {
             _syncInProgress = false;
 
-            bool stillPending = localStorage.PendingCount > 0;
+            bool stillPending = localStorage.PendingCount > 0
+                || localStorage.GetPendingHintUses().Count > 0
+                || localStorage.GetPendingRevealedHints().Count > 0;
             bool fullySucceeded = uploadSucceeded && !stillPending;
             if (fullySucceeded)
                 MarkSyncSucceeded(studentId);
@@ -507,6 +598,59 @@ namespace Anatomia3D.Backend
                 // manual Sync Progress tap, or the next answer saved while
                 // online).
                 UploadNext(pending, index + 1, allSucceededSoFar && success, onDone);
+            });
+        }
+
+        // Uploads pending hint-use records one at a time - same "don't
+        // flood Firebase" and "partial failure leaves the rest pending"
+        // reasoning as UploadPending/UploadNext above, kept as a separate
+        // method rather than a generic one since HintUseRecord has no
+        // shared base type with PlayModeAnswerRecord and is matched by
+        // DocumentId (MarkHintSynced) rather than by key (MarkSynced).
+        private void UploadPendingHints(List<HintUseRecord> pending, Action<bool> onDone)
+        {
+            UploadNextHint(pending, 0, true, onDone);
+        }
+
+        private void UploadNextHint(List<HintUseRecord> pending, int index, bool allSucceededSoFar, Action<bool> onDone)
+        {
+            if (index >= pending.Count)
+            {
+                onDone(allSucceededSoFar);
+                return;
+            }
+
+            var record = pending[index];
+            firebase.SyncHintUse(record, success =>
+            {
+                if (success)
+                    localStorage.MarkHintSynced(record.DocumentId);
+                UploadNextHint(pending, index + 1, allSucceededSoFar && success, onDone);
+            });
+        }
+
+        // Uploads pending revealed-hint-letter records one at a time -
+        // same "don't flood Firebase" / "partial failure leaves the rest
+        // pending" reasoning as UploadPendingHints/UploadNextHint above.
+        private void UploadPendingRevealedHints(List<RevealedHintRecord> pending, Action<bool> onDone)
+        {
+            UploadNextRevealedHint(pending, 0, true, onDone);
+        }
+
+        private void UploadNextRevealedHint(List<RevealedHintRecord> pending, int index, bool allSucceededSoFar, Action<bool> onDone)
+        {
+            if (index >= pending.Count)
+            {
+                onDone(allSucceededSoFar);
+                return;
+            }
+
+            var record = pending[index];
+            firebase.SyncRevealedHint(record, success =>
+            {
+                if (success)
+                    localStorage.MarkRevealedHintSynced(record.DocumentId);
+                UploadNextRevealedHint(pending, index + 1, allSucceededSoFar && success, onDone);
             });
         }
     }

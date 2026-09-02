@@ -215,18 +215,18 @@ namespace Anatomia3D.UI
             public string QuizTitle;
             public string CompletedDateText;
             public bool Passed;
-            public int ScoreCorrect;
-            public int ScoreTotal;
+            public int PointsEarned;
+            public int PointsPossible;
             public string TimeText;
             public int Attempt;
 
-            public ScoreHistoryInfo(string quizTitle, string completedDateText, bool passed, int scoreCorrect, int scoreTotal, string timeText, int attempt)
+            public ScoreHistoryInfo(string quizTitle, string completedDateText, bool passed, int pointsEarned, int pointsPossible, string timeText, int attempt)
             {
                 QuizTitle = quizTitle;
                 CompletedDateText = completedDateText;
                 Passed = passed;
-                ScoreCorrect = scoreCorrect;
-                ScoreTotal = scoreTotal;
+                PointsEarned = pointsEarned;
+                PointsPossible = pointsPossible;
                 TimeText = timeText;
                 Attempt = attempt;
             }
@@ -284,6 +284,13 @@ namespace Anatomia3D.UI
         private ListenerRegistration _announcementsListener;
         private ListenerRegistration _rosterListener;
         private ClassroomService.AvailableQuizzesListenerHandle _availableQuizzesHandle;
+
+        /// <summary>"You're Offline" overlay with Retry / Go back to Dashboard - shown
+        /// when this screen is opened/entered offline, and toggled live if the
+        /// connection drops or comes back while it's open. Rebuilt every OnEnable
+        /// (see OfflineOverlay's own doc comment - CloneTree wipes the whole screen
+        /// tree on every UIManager.ShowScreen()).</summary>
+        private OfflineOverlay _offlineOverlay;
 
         /// <summary>Latest value from the classroom-detail listener. The roster listener's
         /// callback (leaderboard) needs LeaderboardVisible/TeacherName/Description, and
@@ -354,15 +361,33 @@ namespace Anatomia3D.UI
             SetScores(_lastScores);
             SetBadges(_lastBadgePoints, _lastBadges);
 
+            // Screen tree was just rebuilt (see class doc) - rebuild the overlay on
+            // top of it and re-subscribe (guard against a double-subscribe if
+            // OnEnable ever runs twice without OnDisable in between).
+            _offlineOverlay?.Dispose();
+            _offlineOverlay = new OfflineOverlay(_screenRoot, OnOfflineRetry, OnOfflineGoToDashboard);
+
+            NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            NetworkStatusMonitor.OnConnectivityChanged += OnConnectivityStatusChanged;
+
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back).
             // Only refetch if this is a DIFFERENT classroom than what's currently
             // loaded - SetClassroomIdentity() already forces a fresh load whenever
             // the student actually navigates into a classroom (same or different),
             // so this only catches the "re-enabled with nothing new to show" case,
-            // which the cache repaint above already handled.
+            // which the cache repaint above already handled. LoadClassroomContent()
+            // itself checks NetworkStatusMonitor.IsOnline and shows the offline
+            // overlay instead of fetching when offline (Scenario 1).
             if (!string.IsNullOrEmpty(_classroomId) && _classroomId != _lastLoadedClassroomId)
             {
                 LoadClassroomContent();
+            }
+            else if (!NetworkStatusMonitor.IsOnline)
+            {
+                // Re-entering the SAME classroom while offline - nothing to (re)load,
+                // but still surface the overlay rather than silently showing
+                // possibly-stale data with no way to retry.
+                _offlineOverlay.Show();
             }
         }
 
@@ -371,11 +396,48 @@ namespace Anatomia3D.UI
             UnregisterCallbacks();
             StopClassroomListeners();
 
+            NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            _offlineOverlay?.Dispose();
+            _offlineOverlay = null;
+
             if (_headerGradientTexture != null)
             {
                 Destroy(_headerGradientTexture);
                 _headerGradientTexture = null;
             }
+        }
+
+        // ---------------- Offline handling ----------------
+
+        /// <summary>Scenario 2: student is already viewing this screen (any tab) and
+        /// the connection drops or comes back - see NetworkStatusMonitor.</summary>
+        private void OnConnectivityStatusChanged(bool isOnline)
+        {
+            if (_offlineOverlay == null) return;
+
+            if (!isOnline)
+            {
+                Debug.Log("[StudentClassroomDetailController] Connection lost - showing offline overlay.");
+                _offlineOverlay.Show();
+            }
+            else if (_offlineOverlay.IsVisible)
+            {
+                Debug.Log("[StudentClassroomDetailController] Connection restored - hiding offline overlay and reloading classroom content.");
+                _offlineOverlay.Hide();
+                LoadClassroomContent();
+            }
+        }
+
+        private void OnOfflineRetry()
+        {
+            Debug.Log("[StudentClassroomDetailController] Offline overlay Retry tapped while back online - reloading classroom content.");
+            LoadClassroomContent();
+        }
+
+        private void OnOfflineGoToDashboard()
+        {
+            Debug.Log("[StudentClassroomDetailController] Offline overlay - returning to dashboard.");
+            UIManager.Instance?.ShowStudentDashboard();
         }
 
         private void StopClassroomListeners()
@@ -542,6 +604,18 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                // Single choke point for all three entry paths - SetClassroomIdentity()
+                // (opening a classroom card from the Hub), OnEnable() re-entering the
+                // same/different classroom, and the offline overlay's own Retry button.
+                Debug.Log("[StudentClassroomDetailController] Offline - showing offline overlay instead of loading classroom content.");
+                _offlineOverlay?.Show();
+                return;
+            }
+
+            _offlineOverlay?.Hide();
+
             // This screen is reused across classrooms (see the OnEnable comment about
             // surviving screen rebuilds), so if a student opens classroom A then quickly
             // backs out and opens classroom B, stop A's listeners before subscribing to
@@ -562,7 +636,7 @@ namespace Anatomia3D.UI
 
                 SetScores(scores.ConvertAll(s => new ScoreHistoryInfo(
                     s.QuizTitle, s.CompletedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"), s.Passed,
-                    s.ScoreCorrect, s.ScoreTotal, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
+                    s.PointsEarned, s.PointsPossible, FormatDuration(s.TimeSpentSeconds), s.Attempt)));
             });
         }
 
@@ -596,7 +670,7 @@ namespace Anatomia3D.UI
             _availableQuizzesHandle = ClassroomService.Instance.ListenToAvailableQuizzes(classroomId, quizzes =>
             {
                 if (classroomId != _lastLoadedClassroomId) return;
-                LoadQuizStartEligibility(quizzes, () => classroomId != _lastLoadedClassroomId);
+                LoadQuizStartEligibility(classroomId, quizzes, () => classroomId != _lastLoadedClassroomId);
             });
         }
 
@@ -731,8 +805,12 @@ namespace Anatomia3D.UI
         /// re-runs as the real enforcement point when Start is actually tapped) so the button
         /// can already show "Deadline Expired" / "No More Attempts" and be disabled up front,
         /// instead of only failing after the student taps it.
+        ///
+        /// classroomId scopes the eligibility check to THIS classroom - the same quiz can be
+        /// published into more than one classroom, and an attempt used up in one classroom
+        /// must not show as "No More Attempts" here for a different classroom.
         /// </summary>
-        private void LoadQuizStartEligibility(List<ClassroomService.QuizSummary> quizzes, Func<bool> isStale)
+        private void LoadQuizStartEligibility(string classroomId, List<ClassroomService.QuizSummary> quizzes, Func<bool> isStale)
         {
             if (quizzes == null || quizzes.Count == 0)
             {
@@ -756,7 +834,7 @@ namespace Anatomia3D.UI
                 var q = quizzes[i];
                 int index = i;
 
-                QuizService.Instance.CheckAttemptEligibility(q.QuizId, (checkOk, checkError, eligibility) =>
+                QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
                 {
                     var block = QuizStartBlock.None;
                     if (checkOk && eligibility != null && !eligibility.CanStart)
@@ -1369,13 +1447,13 @@ namespace Anatomia3D.UI
 
             var scoreBlock = new VisualElement();
             scoreBlock.AddToClassList("performer-score-block");
-            var percentLabel = new Label($"{Mathf.RoundToInt(performer.ScorePercent)}%");
+            var percentLabel = new Label($"{performer.ScorePercent.ToString("0.#")}%");
             percentLabel.AddToClassList("performer-score-percent");
             var pointsLabel = new Label($"{performer.Points:N0} pts");
             pointsLabel.AddToClassList("performer-points-sub");
             scoreBlock.Add(percentLabel);
             scoreBlock.Add(pointsLabel);
-
+                
             row.Add(badge);
             row.Add(avatar);
             row.Add(info);
@@ -1420,10 +1498,10 @@ namespace Anatomia3D.UI
 
             var midRow = new VisualElement();
             midRow.AddToClassList("score-mid-row");
-            var fractionLabel = new Label($"Score: {score.ScoreCorrect} / {score.ScoreTotal}");
+            var fractionLabel = new Label($"Score: {score.PointsEarned} / {score.PointsPossible}");
             fractionLabel.AddToClassList("score-fraction-label");
-            float percent = score.ScoreTotal > 0 ? (score.ScoreCorrect / (float)score.ScoreTotal) * 100f : 0f;
-            var percentLabel = new Label($"{Mathf.RoundToInt(percent)}%");
+            float percent = score.PointsPossible > 0 ? (score.PointsEarned / (float)score.PointsPossible) * 100f : 0f;
+            var percentLabel = new Label($"{percent.ToString("0.#")}%");
             percentLabel.AddToClassList("score-percent-label");
             percentLabel.AddToClassList(score.Passed ? "score-percent-label-passed" : "score-percent-label-failed");
             midRow.Add(fractionLabel);

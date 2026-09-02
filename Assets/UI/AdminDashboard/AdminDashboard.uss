@@ -514,11 +514,41 @@
     max-height: 85%;
 }
 
+/* #classrooms-view-all-overlay (ID selector) locks in the flex settings this overlay
+   actually needs (stretch the card to fill it, no padding) so a same-named
+   ".modal-overlay" rule from another screen's stylesheet (e.g. AdminQuizManagement.uss,
+   which centers its own modal cards with 32px padding instead of stretching them) can
+   never re-center or pad this one out - see the #classrooms-view-all-card note below
+   for why that can happen. */
+#classrooms-view-all-overlay
+{
+    justify-content: flex-end;
+    align-items: stretch;
+    padding: 0;
+}
+
 /* ---------- My Classrooms: View All overlay (full screen) ---------- */
 
 .view-all-card
 {
     flex-direction: column;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+}
+
+/* #classrooms-view-all-card (ID selector, higher specificity than any single-class
+   rule) pins this card to full screen no matter what. Belt-and-braces alongside the
+   .view-all-card rule above: both AdminDashboard.uss and AdminQuizManagement.uss
+   define a ".modal-card" class (same name, different screens, same specificity), and
+   AdminQuizManagementController temporarily copies its stylesheet onto the shared
+   panel root while that screen is active (see PropagateStyleSheetsToPanelRoot). An ID
+   selector always outranks a class selector regardless of stylesheet load/cascade
+   order, so this card can never be squeezed by another screen's ".modal-card" rule
+   again, even if a future screen does something similar and forgets to clean up. */
+#classrooms-view-all-card
+{
     width: 100%;
     height: 100%;
     max-height: 100%;

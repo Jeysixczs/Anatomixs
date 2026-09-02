@@ -388,7 +388,7 @@ namespace Anatomia3D.UI
             {
                 if (!success || result == null) return;
 
-                if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(result.AvgScorePercent)}%";
+                if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{result.AvgScorePercent.ToString("0.##")}%";
                 if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
             });
         }
@@ -516,7 +516,7 @@ namespace Anatomia3D.UI
                     AnatomyPlayModeLocalStorage.Instance.Load(studentId);
                     var anatomyPoints = AnatomyPlayModeLocalStorage.Instance.GetAllRecords()
                         .Where(r => r.correct)
-                        .Select(r => ((float)(r.pointsEarned + r.streakBonus), ParseTimestampUtc(r.timestampUtc)));
+                        .Select(r => ((float)r.pointsEarned, ParseTimestampUtc(r.timestampUtc)));
                     AddPointsToWeek(weekly, anatomyPoints);
                 }
 
@@ -756,7 +756,7 @@ namespace Anatomia3D.UI
             if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
-            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
+            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent.ToString("0.##")}%";
             if (_pointsValueLabel != null) _pointsValueLabel.text = totalPoints.ToString();
             if (_badgesValueLabel != null) _badgesValueLabel.text = badgesEarned.ToString();
         }

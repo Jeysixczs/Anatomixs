@@ -51,6 +51,13 @@ namespace Anatomia3D.UI
     ///    a comma-separated list, True/False as literally "True"/"False".
     ///  - Each question row shows its Q# / difficulty / type badges, matching
     ///    the mock, with its own delete button
+    ///  - Difficulty picked in the Add Question wizard (Step 3) drives the
+    ///    question's point value directly via PointsForDifficulty, which reads
+    ///    this teacher's own configured Easy/Medium/HardPoints from
+    ///    AdminGamificationService (falling back to DefaultDifficultyToPoints
+    ///    until that fetch completes - see ApplyPointsForSelectedDifficulty). The
+    ///    points field itself is locked (SetEnabled(false)) so its displayed
+    ///    value can never drift from whatever difficulty is actually selected.
     ///  - Applies the green->blue gradient at runtime to the header, "New
     ///    Quiz" button, "Add Question" buttons and the two modal submit
     ///    buttons (USS has no linear-gradient)
@@ -93,6 +100,49 @@ namespace Anatomia3D.UI
             { TypeMultipleIdentification, "question-type-icon--multiple-id" },
             { TypeImageBased, "question-type-icon--image-based" },
         };
+
+        /// <summary>Fallback difficulty -> points if AdminGamificationService hasn't
+        /// returned this teacher's configured values yet (e.g. this screen was opened
+        /// before FetchSettings' callback fired). Once real settings arrive, PointsForDifficulty
+        /// reads EasyPoints/MediumPoints/HardPoints from there instead - see
+        /// AdminGamificationService.GamificationSettings, which is exactly what
+        /// AdminGamificationSettingsController.OnSaveChangesClicked() writes via
+        /// SaveSettings(). This keeps question points in sync with whatever the teacher
+        /// has actually configured, rather than a value fixed in this file.</summary>
+        private static readonly Dictionary<string, int> DefaultDifficultyToPoints = new Dictionary<string, int>
+        {
+            { "easy", 1 },
+            { "medium", 2 },
+            { "hard", 5 },
+        };
+
+        /// <summary>This teacher's points-per-difficulty (+ badges/levels, unused here),
+        /// fetched once in OnEnable via AdminGamificationService. Null until that fetch
+        /// completes, in which case PointsForDifficulty falls back to
+        /// DefaultDifficultyToPoints.</summary>
+        private AdminGamificationService.GamificationSettings _gamificationSettings;
+
+        /// <summary>Single source of truth for "how many points is a question of this
+        /// difficulty worth" - see ApplyPointsForSelectedDifficulty (keeps the Step 3
+        /// points field in sync as a read-only display) and OnAddQuestionSubmitClicked
+        /// (reads from here directly when building the QuestionData that actually gets
+        /// persisted). Reads the signed-in teacher's own configured
+        /// Easy/Medium/HardPoints from AdminGamificationService.CurrentSettings once
+        /// loaded, falling back to DefaultDifficultyToPoints until then.</summary>
+        private int PointsForDifficulty(string difficulty)
+        {
+            if (_gamificationSettings != null)
+            {
+                switch (difficulty)
+                {
+                    case "easy": return _gamificationSettings.EasyPoints;
+                    case "medium": return _gamificationSettings.MediumPoints;
+                    case "hard": return _gamificationSettings.HardPoints;
+                }
+            }
+
+            return DefaultDifficultyToPoints.TryGetValue(difficulty ?? "", out var fallback) ? fallback : 1;
+        }
 
         // Deadline date/time. UI Toolkit runtime has no DateTimePicker - that's
         // UnityEditor.UIElements only - so the deadline picker is a hand-built
@@ -200,6 +250,17 @@ namespace Anatomia3D.UI
         private UIDocument _document;
         private VisualElement _root;
         private VisualElement _screenRoot;
+
+        /// <summary>Tracks exactly which StyleSheet objects THIS controller copied onto the
+        /// shared panel root (see CopyAncestorStyleSheetsOnto), and which panel root they were
+        /// copied onto, so OnDisable can remove precisely those sheets again. Without this,
+        /// AdminQuizManagement.uss stays attached to panel.visualTree - the ancestor shared by
+        /// every screen on the single UIManager UIDocument - forever after the first visit,
+        /// bleeding class-name-colliding rules (e.g. .modal-card) into other screens such as
+        /// the Dashboard's classrooms-view-all-card even after navigating back and this screen
+        /// being disabled.</summary>
+        private readonly List<StyleSheet> _stylesheetsCopiedToPanelRoot = new List<StyleSheet>();
+        private VisualElement _panelRootWithCopiedStyles;
 
         private Texture2D _headerGradientTexture;
         private Texture2D _newQuizButtonGradientTexture;
@@ -439,7 +500,7 @@ namespace Anatomia3D.UI
         private Button _difficultyMediumButton;
         private Button _difficultyHardButton;
         private Dictionary<string, Button> _difficultyButtons;
-        private string _selectedDifficulty = "medium";
+        private string _selectedDifficulty = "easy";
         private TextField _questionPointsField;
         private Label _addQuestionStatusLabel;
         private Button _addQuestionStep3BackButton;
@@ -505,6 +566,25 @@ namespace Anatomia3D.UI
             RefreshQuizzesUI();
             RefreshStats();
 
+            // Pull this teacher's configured Easy/Medium/HardPoints (Gamification
+            // Settings) so question points reflect what they actually set, not a
+            // value hardcoded in this file. Paint from CurrentSettings immediately if
+            // AdminGamificationService already has one cached (e.g. FetchSettings ran
+            // earlier this session, such as from opening Gamification Settings), then
+            // refresh once the live fetch below completes - ApplyPointsForSelectedDifficulty
+            // re-reads PointsForDifficulty each time, so an Add Question modal that's
+            // already open picks up the corrected value automatically.
+            if (AdminGamificationService.Instance?.CurrentSettings != null)
+            {
+                _gamificationSettings = AdminGamificationService.Instance.CurrentSettings;
+                ApplyPointsForSelectedDifficulty();
+            }
+            AdminGamificationService.Instance?.FetchSettings(settings =>
+            {
+                _gamificationSettings = settings;
+                ApplyPointsForSelectedDifficulty();
+            });
+
             CloseCreateQuizModal();
             CloseQuizDeleteConfirm();
 
@@ -552,6 +632,7 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            RemoveCopiedStyleSheetsFromPanelRoot();
 
             if (_headerGradientTexture != null) { Destroy(_headerGradientTexture); _headerGradientTexture = null; }
             if (_newQuizButtonGradientTexture != null) { Destroy(_newQuizButtonGradientTexture); _newQuizButtonGradientTexture = null; }
@@ -935,12 +1016,42 @@ namespace Anatomia3D.UI
                     if (sheet != null && !panelRoot.styleSheets.Contains(sheet))
                     {
                         panelRoot.styleSheets.Add(sheet);
+                        _stylesheetsCopiedToPanelRoot.Add(sheet);
                         copied++;
                     }
                 }
                 current = current.parent;
             }
+            _panelRootWithCopiedStyles = panelRoot;
             Debug.Log($"[AdminQuizManagementController] CopyAncestorStyleSheetsOnto: copied {copied} new stylesheet(s) onto panelRoot (now has {panelRoot.styleSheets.count} total)");
+        }
+
+        /// <summary>Undoes CopyAncestorStyleSheetsOnto: removes exactly the stylesheet(s) this
+        /// screen added to the shared panel root, restoring it to how it looked before this
+        /// screen was ever shown. Must run on OnDisable (navigating away), not just OnDestroy,
+        /// because the panel root is shared with every other screen (Dashboard included) via
+        /// the single UIManager UIDocument - leaving AdminQuizManagement.uss attached there
+        /// after leaving this screen means its class-name-colliding rules (.modal-card, etc.)
+        /// keep cascading into other screens for as long as the app runs.</summary>
+        private void RemoveCopiedStyleSheetsFromPanelRoot()
+        {
+            if (_stylesheetsCopiedToPanelRoot.Count == 0) return;
+
+            var panelRoot = _panelRootWithCopiedStyles ?? _screenRoot?.panel?.visualTree;
+            if (panelRoot != null)
+            {
+                foreach (var sheet in _stylesheetsCopiedToPanelRoot)
+                {
+                    if (sheet != null && panelRoot.styleSheets.Contains(sheet))
+                    {
+                        panelRoot.styleSheets.Remove(sheet);
+                    }
+                }
+                Debug.Log($"[AdminQuizManagementController] RemoveCopiedStyleSheetsFromPanelRoot: removed {_stylesheetsCopiedToPanelRoot.Count} stylesheet(s) from panelRoot (now has {panelRoot.styleSheets.count} total)");
+            }
+
+            _stylesheetsCopiedToPanelRoot.Clear();
+            _panelRootWithCopiedStyles = null;
         }
 
         private void WireCallbacks()
@@ -2146,7 +2257,6 @@ namespace Anatomia3D.UI
             if (_option3Field != null) _option3Field.value = string.Empty;
             if (_option4Field != null) _option4Field.value = string.Empty;
             if (_correctAnswerField != null) _correctAnswerField.value = string.Empty;
-            if (_questionPointsField != null) _questionPointsField.value = "10";
 
             foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
             {
@@ -2177,8 +2287,11 @@ namespace Anatomia3D.UI
             RefreshImageBasedSystemButtons();
             ClearImageBasedSelection();
 
-            _selectedDifficulty = "medium";
+            // Difficulty defaults to "easy", which also seeds the (now read-only)
+            // points field via PointsForDifficulty - see ApplyPointsForSelectedDifficulty.
+            _selectedDifficulty = "easy";
             RefreshDifficultyButtons();
+            ApplyPointsForSelectedDifficulty();
 
             ClearError(_questionTextError);
             ClearError(_correctAnswerError);
@@ -2242,6 +2355,12 @@ namespace Anatomia3D.UI
                 UpdateProgressSegments(_addQuestionProgressSegments, step);
                 UpdateStepIndicatorItems(_addQuestionStepItems, _addQuestionStepCircleLabels, step);
             }
+
+            // Success (step 4) has its own Add Another / Done buttons - the wizard's
+            // Back and Cancel controls belong to steps 1-3 only and should disappear
+            // once the question has actually been saved.
+            _addQuestionWizardBackButton?.EnableInClassList("hidden", !onWizardStep);
+            _addQuestionCancelLinkButton?.EnableInClassList("hidden", !onWizardStep);
         }
 
         private void OnAddQuestionWizardBackClicked(ClickEvent evt)
@@ -2538,6 +2657,7 @@ namespace Anatomia3D.UI
 
             _selectedDifficulty = difficulty;
             RefreshDifficultyButtons();
+            ApplyPointsForSelectedDifficulty();
         }
 
         private void RefreshDifficultyButtons()
@@ -2546,6 +2666,24 @@ namespace Anatomia3D.UI
             foreach (var kvp in _difficultyButtons)
             {
                 kvp.Value?.EnableInClassList($"selected-{kvp.Key}", kvp.Key == _selectedDifficulty);
+            }
+        }
+
+        /// <summary>Syncs the (read-only) points field to whatever _selectedDifficulty
+        /// currently is, via PointsForDifficulty (this teacher's configured
+        /// Easy/Medium/HardPoints, from Gamification Settings). Called on modal open
+        /// and every time a difficulty button is clicked, so the displayed value is
+        /// always exactly what OnAddQuestionSubmitClicked will persist - the field
+        /// itself is disabled (see OpenAddQuestionModal) purely for display, since
+        /// points are no longer teacher-editable here (they're editable in
+        /// Gamification Settings instead).</summary>
+        private void ApplyPointsForSelectedDifficulty()
+        {
+            int points = PointsForDifficulty(_selectedDifficulty);
+            if (_questionPointsField != null)
+            {
+                _questionPointsField.value = points.ToString();
+                _questionPointsField.SetEnabled(false);
             }
         }
 
@@ -2590,111 +2728,111 @@ namespace Anatomia3D.UI
             switch (typeSlug)
             {
                 case TypeMultipleChoice:
-                {
-                    foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
                     {
-                        string option = optionField?.value?.Trim() ?? string.Empty;
-                        options.Add(option);
-                        bool empty = string.IsNullOrEmpty(option);
-                        MarkFieldInvalid(optionField, empty);
-                        if (empty) valid = false;
-                    }
+                        foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
+                        {
+                            string option = optionField?.value?.Trim() ?? string.Empty;
+                            options.Add(option);
+                            bool empty = string.IsNullOrEmpty(option);
+                            MarkFieldInvalid(optionField, empty);
+                            if (empty) valid = false;
+                        }
 
-                    int selected = GetMcSelectedIndex();
-                    if (selected < 0)
-                    {
-                        SetError(_mcCorrectAnswerError, "Please select the correct answer");
-                        valid = false;
+                        int selected = GetMcSelectedIndex();
+                        if (selected < 0)
+                        {
+                            SetError(_mcCorrectAnswerError, "Please select the correct answer");
+                            valid = false;
+                        }
+                        else
+                        {
+                            ClearError(_mcCorrectAnswerError);
+                            correctAnswer = selected < options.Count ? options[selected] : string.Empty;
+                        }
+                        break;
                     }
-                    else
-                    {
-                        ClearError(_mcCorrectAnswerError);
-                        correctAnswer = selected < options.Count ? options[selected] : string.Empty;
-                    }
-                    break;
-                }
                 case TypeMultipleIdentification:
-                {
-                    foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
                     {
-                        string option = optionField?.value?.Trim() ?? string.Empty;
-                        options.Add(option);
-                        bool empty = string.IsNullOrEmpty(option);
-                        MarkFieldInvalid(optionField, empty);
-                        if (empty) valid = false;
-                    }
+                        foreach (var optionField in new[] { _option1Field, _option2Field, _option3Field, _option4Field })
+                        {
+                            string option = optionField?.value?.Trim() ?? string.Empty;
+                            options.Add(option);
+                            bool empty = string.IsNullOrEmpty(option);
+                            MarkFieldInvalid(optionField, empty);
+                            if (empty) valid = false;
+                        }
 
-                    var selectedIndices = GetMiSelectedIndices();
-                    if (selectedIndices.Count == 0)
-                    {
-                        SetError(_miCorrectAnswerError, "Please select at least one correct answer");
-                        valid = false;
+                        var selectedIndices = GetMiSelectedIndices();
+                        if (selectedIndices.Count == 0)
+                        {
+                            SetError(_miCorrectAnswerError, "Please select at least one correct answer");
+                            valid = false;
+                        }
+                        else
+                        {
+                            ClearError(_miCorrectAnswerError);
+                            correctAnswer = string.Join(", ", selectedIndices.Where(i => i < options.Count).Select(i => options[i]));
+                        }
+                        break;
                     }
-                    else
-                    {
-                        ClearError(_miCorrectAnswerError);
-                        correctAnswer = string.Join(", ", selectedIndices.Where(i => i < options.Count).Select(i => options[i]));
-                    }
-                    break;
-                }
                 case TypeTrueFalse:
-                {
-                    correctAnswer = _selectedTrueFalseAnswer;
-                    break;
-                }
+                    {
+                        correctAnswer = _selectedTrueFalseAnswer;
+                        break;
+                    }
                 case TypeEnumeration:
-                {
-                    if (_enumerationAnswers.Count == 0)
                     {
-                        SetError(_enumerationAnswerError, "Please add at least one answer");
-                        valid = false;
+                        if (_enumerationAnswers.Count == 0)
+                        {
+                            SetError(_enumerationAnswerError, "Please add at least one answer");
+                            valid = false;
+                        }
+                        else
+                        {
+                            ClearError(_enumerationAnswerError);
+                            correctAnswer = string.Join(", ", _enumerationAnswers);
+                        }
+                        break;
                     }
-                    else
-                    {
-                        ClearError(_enumerationAnswerError);
-                        correctAnswer = string.Join(", ", _enumerationAnswers);
-                    }
-                    break;
-                }
                 case TypeImageBased:
-                {
-                    string system = _selectedImageBasedSystem ?? AnatomySystemDisplayChoices[0];
+                    {
+                        string system = _selectedImageBasedSystem ?? AnatomySystemDisplayChoices[0];
 
-                    // The teacher must have actually tapped a structure on the 3D
-                    // model - never silently fall back to the first/any structure
-                    // (plan section 12).
-                    if (string.IsNullOrEmpty(_imageBasedSelectedStructureDisplayName))
-                    {
-                        SetError(_imageBasedStructureError, "Please select a structure from the anatomy model.");
-                        valid = false;
+                        // The teacher must have actually tapped a structure on the 3D
+                        // model - never silently fall back to the first/any structure
+                        // (plan section 12).
+                        if (string.IsNullOrEmpty(_imageBasedSelectedStructureDisplayName))
+                        {
+                            SetError(_imageBasedStructureError, "Please select a structure from the anatomy model.");
+                            valid = false;
+                        }
+                        else
+                        {
+                            ClearError(_imageBasedStructureError);
+                            // MUST be the displayName, never the internal structureKey -
+                            // see the plan's section 7.
+                            correctAnswer = _imageBasedSelectedStructureDisplayName;
+                            string noun = AnatomySystemNoun.TryGetValue(system ?? string.Empty, out var n) ? n : "structure";
+                            if (string.IsNullOrEmpty(questionText)) questionText = $"What is the name of the highlighted {noun}?";
+                        }
+                        break;
                     }
-                    else
-                    {
-                        ClearError(_imageBasedStructureError);
-                        // MUST be the displayName, never the internal structureKey -
-                        // see the plan's section 7.
-                        correctAnswer = _imageBasedSelectedStructureDisplayName;
-                        string noun = AnatomySystemNoun.TryGetValue(system ?? string.Empty, out var n) ? n : "structure";
-                        if (string.IsNullOrEmpty(questionText)) questionText = $"What is the name of the highlighted {noun}?";
-                    }
-                    break;
-                }
                 default: // Identification
-                {
-                    correctAnswer = _correctAnswerField?.value?.Trim() ?? string.Empty;
-                    bool empty = string.IsNullOrEmpty(correctAnswer);
-                    MarkFieldInvalid(_correctAnswerField, empty);
-                    if (empty)
                     {
-                        SetError(_correctAnswerError, "Please enter the correct answer");
-                        valid = false;
+                        correctAnswer = _correctAnswerField?.value?.Trim() ?? string.Empty;
+                        bool empty = string.IsNullOrEmpty(correctAnswer);
+                        MarkFieldInvalid(_correctAnswerField, empty);
+                        if (empty)
+                        {
+                            SetError(_correctAnswerError, "Please enter the correct answer");
+                            valid = false;
+                        }
+                        else
+                        {
+                            ClearError(_correctAnswerError);
+                        }
+                        break;
                     }
-                    else
-                    {
-                        ClearError(_correctAnswerError);
-                    }
-                    break;
-                }
             }
 
             if (!valid)
@@ -2729,13 +2867,19 @@ namespace Anatomia3D.UI
 
             string typeSlug = _selectedQuestionTypeSlug ?? TypeMultipleChoice;
 
+            // Points are derived from the selected difficulty, using this teacher's
+            // configured Easy/Medium/HardPoints (Gamification Settings) via
+            // PointsForDifficulty - read straight from there rather than from
+            // _questionPointsField, which is now a disabled/display-only mirror of it.
+            int points = PointsForDifficulty(_selectedDifficulty);
+
             var question = new QuestionData
             {
                 QuestionText = _stagedQuestionText,
                 QuestionTypeSlug = typeSlug,
                 CorrectAnswer = _stagedCorrectAnswer,
                 Difficulty = _selectedDifficulty,
-                Points = ParseIntOrDefault(_questionPointsField, 10),
+                Points = points,
             };
 
             if (_stagedOptions != null) question.Options.AddRange(_stagedOptions);

@@ -94,6 +94,13 @@ public class AnatomyScreenController : MonoBehaviour
         _hasPendingSystem = true;
     }
 
+    // Read-only access to the currently active system, resolved by
+    // ResolveAnatomySystem in OnEnable. AnatomyPlayModeController reads
+    // this to scope the per-system daily hint limit (see
+    // AnatomyPlayModeLocalStorage.TryUseHint) to whichever system the
+    // student is actually looking at right now.
+    public AnatomySystem CurrentSystem => _currentSystem;
+
     // Loaded once in OnEnable from boneDatabaseJson (see PopulateBoneDataFromSkeleton).
     // boneData is built at runtime too, one entry per direct child of
     // skeletonRoot, with its title/description resolved from

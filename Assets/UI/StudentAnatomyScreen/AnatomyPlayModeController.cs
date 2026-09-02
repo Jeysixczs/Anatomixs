@@ -11,7 +11,7 @@ namespace Anatomia3D.Backend
     /// Student Explore 3D -> Play Mode gameplay: the anatomy guessing game.
     ///
     /// This script owns ONLY Play Mode state (current question, hints,
-    /// points, streak, completedKeys, progress, Isolate Answered). It never
+    /// points, completedKeys, progress, Isolate Answered). It never
     /// duplicates selection, outline, camera-focus, or hide/restore logic -
     /// all of that stays in AnatomyScreenController and is reused through
     /// the small public API at the bottom of that class:
@@ -45,32 +45,8 @@ namespace Anatomia3D.Backend
     public class AnatomyPlayModeController : MonoBehaviour
     {
         [Header("Points")]
-        [Tooltip("Points awarded for a correct answer with 0 hints used.")]
-        [SerializeField] private int pointsNoHints = 100;
-        [Tooltip("Points awarded for a correct answer with exactly 1 hint used.")]
-        [SerializeField] private int points1Hint = 60;
-        [Tooltip("Points awarded for a correct answer with exactly 2 hints used.")]
-        [SerializeField] private int points2Hints = 30;
-        [Tooltip("Points awarded for a correct answer with 3+ hints used (the minimum).")]
-        [SerializeField] private int points3PlusHints = 10;
-
-        [Header("Streak Bonuses")]
-        [Tooltip("Streak count -> bonus points awarded on top of the question's points " +
-                 "the moment the streak reaches that count. Suggested: 3->25, 5->50, 10->100.")]
-        [SerializeField]
-        private List<StreakBonus> streakBonuses = new List<StreakBonus>
-        {
-            new StreakBonus { streakCount = 3, bonusPoints = 25 },
-            new StreakBonus { streakCount = 5, bonusPoints = 50 },
-            new StreakBonus { streakCount = 10, bonusPoints = 100 },
-        };
-
-        [Serializable]
-        public class StreakBonus
-        {
-            public int streakCount;
-            public int bonusPoints;
-        }
+        [Tooltip("Points awarded for every correct answer, regardless of how many hints were used.")]
+        [SerializeField] private int pointsPerCorrectAnswer = 1;
 
         [Header("Firebase")]
         [Tooltip("Optional. If assigned, incorrect attempts are logged via this script directly, " +
@@ -98,8 +74,6 @@ namespace Anatomia3D.Backend
         private readonly HashSet<string> _completedKeys = new HashSet<string>();
         private AnatomyScreenController.BoneInfo _currentQuestion;
         private int _currentHints;
-        private int _currentStreak;
-        private int _highestStreak;
         private int _totalPoints;
         private int _correctAnswers;
         private int _incorrectAnswers;
@@ -141,8 +115,6 @@ namespace Anatomia3D.Backend
 
         public bool IsPlayModeActive => _isPlayModeActive;
         public int TotalPoints => _totalPoints;
-        public int CurrentStreak => _currentStreak;
-        public int HighestStreak => _highestStreak;
         public IReadOnlyCollection<string> CompletedKeys => _completedKeys;
 
         // ===== UI refs (queried from the same root AnatomyScreenController uses) =====
@@ -157,6 +129,9 @@ namespace Anatomia3D.Backend
         private VisualElement _completionPanel;
         private Label _completionLabel;
         private Button _completionCloseButton;
+        private VisualElement _noHintsPanel;
+        private Label _noHintsLabel;
+        private Button _noHintsCloseButton;
         private VisualElement _playModeControlsRow;
         private VisualElement _audioRow;
 
@@ -224,6 +199,7 @@ namespace Anatomia3D.Backend
             if (_hintButton != null) _hintButton.clicked -= OnHintClicked;
             if (_submitButton != null) _submitButton.clicked -= OnSubmitClicked;
             if (_completionCloseButton != null) _completionCloseButton.clicked -= HideCompletionPanel;
+            if (_noHintsCloseButton != null) _noHintsCloseButton.clicked -= HideNoHintsPanel;
 
             // Leaving the screen entirely - don't leave Play Mode's
             // Isolate Answered visibility rule stuck active underneath
@@ -285,6 +261,9 @@ namespace Anatomia3D.Backend
             _completionPanel = _root.Q<VisualElement>("PlayModeCompletionPanel");
             _completionLabel = _root.Q<Label>("PlayModeCompletionLabel");
             _completionCloseButton = _root.Q<Button>("PlayModeCompletionCloseButton");
+            _noHintsPanel = _root.Q<VisualElement>("NoHintsPanel");
+            _noHintsLabel = _root.Q<Label>("NoHintsLabel");
+            _noHintsCloseButton = _root.Q<Button>("NoHintsCloseButton");
             _playModeControlsRow = _root.Q<VisualElement>("PlayModeControls");
             _audioRow = _root.Q<VisualElement>("AudioRow");
 
@@ -338,6 +317,15 @@ namespace Anatomia3D.Backend
             {
                 _completionCloseButton.clicked -= HideCompletionPanel;
                 _completionCloseButton.clicked += HideCompletionPanel;
+            }
+
+            if (_noHintsPanel != null)
+                _noHintsPanel.AddToClassList("hidden");
+
+            if (_noHintsCloseButton != null)
+            {
+                _noHintsCloseButton.clicked -= HideNoHintsPanel;
+                _noHintsCloseButton.clicked += HideNoHintsPanel;
             }
 
             _uiWired = true;
@@ -476,7 +464,7 @@ namespace Anatomia3D.Backend
 
         /// <summary>Re-reads _completedKeys from local storage and updates
         /// every part of the UI that depends on it, WITHOUT resetting the
-        /// current question, points, or streak - the safe "refresh, don't
+        /// current question or points - the safe "refresh, don't
         /// restart" path the plan's section 7 asks for so a Sync Progress
         /// download that merges in structures answered on another device
         /// shows up immediately if Play Mode is already open. Newly-merged
@@ -640,12 +628,17 @@ namespace Anatomia3D.Backend
                 _screen.SetInfoPanelDescription("Type each letter, or use a hint.");
                 _letterRow?.RemoveFromClassList("hidden");
                 BuildLetterBoxes(entry.displayName);
+                RestoreRevealedHints(info.boneName, entry.displayName);
                 SetGuessUiEnabled(true);
                 FocusLetterField(0);
+
+                // Reflect today's already-used hint count for the active
+                // system immediately - a student who hit the limit earlier
+                // (on this device or another, once synced) should see "No
+                // more hints" the instant a new question loads, not only
+                // after tapping Hint and being denied.
+                RefreshHintButtonState();
             }
-
-
-           
         }
 
         private void SetGuessUiEnabled(bool enabled)
@@ -816,6 +809,40 @@ namespace Anatomia3D.Backend
             return sb.ToString();
         }
 
+        // Re-applies every hint letter already revealed for `key` before
+        // this visit - read from AnatomyPlayModeLocalStorage, which by the
+        // time this runs already reflects whatever's been merged down from
+        // Firebase too (see AnatomyPlayModeSyncService.RequestFullSync).
+        // Called right after BuildLetterBoxes for every still-unanswered
+        // structure, so backing out and reselecting the same structure, or
+        // closing and reopening the app/tab entirely, shows exactly the
+        // letters already earned instead of a blank row. A structure with
+        // no hints used yet simply gets nothing restored - identical to
+        // how the letter row looked before this existed.
+        //
+        // Resets _revealedIndices/_currentHints first (rather than relying
+        // on OnStructureSelected's earlier reset) so this method is safe
+        // to treat as the single source of truth for "what's revealed
+        // right now" - it fully re-derives that state from storage rather
+        // than assuming it starts empty.
+        private void RestoreRevealedHints(string key, string displayName)
+        {
+            _revealedIndices.Clear();
+            _currentHints = 0;
+
+            if (localStorage == null) return;
+
+            foreach (int index in localStorage.GetRevealedIndices(key))
+            {
+                if (index < 0 || index >= displayName.Length || char.IsWhiteSpace(displayName[index]))
+                    continue; // stale/out-of-range data - skip rather than crash the letter row.
+
+                _revealedIndices.Add(index);
+                _currentHints++;
+                RevealLetterField(index, displayName[index]);
+            }
+        }
+
         // ===== Hints =====
 
         private void OnHintClicked()
@@ -833,7 +860,25 @@ namespace Anatomia3D.Backend
                     candidates.Add(i);
             }
 
-            if (candidates.Count == 0) return; // fully revealed already
+            if (candidates.Count == 0) return; // fully revealed already - never spend a daily hint on this.
+
+            // Per-system daily hint limit (3 per AnatomySystem per student
+            // per day - see AnatomyPlayModeLocalStorage.TryUseHint). Checked
+            // only once we know a hint would actually reveal something -
+            // if the student is already at the limit for the currently
+            // active system, no hint is granted and no letter is revealed.
+            if (localStorage == null || !localStorage.TryUseHint(CurrentStudentId, _screen.CurrentSystem, out var hintRecord))
+            {
+                // TryUseHint only fails for one reason: today's per-system
+                // hint limit is already used up (see its doc comment) - so
+                // getting here always means "no hints left", never some
+                // other kind of failure. Tell the student when they'll get
+                // more, since the button no longer explains itself by going
+                // disabled/greyed-out (see RefreshHintButtonState).
+                ShowNoHintsPopup();
+                RefreshHintButtonState();
+                return;
+            }
 
             // Pick a random not-yet-revealed position rather than always
             // the leftmost one, so hints don't just fill the word in
@@ -845,6 +890,73 @@ namespace Anatomia3D.Backend
             _hintsUsedTotal++;
 
             RevealLetterField(pickedIndex, displayName[pickedIndex]);
+
+            // Fire-and-forget sync, same pattern as SaveAnswer's direct
+            // Firebase call elsewhere in this class - the hint was already
+            // saved locally by TryUseHint above, so a failed/offline sync
+            // here never blocks or loses the hint; AnatomyPlayModeSyncService
+            // retries it later from GetPendingHintUses().
+            firebase?.SyncHintUse(hintRecord, _ => { });
+
+            // Persist WHICH letter this hint revealed (not just that a hint
+            // was spent) - separate from hintRecord above, which only
+            // counts toward the daily per-system limit. This is what lets
+            // RestoreRevealedHints bring the letter row back exactly as
+            // it's left, whether the student backs out and reselects this
+            // structure or closes and reopens the app entirely. Same
+            // fire-and-forget sync pattern as SyncHintUse: saved locally
+            // first (always succeeds), Firebase attempted after but never
+            // required - a failed/offline sync just leaves it 'pending'
+            // for AnatomyPlayModeSyncService to retry later.
+            if (localStorage != null)
+            {
+                var revealedRecord = localStorage.SaveRevealedIndex(CurrentStudentId, _currentQuestion.boneName, pickedIndex);
+                firebase?.SyncRevealedHint(revealedRecord, _ => { });
+            }
+
+            RefreshHintButtonState();
+        }
+
+        // Re-evaluates whether the Hint button should be enabled for the
+        // currently active system, and updates its label accordingly.
+        // Called after every hint use, and whenever a new question is set
+        // up (OnStructureSelected) so a student who already hit today's
+        // limit on this system sees "No more hints" immediately on
+        // opening a new, unanswered question - not only after tapping
+        // Hint and being denied.
+        private void RefreshHintButtonState()
+        {
+            if (_hintButton == null || _screen == null || localStorage == null) return;
+
+            bool limitReached = localStorage.GetHintCountToday(_screen.CurrentSystem) >= AnatomyPlayModeLocalStorage.MaxHintsPerSystemPerDay;
+            _hintButton.text = limitReached ? "No more hints" : "Hint";
+
+            // Deliberately left enabled even at the limit (unlike the old
+            // SetEnabled(!limitReached)) - a disabled button can't be
+            // tapped, so it could never explain itself. Leaving it enabled
+            // lets OnHintClicked's TryUseHint failure path show
+            // ShowNoHintsPopup() with the reset time instead of the button
+            // just going dead with no explanation.
+            _hintButton.SetEnabled(true);
+        }
+
+        // Builds and shows the "no hints left today" popup, filling in the
+        // exact local time hints reset - hints reset at local midnight
+        // (see AnatomyPlayModeLocalStorage.GetHintCountToday, which compares
+        // DateTime.Now.Date), so that's the time shown here.
+        private void ShowNoHintsPopup()
+        {
+            if (_noHintsPanel == null || _noHintsLabel == null) return;
+
+            DateTime nextResetLocal = DateTime.Now.Date.AddDays(1);
+            _noHintsLabel.text =
+                $"You've used all your hints for this system today. They'll refresh at {nextResetLocal:h:mm tt} ({nextResetLocal:MMM d}).";
+            _noHintsPanel.RemoveFromClassList("hidden");
+        }
+
+        private void HideNoHintsPanel()
+        {
+            _noHintsPanel?.AddToClassList("hidden");
         }
 
         // ===== Answer submission =====
@@ -879,24 +991,19 @@ namespace Anatomia3D.Backend
             // in case of a stale/queued click.
             if (_completedKeys.Contains(info.boneName)) return;
 
-            int questionPoints = PointsForHints(_currentHints);
-            _currentStreak++;
-            _highestStreak = Mathf.Max(_highestStreak, _currentStreak);
+            int questionPoints = pointsPerCorrectAnswer;
 
-            int streakBonus = StreakBonusFor(_currentStreak);
-
-            _totalPoints += questionPoints + streakBonus;
+            _totalPoints += questionPoints;
             _correctAnswers++;
             _completedKeys.Add(info.boneName);
+            CleanupRevealedHints(info.boneName);
 
             _screen.SetInfoPanelTitle(entry.displayName);
-            _screen.SetInfoPanelDescription(streakBonus > 0
-                ? $"Correct! +{questionPoints} points (+{streakBonus} streak bonus)."
-                : $"Correct! +{questionPoints} points.");
+            _screen.SetInfoPanelDescription($"Correct! +{questionPoints} points.");
             SetGuessUiEnabled(false);
             _letterRow?.AddToClassList("hidden");
 
-            SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints, streakBonus);
+            SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints);
 
             // Isolate Answered is live - a newly-completed key should
             // immediately become visible if the player has it toggled on.
@@ -917,7 +1024,7 @@ namespace Anatomia3D.Backend
         // regardless of connectivity; Firebase is then attempted (via the
         // sync service if one is assigned, so retries stay idempotent) but
         // is never required for the answer itself to be accepted.
-        private void SaveCorrectAnswer(string key, string displayName, int pointsEarned, int streakBonus)
+        private void SaveCorrectAnswer(string key, string displayName, int pointsEarned)
         {
             string studentId = CurrentStudentId;
             if (localStorage == null || string.IsNullOrEmpty(studentId))
@@ -925,12 +1032,12 @@ namespace Anatomia3D.Backend
                 // No offline storage available (or no signed-in student) -
                 // fall back to the original direct-to-Firebase save so Play
                 // Mode still works, just without offline/restore support.
-                firebase?.SaveAnswer(key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+                firebase?.SaveAnswer(key, displayName, true, _currentHints, pointsEarned);
                 return;
             }
 
             var record = localStorage.SaveAnswer(
-                studentId, key, displayName, true, _currentHints, pointsEarned, _currentStreak, streakBonus);
+                studentId, key, displayName, true, _currentHints, pointsEarned);
 
             if (syncService != null)
             {
@@ -948,37 +1055,42 @@ namespace Anatomia3D.Backend
             }
         }
 
+        // Once a structure is correctly answered, its revealed-hint
+        // letters are no longer needed - it's never asked again, so
+        // there's nothing left for RestoreRevealedHints to restore.
+        // Removes the local records immediately (always succeeds,
+        // regardless of connectivity) and best-effort deletes their
+        // Firestore docs too, so the remote collection doesn't grow
+        // forever with data for structures that are already done. A
+        // failed/offline delete is harmless: MergeRemoteRevealedHint
+        // already skips restoring hints for any key this device has
+        // correctly answered, so an orphaned doc is silently ignored
+        // rather than causing stale letters to reappear later.
+        private void CleanupRevealedHints(string key)
+        {
+            if (localStorage == null) return;
+
+            var removed = localStorage.ClearRevealedHints(key);
+            if (firebase == null) return;
+
+            foreach (var record in removed)
+                firebase.DeleteRevealedHint(record, _ => { });
+        }
+
         private void HandleIncorrectAnswer()
         {
-            _currentStreak = 0;
             _incorrectAnswers++;
 
             if (_screen.TryGetBoneDatabaseEntry(_currentQuestion, out var entry))
             {
                 _screen.SetInfoPanelDescription("Not quite - try again.");
 
-                firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0, 0, 0);
+                firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0);
             }
 
             ClearUnrevealedLetterFields();
             FocusLetterField(0);
             // Structure stays visible, another attempt is allowed - guess UI stays enabled.
-        }
-
-        private int PointsForHints(int hints)
-        {
-            if (hints <= 0) return pointsNoHints;
-            if (hints == 1) return points1Hint;
-            if (hints == 2) return points2Hints;
-            return points3PlusHints;
-        }
-
-        private int StreakBonusFor(int streak)
-        {
-            int total = 0;
-            foreach (var b in streakBonuses)
-                if (b.streakCount == streak) total += b.bonusPoints;
-            return total;
         }
 
         // ===== Progress / completion =====
@@ -999,7 +1111,7 @@ namespace Anatomia3D.Backend
             {
                 _completionLabel.text =
                     $"ANATOMY COMPLETE!\nYou identified {_completedKeys.Count} / {total} structures\n" +
-                    $"Total Points: {_totalPoints}\nHighest Streak: {_highestStreak}";
+                    $"Total Points: {_totalPoints}";
                 _completionPanel.RemoveFromClassList("hidden");
             }
         }

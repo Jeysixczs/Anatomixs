@@ -293,7 +293,11 @@ namespace Anatomia3D.UI.Quiz
             // into gameplay (classroom detail's Start button, deep links, etc.) routes
             // through LoadQuiz(), so enforcing the deadline/attempts check here means it
             // can't be bypassed by skipping some other screen's pre-check.
-            QuizService.Instance.CheckAttemptEligibility(quizId, (checkOk, checkError, eligibility) =>
+            //
+            // classroomId is passed through here so attempts are scoped to this specific
+            // classroom - the same quiz can be published into multiple classrooms, and an
+            // attempt used up in one must not block starting it in another.
+            QuizService.Instance.CheckAttemptEligibility(classroomId, quizId, (checkOk, checkError, eligibility) =>
             {
                 //if (!checkOk)
                 //{
@@ -645,12 +649,18 @@ namespace Anatomia3D.UI.Quiz
             int incorrectCount = 0;
             int pointsEarned = 0;
 
+            // Per-question right/wrong breakdown - feeds AdminAnalyticsReportsController's
+            // "Common Incorrect Answers" list via QuizService.FetchClassroomReportData.
+            // Without this, that list stays empty no matter how many attempts exist.
+            var questionResults = new List<QuizService.QuestionAttemptResult>(_quiz.Questions.Count);
+
             for (int i = 0; i < _quiz.Questions.Count; i++)
             {
                 var q = _quiz.Questions[i];
 
                 _answers.TryGetValue(i, out var answer);
-                if (IsAnswerCorrect(q, answer))
+                bool isCorrect = IsAnswerCorrect(q, answer);
+                if (isCorrect)
                 {
                     correctCount++;
                     pointsEarned += q.Points;
@@ -659,6 +669,8 @@ namespace Anatomia3D.UI.Quiz
                 {
                     incorrectCount++;
                 }
+
+                questionResults.Add(new QuizService.QuestionAttemptResult(q.QuestionText, isCorrect));
             }
 
             string quizTitle = _quiz.Title;
@@ -685,7 +697,6 @@ namespace Anatomia3D.UI.Quiz
                 incorrectCount,
                 pointsEarned,
                 _quiz.PointsPossible,
-                bonusXp: 0,
                 (success, error, result) =>
                 {
                     if (!success)
@@ -708,10 +719,11 @@ namespace Anatomia3D.UI.Quiz
                     PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
                     {
                         UIManager.Instance.ShowStudentQuizResult(
-                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, bonusXp: 0);
+                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible);
                     });
 
                 },
+                questionResults: questionResults,
                 timeSpentSeconds: timeSpentSeconds);
         }
 

@@ -249,7 +249,7 @@ namespace Anatomia3D.UI
             UpdateResponsiveLayout();
 
             SetHeaderData(_lastTeacherName, _lastAvatarUrl);
-            SetDashboardStats(_lastClassroomCount, _lastStudentCount, _lastAvgScorePercent);
+            SetDashboardStats(_lastClassroomCount, _lastStudentCount);
             RefreshClassroomsUI();
             RefreshRecentActivityUI();
 
@@ -493,15 +493,14 @@ namespace Anatomia3D.UI
         }
 
         /// <summary>Push real values into the three glass stat cards in the header.</summary>
-        public void SetDashboardStats(int classroomCount, int studentCount, float avgScorePercent)
+        public void SetDashboardStats(int classroomCount, int studentCount)
         {
             _lastClassroomCount = classroomCount;
             _lastStudentCount = studentCount;
-            _lastAvgScorePercent = avgScorePercent;
 
             if (_classroomsCountLabel != null) _classroomsCountLabel.text = classroomCount.ToString("N0");
             if (_studentsCountLabel != null) _studentsCountLabel.text = studentCount.ToString("N0");
-            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
+           
         }
 
         /// <summary>Push the teacher's classrooms into "My Classrooms". Pass an empty/null list to show the empty state.</summary>
@@ -563,7 +562,7 @@ namespace Anatomia3D.UI
                 // No quiz/analytics service exists yet to source a real average
                 // score, so we report 0% rather than fabricate a number. Swap
                 // this out once that backend exists.
-                SetDashboardStats(summaries.Count, totalStudents, 0f);
+                SetDashboardStats(summaries.Count, totalStudents);
 
                 RefreshRecentActivitySources(summaries);
             });

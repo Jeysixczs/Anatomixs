@@ -411,11 +411,29 @@ namespace Anatomia3D.UI
             int quizzesCompleted,
             int totalPoints)
         {
+            // AdminGamificationService.ComputeLevelProgress returns nextLevel == currentLevel
+            // (and pointsToNextLevel == 0) when the student has no level above their current
+            // one - that's the signal a max level has been reached, rather than a separate flag.
+            bool maxLevelReached = nextLevel <= currentLevel;
+
             if (_studentNameLabel != null) _studentNameLabel.text = studentName;
             if (_currentLevelLabel != null) _currentLevelLabel.text = $"Level {currentLevel}";
-            if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {currentLevel + 1}";
+
+            if (_nextLevelLabel != null)
+            {
+                _nextLevelLabel.EnableInClassList("hidden", maxLevelReached);
+                if (!maxLevelReached) _nextLevelLabel.text = $"Level {currentLevel + 1}";
+            }
+
             if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(levelProgress01) * 100f, LengthUnit.Percent);
-            if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
+
+            if (_pointsToNextLabel != null)
+            {
+                _pointsToNextLabel.text = maxLevelReached
+                    ? "Maximum level reached!"
+                    : $"{pointsToNextLevel} points to next level";
+            }
+
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_levelValueLabel != null) _levelValueLabel.text = currentLevel.ToString();
             if (_pointsValueLabel != null) _pointsValueLabel.text = totalPoints.ToString();
@@ -937,6 +955,7 @@ namespace Anatomia3D.UI
 
         private void OnClassroomHubClicked(ClickEvent evt)
         {
+            
             UIManager.Instance.ShowStudentClassroomHub();
         }
 

@@ -20,23 +20,23 @@
                             <ui:Label name="classroom-code-label" text="YG7XYYHJ" class="classroom-code-value"/>
                         </ui:VisualElement>
                         <ui:Button name="copy-code-button" class="copy-code-icon-button" style="background-image: none;">
-                            <ui:VisualElement class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-icon.png?fileID=2800000&amp;guid=efea9607a1058144f9b78865cdeecaca&amp;type=3#copy-icon&quot;); height: 49px; width: 45px;"/>
+                            <ui:VisualElement class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-white.png?fileID=2800000&amp;guid=e161e02690c1af842986860fba0491cb&amp;type=3#copy-white&quot;); height: 49px; width: 45px; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(0, 0, 0, 0);"/>
                         </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="stats-row" class="stats-row">
+                <ui:VisualElement name="stats-row" class="stats-row" style="margin-top: 39px;">
                     <ui:VisualElement class="stat-card stat-card-spaced">
-                        <ui:VisualElement class="stat-icon icon-users-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/userclassroom-icon.png?fileID=2800000&amp;guid=c62a1173899cbf746950a52e454c7190&amp;type=3#userclassroom-icon&quot;); height: 64px; width: 79px;"/>
+                        <ui:VisualElement class="stat-icon icon-users-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 64px; width: 79px; -unity-background-image-tint-color: rgb(0, 0, 0); background-color: rgba(0, 0, 0, 0);"/>
                         <ui:Label name="students-value-label" text="0" class="stat-value"/>
                         <ui:Label text="Students" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="stat-card stat-card-spaced">
-                        <ui:VisualElement class="stat-icon icon-trend-green" style="background-image: url(&quot;project://database/Assets/UI/Icons/progress-icon.png?fileID=2800000&amp;guid=ac34e65b9a01a3542a77c551cdcb455b&amp;type=3#progress-icon&quot;); height: 54px; width: 56px;"/>
+                        <ui:VisualElement class="stat-icon icon-trend-green" style="background-image: url(&quot;project://database/Assets/UI/Icons/progress-icon.png?fileID=2800000&amp;guid=ac34e65b9a01a3542a77c551cdcb455b&amp;type=3#progress-icon&quot;); height: 54px; width: 56px; -unity-background-image-tint-color: rgb(20, 21, 22);"/>
                         <ui:Label name="avg-score-value-label" text="0%" class="stat-value"/>
                         <ui:Label text="Avg Score" class="stat-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="stat-card">
-                        <ui:VisualElement class="stat-icon icon-ribbon-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon.png?fileID=2800000&amp;guid=775f1626d353491439de4a800cedcda0&amp;type=3#reward-icon&quot;); height: 77px; width: 64px;"/>
+                        <ui:VisualElement class="stat-icon icon-ribbon-blue" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon.png?fileID=2800000&amp;guid=775f1626d353491439de4a800cedcda0&amp;type=3#reward-icon&quot;); height: 77px; width: 64px; -unity-background-image-tint-color: rgb(0, 0, 0);"/>
                         <ui:Label name="quizzes-done-value-label" text="0" class="stat-value"/>
                         <ui:Label text="Quizzes Done" class="stat-label"/>
                     </ui:VisualElement>
@@ -49,7 +49,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="students-panel" class="tab-panel">
                     <ui:VisualElement name="students-empty-state" class="panel-card empty-state">
-                        <ui:VisualElement class="empty-icon icon-users-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/user-icon.png?fileID=2800000&amp;guid=55a2369fdf4771848b76ae9f9077db8e&amp;type=3#user-icon&quot;);"/>
+                        <ui:VisualElement class="empty-icon icon-users-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
                         <ui:Label text="No students yet" class="empty-title"/>
                         <ui:Label text="Share the classroom code with students to get started" class="empty-subtitle"/>
                         <ui:Button name="copy-classroom-code-button" class="copy-classroom-code-button">
@@ -63,7 +63,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="quizzes-panel" class="tab-panel hidden">
                     <ui:VisualElement name="quizzes-empty-state" class="panel-card empty-state hidden">
-                        <ui:VisualElement class="empty-icon icon-users-gray"/>
+                        <ui:VisualElement class="empty-icon icon-users-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
                         <ui:Label text="No quizzes yet" class="empty-title"/>
                         <ui:Label text="Create a quiz from the dashboard to publish it to this classroom" class="empty-subtitle"/>
                     </ui:VisualElement>
@@ -125,7 +125,7 @@
                     </ui:VisualElement>
                     <ui:Label text="Announcement History" class="announcements-section-title"/>
                     <ui:VisualElement name="announcements-empty-state" class="panel-card empty-state">
-                        <ui:VisualElement class="empty-icon icon-announce-gray"/>
+                        <ui:VisualElement class="empty-icon icon-announce-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
                         <ui:Label text="No announcements yet" class="empty-title"/>
                         <ui:Label text="Announcements you post will show up here, and on students&apos; Overview tab." class="empty-subtitle"/>
                     </ui:VisualElement>
@@ -140,6 +140,16 @@
                 <ui:VisualElement name="archive-dialog-button-row" class="dialog-button-row">
                     <ui:Button name="archive-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
                     <ui:Button name="archive-dialog-confirm-button" text="Archive" class="dialog-button dialog-button-danger"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="unenroll-dialog-overlay" class="dialog-overlay hidden">
+            <ui:VisualElement name="unenroll-dialog-card" class="dialog-card">
+                <ui:Label name="unenroll-dialog-title-label" text="Remove Student" class="dialog-title"/>
+                <ui:Label name="unenroll-dialog-message-label" text="Remove this student from this classroom? Their points and quiz history in this classroom will be lost. This can&apos;t be undone." class="dialog-message"/>
+                <ui:VisualElement name="unenroll-dialog-button-row" class="dialog-button-row">
+                    <ui:Button name="unenroll-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
+                    <ui:Button name="unenroll-dialog-confirm-button" text="Remove" class="dialog-button dialog-button-danger"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

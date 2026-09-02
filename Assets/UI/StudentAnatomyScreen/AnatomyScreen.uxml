@@ -120,6 +120,16 @@
             <ui:Label name="PlayModeCompletionLabel" text="" class="play-mode-completion-label"/>
             <ui:Button name="PlayModeCompletionCloseButton" text="Continue" class="audio-btn play-mode-completion-close-btn"/>
         </ui:VisualElement>
+        <ui:VisualElement name="NoHintsPanel" class="no-hints-overlay hidden">
+            <ui:VisualElement name="NoHintsCard" class="no-hints-card">
+                <ui:VisualElement class="no-hints-icon-circle">
+                    <ui:Label text="&#9203;" class="no-hints-icon"/>
+                </ui:VisualElement>
+                <ui:Label text="No More Hints Today" class="no-hints-title"/>
+                <ui:Label name="NoHintsLabel" text="" class="no-hints-message"/>
+                <ui:Button name="NoHintsCloseButton" text="Got it" class="no-hints-close-btn"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="ControlsGuideOverlay" class="controls-guide-overlay hidden">
             <ui:VisualElement name="ControlsGuideBackdrop" class="controls-guide-backdrop"/>
             <ui:VisualElement name="ControlsGuideCard" class="controls-guide-card">
