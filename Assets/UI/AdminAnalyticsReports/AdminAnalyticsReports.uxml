@@ -29,10 +29,9 @@
                                 <ui:VisualElement class="overview-icon-circle overview-icon-blue">
                                     <ui:Label text="👥" class="overview-icon"/>
                                 </ui:VisualElement>
-                                <ui:Label text="Active Users" class="overview-card-title"/>
+                                <ui:Label text="Total Students" class="overview-card-title"/>
                             </ui:VisualElement>
                             <ui:Label name="active-users-value-label" text="0" class="overview-card-value"/>
-                            <ui:Label name="active-users-delta-label" text="+0% from last month" class="overview-card-delta"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="avg-score-card" class="overview-card overview-card-right">
                             <ui:VisualElement class="overview-card-header">
@@ -42,7 +41,6 @@
                                 <ui:Label text="Avg Score" class="overview-card-title"/>
                             </ui:VisualElement>
                             <ui:Label name="avg-score-value-label" text="0%" class="overview-card-value"/>
-                            <ui:Label name="avg-score-delta-label" text="+0% from last month" class="overview-card-delta"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="stats-row-2" class="stats-grid-row">
@@ -51,10 +49,9 @@
                                 <ui:VisualElement class="overview-icon-circle overview-icon-purple">
                                     <ui:Label text="🏆" class="overview-icon"/>
                                 </ui:VisualElement>
-                                <ui:Label text="Quizzes Done" class="overview-card-title"/>
+                                <ui:Label text="Participated" class="overview-card-title"/>
                             </ui:VisualElement>
                             <ui:Label name="quizzes-done-value-label" text="0" class="overview-card-value"/>
-                            <ui:Label name="quizzes-done-delta-label" text="+0% from last month" class="overview-card-delta"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="completion-card" class="overview-card overview-card-right">
                             <ui:VisualElement class="overview-card-header">
@@ -64,7 +61,6 @@
                                 <ui:Label text="Completion" class="overview-card-title"/>
                             </ui:VisualElement>
                             <ui:Label name="completion-value-label" text="0%" class="overview-card-value"/>
-                            <ui:Label name="completion-delta-label" text="+0% from last month" class="overview-card-delta"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -101,7 +97,7 @@
                                 <ui:Label name="total-students-value-label" text="0" class="student-activity-value"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="student-activity-row">
-                                <ui:Label text="Active This Month" class="student-activity-label"/>
+                                <ui:Label text="Active Students" class="student-activity-label"/>
                                 <ui:Label name="active-this-month-value-label" text="0" class="student-activity-value"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="student-activity-row">
