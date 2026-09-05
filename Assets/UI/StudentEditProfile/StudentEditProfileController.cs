@@ -320,9 +320,16 @@ namespace Anatomia3D.UI
         }
 
         /// <summary>Loads whatever avatar the signed-in student currently has
-        /// (Cloudinary URL, same field StudentProfileController reads) into the
-        /// preview circle, or falls back to initials if there isn't one. Called
-        /// fresh every time this screen opens - see OnEnable.</summary>
+        /// into the preview circle, or falls back to initials if there isn't
+        /// one. Called fresh every time this screen opens - see OnEnable.
+        ///
+        /// Tries the local on-disk cache first (see
+        /// CloudinaryAvatarUploadService.TryLoadLocalAvatar) so the photo
+        /// shows up instantly and works offline, then still kicks off a
+        /// network refresh from student.AvatarUrl in the background - that
+        /// keeps this device in sync if the avatar was changed elsewhere,
+        /// and self-heals the local cache if it's missing (e.g. first login
+        /// on a new device).</summary>
         private void RefreshAvatarPreview()
         {
             var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
@@ -336,11 +343,25 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            if (CloudinaryAvatarUploadService.Instance != null &&
+                CloudinaryAvatarUploadService.Instance.TryLoadLocalAvatar(student.Uid, out byte[] cachedBytes))
+            {
+                var cachedTex = new Texture2D(2, 2);
+                if (ImageConversion.LoadImage(cachedTex, cachedBytes))
+                {
+                    ShowAvatarPreviewTexture(cachedTex); // takes ownership, same as a freshly-picked photo
+                }
+                else
+                {
+                    Destroy(cachedTex);
+                }
+            }
+
             if (_avatarPreviewLoadRoutine != null) StopCoroutine(_avatarPreviewLoadRoutine);
-            _avatarPreviewLoadRoutine = StartCoroutine(LoadAvatarPreviewFromUrl(student.AvatarUrl));
+            _avatarPreviewLoadRoutine = StartCoroutine(LoadAvatarPreviewFromUrl(student.AvatarUrl, student.Uid));
         }
 
-        private IEnumerator LoadAvatarPreviewFromUrl(string avatarUrl)
+        private IEnumerator LoadAvatarPreviewFromUrl(string avatarUrl, string uid)
         {
             using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
             {
@@ -350,7 +371,7 @@ namespace Anatomia3D.UI
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     Debug.LogWarning($"[StudentEditProfileController] Could not load current avatar '{avatarUrl}': {request.error}");
-                    yield break; // leave the initials fallback already showing
+                    yield break; // leave whatever's already showing (local cache or initials fallback)
                 }
 
                 if (_avatarPreview == null) yield break; // screen closed while the request was in flight
@@ -362,6 +383,10 @@ namespace Anatomia3D.UI
                 _avatarPreview.style.backgroundImage = new StyleBackground(_avatarPreviewTexture);
                 ApplyCoverBackground(_avatarPreview);
                 if (_avatarPreviewInitialsLabel != null) _avatarPreviewInitialsLabel.style.display = DisplayStyle.None;
+
+                // Keep the local cache in sync in case the avatar changed on
+                // another device since we last cached it here.
+                CloudinaryAvatarUploadService.Instance?.SaveAvatarLocally(request.downloadHandler.data, uid);
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Anatomia3D.UI;
@@ -9,6 +10,7 @@ using Firebase.Firestore;
 using Google;
 using NativeBiometricAuth;
 using UnityEngine;
+using UnityEngine.Networking;
 
 
 namespace Anatomia3D.Backend
@@ -91,6 +93,16 @@ namespace Anatomia3D.Backend
 
         private const string BiometricEnabledPrefKeyPrefix = "biometric_login_enabled_";
         private static string BiometricPrefKeyForUid(string uid) => BiometricEnabledPrefKeyPrefix + uid;
+
+        /// <summary>Pure hardware/enrollment capability check - true if this device
+        /// COULD do a biometric or device-credential check at all, regardless of
+        /// whether any account has opted in yet. Different from
+        /// IsBiometricLoginAvailable below (which also requires a persisted Auth
+        /// session and the per-uid opt-in flag): UIManager's offline cold-start
+        /// uses this one to tell "there's a lock screen the student could use" apart
+        /// from "there's nothing this device can ever do to verify anyone," since
+        /// only the second case has no safe way through at all when offline.</summary>
+        public bool IsBiometricHardwareAvailable => Biometric.IsAvailable(allowDeviceCredential: true);
 
         /// <summary>True only when there's a Firebase user already persisted on this
         /// device AND that student has previously been through a successful
@@ -640,7 +652,19 @@ namespace Anatomia3D.Backend
         /// <summary>Writes fullName to students/{uid}. Uses a merge-Set rather
         /// than Update: Update() throws if the doc doesn't exist in exactly
         /// the expected shape, which can silently fail the write - a
-        /// merge-Set can't fail that way and self-heals odd/older docs.</summary>
+        /// merge-Set can't fail that way and self-heals odd/older docs.
+        ///
+        /// Also fires SyncStudentNameToClassrooms() to fix the fact that
+        /// `classrooms/{id}/members/{uid}.studentName` is a denormalized copy
+        /// taken at join time (see ClassroomService.JoinClassroom) - without
+        /// this, a renamed student keeps showing their old name in every
+        /// classroom's roster/analytics even though students/{uid} itself is
+        /// correct. That sync is best-effort and reported via onComplete only
+        /// through logging, never by failing the profile save itself: the
+        /// name change to students/{uid} - the source of truth - already
+        /// succeeded by that point, and the roster copies healing a few
+        /// seconds later (or on a retry) is an acceptable trade-off against
+        /// blocking Save Changes on N extra classroom writes.</summary>
         private void WriteFullName(string uid, string fullName, Action<bool, string> onComplete)
         {
             Db.Collection("students").Document(uid).SetAsync(
@@ -660,7 +684,56 @@ namespace Anatomia3D.Backend
                         OnStudentProfileChanged?.Invoke(CurrentStudent);
                     }
                     onComplete?.Invoke(true, null);
+
+                    SyncStudentNameToClassrooms(uid, fullName);
                 });
+        }
+
+        /// <summary>Best-effort fix-up for the denormalized `studentName` field
+        /// that ClassroomService.JoinClassroom copies into
+        /// `classrooms/{classroomId}/members/{uid}` at join time. Re-reads
+        /// students/{uid}.enrolledClassroomIds (not cached on StudentProfile)
+        /// and batches a merge-Set of the new name onto every classroom
+        /// membership doc, so AdminClassroomService.FetchClassroomAnalytics
+        /// and the student-facing ClassroomService reads pick up the new name
+        /// immediately instead of only at next join. Failures here are logged
+        /// and swallowed - the caller already reported success for the actual
+        /// profile save via WriteFullName's onComplete.</summary>
+        private void SyncStudentNameToClassrooms(string uid, string fullName)
+        {
+            Db.Collection("students").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale name until next sync.");
+                    return;
+                }
+
+                var snap = task.Result;
+                if (!snap.ContainsField("enrolledClassroomIds")) return;
+
+                var classroomIds = snap.GetValue<List<string>>("enrolledClassroomIds");
+                if (classroomIds == null || classroomIds.Count == 0) return;
+
+                var batch = Db.StartBatch();
+                foreach (var classroomId in classroomIds)
+                {
+                    if (string.IsNullOrEmpty(classroomId)) continue;
+                    var memberRef = Db.Collection("classrooms").Document(classroomId)
+                        .Collection("members").Document(uid);
+                    batch.Set(memberRef,
+                        new System.Collections.Generic.Dictionary<string, object> { { "studentName", fullName } },
+                        SetOptions.MergeAll);
+                }
+
+                batch.CommitAsync().ContinueWithOnMainThread(commitTask =>
+                {
+                    if (commitTask.IsCanceled || commitTask.IsFaulted)
+                    {
+                        Debug.LogWarning($"[PlayerSessionManager] Failed to sync new name to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
+                    }
+                });
+            });
         }
 
         /// <summary>Call from StudentEditProfileController when changingPassword is true.</summary>
@@ -850,6 +923,13 @@ namespace Anatomia3D.Backend
             var uid = Auth.CurrentUser?.UserId;
             if (uid != null) PlayerPrefs.DeleteKey(BiometricPrefKeyForUid(uid));
 
+            // Same reasoning: wipe this uid's cached avatar file (see
+            // CloudinaryAvatarUploadService.SaveAvatarLocally/DeleteLocalAvatar)
+            // while we still have the uid, so a signed-out device - especially
+            // a shared one - doesn't keep showing this student's photo to
+            // whoever logs in next.
+            if (uid != null) CloudinaryAvatarUploadService.Instance?.DeleteLocalAvatar(uid);
+
             Auth.SignOut();
             try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
@@ -1015,6 +1095,21 @@ namespace Anatomia3D.Backend
             OnStudentProfileChanged?.Invoke(CurrentStudent);
             StartStudentListener(profile.Uid);
 
+            // Cache the avatar locally right at login too, not just whenever
+            // Edit Profile happens to load it (see
+            // CloudinaryAvatarUploadService.TryLoadLocalAvatar, and
+            // StudentDashboardController/StudentProfileController, which now
+            // both read from that cache). This way a student who signs in once
+            // online has their photo available offline everywhere those
+            // screens are shown, even if they never open Edit Profile this
+            // session. Fire-and-forget: failure here (no connection, no
+            // avatar set, etc.) just means those screens fall back to their
+            // own network fetch/initials, same as before this existed.
+            if (!string.IsNullOrEmpty(profile.AvatarUrl))
+            {
+                StartCoroutine(CacheAvatarFromNetwork(profile.AvatarUrl, profile.Uid));
+            }
+
             // Opt this device+account into biometric sign-in the moment there's a
             // real, freshly-authenticated session to unlock later - but only if
             // this device can actually do a biometric/device-credential check at
@@ -1060,6 +1155,29 @@ namespace Anatomia3D.Backend
                 {
                     SetBiometricLoginEnabled(true);
                 }
+            }
+        }
+
+        /// <summary>Downloads avatarUrl's raw bytes and writes them to uid's local
+        /// avatar cache (CloudinaryAvatarUploadService.SaveAvatarLocally). Only
+        /// called right after a fresh login (see SetCurrentStudentAndListen) - not
+        /// on every RefreshCurrentStudent/listener echo - so this isn't
+        /// re-downloading the same photo on every Firestore update, just making
+        /// sure it's on disk by the time the student might go offline later in the
+        /// session.</summary>
+        private IEnumerator CacheAvatarFromNetwork(string avatarUrl, string uid)
+        {
+            using (var request = UnityWebRequest.Get(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] Could not cache avatar for '{uid}' at login: {request.error}");
+                    yield break;
+                }
+
+                CloudinaryAvatarUploadService.Instance?.SaveAvatarLocally(request.downloadHandler.data, uid);
             }
         }
 
