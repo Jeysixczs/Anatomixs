@@ -247,7 +247,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            UIManager.Instance?.ShowStudentProfile();
+            UIManager.Instance?.ShowAdminProfile();
         }
 
         // ---------------- Responsive layout ----------------
