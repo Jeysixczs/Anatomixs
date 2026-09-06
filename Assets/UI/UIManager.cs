@@ -129,19 +129,16 @@ namespace Anatomia3D.UI
 
         private void Start()
         {
-            // Offline at launch with a previously-signed-in student: there's
-            // no connection to submit the login screen anyway, and
-            // PlayerSessionManager can rebuild CurrentStudent from its local
-            // cache with zero network calls (see
-            // PlayerSessionManager.TryRestoreSessionOffline) - so skip
-            // Login and go straight to Student Explore 3D instead of
-            // stranding the student on a screen they can't get past.
-            // Online, or with no cached session to restore, the normal
-            // login flow is unchanged.
-          
+            // What happens next depends on connectivity AND biometric hardware -
+            // see DecideInitialScreen for the actual logic. Short version: online
+            // always shows Login; offline with biometric/PIN hardware also shows
+            // Login (so the "Sign in with biometrics" button gates access - see
+            // PlayerSessionManager.LoginWithBiometrics); offline with NO hardware
+            // at all falls back to auto-restoring the last cached session
+            // (PlayerSessionManager.TryRestoreSessionOffline) straight to Student
+            // Explore 3D, since there'd be no way through Login at all otherwise.
+
             StartCoroutine(DecideInitialScreen());
-          
-           
         }
 
         /// <summary>Android's hardware back button and the gesture-nav back
@@ -190,8 +187,12 @@ private IEnumerator DecideInitialScreen()
                 // running on this exact frame. This does NOT wait for network -
                 // Auth becomes ready from Firebase's own on-device persisted state,
                 // which doesn't require a connection - it just hasn't finished
-                // initializing yet. Give it a short window before concluding
-                // there's nothing to restore.
+                // initializing yet. Give it a short window so the Login screen's
+                // biometric button (see
+                // StudentLoginController.UpdateBiometricButtonVisibility /
+                // PlayerSessionManager.IsBiometricLoginAvailable) reflects the real
+                // Auth.CurrentUser state the moment it's shown, instead of coming
+                // up hidden just because Firebase was a beat slow to initialize.
                 float timeout = 3f;
                 float elapsed = 0f;
                 while ((FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) && elapsed < timeout)
@@ -199,20 +200,49 @@ private IEnumerator DecideInitialScreen()
                     yield return null;
                     elapsed += Time.unscaledDeltaTime;
                 }
+
+                bool hasBiometricHardware = PlayerSessionManager.Instance != null
+                    && PlayerSessionManager.Instance.IsBiometricHardwareAvailable;
+
+                if (!hasBiometricHardware)
+                {
+                    // Offline AND this device has no biometric/PIN hardware at all -
+                    // there's no lock screen to put in front of the student either
+                    // way, and typing a password is off the table without a
+                    // connection. Login would just be a dead end here, so fall back
+                    // to auto-restoring the last cached session instead of
+                    // stranding the student on a screen with nothing they can do.
+                    // A device WITH hardware still always goes to Login below, even
+                    // offline - that's the biometric gate doing its job.
+                    bool restored = PlayerSessionManager.Instance != null
+                        && PlayerSessionManager.Instance.TryRestoreSessionOffline();
+
+                    if (restored)
+                    {
+                        Debug.Log("[UIManager] Offline with no biometric hardware and a cached student session - skipping Login, opening Student Explore 3D.");
+                        ShowStudentExplore3d();
+                        yield break;
+                    }
+
+                    // Nothing cached to restore either (never logged in on this
+                    // device) - fall through to Login, which will just show the
+                    // normal (currently unusable-offline) password form. There's
+                    // nothing better to offer a device with no prior session and no
+                    // hardware.
+                }
             }
 
-            bool restoredOffline = offline && PlayerSessionManager.Instance != null
-                                             && PlayerSessionManager.Instance.TryRestoreSessionOffline();
-
-            if (restoredOffline)
-            {
-                Debug.Log("[UIManager] Offline at launch with a cached student session - skipping Login, opening Student Explore 3D.");
-                ShowStudentExplore3d();
-            }
-            else
-            {
-                ShowStudentLogin();
-            }
+            // Being offline no longer skips straight to the dashboard on its own
+            // when there IS biometric hardware - that would bypass the security
+            // check entirely. Login is shown, and a student who was previously
+            // signed in on this device still gets in fast, but only via a real
+            // biometric/device-credential check (the "Sign in with biometrics"
+            // button). Typing a password still requires connectivity either way
+            // (Firebase Auth needs a network round-trip), so biometrics is what
+            // actually lets an offline student back in - see
+            // PlayerSessionManager.LoginWithBiometrics, which is what restores the
+            // cached profile once that check succeeds.
+            ShowStudentLogin();
         }
 
 

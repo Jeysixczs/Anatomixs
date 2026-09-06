@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Anatomia3D.UI;
@@ -7,7 +8,9 @@ using Firebase.Auth;
 using Firebase.Extensions;
 using Firebase.Firestore;
 using Google;
+using NativeBiometricAuth;
 using UnityEngine;
+using UnityEngine.Networking;
 
 
 namespace Anatomia3D.Backend
@@ -71,6 +74,110 @@ namespace Anatomia3D.Backend
 
         private const string SessionCacheFileName = "student_session_cache.json";
         private string SessionCacheFilePath => Path.Combine(Application.persistentDataPath, SessionCacheFileName);
+
+        // ---------------- Biometric login ----------------
+        //
+        // Biometrics here are a LOCK SCREEN on top of the Firebase session that's
+        // already persisted on-device (Auth.CurrentUser survives an app restart -
+        // see TryRestoreSessionOffline above), not a replacement for the
+        // email/password or Google sign-in flows. A student still has to sign in
+        // normally at least once per device; after that, a successful biometric
+        // check just unlocks the profile that's already cached locally instead of
+        // asking for the password again.
+        //
+        // The opt-in flag is stored per-uid so a shared/lab device doesn't offer
+        // "sign in with biometrics" for a different student than whoever's
+        // fingerprint/face is enrolled on that device, and so logging out (which
+        // clears the cached profile) doesn't leave a stale flag pointing at data
+        // that no longer exists.
+
+        private const string BiometricEnabledPrefKeyPrefix = "biometric_login_enabled_";
+        private static string BiometricPrefKeyForUid(string uid) => BiometricEnabledPrefKeyPrefix + uid;
+
+        /// <summary>Pure hardware/enrollment capability check - true if this device
+        /// COULD do a biometric or device-credential check at all, regardless of
+        /// whether any account has opted in yet. Different from
+        /// IsBiometricLoginAvailable below (which also requires a persisted Auth
+        /// session and the per-uid opt-in flag): UIManager's offline cold-start
+        /// uses this one to tell "there's a lock screen the student could use" apart
+        /// from "there's nothing this device can ever do to verify anyone," since
+        /// only the second case has no safe way through at all when offline.</summary>
+        public bool IsBiometricHardwareAvailable => Biometric.IsAvailable(allowDeviceCredential: true);
+
+        /// <summary>True only when there's a Firebase user already persisted on this
+        /// device AND that student has previously been through a successful
+        /// password/Google login here with biometric hardware available (see
+        /// SetCurrentStudentAndListen). StudentLoginController should check this
+        /// before showing a "Sign in with biometrics" button - showing it any other
+        /// time would just fail, since there's nothing local to unlock yet.</summary>
+        public bool IsBiometricLoginAvailable
+        {
+            get
+            {
+                if (FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) return false;
+                var user = Auth.CurrentUser;
+                if (user == null) return false;
+                return PlayerPrefs.GetInt(BiometricPrefKeyForUid(user.UserId), 0) == 1;
+            }
+        }
+
+        /// <summary>Turns the per-device biometric opt-in on/off for whoever's
+        /// currently signed in. Called automatically after a successful login (see
+        /// SetCurrentStudentAndListen); exposed publicly too in case you want to add
+        /// an explicit toggle (e.g. in profile/account settings) instead of relying
+        /// on the automatic opt-in.</summary>
+        public void SetBiometricLoginEnabled(bool enabled)
+        {
+            if (Auth.CurrentUser == null) return;
+            PlayerPrefs.SetInt(BiometricPrefKeyForUid(Auth.CurrentUser.UserId), enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>Call from StudentLoginController's biometric button. Requires the
+        /// OS-level biometric/device-credential check to succeed BEFORE touching any
+        /// session state - only then does this restore the profile from cache
+        /// (same as TryRestoreSessionOffline) and kick off a background refresh so
+        /// stale cached points/level get corrected the moment there's connectivity,
+        /// without making the student wait for a network round-trip just to see
+        /// their dashboard.</summary>
+        public void LoginWithBiometrics(Action<bool, string> onComplete)
+        {
+            if (!IsBiometricLoginAvailable)
+            {
+                onComplete?.Invoke(false, "Biometric sign-in isn't set up on this device yet. Please sign in with your password.");
+                return;
+            }
+
+            Biometric.Authenticate(
+                allowDeviceCredential: true,
+                onSuccess: () =>
+                {
+                    if (TryRestoreSessionOffline())
+                    {
+                        RefreshCurrentStudent();
+                        onComplete?.Invoke(true, null);
+                    }
+                    else
+                    {
+                        onComplete?.Invoke(false, "Could not restore your session. Please sign in with your password.");
+                    }
+                },
+                onFailure: reason =>
+                {
+                    // TEMP diagnostic logging - remove once biometric login is
+                    // confirmed working end-to-end on target devices. The generic
+                    // message below is what the student sees either way; this is
+                    // purely so `adb logcat -s Unity` shows WHY the OS-level check
+                    // failed (no hardware, nothing enrolled, user cancelled,
+                    // lockout, etc.) instead of us having to guess.
+                    Debug.Log($"[PlayerSessionManager] Biometric authentication failed: {reason}");
+
+                    bool offline = Application.internetReachability == NetworkReachability.NotReachable;
+                    onComplete?.Invoke(false, offline
+                        ? "Biometric authentication failed. Please try again once your device recognizes you, or reconnect to sign in with your password."
+                        : "Biometric authentication failed. Please sign in with your password.");
+                });
+        }
 
         private void CacheStudent(StudentProfile profile)
         {
@@ -545,7 +652,19 @@ namespace Anatomia3D.Backend
         /// <summary>Writes fullName to students/{uid}. Uses a merge-Set rather
         /// than Update: Update() throws if the doc doesn't exist in exactly
         /// the expected shape, which can silently fail the write - a
-        /// merge-Set can't fail that way and self-heals odd/older docs.</summary>
+        /// merge-Set can't fail that way and self-heals odd/older docs.
+        ///
+        /// Also fires SyncStudentNameToClassrooms() to fix the fact that
+        /// `classrooms/{id}/members/{uid}.studentName` is a denormalized copy
+        /// taken at join time (see ClassroomService.JoinClassroom) - without
+        /// this, a renamed student keeps showing their old name in every
+        /// classroom's roster/analytics even though students/{uid} itself is
+        /// correct. That sync is best-effort and reported via onComplete only
+        /// through logging, never by failing the profile save itself: the
+        /// name change to students/{uid} - the source of truth - already
+        /// succeeded by that point, and the roster copies healing a few
+        /// seconds later (or on a retry) is an acceptable trade-off against
+        /// blocking Save Changes on N extra classroom writes.</summary>
         private void WriteFullName(string uid, string fullName, Action<bool, string> onComplete)
         {
             Db.Collection("students").Document(uid).SetAsync(
@@ -565,7 +684,56 @@ namespace Anatomia3D.Backend
                         OnStudentProfileChanged?.Invoke(CurrentStudent);
                     }
                     onComplete?.Invoke(true, null);
+
+                    SyncStudentNameToClassrooms(uid, fullName);
                 });
+        }
+
+        /// <summary>Best-effort fix-up for the denormalized `studentName` field
+        /// that ClassroomService.JoinClassroom copies into
+        /// `classrooms/{classroomId}/members/{uid}` at join time. Re-reads
+        /// students/{uid}.enrolledClassroomIds (not cached on StudentProfile)
+        /// and batches a merge-Set of the new name onto every classroom
+        /// membership doc, so AdminClassroomService.FetchClassroomAnalytics
+        /// and the student-facing ClassroomService reads pick up the new name
+        /// immediately instead of only at next join. Failures here are logged
+        /// and swallowed - the caller already reported success for the actual
+        /// profile save via WriteFullName's onComplete.</summary>
+        private void SyncStudentNameToClassrooms(string uid, string fullName)
+        {
+            Db.Collection("students").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale name until next sync.");
+                    return;
+                }
+
+                var snap = task.Result;
+                if (!snap.ContainsField("enrolledClassroomIds")) return;
+
+                var classroomIds = snap.GetValue<List<string>>("enrolledClassroomIds");
+                if (classroomIds == null || classroomIds.Count == 0) return;
+
+                var batch = Db.StartBatch();
+                foreach (var classroomId in classroomIds)
+                {
+                    if (string.IsNullOrEmpty(classroomId)) continue;
+                    var memberRef = Db.Collection("classrooms").Document(classroomId)
+                        .Collection("members").Document(uid);
+                    batch.Set(memberRef,
+                        new System.Collections.Generic.Dictionary<string, object> { { "studentName", fullName } },
+                        SetOptions.MergeAll);
+                }
+
+                batch.CommitAsync().ContinueWithOnMainThread(commitTask =>
+                {
+                    if (commitTask.IsCanceled || commitTask.IsFaulted)
+                    {
+                        Debug.LogWarning($"[PlayerSessionManager] Failed to sync new name to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
+                    }
+                });
+            });
         }
 
         /// <summary>Call from StudentEditProfileController when changingPassword is true.</summary>
@@ -747,6 +915,21 @@ namespace Anatomia3D.Backend
         {
             CancelInvoke(nameof(PollPendingEmailConfirmation));
             StopStudentListener();
+
+            // Clear the biometric opt-in for this uid before signing out, while
+            // Auth.CurrentUser (and therefore its UserId) is still available -
+            // otherwise a signed-out device would still have IsBiometricLoginAvailable
+            // pointing at cached data that ClearCachedStudent is about to delete.
+            var uid = Auth.CurrentUser?.UserId;
+            if (uid != null) PlayerPrefs.DeleteKey(BiometricPrefKeyForUid(uid));
+
+            // Same reasoning: wipe this uid's cached avatar file (see
+            // CloudinaryAvatarUploadService.SaveAvatarLocally/DeleteLocalAvatar)
+            // while we still have the uid, so a signed-out device - especially
+            // a shared one - doesn't keep showing this student's photo to
+            // whoever logs in next.
+            if (uid != null) CloudinaryAvatarUploadService.Instance?.DeleteLocalAvatar(uid);
+
             Auth.SignOut();
             try { GoogleSignIn.DefaultInstance.SignOut(); } catch { /* wasn't signed in via Google - fine */ }
             CurrentStudent = null;
@@ -911,6 +1094,91 @@ namespace Anatomia3D.Backend
             CacheStudent(profile);
             OnStudentProfileChanged?.Invoke(CurrentStudent);
             StartStudentListener(profile.Uid);
+
+            // Cache the avatar locally right at login too, not just whenever
+            // Edit Profile happens to load it (see
+            // CloudinaryAvatarUploadService.TryLoadLocalAvatar, and
+            // StudentDashboardController/StudentProfileController, which now
+            // both read from that cache). This way a student who signs in once
+            // online has their photo available offline everywhere those
+            // screens are shown, even if they never open Edit Profile this
+            // session. Fire-and-forget: failure here (no connection, no
+            // avatar set, etc.) just means those screens fall back to their
+            // own network fetch/initials, same as before this existed.
+            if (!string.IsNullOrEmpty(profile.AvatarUrl))
+            {
+                StartCoroutine(CacheAvatarFromNetwork(profile.AvatarUrl, profile.Uid));
+            }
+
+            // Opt this device+account into biometric sign-in the moment there's a
+            // real, freshly-authenticated session to unlock later - but only if
+            // this device can actually do a biometric/device-credential check at
+            // all, so we don't set a flag that IsBiometricLoginAvailable would
+            // then advertise on hardware that can't back it up.
+            bool biometricAvailable = Biometric.IsAvailable(allowDeviceCredential: true);
+            if (biometricAvailable)
+            {
+                // IsAvailable() only checks hardware/enrollment capability - it does NOT
+                // flip the plugin's own internal "active" flag, which Authenticate()
+                // requires to be on (this is exactly what BiometricFailureReason.Inactive
+                // was telling us: we'd never called SetActive). Do that here.
+                //
+                // authenticate: false is deliberate - SetActive's default is `true`,
+                // which per the plugin's README triggers its OWN biometric prompt
+                // immediately to "verify the user before enabling". We don't want
+                // that here: the student just proved who they are via password/Google
+                // a moment ago, so prompting again right now would be a redundant,
+                // confusing double-auth. Only persist our own opt-in flag once
+                // SetActive confirms success, so IsBiometricLoginAvailable never
+                // advertises a button that would just fail again on the next login.
+                Biometric.SetActive(
+                    value: true,
+                    allowDeviceCredential: true,
+                    authenticate: false,
+                    onSuccess: () =>
+                    {
+                        SetBiometricLoginEnabled(true);
+                    },
+                    onFailure: reason =>
+                    {
+                        Debug.LogWarning($"[PlayerSessionManager] Biometric.SetActive(true) onFailure fired: {reason} - biometric opt-in not enabled this login.");
+                    });
+
+                // Confirmed via logcat: with authenticate:false, neither onSuccess nor
+                // onFailure above ever fires - there's nothing for the plugin to verify
+                // or report back on, since authenticate:false skips the OS prompt
+                // entirely. Those callbacks appear to only apply to the authenticate:true
+                // path. So don't depend on them - read the plugin's own synchronous
+                // Biometric.IsActive property right after the call instead, and persist
+                // our opt-in flag from that ground truth.
+                if (Biometric.IsActive)
+                {
+                    SetBiometricLoginEnabled(true);
+                }
+            }
+        }
+
+        /// <summary>Downloads avatarUrl's raw bytes and writes them to uid's local
+        /// avatar cache (CloudinaryAvatarUploadService.SaveAvatarLocally). Only
+        /// called right after a fresh login (see SetCurrentStudentAndListen) - not
+        /// on every RefreshCurrentStudent/listener echo - so this isn't
+        /// re-downloading the same photo on every Firestore update, just making
+        /// sure it's on disk by the time the student might go offline later in the
+        /// session.</summary>
+        private IEnumerator CacheAvatarFromNetwork(string avatarUrl, string uid)
+        {
+            using (var request = UnityWebRequest.Get(avatarUrl))
+            {
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[PlayerSessionManager] Could not cache avatar for '{uid}' at login: {request.error}");
+                    yield break;
+                }
+
+                CloudinaryAvatarUploadService.Instance?.SaveAvatarLocally(request.downloadHandler.data, uid);
+            }
         }
 
         private void StartStudentListener(string uid)

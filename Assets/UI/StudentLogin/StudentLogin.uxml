@@ -2,7 +2,7 @@
     <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss?fileID=7433441132597879392&amp;guid=e188d20bee8fcba44a3b70d245d72c03&amp;type=3#StudentLogin"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:VisualElement name="screen-container" class="screen-container">
-            <ui:ScrollView name="scroll-view" class="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden">
+            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
                     <ui:VisualElement name="logo-circle" class="logo-circle">
                         <ui:VisualElement name="logo-icon" class="logo-icon"/>
@@ -24,6 +24,10 @@
                         </ui:VisualElement>
                         <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
                         <ui:Button name="forgot-password-button" text="Forgot Password?" class="forgot-password-link"/>
+                        <ui:Button name="biometric-login-button" class="biometric-button hidden">
+                            <ui:VisualElement class="icon-fingerprint"/>
+                            <ui:Label text="Sign in with Biometrics" class="biometric-button-text"/>
+                        </ui:Button>
                         <ui:Button name="sign-in-button" text="Sign In" class="sign-in-button"/>
                         <ui:VisualElement class="divider-row">
                             <ui:VisualElement class="divider-line"/>

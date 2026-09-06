@@ -49,8 +49,7 @@ namespace Anatomia3D.Backend
 
             public int ActiveUsers;
             public string ActiveUsersDelta;
-            public int AvgScorePercent;
-            public string AvgScoreDelta;
+            public float AvgScorePercent;
             public int QuizzesDone;
             public string QuizzesDoneDelta;
             public int CompletionPercent;
@@ -202,9 +201,9 @@ namespace Anatomia3D.Backend
 
         private static readonly TableSpec OverviewTable = new TableSpec
         {
-            Headers = new[] { "Metric", "Value", "Change" },
-            ColumnX = new[] { 0f, 200f, 320f },
-            ColumnWidth = new[] { 190f, 110f, 160f },
+            Headers = new[] { "Metric", "Value" },
+            ColumnX = new[] { 0f, 200f },
+            ColumnWidth = new[] { 190f, 110f },
         };
 
         private static readonly TableSpec StudentActivityTable = new TableSpec
@@ -329,17 +328,17 @@ namespace Anatomia3D.Backend
             lines.Add(Heading("Overview", spacingBefore: 0f));
             AddTable(lines, OverviewTable, new[]
             {
-                new[] { "Active Users", data.ActiveUsers.ToString(), data.ActiveUsersDelta ?? "-" },
-                new[] { "Avg Score", $"{data.AvgScorePercent}%", data.AvgScoreDelta ?? "-" },
-                new[] { "Quizzes Done", data.QuizzesDone.ToString(), data.QuizzesDoneDelta ?? "-" },
-                new[] { "Completion", $"{data.CompletionPercent}%", data.CompletionDelta ?? "-" },
+                new[] { "Active Students", data.ActiveUsers.ToString() },
+                new[] { "Avg Score", $"{data.AvgScorePercent}%" },
+                new[] { "Participated", data.QuizzesDone.ToString() },
+                new[] { "Completion", $"{data.CompletionPercent}%" },
             });
 
             lines.Add(Heading("Student Activity"));
             AddTable(lines, StudentActivityTable, new[]
             {
                 new[] { "Total Students", data.StudentActivity.TotalStudents.ToString() },
-                new[] { "Active This Month", data.StudentActivity.ActiveThisMonth.ToString() },
+                new[] { "Active Students", data.StudentActivity.ActiveThisMonth.ToString() },
                 new[] { "Average Level", data.StudentActivity.AverageLevel.ToString("0.0", CultureInfo.InvariantCulture) },
                 new[] { "Average Points", data.StudentActivity.AveragePoints.ToString() },
             });

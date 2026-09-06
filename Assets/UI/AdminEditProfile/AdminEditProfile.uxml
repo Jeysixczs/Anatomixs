@@ -49,30 +49,39 @@
                     </ui:VisualElement>
                     <ui:Label name="email-pending-hint" text="" class="field-hint hidden"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="password-card" class="form-card">
-                    <ui:VisualElement name="password-card-header-row" class="card-header-row">
-                        <ui:Label text="Security" class="card-title"/>
-                        <ui:Button name="toggle-password-visibility-button" text="Show" class="toggle-visibility-button"/>
-                    </ui:VisualElement>
-                    <ui:Label text="Enter your current password to change your email or set a new password" class="card-subtitle"/>
-                    <ui:Label text="Current Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="current-password-field" password="true" class="text-field"/>
-                    <ui:Label name="current-password-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Required only if you changed your email above or a password below" class="field-hint"/>
-                    <ui:Label text="New Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="new-password-field" password="true" class="text-field"/>
-                    <ui:Label name="new-password-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Leave blank to keep your current password" class="field-hint"/>
-                    <ui:Label text="Confirm New Password" class="field-label field-label-spaced"/>
-                    <ui:TextField name="confirm-password-field" password="true" class="text-field"/>
-                    <ui:Label name="confirm-password-error" text="" class="field-error hidden"/>
+                <ui:VisualElement name="password-summary-card" class="form-card">
+                    <ui:Label text="Security" class="card-title"/>
+                    <ui:Label text="Change your password to keep your account secure." class="card-subtitle"/>
+                    <ui:Button name="change-password-button" text="Change Password" class="change-password-button"/>
                 </ui:VisualElement>
                 <ui:Label name="status-label" text="" class="status-label hidden"/>
                 <ui:Button name="save-changes-button" class="save-changes-submit-button">
-                    <ui:VisualElement name="save-changes-icon" class="save-changes-icon"/>
+                    <ui:VisualElement name="save-changes-icon" class="save-changes-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); height: 65px; width: 70px; background-color: rgba(255, 255, 255, 0);"/>
                     <ui:Label text="Save Changes" class="save-changes-label"/>
                 </ui:Button>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="password-overlay" class="password-overlay hidden">
+            <ui:VisualElement name="password-overlay-backdrop" class="password-overlay-backdrop"/>
+            <ui:VisualElement name="password-card" class="form-card password-card-floating">
+                <ui:VisualElement name="password-card-header-row" class="card-header-row">
+                    <ui:Label text="Change Password" class="card-title"/>
+                    <ui:Button name="toggle-password-visibility-button" text="Show" class="toggle-visibility-button"/>
+                </ui:VisualElement>
+                <ui:Label text="Enter your current password to change your email or set a new password" class="card-subtitle"/>
+                <ui:Label text="Current Password" class="field-label field-label-spaced"/>
+                <ui:TextField name="current-password-field" password="true" class="text-field"/>
+                <ui:Label name="current-password-error" text="" class="field-error hidden"/>
+                <ui:Label text="Required only if you changed your email above or a password below" class="field-hint"/>
+                <ui:Label text="New Password" class="field-label field-label-spaced"/>
+                <ui:TextField name="new-password-field" password="true" class="text-field"/>
+                <ui:Label name="new-password-error" text="" class="field-error hidden"/>
+                <ui:Label text="Leave blank to keep your current password" class="field-hint"/>
+                <ui:Label text="Confirm New Password" class="field-label field-label-spaced"/>
+                <ui:TextField name="confirm-password-field" password="true" class="text-field"/>
+                <ui:Label name="confirm-password-error" text="" class="field-error hidden"/>
+                <ui:Button name="close-password-card-button" text="Done" class="close-password-card-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

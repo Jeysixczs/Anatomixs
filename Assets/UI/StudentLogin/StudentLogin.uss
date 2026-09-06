@@ -268,6 +268,20 @@
     background-repeat: no-repeat;
 }
 
+.icon-fingerprint
+{
+    width: 44px;
+    height: 44px;
+
+    margin-right: 20px;
+    flex-shrink: 0;
+
+    background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 /* ---------- TextField ---------- */
 
 .input-field
@@ -333,6 +347,37 @@
 
     font-size: 36px;
     -unity-font-style: bold;
+}
+
+/* ---------- Biometric Login Button ---------- */
+/* Outlined (not filled) so it reads as a secondary/quick action next to the
+   primary purple Sign In button - same footprint as .google-button, just
+   with the brand purple for the border/text/icon instead of Google's colors. */
+
+.biometric-button
+{
+    width: 100%;
+    height: 118px;
+
+    flex-direction: row;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgb(244,245,247);
+
+    border-width: 2px;
+    border-color: rgb(142,45,226);
+
+    border-radius: 28px;
+}
+
+.biometric-button-text
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+
+    color: rgb(142,45,226);
 }
 
 /* ---------- Divider ---------- */
@@ -584,6 +629,11 @@
     background-color: rgb(244,245,247);
 }
 
+.biometric-button:hover
+{
+    background-color: rgb(238,230,250);
+}
+
 .bottom-link-button:hover,
 .create-account-link:hover,
 .admin-login-link:hover,
@@ -671,12 +721,14 @@
 
 .compact .sign-in-button,
 .compact .create-account-button,
-.compact .google-button
+.compact .google-button,
+.compact .biometric-button
 {
     height: 105px;
 }
 
-.compact .google-button-text
+.compact .google-button-text,
+.compact .biometric-button-text
 {
     font-size: 30px;
 }
@@ -768,6 +820,11 @@
     height: 84px;
 
     margin-top: 24px;
+}
+
+.landscape .biometric-button
+{
+    height: 84px;
 }
 
 .landscape .divider-row
@@ -892,7 +949,8 @@
 
 .ultra-compact .sign-in-button,
 .ultra-compact .create-account-button,
-.ultra-compact .google-button
+.ultra-compact .google-button,
+.ultra-compact .biometric-button
 {
     height: 90px;
 
@@ -901,7 +959,8 @@
     font-size: 28px;
 }
 
-.ultra-compact .google-button-text
+.ultra-compact .google-button-text,
+.ultra-compact .biometric-button-text
 {
     font-size: 26px;
 }

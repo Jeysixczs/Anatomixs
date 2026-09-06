@@ -1434,17 +1434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de41baa22f36c4d41a5785bb5b474435, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnatomyPlayModeController
-  pointsNoHints: 100
-  points1Hint: 60
-  points2Hints: 30
-  points3PlusHints: 10
-  streakBonuses:
-  - streakCount: 3
-    bonusPoints: 25
-  - streakCount: 5
-    bonusPoints: 50
-  - streakCount: 10
-    bonusPoints: 100
+  pointsPerCorrectAnswer: 1
   firebase: {fileID: 1051780051}
   localStorage: {fileID: 1051780053}
   syncService: {fileID: 1051780052}

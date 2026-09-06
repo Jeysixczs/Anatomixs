@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -14,12 +15,23 @@ namespace Anatomia3D.Backend
     /// AnatomyPlayModeFirebase/AnatomyPlayModeLocalStorage keep for their
     /// own concerns.
     ///
+    /// Also maintains a local on-disk copy of each user's avatar (under
+    /// Application.persistentDataPath), keyed by uid, purely so profile
+    /// screens can show the avatar instantly and while offline instead of
+    /// depending on a network fetch of the Cloudinary URL every time the
+    /// screen opens. This local cache is a convenience mirror, not a source
+    /// of truth - students/{uid}.avatarUrl (Firestore) still is. See
+    /// SaveAvatarLocally/TryLoadLocalAvatar/DeleteLocalAvatar below.
+    ///
     /// Caller (e.g. StudentEditProfileController) is responsible for:
     ///   1. Getting image bytes (native photo picker / file dialog)
     ///   2. Calling UploadAvatar()
     ///   3. On success, writing the returned URL to students/{uid}.avatarUrl
     ///      via Firestore - StudentProfileController already renders
     ///      whatever's in PlayerSessionManager.CurrentStudent.AvatarUrl.
+    ///   4. Calling DeleteLocalAvatar(uid) when that user logs out, so a
+    ///      signed-out device doesn't keep showing (or leaking) the previous
+    ///      user's cached photo - see PlayerSessionManager.LogoutStudent().
     ///
     /// Attach anywhere on the persistent Bootstrap GameObject (same one as
     /// FirebaseBootstrap/PlayerSessionManager) and set cloudName/uploadPreset
@@ -149,6 +161,15 @@ namespace Anatomia3D.Backend
                     yield break;
                 }
 
+                // Cache the exact bytes we just uploaded, keyed by uid, so this
+                // avatar shows up instantly (and offline) next time a profile
+                // screen opens - see SaveAvatarLocally below. Deliberately done
+                // here rather than at photo-pick time: this only runs once the
+                // upload (and therefore the eventual Firestore avatarUrl write)
+                // has actually succeeded, so the local cache never gets ahead of
+                // what's really saved.
+                SaveAvatarLocally(imageBytes, studentUid);
+
                 // Belt-and-braces: with a unique public_id per upload (above) this
                 // should never happen again, but if it ever does, "existing":true
                 // means Cloudinary handed back an OLD asset's URL instead of a new
@@ -194,6 +215,84 @@ namespace Anatomia3D.Backend
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        // ---------------- Local avatar cache (offline viewing) ----------------
+        //
+        // Stored under Application.persistentDataPath/avatars/{uid}.jpg - one
+        // file per user, always overwritten in place (unlike the Cloudinary
+        // public_id above, there's no "existing asset wins" problem here since
+        // we're writing straight to a known local path we fully control).
+
+        private string GetLocalAvatarPath(string uid) =>
+            Path.Combine(Application.persistentDataPath, "avatars", $"{uid}.jpg");
+
+        /// <summary>Writes imageBytes to this uid's local avatar cache file,
+        /// overwriting whatever was there before. Safe to call even if the
+        /// "avatars" folder doesn't exist yet. Failures are logged and
+        /// swallowed - a missing local cache just means the profile screen
+        /// falls back to a network fetch (or initials) next time, same as
+        /// before this feature existed.</summary>
+        public void SaveAvatarLocally(byte[] imageBytes, string uid)
+        {
+            if (imageBytes == null || imageBytes.Length == 0 || string.IsNullOrEmpty(uid)) return;
+
+            try
+            {
+                string path = GetLocalAvatarPath(uid);
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllBytes(path, imageBytes);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not cache avatar locally for '{uid}': {e.Message}");
+            }
+        }
+
+        /// <summary>Reads this uid's cached avatar bytes, if any exist on disk.
+        /// Callers (e.g. StudentEditProfileController.RefreshAvatarPreview)
+        /// decode these into a Texture2D themselves via
+        /// ImageConversion.LoadImage - kept out of this class since texture
+        /// creation/ownership is a UI concern, not an upload-service one.</summary>
+        public bool TryLoadLocalAvatar(string uid, out byte[] imageBytes)
+        {
+            imageBytes = null;
+            if (string.IsNullOrEmpty(uid)) return false;
+
+            string path = GetLocalAvatarPath(uid);
+            if (!File.Exists(path)) return false;
+
+            try
+            {
+                imageBytes = File.ReadAllBytes(path);
+                return imageBytes != null && imageBytes.Length > 0;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not read cached avatar for '{uid}': {e.Message}");
+                imageBytes = null;
+                return false;
+            }
+        }
+
+        /// <summary>Deletes this uid's local avatar cache file, if any. Call on
+        /// logout (see PlayerSessionManager.LogoutStudent / the admin
+        /// equivalent) so a signed-out device doesn't keep the previous
+        /// user's photo sitting on disk, or show it to whoever signs in
+        /// next on a shared device.</summary>
+        public void DeleteLocalAvatar(string uid)
+        {
+            if (string.IsNullOrEmpty(uid)) return;
+
+            try
+            {
+                string path = GetLocalAvatarPath(uid);
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not delete cached avatar for '{uid}': {e.Message}");
             }
         }
     }

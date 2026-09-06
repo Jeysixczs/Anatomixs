@@ -1011,18 +1011,45 @@ namespace Anatomia3D.Backend
         /// Leaderboard - not the quizAttempts collection itself, since a student can
         /// only read their own attempts there.
         ///
-        /// `pointsEarned` here is just this classroom's own running total (useful for
-        /// "points earned in this class" style stats) - it does NOT drive the
-        /// student's level. Levels are global: the student's actual level is computed
-        /// once in QuizService.SubmitQuizAttempt from their `students/{uid}.totalPoints`
-        /// (summed across every classroom they're in) against the fixed global
-        /// `gamificationSettings/config` levels, and passed in here as `globalLevel` so
-        /// this roster doc always shows the same level a student sees everywhere else.
+        /// Mirrors the same "best attempt" handling QuizService.SubmitQuizAttemptInternal
+        /// already applies to the student's global totalPoints, so this roster doc can never
+        /// drift from it:
+        ///   - isFirstAttempt: the student's very first attempt at this quiz in this
+        ///     classroom - quizzesCompleted only ever increments here, exactly once per quiz.
+        ///   - isNewBest: true for a first attempt, or a retake that beat the student's prior
+        ///     best. False means this attempt scored lower than an existing result - in that
+        ///     case this method is a no-op so a worse retake can never shrink points, lower
+        ///     avgScorePercent, or otherwise overwrite the stored best.
+        ///   - pointsDelta: how much this classroom's running `points` total should change by
+        ///     (0 whenever isNewBest is false - see QuizService for how it's derived).
+        ///   - newPercent / previousBestPercent: this attempt's percent and the percent it's
+        ///     replacing (only meaningful, and only used, when isNewBest && !isFirstAttempt),
+        ///     so avgScorePercent can swap the old best's contribution for the new one instead
+        ///     of averaging in every attempt ever made.
+        ///
+        /// `pointsDelta` only affects this classroom's own running total (useful for "points
+        /// earned in this class" style stats) - it does NOT drive the student's level. Levels
+        /// are global: the student's actual level is computed once in
+        /// QuizService.SubmitQuizAttempt from their `students/{uid}.totalPoints` (summed
+        /// across every classroom they're in) against the fixed global
+        /// `gamificationSettings/config` levels, and passed in here as `globalLevel` so this
+        /// roster doc always shows the same level a student sees everywhere else.
         /// </summary>
-        public void RecordQuizCompletion(string classroomId, int pointsEarned, float scorePercent, int globalLevel, Action<bool> onComplete = null)
+        public void RecordQuizCompletion(string classroomId, bool isFirstAttempt, bool isNewBest, int pointsDelta,
+            float newPercent, float previousBestPercent, int globalLevel, Action<bool> onComplete = null)
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null || string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(false); return; }
+
+            if (!isNewBest)
+            {
+                // A retake that didn't beat the student's existing best for this quiz -
+                // nothing about the roster doc (points/quizzesCompleted/avgScorePercent)
+                // should change, so skip the write entirely rather than touching Firestore
+                // for a no-op update.
+                onComplete?.Invoke(true);
+                return;
+            }
 
             var memberRef = Db.Collection("classrooms").Document(classroomId).Collection("members").Document(student.Uid);
 
@@ -1034,9 +1061,14 @@ namespace Anatomia3D.Backend
                 int priorPoints = snap.ContainsField("points") ? snap.GetValue<int>("points") : 0;
                 float priorAvg = snap.ContainsField("avgScorePercent") ? (float)snap.GetValue<double>("avgScorePercent") : 0f;
 
-                int newQuizzes = priorQuizzes + 1;
-                int newPoints = priorPoints + pointsEarned;
-                float newAvg = ((priorAvg * priorQuizzes) + scorePercent) / newQuizzes;
+                int newQuizzes = isFirstAttempt ? priorQuizzes + 1 : priorQuizzes;
+                int newPoints = priorPoints + pointsDelta;
+
+                // Swap the outgoing best's contribution to the average for the incoming
+                // one on a first attempt there's nothing to swap out, so just add.
+                float priorSum = priorAvg * priorQuizzes;
+                float newSum = isFirstAttempt ? priorSum + newPercent : priorSum - previousBestPercent + newPercent;
+                float newAvg = newQuizzes > 0 ? newSum / newQuizzes : 0f;
 
                 var update = new Dictionary<string, object>
                 {

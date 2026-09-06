@@ -380,7 +380,7 @@ namespace Anatomia3D.UI
                 Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
                     "falling back to raw points/quiz stats without level-progress math.");
                 SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
-                ApplyAvatar(student.FullName, student.AvatarUrl);
+                ApplyAvatar(student.FullName, student.AvatarUrl, student.Uid);
                 return;
             }
 
@@ -398,7 +398,7 @@ namespace Anatomia3D.UI
                     totalPoints: student.TotalPoints
                 );
 
-                ApplyAvatar(student.FullName, student.AvatarUrl);
+                ApplyAvatar(student.FullName, student.AvatarUrl, student.Uid);
             });
         }
 
@@ -445,8 +445,15 @@ namespace Anatomia3D.UI
         // to initials. Skips re-downloading when avatarUrl hasn't changed
         // since the last successful load (PopulateDashboard runs on every
         // OnEnable and OnStudentProfileChanged).
+        //
+        // Prefers the local cache and stops there when one exists - no network
+        // re-fetch on top of it, even once back online. See
+        // StudentProfileController.ApplyAvatar for the full reasoning: the
+        // cache is already kept in sync at the points that actually change the
+        // avatar, so re-fetching here on every reconnect would just be a
+        // redundant download of the same bytes.
 
-        private void ApplyAvatar(string studentName, string avatarUrl)
+        private void ApplyAvatar(string studentName, string avatarUrl, string uid = null)
         {
             if (_profile == null) return;
 
@@ -465,11 +472,29 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            if (!string.IsNullOrEmpty(uid) &&
+                CloudinaryAvatarUploadService.Instance != null &&
+                CloudinaryAvatarUploadService.Instance.TryLoadLocalAvatar(uid, out byte[] cachedBytes))
+            {
+                var cachedTex = new Texture2D(2, 2);
+                if (ImageConversion.LoadImage(cachedTex, cachedBytes))
+                {
+                    ShowAvatarTexture(cachedTex); // takes ownership - same as the network path below
+                    _loadedAvatarUrl = avatarUrl; // treat the cache as authoritative - no follow-up network fetch
+                    return;
+                }
+
+                Destroy(cachedTex);
+                // Fall through to the network fetch below - the cache file exists
+                // but failed to decode (corrupt/truncated), so it's effectively a
+                // cache miss.
+            }
+
             if (_avatarLoadRoutine != null)
             {
                 StopCoroutine(_avatarLoadRoutine);
             }
-            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl));
+            _avatarLoadRoutine = StartCoroutine(LoadAvatarImage(avatarUrl, uid));
         }
 
         private void ShowInitialsAvatar()
@@ -492,7 +517,7 @@ namespace Anatomia3D.UI
             _loadedAvatarUrl = null;
         }
 
-        private IEnumerator LoadAvatarImage(string avatarUrl)
+        private IEnumerator LoadAvatarImage(string avatarUrl, string uid = null)
         {
             using (var request = UnityWebRequestTexture.GetTexture(avatarUrl))
             {
@@ -503,29 +528,66 @@ namespace Anatomia3D.UI
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     Debug.LogWarning($"[StudentDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
-                    // Leave whatever's currently showing (initials, most likely)
-                    // rather than blanking the avatar out over a transient network hiccup.
+
+                    // Explicit fallback, not just "leave whatever's showing" - covers
+                    // access-denied/expired-URL/deleted-asset cases (not just being
+                    // offline) where ApplyAvatar's earlier proactive cache check might
+                    // not have found anything yet (e.g. this is the very first login
+                    // where the network fetch itself is what would have populated the
+                    // cache).
+                    if (!string.IsNullOrEmpty(uid) &&
+                        CloudinaryAvatarUploadService.Instance != null &&
+                        CloudinaryAvatarUploadService.Instance.TryLoadLocalAvatar(uid, out byte[] fallbackBytes))
+                    {
+                        var fallbackTex = new Texture2D(2, 2);
+                        if (ImageConversion.LoadImage(fallbackTex, fallbackBytes))
+                        {
+                            ShowAvatarTexture(fallbackTex);
+                        }
+                        else
+                        {
+                            Destroy(fallbackTex);
+                        }
+                    }
+
                     yield break;
                 }
 
-                if (_avatarTexture != null)
-                {
-                    Destroy(_avatarTexture);
-                }
-
-                _avatarTexture = DownloadHandlerTexture.GetContent(request);
+                var tex = DownloadHandlerTexture.GetContent(request);
                 _loadedAvatarUrl = avatarUrl;
 
-                if (_profile == null) yield break; // screen may have been disabled while the request was in flight.
+                if (_profile == null) { Destroy(tex); yield break; } // screen may have been disabled while the request was in flight.
 
-                _profile.style.backgroundImage = new StyleBackground(_avatarTexture);
-                ApplyCoverBackground(_profile);
+                ShowAvatarTexture(tex);
 
-                // Image fills the circle now - the initials fallback underneath
-                // would otherwise show through any transparent corners.
-                if (_profileInitialsLabel != null)
-                    _profileInitialsLabel.style.display = DisplayStyle.None;
+                // Keep the local cache in sync in case the avatar changed on
+                // another device.
+                if (!string.IsNullOrEmpty(uid))
+                    CloudinaryAvatarUploadService.Instance?.SaveAvatarLocally(request.downloadHandler.data, uid);
             }
+        }
+
+        /// <summary>Puts tex into #profile and hides the initials fallback. Takes
+        /// ownership of tex (destroys whatever was showing before) - shared by both
+        /// the local-cache path and the network-fetch path above so there's one
+        /// place that manages _avatarTexture's lifetime.</summary>
+        private void ShowAvatarTexture(Texture2D tex)
+        {
+            if (_profile == null) { Destroy(tex); return; }
+
+            if (_avatarTexture != null)
+            {
+                Destroy(_avatarTexture);
+            }
+            _avatarTexture = tex;
+
+            _profile.style.backgroundImage = new StyleBackground(_avatarTexture);
+            ApplyCoverBackground(_profile);
+
+            // Image fills the circle now - the initials fallback underneath
+            // would otherwise show through any transparent corners.
+            if (_profileInitialsLabel != null)
+                _profileInitialsLabel.style.display = DisplayStyle.None;
         }
 
         // unityBackgroundScaleMode is obsolete (deprecated in favor of the CSS-style

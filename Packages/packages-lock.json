@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "com.google.external-dependency-manager": {
+      "version": "https://github.com/googlesamples/unity-jar-resolver.git?path=upm#v1.2.187",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "38f31affdc54bf7ed0ffb8b97f3444395912a398"
+    },
+    "com.ishix.nativebiometricauth": {
+      "version": "https://github.com/IShix-g/NativeBiometricAuth.git?path=Packages/com.ishix.nativebiometricauth#v1",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "9407907ed7174e7e8b1c645985527dd3ba25d329"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.10",
       "depth": 0,

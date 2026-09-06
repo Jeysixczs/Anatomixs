@@ -96,6 +96,22 @@ namespace Anatomia3D.Backend
             public int MaxAttempts;
             /// <summary>-1 = unlimited.</summary>
             public int RemainingAttempts;
+
+            /// <summary>True if the student already has at least one prior "Completed" (non-
+            /// Missed) attempt at this quiz in this classroom - i.e. a submission right now
+            /// would be a retake, not their first attempt. Used by SubmitQuizAttemptInternal
+            /// to decide whether this submission should count as a brand-new completion or
+            /// be compared against the student's existing best result instead.</summary>
+            public bool HasPriorAttempt;
+
+            /// <summary>Highest pointsEarned across the student's prior "Completed" attempts
+            /// at this quiz in this classroom. Only meaningful when HasPriorAttempt is true -
+            /// a fresh AttemptEligibility with no prior attempts leaves this at 0.</summary>
+            public int BestPointsEarned;
+
+            /// <summary>The percent score (0-100) that went with BestPointsEarned. Only
+            /// meaningful when HasPriorAttempt is true.</summary>
+            public float BestPercent;
         }
 
         /// <summary>One question's outcome within a single attempt. Pass a list of these into
@@ -126,6 +142,21 @@ namespace Anatomia3D.Backend
             public string NewLevelTitle;
             public List<string> NewlyEarnedBadgeIds = new List<string>();
             public List<string> NewlyEarnedBadgeNames = new List<string>();
+
+            /// <summary>True if this was the student's first-ever attempt at this quiz in
+            /// this classroom.</summary>
+            public bool IsFirstAttempt;
+
+            /// <summary>True if this attempt is now the student's best (or only) result for
+            /// this quiz in this classroom - i.e. NewTotalPoints/NewLevel reflect it. False
+            /// means this was a retake that scored lower than an earlier attempt, so nothing
+            /// changed: the student's existing best result still stands. Callers (e.g. the
+            /// results screen) can use this to avoid showing "+N points!" for a retake that
+            /// didn't actually improve anything.</summary>
+            public bool IsNewBest;
+
+            /// <summary>How much NewTotalPoints changed by. 0 whenever IsNewBest is false.</summary>
+            public int PointsDelta;
         }
 
         [Serializable]
@@ -509,8 +540,17 @@ namespace Anatomia3D.Backend
                 int attemptNumber = (eligibility?.AttemptsUsed ?? 0) + 1;
                 int maxAttempts = eligibility?.MaxAttempts ?? 0;
 
+                // Carry the student's existing best result (if any) through to the write
+                // step, so it can compare this new attempt against it rather than blindly
+                // adding to totalPoints/quizzesCompleted every time - see
+                // SubmitQuizAttemptInternal's "best attempt" handling below.
+                bool hasPriorAttempt = eligibility?.HasPriorAttempt ?? false;
+                int previousBestPoints = eligibility?.BestPointsEarned ?? 0;
+                float previousBestPercent = eligibility?.BestPercent ?? 0f;
+
                 SubmitQuizAttemptInternal(quizId, quizName, category, classroomId, correctCount, incorrectCount,
-                    pointsEarned, pointsPossible, attemptNumber, maxAttempts, onComplete,
+                    pointsEarned, pointsPossible, attemptNumber, maxAttempts,
+                    hasPriorAttempt, previousBestPoints, previousBestPercent, onComplete,
                     passingScorePercent, questionResults, timeSpentSeconds);
             });
         }
@@ -526,6 +566,9 @@ namespace Anatomia3D.Backend
             int pointsPossible,
             int attemptNumber,
             int maxAttempts,
+            bool hasPriorAttempt,
+            int previousBestPoints,
+            float previousBestPercent,
             Action<bool, string, AttemptResult> onComplete,
             int passingScorePercent = 70,
             List<QuestionAttemptResult> questionResults = null,
@@ -533,6 +576,16 @@ namespace Anatomia3D.Backend
         {
             var student = PlayerSessionManager.Instance.CurrentStudent;
             if (student == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+
+            // "Best attempt" handling: a retake only moves the needle on totalPoints /
+            // quizzesCompleted / the classroom roster when it beats (or is) the student's
+            // existing best for this quiz. isNewBest/pointsDelta are pure functions of the
+            // eligibility check's own values, so they're computed once here and reused both
+            // inside the transaction below and in the ClassroomService.RecordQuizCompletion
+            // call in the continuation - a lower-scoring retake always resolves to
+            // pointsDelta == 0, never a negative adjustment.
+            bool isNewBest = !hasPriorAttempt || pointsEarned > previousBestPoints;
+            int pointsDelta = !hasPriorAttempt ? pointsEarned : (isNewBest ? pointsEarned - previousBestPoints : 0);
 
             var attemptRef = Db.Collection("quizAttempts").Document();
             var studentRef = Db.Collection("students").Document(student.Uid);
@@ -581,7 +634,10 @@ namespace Anatomia3D.Backend
                     ? studentSnap.GetValue<List<string>>("badgesEarned")
                     : new List<string>();
 
-                int newTotalPoints = currentTotalPoints + pointsEarned;
+                // pointsDelta is 0 for a retake that didn't beat the existing best, so
+                // newTotalPoints only grows when this attempt is a first attempt or a new
+                // personal best - never from simply retaking a quiz already completed.
+                int newTotalPoints = currentTotalPoints + pointsDelta;
                 var settings = AdminGamificationService.ToSettings(configSnap, levelsSnap);
                 var levelInfo = AdminGamificationService.ComputeLevelProgress(settings, newTotalPoints);
                 var newBadgeIds = AdminGamificationService.ComputeNewlyEarnedBadges(settings, newTotalPoints, existingBadges);
@@ -611,6 +667,12 @@ namespace Anatomia3D.Backend
                     { "passed", percent >= passingScorePercent },
                     { "status", "Completed" },
                     { "score", percent },
+                    // True if this attempt is the student's best (or only) result for this
+                    // quiz in this classroom - i.e. the one that counted toward
+                    // totalPoints/quizzesCompleted/the roster below. False for a retake that
+                    // scored lower than an earlier attempt; that attempt is still recorded
+                    // here for history, it just doesn't move any aggregate stats.
+                    { "isBestAttempt", isNewBest },
                     { "attemptCount", attemptNumber },
                     { "remainingAttempts", maxAttempts > 0 ? Mathf.Max(0, maxAttempts - attemptNumber) : -1 },
                     { "completedAt", Timestamp.GetCurrentTimestamp() }
@@ -635,9 +697,15 @@ namespace Anatomia3D.Backend
                 var studentUpdate = new Dictionary<string, object>
                 {
                     { "totalPoints", newTotalPoints },
-                    { "quizzesCompleted", FieldValue.Increment(1) },
                     { "level", levelInfo.level }
                 };
+                // Only counts as a new completion the first time this quiz is attempted -
+                // a retake (whether or not it's a new best) must not inflate this counter,
+                // or "quizzes completed" would really mean "quiz attempts submitted".
+                if (!hasPriorAttempt)
+                {
+                    studentUpdate["quizzesCompleted"] = FieldValue.Increment(1);
+                }
                 if (newBadgeIds.Count > 0)
                 {
                     studentUpdate["badgesEarned"] = FieldValue.ArrayUnion(newBadgeIds.ToArray());
@@ -655,7 +723,10 @@ namespace Anatomia3D.Backend
                     NewLevel = levelInfo.level,
                     NewLevelTitle = levelInfo.title,
                     NewlyEarnedBadgeIds = newBadgeIds,
-                    NewlyEarnedBadgeNames = badgeNames
+                    NewlyEarnedBadgeNames = badgeNames,
+                    IsFirstAttempt = !hasPriorAttempt,
+                    IsNewBest = isNewBest,
+                    PointsDelta = pointsDelta
                 };
             }).ContinueWithOnMainThread(task =>
             {
@@ -671,9 +742,14 @@ namespace Anatomia3D.Backend
                 // Leaderboard, Analytics) - pass the just-computed GLOBAL level through
                 // rather than letting ClassroomService recompute it from this classroom's
                 // own points, so the level shown here always matches the student's real
-                // level everywhere else.
+                // level everywhere else. isNewBest/pointsDelta/percent mirror exactly what
+                // was just applied to totalPoints above, so the classroom roster's
+                // points/quizzesCompleted/avgScorePercent stay consistent with the global
+                // student doc - a retake that didn't beat the existing best is a no-op here
+                // too (see RecordQuizCompletion's early-out).
                 ClassroomService.Instance?.RecordQuizCompletion(
-                    classroomId, pointsEarned, percent, result.NewLevel);
+                    classroomId, result.IsFirstAttempt, result.IsNewBest, result.PointsDelta,
+                    percent, previousBestPercent, result.NewLevel);
 
                 if (result.NewlyEarnedBadgeIds.Count > 0)
                 {
@@ -749,8 +825,26 @@ namespace Anatomia3D.Backend
                         var docs = attemptsTask.Result.Documents;
                         bool IsMissed(DocumentSnapshot d) => d.ContainsField("status") && d.GetValue<string>("status") == "Missed";
 
-                        int attemptsUsed = docs.Count(d => !IsMissed(d));
+                        var completedDocs = docs.Where(d => !IsMissed(d)).ToList();
+                        int attemptsUsed = completedDocs.Count;
                         bool alreadyRecordedMissed = docs.Any(IsMissed);
+
+                        // Highest pointsEarned among this student's prior completed attempts
+                        // at this quiz/classroom - the "best result" SubmitQuizAttemptInternal
+                        // compares a new submission against so a lower-scoring retake never
+                        // overwrites it. bestDoc stays null when attemptsUsed == 0 (first
+                        // attempt), which is exactly when HasPriorAttempt should be false.
+                        DocumentSnapshot bestDoc = null;
+                        foreach (var d in completedDocs)
+                        {
+                            int pts = d.ContainsField("pointsEarned") ? d.GetValue<int>("pointsEarned") : 0;
+                            int bestPts = bestDoc != null && bestDoc.ContainsField("pointsEarned") ? bestDoc.GetValue<int>("pointsEarned") : -1;
+                            if (bestDoc == null || pts > bestPts) bestDoc = d;
+                        }
+
+                        bool hasPriorAttempt = bestDoc != null;
+                        int bestPointsEarned = hasPriorAttempt && bestDoc.ContainsField("pointsEarned") ? bestDoc.GetValue<int>("pointsEarned") : 0;
+                        float bestPercent = hasPriorAttempt && bestDoc.ContainsField("percent") ? Convert.ToSingle(bestDoc.GetValue<double>("percent")) : 0f;
 
                         bool deadlinePassed = quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
                             && DateTime.UtcNow > quiz.DeadlineUtc.Value;
@@ -770,7 +864,10 @@ namespace Anatomia3D.Backend
                                 BlockReason = "The deadline for this quiz has passed. You can no longer take this quiz.",
                                 AttemptsUsed = attemptsUsed,
                                 MaxAttempts = quiz.MaxAttempts,
-                                RemainingAttempts = remaining
+                                RemainingAttempts = remaining,
+                                HasPriorAttempt = hasPriorAttempt,
+                                BestPointsEarned = bestPointsEarned,
+                                BestPercent = bestPercent
                             });
                             return;
                         }
@@ -783,7 +880,10 @@ namespace Anatomia3D.Backend
                                 BlockReason = "You have used all available attempts for this quiz.",
                                 AttemptsUsed = attemptsUsed,
                                 MaxAttempts = quiz.MaxAttempts,
-                                RemainingAttempts = 0
+                                RemainingAttempts = 0,
+                                HasPriorAttempt = hasPriorAttempt,
+                                BestPointsEarned = bestPointsEarned,
+                                BestPercent = bestPercent
                             });
                             return;
                         }
@@ -794,6 +894,9 @@ namespace Anatomia3D.Backend
                             BlockReason = null,
                             AttemptsUsed = attemptsUsed,
                             MaxAttempts = quiz.MaxAttempts,
+                            HasPriorAttempt = hasPriorAttempt,
+                            BestPointsEarned = bestPointsEarned,
+                            BestPercent = bestPercent,
                             RemainingAttempts = remaining
                         });
                     });
@@ -1525,17 +1628,19 @@ namespace Anatomia3D.Backend
                 });
         }
 
-        /// <summary>Call for the four overview stat cards on AdminAnalyticsReportsController.
-        /// Buckets this classroom's quizAttempts into "this calendar month" vs "last calendar
-        /// month" (both in UTC) and reports each stat plus its month-over-month delta - a
-        /// previous-month value of 0 reports +100% if this month has activity, 0% otherwise.</summary>
+        /// <summary>Call for the Active Users / Quizzes Done / Completion overview stat cards
+        /// on AdminAnalyticsReportsController. Buckets this classroom's quizAttempts into
+        /// "this calendar month" vs "last calendar month" (both in UTC) and reports each stat
+        /// plus its month-over-month delta - a previous-month value of 0 reports +100% if this
+        /// month has activity, 0% otherwise. Avg Score is no longer part of this - it's an
+        /// unweighted average across all enrolled students' AvgScorePercent, computed straight
+        /// off the classroom roster (see AdminAnalyticsReportsController.LoadAnalyticsFor)
+        /// rather than being month-bucketed here.</summary>
         [Serializable]
         public class OverviewStats
         {
             public int ActiveUsers;
             public float ActiveUsersDeltaPercent;
-            public float AvgScorePercent;
-            public float AvgScoreDeltaPercent;
             public int QuizzesDone;
             public float QuizzesDoneDeltaPercent;
             public float CompletionPercent;
@@ -1576,15 +1681,12 @@ namespace Anatomia3D.Backend
 
                     result.ActiveUsers = activeThisMonth;
                     result.QuizzesDone = thisMonth.Count;
-                    result.AvgScorePercent = AveragePercent(thisMonth);
                     result.CompletionPercent = CompletionRate(thisMonth);
 
-                    float lastAvgScore = AveragePercent(lastMonth);
                     float lastCompletion = CompletionRate(lastMonth);
 
                     result.ActiveUsersDeltaPercent = PercentDelta(activeThisMonth, activeLastMonth);
                     result.QuizzesDoneDeltaPercent = PercentDelta(result.QuizzesDone, lastMonth.Count);
-                    result.AvgScoreDeltaPercent = result.AvgScorePercent - lastAvgScore;
                     result.CompletionDeltaPercent = result.CompletionPercent - lastCompletion;
 
                     onComplete?.Invoke(result);
@@ -1682,12 +1784,6 @@ namespace Anatomia3D.Backend
                 .Select(d => d.GetValue<string>("studentId"))
                 .Distinct()
                 .Count();
-        }
-
-        private static float AveragePercent(List<DocumentSnapshot> docs)
-        {
-            if (docs.Count == 0) return 0f;
-            return docs.Average(d => d.ContainsField("percent") ? Convert.ToSingle(d.GetValue<double>("percent")) : 0f);
         }
 
         private static float CompletionRate(List<DocumentSnapshot> docs)

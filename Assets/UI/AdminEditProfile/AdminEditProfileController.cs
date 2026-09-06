@@ -83,6 +83,9 @@ namespace Anatomia3D.UI
         private VisualElement _verifyEmailWarning;
         private Label _emailPendingHint;
 
+        private Button _changePasswordButton;
+        private VisualElement _passwordOverlay;
+        private VisualElement _passwordOverlayBackdrop;
         private Button _togglePasswordVisibilityButton;
         private TextField _currentPasswordField;
         private Label _currentPasswordError;
@@ -90,6 +93,7 @@ namespace Anatomia3D.UI
         private Label _newPasswordError;
         private TextField _confirmPasswordField;
         private Label _confirmPasswordError;
+        private Button _closePasswordCardButton;
 
         private Label _statusLabel;
         private Button _saveChangesButton;
@@ -137,6 +141,7 @@ namespace Anatomia3D.UI
             UpdatePasswordVisibility();
             ClearAllErrors();
             SetStatus(string.Empty);
+            ClosePasswordOverlay();
 
             RefreshVerificationBadge();
             UpdatePendingEmailHint();
@@ -179,6 +184,9 @@ namespace Anatomia3D.UI
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _changePhotoButton?.UnregisterCallback<ClickEvent>(OnChangePhotoClicked);
+            _changePasswordButton?.UnregisterCallback<ClickEvent>(OnChangePasswordClicked);
+            _passwordOverlayBackdrop?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
+            _closePasswordCardButton?.UnregisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _togglePasswordVisibilityButton?.UnregisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
             _verifyEmailButton?.UnregisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.UnregisterCallback<ClickEvent>(OnSaveChangesClicked);
@@ -215,6 +223,10 @@ namespace Anatomia3D.UI
             _cardSubtitle = _screenRoot.Q<Label>("card-subtitle");
             _emailPendingHint = _screenRoot.Q<Label>("email-pending-hint");
 
+            _changePasswordButton = _screenRoot.Q<Button>("change-password-button");
+            _passwordOverlay = _screenRoot.Q<VisualElement>("password-overlay");
+            _passwordOverlayBackdrop = _screenRoot.Q<VisualElement>("password-overlay-backdrop");
+
             _togglePasswordVisibilityButton = _screenRoot.Q<Button>("toggle-password-visibility-button");
             _currentPasswordField = _screenRoot.Q<TextField>("current-password-field");
             _currentPasswordError = _screenRoot.Q<Label>("current-password-error");
@@ -222,6 +234,7 @@ namespace Anatomia3D.UI
             _newPasswordError = _screenRoot.Q<Label>("new-password-error");
             _confirmPasswordField = _screenRoot.Q<TextField>("confirm-password-field");
             _confirmPasswordError = _screenRoot.Q<Label>("confirm-password-error");
+            _closePasswordCardButton = _screenRoot.Q<Button>("close-password-card-button");
 
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
@@ -233,6 +246,9 @@ namespace Anatomia3D.UI
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _changePhotoButton?.RegisterCallback<ClickEvent>(OnChangePhotoClicked);
+            _changePasswordButton?.RegisterCallback<ClickEvent>(OnChangePasswordClicked);
+            _passwordOverlayBackdrop?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
+            _closePasswordCardButton?.RegisterCallback<ClickEvent>(OnClosePasswordOverlayClicked);
             _togglePasswordVisibilityButton?.RegisterCallback<ClickEvent>(OnTogglePasswordVisibilityClicked);
             _verifyEmailButton?.RegisterCallback<ClickEvent>(OnVerifyEmailClicked);
             _saveChangesButton?.RegisterCallback<ClickEvent>(OnSaveChangesClicked);
@@ -254,6 +270,11 @@ namespace Anatomia3D.UI
         }
 
         // ---------------- Button handlers ----------------
+
+        private void OnChangePasswordClicked(ClickEvent evt)
+        {
+            OpenPasswordOverlay();
+        }
 
         private void OnBackClicked(ClickEvent evt)
         {
@@ -396,6 +417,26 @@ namespace Anatomia3D.UI
             element.style.backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center));
             element.style.backgroundRepeat = new StyleBackgroundRepeat(new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
             element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
+        }
+
+        private void OnClosePasswordOverlayClicked(ClickEvent evt)
+        {
+            ClosePasswordOverlay();
+        }
+
+        /// <summary>Reveals the password-card, floated over the whole screen
+        /// with a dimmed backdrop behind it (like a modal).</summary>
+        private void OpenPasswordOverlay()
+        {
+            _passwordOverlay?.RemoveFromClassList("hidden");
+        }
+
+        /// <summary>Hides the floating password-card overlay. Does not clear
+        /// the password fields - only OnSaveComplete does that, so an
+        /// in-progress edit survives closing/reopening the overlay.</summary>
+        private void ClosePasswordOverlay()
+        {
+            _passwordOverlay?.AddToClassList("hidden");
         }
 
         private void OnTogglePasswordVisibilityClicked(ClickEvent evt)
@@ -644,6 +685,7 @@ namespace Anatomia3D.UI
             _currentPasswordField.value = string.Empty;
             _newPasswordField.value = string.Empty;
             _confirmPasswordField.value = string.Empty;
+            ClosePasswordOverlay();
 
             if (emailChanged)
             {

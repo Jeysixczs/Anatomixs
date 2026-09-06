@@ -1,4 +1,5 @@
 using Anatomia3D.Backend;
+using System.Collections;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -60,9 +61,11 @@ namespace Anatomia3D.UI
 
         private Button _googleButton;
         private Button _adminLoginButton;
+        private Button _biometricLoginButton;
         private Label _statusLabel;
 
         private bool _passwordVisible;
+        private Coroutine _biometricVisibilityRoutine;
 
         private void OnEnable()
         {
@@ -79,17 +82,31 @@ namespace Anatomia3D.UI
             ApplyGradients();
             WireCallbacks();
             UpdateResponsiveLayout();
+            UpdateBiometricButtonVisibility();
 
-
+            // A single check right here can catch Firebase mid-restore on a
+            // real device (Auth.CurrentUser not populated yet), even when
+            // online - it's not just an offline-startup thing. Poll briefly
+            // instead of deciding once, so a device that really is opted in
+            // doesn't get stuck showing a hidden button for the rest of this
+            // screen's lifetime just because Firebase was a beat slow.
+            _biometricVisibilityRoutine = StartCoroutine(RefreshBiometricButtonVisibilityWhenReady());
         }
 
         private void OnDisable()
         {
+            if (_biometricVisibilityRoutine != null)
+            {
+                StopCoroutine(_biometricVisibilityRoutine);
+                _biometricVisibilityRoutine = null;
+            }
+
             if (_root == null) return;
 
             _signInButton?.UnregisterCallback<ClickEvent>(OnSignInClicked);
             _googleButton?.UnregisterCallback<ClickEvent>(OnGoogleClicked);
             _adminLoginButton?.UnregisterCallback<ClickEvent>(OnAdminLoginClicked);
+            _biometricLoginButton?.UnregisterCallback<ClickEvent>(OnBiometricLoginClicked);
             _togglePasswordButton?.UnregisterCallback<ClickEvent>(OnTogglePasswordClicked);
             _createAccountButton?.UnregisterCallback<ClickEvent>(OnCreateAccountClicked);
             _forgotPasswordButton?.UnregisterCallback<ClickEvent>(OnForgotPasswordClicked);
@@ -114,6 +131,7 @@ namespace Anatomia3D.UI
 
             _googleButton = _root.Q<Button>("google-signin-button");
             _adminLoginButton = _root.Q<Button>("admin-login-button");
+            _biometricLoginButton = _root.Q<Button>("biometric-login-button");
             _statusLabel = _root.Q<Label>("status-label");
 
         }
@@ -123,6 +141,7 @@ namespace Anatomia3D.UI
             _signInButton.RegisterCallback<ClickEvent>(OnSignInClicked);
             _googleButton.RegisterCallback<ClickEvent>(OnGoogleClicked);
             _adminLoginButton.RegisterCallback<ClickEvent>(OnAdminLoginClicked);
+            _biometricLoginButton?.RegisterCallback<ClickEvent>(OnBiometricLoginClicked);
             _togglePasswordButton.RegisterCallback<ClickEvent>(OnTogglePasswordClicked);
             _createAccountButton.RegisterCallback<ClickEvent>(OnCreateAccountClicked);
             _forgotPasswordButton?.RegisterCallback<ClickEvent>(OnForgotPasswordClicked);
@@ -235,6 +254,72 @@ namespace Anatomia3D.UI
         private void OnAdminLoginClicked(ClickEvent evt)
         {
             UIManager.Instance.ShowAdminLogin();
+        }
+
+        private void OnBiometricLoginClicked(ClickEvent evt)
+        {
+            SetStatus("Verifying...");
+            _biometricLoginButton.SetEnabled(false);
+
+            PlayerSessionManager.Instance.LoginWithBiometrics((success, errorMessage) =>
+            {
+                _biometricLoginButton.SetEnabled(true);
+
+                if (success)
+                {
+                    UIManager.Instance.ShowStudentDashboard();
+                }
+                else
+                {
+                    SetStatus(errorMessage);
+                }
+            });
+        }
+
+        // ---------------- Biometrics ----------------
+
+        /// <summary>Shows the "Sign in with biometrics" button only when there's
+        /// actually a local session it could unlock (see
+        /// PlayerSessionManager.IsBiometricLoginAvailable) - e.g. hidden the very
+        /// first time this student uses this device, before any password/Google
+        /// login has happened here. Re-checked every time this screen becomes
+        /// visible (OnEnable) so it reflects reality if the student logged out, or
+        /// signed in successfully on their last visit, since this screen was last
+        /// shown.</summary>
+        private void UpdateBiometricButtonVisibility()
+        {
+            if (_biometricLoginButton == null) return;
+
+            bool show = PlayerSessionManager.Instance != null
+                && PlayerSessionManager.Instance.IsBiometricLoginAvailable;
+
+            _biometricLoginButton.EnableInClassList("hidden", !show);
+        }
+
+        /// <summary>Re-runs UpdateBiometricButtonVisibility every frame for a few
+        /// seconds instead of just once. Firebase's own local-session restore
+        /// (FirebaseBootstrap's dependency check, then Auth populating
+        /// Auth.CurrentUser from on-device storage) is asynchronous and can still
+        /// be in progress the moment this screen first appears - on a real device
+        /// this isn't rare, and it isn't only an offline-launch thing - so a
+        /// single check right on enable can read IsBiometricLoginAvailable as
+        /// false even though a prior login genuinely opted this device in. Stops
+        /// as soon as it sees true, so it doesn't keep polling for the rest of
+        /// this screen's lifetime once there's nothing left to wait for.</summary>
+        private IEnumerator RefreshBiometricButtonVisibilityWhenReady()
+        {
+            float timeout = 3f;
+            float elapsed = 0f;
+            while (elapsed < timeout)
+            {
+                UpdateBiometricButtonVisibility();
+
+                if (PlayerSessionManager.Instance != null && PlayerSessionManager.Instance.IsBiometricLoginAvailable)
+                    yield break;
+
+                yield return null;
+                elapsed += Time.unscaledDeltaTime;
+            }
         }
 
         // ---------------- Helpers ----------------

@@ -143,13 +143,9 @@ namespace Anatomia3D.UI
         private Button _exportPdfButton;
 
         private Label _activeUsersValueLabel;
-        private Label _activeUsersDeltaLabel;
         private Label _avgScoreValueLabel;
-        private Label _avgScoreDeltaLabel;
         private Label _quizzesDoneValueLabel;
-        private Label _quizzesDoneDeltaLabel;
         private Label _completionValueLabel;
-        private Label _completionDeltaLabel;
 
         private Button _performanceTabButton;
         private Button _studentsTabButton;
@@ -211,12 +207,12 @@ namespace Anatomia3D.UI
         // (which need the numbers, not "82%") would otherwise have nothing to read.
         private int _currentActiveUsers;
         private string _currentActiveUsersDelta = "+0%";
-        private int _currentAvgScorePercent;
-        private string _currentAvgScoreDelta = "+0%";
+        private float _currentAvgScorePercent;
+
         private int _currentQuizzesDone;
-        private string _currentQuizzesDoneDelta = "+0%";
+        private string _currentQuizzesDoneDelta = "No quiz selected";
         private int _currentCompletionPercent;
-        private string _currentCompletionDelta = "+0%";
+        private string _currentCompletionDelta = "No students enrolled";
 
         private void OnEnable()
         {
@@ -255,7 +251,6 @@ namespace Anatomia3D.UI
 
             _quizExportPicker?.SetEnabled(false);
 
-            LoadPlaceholderDataIfEmpty();
             RefreshScoreTrendUI();
             RefreshTopPerformersUI();
             RefreshStudentActivityUI();
@@ -315,13 +310,9 @@ namespace Anatomia3D.UI
             _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
 
             _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
-            _activeUsersDeltaLabel = _screenRoot.Q<Label>("active-users-delta-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
-            _avgScoreDeltaLabel = _screenRoot.Q<Label>("avg-score-delta-label");
             _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
-            _quizzesDoneDeltaLabel = _screenRoot.Q<Label>("quizzes-done-delta-label");
             _completionValueLabel = _screenRoot.Q<Label>("completion-value-label");
-            _completionDeltaLabel = _screenRoot.Q<Label>("completion-delta-label");
 
             _performanceTabButton = _screenRoot.Q<Button>("performance-tab-button");
             _studentsTabButton = _screenRoot.Q<Button>("students-tab-button");
@@ -366,30 +357,33 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Push the four overview stat cards. Deltas are shown as-is (include the sign), e.g. "+12%".</summary>
-        public void SetOverviewStats(int activeUsers, string activeUsersDelta, int avgScorePercent, string avgScoreDelta,
+        /// <summary>Push the four overview stat cards. activeUsersDelta is shown as-is
+        /// (includes the sign), e.g. "+12%". avgScorePercent has no delta anymore - it's a
+        /// plain unweighted average across all enrolled students' scores, not a month-over-
+        /// month comparison (see LoadAnalyticsFor). quizzesDoneDelta and completionDelta
+        /// are also no longer month-over-month percents - they're roster-based summary
+        /// strings, e.g. "8/10 students completed - "Skeletal System Quiz"" (see
+        /// FormatQuizzesDoneSummary) and "8/10 students completed" (see
+        /// FormatCompletionSummary), since quizzesDone/completionPercent themselves are now
+        /// roster-based rather than a month-bucketed attempt count / passed-attempt rate.
+        /// quizzesDone/quizzesDoneDelta specifically are kept in sync with the quiz export
+        /// picker's selection by RefreshQuizzesDoneStat() rather than being pushed through
+        /// this method directly from LoadAnalyticsFor - see its call sites.</summary>
+        public void SetOverviewStats(int activeUsers, string activeUsersDelta, float avgScorePercent,
             int quizzesDone, string quizzesDoneDelta, int completionPercent, string completionDelta)
         {
             _currentActiveUsers = activeUsers;
             _currentActiveUsersDelta = activeUsersDelta;
             _currentAvgScorePercent = avgScorePercent;
-            _currentAvgScoreDelta = avgScoreDelta;
             _currentQuizzesDone = quizzesDone;
             _currentQuizzesDoneDelta = quizzesDoneDelta;
             _currentCompletionPercent = completionPercent;
             _currentCompletionDelta = completionDelta;
 
-            if (_activeUsersValueLabel != null) _activeUsersValueLabel.text = activeUsers.ToString();
-            if (_activeUsersDeltaLabel != null) _activeUsersDeltaLabel.text = $"{activeUsersDelta} from last month";
-
-            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent}%";
-            if (_avgScoreDeltaLabel != null) _avgScoreDeltaLabel.text = $"{avgScoreDelta} from last month";
-
+            if (_activeUsersValueLabel != null) _activeUsersValueLabel.text = _currentStudentActivity.TotalStudents.ToString();
+            if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent:F2}%";
             if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = quizzesDone.ToString();
-            if (_quizzesDoneDeltaLabel != null) _quizzesDoneDeltaLabel.text = $"{quizzesDoneDelta} from last month";
-
             if (_completionValueLabel != null) _completionValueLabel.text = $"{completionPercent}%";
-            if (_completionDeltaLabel != null) _completionDeltaLabel.text = $"{completionDelta} from last month";
         }
 
         public void SetScoreTrend(List<ScoreTrendEntry> entries)
@@ -531,11 +525,45 @@ namespace Anatomia3D.UI
 
                     SetStudentActivity(new StudentActivitySummary(totalStudents, overview.ActiveUsers, avgLevel, avgPoints));
 
+                    // Completion is roster-driven rather than the month-bucketed "passed"
+                    // rate QuizService.FetchClassroomOverviewStats reports: every student
+                    // currently enrolled in this classroom must have completed at least one
+                    // quiz before the classroom counts as fully complete. See
+                    // CalculateClassroomCompletionPercent() below.
+                    int completionPercent = CalculateClassroomCompletionPercent(analytics.Students);
+
+                    // The old CompletionDeltaPercent ("+3% from last month") compared two
+                    // month-bucketed "passed" rates, which no longer matches what
+                    // completionPercent means now (roster completion, not a passed-attempt
+                    // rate) - report the roster count behind the percentage instead, so the
+                    // exported report's third column stays meaningful.
+                    string completionSummary = FormatCompletionSummary(analytics.Students);
+
+                    // Quizzes Done is no longer sourced from this month-bucketed overview -
+                    // it's tied to whichever quiz is selected in the quiz export picker and
+                    // kept current by RefreshQuizzesDoneStat() (called once the picker's
+                    // default selection resolves, and again on every dropdown change), so
+                    // pass through whatever it last computed rather than overwriting it here.
+                    //
+                    // Avg Score is a plain unweighted average of AvgScorePercent across
+                    // students who have actually completed at least one quiz (QuizzesCompleted
+                    // > 0) - students who haven't taken anything yet are excluded rather than
+                    // counted as a 0% score. E.g. student A at 50%, B at 100%, C at 100%,
+                    // and a 4th student with 0 quizzes completed -> average is still (50+100+
+                    // 100)/3 = 83%, not /4. Not month-bucketed, and no month-over-month delta.
+                    var scoredStudents = analytics.Students.Where(s => s.QuizzesCompleted > 0).ToList();
+
+                   
+
+                    float avgScorePercent = scoredStudents.Count > 0
+                    ? scoredStudents.Average(s => s.AvgScorePercent)
+                    : 0f;
+
                     SetOverviewStats(
                         overview.ActiveUsers, FormatDelta(overview.ActiveUsersDeltaPercent),
-                        Mathf.RoundToInt(overview.AvgScorePercent), FormatDelta(overview.AvgScoreDeltaPercent),
-                        overview.QuizzesDone, FormatDelta(overview.QuizzesDoneDeltaPercent),
-                        Mathf.RoundToInt(overview.CompletionPercent), FormatDelta(overview.CompletionDeltaPercent));
+                        avgScorePercent,
+                        _currentQuizzesDone, _currentQuizzesDoneDelta,
+                        completionPercent, completionSummary);
                 });
             });
 
@@ -621,6 +649,11 @@ namespace Anatomia3D.UI
                 _selectedQuizExportId = null;
                 _quizExportPicker.SetValueWithoutNotify(null);
             }
+
+            // Show the default (first) quiz's "Quizzes Done" count as soon as the picker's
+            // choices resolve - and reset it to "no quiz selected" if this classroom turns
+            // out to have nothing published to it.
+            RefreshQuizzesDoneStat();
         }
 
         private void OnQuizExportPickerChanged(ChangeEvent<string> evt)
@@ -631,6 +664,66 @@ namespace Anatomia3D.UI
             if (index < 0 || index >= _classroomQuizzes.Count) return;
 
             _selectedQuizExportId = _classroomQuizzes[index].QuizId;
+
+            // Quizzes Done tracks whichever quiz is picked here, so it needs to update live
+            // on every selection change, not just when the classroom first loads.
+            RefreshQuizzesDoneStat();
+        }
+
+        /// <summary>Recomputes the "Quizzes Done" overview stat for whichever quiz is
+        /// currently selected in the quiz export picker: the number of students in this
+        /// classroom who have completed that specific quiz - not a raw attempt count, and
+        /// not "any quiz". Reuses QuizService.FetchQuizScoresForClassroom (the same query
+        /// FetchSelectedQuizScoreRows uses for the export), which is already scoped to one
+        /// classroom + one quiz, excludes auto-recorded "Missed" placeholder docs, and
+        /// collapses each student down to a single best attempt - so Attempted == true there
+        /// means "this student completed this quiz in this classroom".
+        ///
+        /// Called once the quiz export picker's default selection resolves (so the card
+        /// shows a real number as soon as the classroom loads) and again on every dropdown
+        /// change (see BuildQuizExportPicker/OnQuizExportPickerChanged), rather than being
+        /// folded into the month-bucketed QuizService.FetchClassroomOverviewStats call in
+        /// LoadAnalyticsFor.</summary>
+        private void RefreshQuizzesDoneStat()
+        {
+            if (string.IsNullOrEmpty(_selectedClassroomId) || string.IsNullOrEmpty(_selectedQuizExportId) || QuizService.Instance == null)
+            {
+                _currentQuizzesDone = 0;
+                _currentQuizzesDoneDelta = "No quiz selected";
+                if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = "0";
+                return;
+            }
+
+            // Captured so a late-arriving response from a classroom/quiz the teacher has
+            // since navigated away from doesn't clobber a newer selection's numbers.
+            string classroomId = _selectedClassroomId;
+            string quizId = _selectedQuizExportId;
+
+            QuizService.Instance.FetchQuizScoresForClassroom(classroomId, quizId, scores =>
+            {
+                if (classroomId != _selectedClassroomId || quizId != _selectedQuizExportId) return;
+
+                int completedCount = (scores ?? new List<QuizService.StudentQuizScoreEntry>()).Count(s => s.Attempted);
+                int totalEnrolled = _currentClassroomStudents.Count;
+                string quizTitle = _classroomQuizzes.FirstOrDefault(q => q.QuizId == quizId)?.Title;
+
+                _currentQuizzesDone = completedCount;
+                _currentQuizzesDoneDelta = FormatQuizzesDoneSummary(completedCount, totalEnrolled, quizTitle);
+
+                if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = completedCount.ToString();
+            });
+        }
+
+        /// <summary>Human-readable companion to RefreshQuizzesDoneStat(), e.g. "8/10 students
+        /// completed - "Skeletal System Quiz"" - shown in the Quizzes Done row's third column
+        /// on the exported report (see AdminReportExportService.BuildPdfLines) in place of
+        /// the old month-over-month delta.</summary>
+        private static string FormatQuizzesDoneSummary(int completedCount, int totalEnrolled, string quizTitle)
+        {
+            if (totalEnrolled == 0) return "No students enrolled";
+
+            string quizPart = string.IsNullOrEmpty(quizTitle) ? "" : $" - \"{quizTitle}\"";
+            return $"{completedCount}/{totalEnrolled} students completed{quizPart}";
         }
 
         /// <summary>Fetches the quiz export picker's currently-selected quiz's per-student
@@ -714,6 +807,32 @@ namespace Anatomia3D.UI
         {
             string sign = deltaPercent >= 0 ? "+" : "";
             return $"{sign}{Mathf.RoundToInt(deltaPercent)}%";
+        }
+
+        /// <summary>Completion for the "Completion" overview stat card: the percentage of
+        /// currently-enrolled students who have completed at least one quiz in this
+        /// classroom (StudentStat.QuizzesCompleted > 0). Only reaches 100% when every
+        /// enrolled student has completed a quiz - a single student with zero completions
+        /// keeps the classroom below 100%. Classrooms with no enrolled students report 0%
+        /// rather than dividing by zero.</summary>
+        private static int CalculateClassroomCompletionPercent(List<AdminClassroomService.StudentStat> enrolledStudents)
+        {
+            if (enrolledStudents == null || enrolledStudents.Count == 0) return 0;
+
+            int completedCount = enrolledStudents.Count(s => s.QuizzesCompleted > 0);
+            return Mathf.RoundToInt((completedCount / (float)enrolledStudents.Count) * 100f);
+        }
+
+        /// <summary>Human-readable companion to CalculateClassroomCompletionPercent(), e.g.
+        /// "8/10 students completed" - shown in the Completion row's third column on the
+        /// exported report (see AdminReportExportService.BuildPdfLines) in place of the old
+        /// month-over-month delta.</summary>
+        private static string FormatCompletionSummary(List<AdminClassroomService.StudentStat> enrolledStudents)
+        {
+            if (enrolledStudents == null || enrolledStudents.Count == 0) return "No students enrolled";
+
+            int completedCount = enrolledStudents.Count(s => s.QuizzesCompleted > 0);
+            return $"{completedCount}/{enrolledStudents.Count} students completed";
         }
 
         private static string CapitalizeCategory(string category)
@@ -1025,7 +1144,6 @@ namespace Anatomia3D.UI
                 ActiveUsers = _currentActiveUsers,
                 ActiveUsersDelta = _currentActiveUsersDelta,
                 AvgScorePercent = _currentAvgScorePercent,
-                AvgScoreDelta = _currentAvgScoreDelta,
                 QuizzesDone = _currentQuizzesDone,
                 QuizzesDoneDelta = _currentQuizzesDoneDelta,
                 CompletionPercent = _currentCompletionPercent,
@@ -1053,70 +1171,6 @@ namespace Anatomia3D.UI
             bool compact = _screenRoot.resolvedStyle.width > 0 && _screenRoot.resolvedStyle.width < compactWidthThreshold;
             _screenRoot.EnableInClassList("compact", compact);
         }
-
-        // ---------------- Placeholder data (matches the mock) ----------------
-
-        private void LoadPlaceholderDataIfEmpty()
-        {
-            if (_currentScoreTrend.Count == 0)
-            {
-                _currentScoreTrend = new List<ScoreTrendEntry>
-                {
-                    new ScoreTrendEntry("Skeletal System Quiz", 88f),
-                    new ScoreTrendEntry("Cell Biology Quiz", 76f),
-                    new ScoreTrendEntry("Muscular System Quiz", 82f),
-                    new ScoreTrendEntry("Circulatory System Quiz", 79f),
-                };
-            }
-
-            if (_currentTopicPerformance.Count == 0)
-            {
-                _currentTopicPerformance = new List<TopicPerformanceEntry>
-                {
-                    new TopicPerformanceEntry("Skeletal System", 74f),
-                    new TopicPerformanceEntry("Cell Biology", 68f),
-                    new TopicPerformanceEntry("Muscular System", 85f),
-                    new TopicPerformanceEntry("Circulatory System", 81f),
-                };
-            }
-
-            if (_currentTopPerformers.Count == 0)
-            {
-                _currentTopPerformers = new List<TopPerformer>
-                {
-                    new TopPerformer("John Carlo Aquino", 24, 2400, 8),
-                    new TopPerformer("Jorge Acopio", 15, 1250, 5),
-                    new TopPerformer("John Carl Alvaro", 8, 650, 3),
-                    new TopPerformer("Christian Abuyan", 8, 650, 3),
-                };
-            }
-
-            if (_currentStudentActivity.TotalStudents == 0 && _currentStudentActivity.ActiveThisMonth == 0)
-            {
-                _currentStudentActivity = new StudentActivitySummary(4, 2, 5.3f, 1433);
-            }
-
-            if (_currentMistakes.Count == 0)
-            {
-                _currentMistakes = new List<MistakeEntry>
-                {
-                    new MistakeEntry("How many bones in adult body?", "Skeletal System", 45),
-                    new MistakeEntry("Function of mitochondria", "Cell Biology", 38),
-                    new MistakeEntry("Types of muscle tissue", "Muscular System", 32),
-                    new MistakeEntry("Cardiac cycle phases", "Circulatory System", 28),
-                };
-            }
-
-            if (_currentRecommendations.Count == 0)
-            {
-                _currentRecommendations = new List<RecommendationEntry>
-                {
-                    new RecommendationEntry("Focus on Cell Biology Quiz (Skeletal System)", "Add more practice questions about bone count and structure", "Skeletal System"),
-                };
-            }
-
-            // Overview stat cards
-            SetOverviewStats(2, "+12%", 82, "+5%", 505, "+18%", 78, "+3%");
-        }
+        
     }
 }
