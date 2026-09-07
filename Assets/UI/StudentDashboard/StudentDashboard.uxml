@@ -86,7 +86,7 @@
                     <ui:Label text="Recent Activity" class="view-all-title"/>
                     <ui:Button name="recent-activity-view-all-close-button" text="✕" class="view-all-close-button"/>
                 </ui:VisualElement>
-                <ui:ScrollView name="recent-activity-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="view-all-scroll">
+                <ui:ScrollView name="recent-activity-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="view-all-scroll">
                     <ui:VisualElement name="recent-activity-view-all-no-results" class="view-all-no-results hidden">
                         <ui:Label text="No recent activity yet" class="activity-time"/>
                     </ui:VisualElement>

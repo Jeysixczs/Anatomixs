@@ -181,6 +181,14 @@ namespace Anatomia3D.UI
 
         private Label _recentActivityEmptyLabel;
         private VisualElement _recentActivityList;
+        private Button _recentActivityViewAllButton;
+
+        private VisualElement _recentActivityViewAllOverlay;
+        private Button _recentActivityViewAllCloseButton;
+        private VisualElement _recentActivityViewAllList;
+        private TextField _recentActivityViewAllSearchField;
+        private VisualElement _recentActivityViewAllNoResults;
+        private Label _recentActivityViewAllNoResultsLabel;
 
         private List<ClassroomSummary> _currentClassrooms = new List<ClassroomSummary>();
 
@@ -195,7 +203,18 @@ namespace Anatomia3D.UI
         private List<ClassroomService.ClassroomJoinRecord> _joinActivity = new List<ClassroomService.ClassroomJoinRecord>();
         private readonly Dictionary<string, VisualElement> _activityRowsById = new Dictionary<string, VisualElement>();
         private bool _hasRenderedActivityOnce;
+
+        /// <summary>Latest merged/sorted/trimmed feed from BuildMergedActivity(), cached so the
+        /// View All search field can re-filter and re-render on every keystroke without
+        /// re-merging the two underlying sources.</summary>
+        private List<ActivityCardData> _lastMergedActivity = new List<ActivityCardData>();
         private const int MaxRecentActivityItems = 8;
+
+        /// <summary>Max activity rows shown inline on the dashboard before "View All" is used
+        /// instead. The full (up to MaxRecentActivityItems) list still renders in
+        /// recent-activity-view-all-list - same inline-cap/full-list split as
+        /// MaxDashboardClassroomItems below.</summary>
+        private const int MaxDashboardActivityItems = 4;
 
         /// <summary>Max classroom cards shown inline on the dashboard before "View All" is
         /// used instead. Full list still renders in classrooms-view-all-list.</summary>
@@ -305,6 +324,10 @@ namespace Anatomia3D.UI
             _manageQuizzesButton?.UnregisterCallback<ClickEvent>(OnManageQuizzesClicked);
             _viewAnalyticsButton?.UnregisterCallback<ClickEvent>(OnViewAnalyticsClicked);
             _gamificationButton?.UnregisterCallback<ClickEvent>(OnGamificationClicked);
+            _recentActivityViewAllButton?.UnregisterCallback<ClickEvent>(OnViewAllActivityClicked);
+            _recentActivityViewAllCloseButton?.UnregisterCallback<ClickEvent>(OnCloseViewAllActivityClicked);
+            _recentActivityViewAllOverlay?.UnregisterCallback<ClickEvent>(OnViewAllActivityOverlayBackdropClicked);
+            _recentActivityViewAllSearchField?.UnregisterValueChangedCallback(OnRecentActivityViewAllSearchChanged);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
 
@@ -347,6 +370,14 @@ namespace Anatomia3D.UI
 
             _recentActivityEmptyLabel = _screenRoot.Q<Label>("recent-activity-empty-label");
             _recentActivityList = _screenRoot.Q<VisualElement>("recent-activity-list");
+            _recentActivityViewAllButton = _screenRoot.Q<Button>("recent-activity-view-all-button");
+
+            _recentActivityViewAllOverlay = _screenRoot.Q<VisualElement>("recent-activity-view-all-overlay");
+            _recentActivityViewAllCloseButton = _screenRoot.Q<Button>("recent-activity-view-all-close-button");
+            _recentActivityViewAllList = _screenRoot.Q<VisualElement>("recent-activity-view-all-list");
+            _recentActivityViewAllSearchField = _screenRoot.Q<TextField>("recent-activity-view-all-search-field");
+            _recentActivityViewAllNoResults = _screenRoot.Q<VisualElement>("recent-activity-view-all-no-results");
+            _recentActivityViewAllNoResultsLabel = _recentActivityViewAllNoResults?.Q<Label>();
 
             Debug.Log($"[AdminDashboardController] Found create classroom button: {_createClassroomButton != null}, classrooms list: {_classroomsList != null}");
         }
@@ -364,6 +395,10 @@ namespace Anatomia3D.UI
             _manageQuizzesButton?.RegisterCallback<ClickEvent>(OnManageQuizzesClicked);
             _viewAnalyticsButton?.RegisterCallback<ClickEvent>(OnViewAnalyticsClicked);
             _gamificationButton?.RegisterCallback<ClickEvent>(OnGamificationClicked);
+            _recentActivityViewAllButton?.RegisterCallback<ClickEvent>(OnViewAllActivityClicked);
+            _recentActivityViewAllCloseButton?.RegisterCallback<ClickEvent>(OnCloseViewAllActivityClicked);
+            _recentActivityViewAllOverlay?.RegisterCallback<ClickEvent>(OnViewAllActivityOverlayBackdropClicked);
+            _recentActivityViewAllSearchField?.RegisterValueChangedCallback(OnRecentActivityViewAllSearchChanged);
 
             if (_screenRoot != null)
             {
@@ -827,51 +862,113 @@ namespace Anatomia3D.UI
         {
             var merged = BuildMergedActivity();
             bool hasActivity = merged.Count > 0;
+            bool hasOverflow = merged.Count > MaxDashboardActivityItems;
+
+            var inline = hasOverflow ? merged.GetRange(0, MaxDashboardActivityItems) : merged;
 
             _recentActivityEmptyLabel?.EnableInClassList("hidden", hasActivity);
             _recentActivityList?.EnableInClassList("hidden", !hasActivity);
+            _recentActivityViewAllButton?.RemoveFromClassList("hidden");
 
-            if (_recentActivityList == null) return;
+            // If activity dropped back under the cap (or emptied out) while the overlay
+            // happened to be open, close it rather than leave it showing a stale list on
+            // top of a dashboard that no longer has an overflow to view.
+            if (!hasOverflow) CloseViewAllActivityOverlay();
 
-            var mergedIds = new HashSet<string>(merged.Select(m => m.Id));
-
-            // Drop rows that fell out of the top MaxRecentActivityItems.
-            foreach (var staleId in _activityRowsById.Keys.Where(id => !mergedIds.Contains(id)).ToList())
+            if (_recentActivityList != null)
             {
-                _activityRowsById[staleId].RemoveFromHierarchy();
-                _activityRowsById.Remove(staleId);
-            }
+                var inlineIds = new HashSet<string>(inline.Select(m => m.Id));
 
-            for (int i = 0; i < merged.Count; i++)
-            {
-                var data = merged[i];
-
-                if (_activityRowsById.TryGetValue(data.Id, out var existingRow))
+                // Drop rows that fell out of the inline top MaxDashboardActivityItems.
+                foreach (var staleId in _activityRowsById.Keys.Where(id => !inlineIds.Contains(id)).ToList())
                 {
-                    // Already on screen - only touch the DOM if its position actually moved
-                    // (e.g. a new item was inserted above it).
-                    if (_recentActivityList.IndexOf(existingRow) != i)
-                    {
-                        existingRow.RemoveFromHierarchy();
-                        _recentActivityList.Insert(i, existingRow);
-                    }
-                    continue;
+                    _activityRowsById[staleId].RemoveFromHierarchy();
+                    _activityRowsById.Remove(staleId);
                 }
 
-                var row = BuildActivityRow(data);
-                _recentActivityList.Insert(i, row);
-                _activityRowsById[data.Id] = row;
-
-                // Pop-in highlight for genuinely new entries only - skip on the very first
-                // render so the initial snapshot doesn't flash every card at once.
-                if (_hasRenderedActivityOnce)
+                for (int i = 0; i < inline.Count; i++)
                 {
-                    row.AddToClassList("activity-row-new");
-                    row.schedule.Execute(() => row.RemoveFromClassList("activity-row-new")).ExecuteLater(1500);
+                    var data = inline[i];
+
+                    if (_activityRowsById.TryGetValue(data.Id, out var existingRow))
+                    {
+                        // Already on screen - only touch the DOM if its position actually moved
+                        // (e.g. a new item was inserted above it).
+                        if (_recentActivityList.IndexOf(existingRow) != i)
+                        {
+                            existingRow.RemoveFromHierarchy();
+                            _recentActivityList.Insert(i, existingRow);
+                        }
+                        continue;
+                    }
+
+                    var row = BuildActivityRow(data);
+                    _recentActivityList.Insert(i, row);
+                    _activityRowsById[data.Id] = row;
+
+                    // Pop-in highlight for genuinely new entries only - skip on the very first
+                    // render so the initial snapshot doesn't flash every card at once.
+                    if (_hasRenderedActivityOnce)
+                    {
+                        row.AddToClassList("activity-row-new");
+                        row.schedule.Execute(() => row.RemoveFromClassList("activity-row-new")).ExecuteLater(1500);
+                    }
                 }
             }
 
             _hasRenderedActivityOnce = true;
+
+            // Cache so the search field can re-filter/re-render without re-merging the
+            // two underlying sources on every keystroke.
+            _lastMergedActivity = merged;
+
+            // Keeps the modal in sync too, whether or not it's currently open - cheap to
+            // rebuild (no diffing needed since it isn't live-highlighted like the inline list).
+            RefreshActivityViewAllList();
+        }
+
+        /// <summary>Rebuilds recent-activity-view-all-list from _lastMergedActivity, filtered by
+        /// whatever's currently typed into the View All search field (matches student name,
+        /// classroom name, or quiz title, case-insensitive - same approach as the classrooms
+        /// View All search). Called whenever the activity data changes and every time the
+        /// search text changes. Simple clear-and-rebuild each call - the modal isn't
+        /// live-diffed/highlighted the way the dashboard's inline list is.</summary>
+        private void RefreshActivityViewAllList()
+        {
+            if (_recentActivityViewAllList == null) return;
+
+            string query = _recentActivityViewAllSearchField?.value?.Trim() ?? "";
+
+            IEnumerable<ActivityCardData> filtered = _lastMergedActivity;
+            if (!string.IsNullOrEmpty(query))
+            {
+                filtered = _lastMergedActivity.Where(data =>
+                    (!string.IsNullOrEmpty(data.StudentName) && data.StudentName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (!string.IsNullOrEmpty(data.ClassroomName) && data.ClassroomName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (!string.IsNullOrEmpty(data.QuizTitle) && data.QuizTitle.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0));
+            }
+
+            var filteredList = filtered.ToList();
+            bool hasResults = filteredList.Count > 0;
+
+            if (_recentActivityViewAllNoResultsLabel != null)
+            {
+                _recentActivityViewAllNoResultsLabel.text = string.IsNullOrEmpty(query)
+                    ? "No student activity yet"
+                    : "No student activity matches your search";
+            }
+            _recentActivityViewAllNoResults?.EnableInClassList("hidden", hasResults);
+
+            _recentActivityViewAllList.Clear();
+            foreach (var data in filteredList)
+            {
+                _recentActivityViewAllList.Add(BuildActivityRow(data));
+            }
+        }
+
+        private void OnRecentActivityViewAllSearchChanged(ChangeEvent<string> evt)
+        {
+            RefreshActivityViewAllList();
         }
 
         /// <summary>Periodic tick (see StartListeningToRecentActivity) that just refreshes
@@ -1008,6 +1105,35 @@ namespace Anatomia3D.UI
         private void CloseViewAllClassroomsOverlay()
         {
             _classroomsViewAllOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnViewAllActivityClicked(ClickEvent evt)
+        {
+            if (_recentActivityViewAllSearchField != null) _recentActivityViewAllSearchField.value = "";
+            _lastMergedActivity = BuildMergedActivity();
+            RefreshActivityViewAllList();
+            _recentActivityViewAllOverlay?.RemoveFromClassList("hidden");
+        }
+
+        private void OnCloseViewAllActivityClicked(ClickEvent evt)
+        {
+            CloseViewAllActivityOverlay();
+        }
+
+        /// <summary>Tapping the dimmed backdrop closes the overlay, same as the close
+        /// button - but only when the tap actually landed on the backdrop itself, not on
+        /// the card or anything inside it (ClickEvent bubbles up from children).</summary>
+        private void OnViewAllActivityOverlayBackdropClicked(ClickEvent evt)
+        {
+            if (evt.target == _recentActivityViewAllOverlay)
+            {
+                CloseViewAllActivityOverlay();
+            }
+        }
+
+        private void CloseViewAllActivityOverlay()
+        {
+            _recentActivityViewAllOverlay?.AddToClassList("hidden");
         }
 
         private void OnViewClassroomDetailsClicked(ClassroomSummary classroom)

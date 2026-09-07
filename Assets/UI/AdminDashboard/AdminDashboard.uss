@@ -555,6 +555,23 @@
     border-radius: 0;
 }
 
+/* Same belt-and-braces pinning as #classrooms-view-all-overlay / -card above,
+   for the Student Activity View All overlay. */
+#recent-activity-view-all-overlay
+{
+    justify-content: flex-end;
+    align-items: stretch;
+    padding: 0;
+}
+
+#recent-activity-view-all-card
+{
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+}
+
 .view-all-header
 {
     flex-direction: row;
@@ -603,7 +620,11 @@
 {
     flex-grow: 1;
     flex-shrink: 1;
+    min-height: 0;
     width: 100%;
+    padding: 0;
+    margin: 0;
+    -unity-overflow-scrolling: touch;
 }
 
 .view-all-scroll .unity-scroll-view__vertical-scroller
@@ -614,6 +635,9 @@
 
 .view-all-list
 {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-height: 0;
     padding-left: 59px;
     padding-right: 59px;
     padding-top: 39px;
@@ -840,6 +864,46 @@
     flex-grow: 1;
     white-space: normal;
     -unity-text-align: middle-left;
+}
+
+/* ---------- Student Activity: View All trigger ---------- */
+
+.unity-scroll-view__content-container{
+    height: 100%;
+}
+.recent-activity-header
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
+.recent-activity-title
+{
+    margin-bottom: 0;
+}
+
+.view-all-inline-button
+{
+    background-color: rgba(37, 99, 235, 0.1);
+    border-width: 0px;
+    border-radius: 22px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-left: 24px;
+    padding-right: 24px;
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    -unity-text-align: middle-center;
+}
+
+.view-all-inline-button:hover
+{
+    background-color: rgba(37, 99, 235, 0.18);
 }
 
 /* ---------- Recent Activity ---------- */
@@ -1110,6 +1174,20 @@
     padding-left: 37px;
     padding-right: 37px;
     padding-top: 29px;
+}
+
+.compact .recent-activity-header
+{
+    margin-bottom: 21px;
+}
+
+.compact .view-all-inline-button
+{
+    font-size: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 18px;
+    padding-right: 18px;
 }
 
 .compact .view-all-search-row

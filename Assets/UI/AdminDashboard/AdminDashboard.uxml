@@ -61,9 +61,12 @@
                     </ui:VisualElement>
                     <ui:Label text="Gamification Configuration" class="gamification-title"/>
                 </ui:Button>
-                <ui:Label text="Recent Activity" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="recent-activity-header" class="recent-activity-header section-title-spaced">
+                    <ui:Label text="Student Activity" class="section-title recent-activity-title"/>
+                    <ui:Button name="recent-activity-view-all-button" text="View All" class="view-all-inline-button hidden"/>
+                </ui:VisualElement>
                 <ui:VisualElement name="recent-activity-card" class="recent-activity-card">
-                    <ui:Label name="recent-activity-empty-label" text="No recent activity yet" class="recent-activity-empty-label"/>
+                    <ui:Label name="recent-activity-empty-label" text="No student activity yet" class="recent-activity-empty-label"/>
                     <ui:VisualElement name="recent-activity-list" class="recent-activity-list hidden"/>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -85,6 +88,26 @@
                         <ui:Label text="No classrooms match your search" class="empty-state-text"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="classrooms-view-all-list" class="classrooms-list view-all-list"/>
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="recent-activity-view-all-overlay" class="modal-overlay hidden">
+            <ui:VisualElement name="recent-activity-view-all-card" class="modal-card view-all-card">
+                <ui:VisualElement name="recent-activity-view-all-header" class="view-all-header">
+                    <ui:Label text="Student Activity" class="view-all-title"/>
+                    <ui:Button name="recent-activity-view-all-close-button" text="✕" class="view-all-close-button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="recent-activity-view-all-search-row" class="view-all-search-row">
+                    <ui:VisualElement name="recent-activity-view-all-search-field-wrapper" class="view-all-search-field-wrapper">
+                        <ui:Label text="" class="view-all-search-icon icon-search"/>
+                        <ui:TextField name="recent-activity-view-all-search-field" placeholder-text="Search student activity" class="view-all-search-field"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:ScrollView name="recent-activity-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="view-all-scroll">
+                    <ui:VisualElement name="recent-activity-view-all-no-results" class="view-all-no-results hidden">
+                        <ui:Label text="No student activity matches your search" class="empty-state-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="recent-activity-view-all-list" class="recent-activity-list view-all-list"/>
                 </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>
