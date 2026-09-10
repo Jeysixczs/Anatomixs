@@ -229,9 +229,9 @@ namespace Anatomia3D.Backend
 
         private static readonly TableSpec MistakesTable = new TableSpec
         {
-            Headers = new[] { "Question", "Category", "Errors" },
-            ColumnX = new[] { 0f, 320f, 440f },
-            ColumnWidth = new[] { 310f, 110f, 76f },
+            Headers = new[] { "Question", "Category", "Type", "Errors" },
+            ColumnX = new[] { 0f, 250f, 360f, 466f },
+            ColumnWidth = new[] { 240f, 100f, 96f, 50f },
         };
 
         private static readonly TableSpec QuizScoresTable = new TableSpec
@@ -363,7 +363,7 @@ namespace Anatomia3D.Backend
             AddTable(lines, ScoreTrendTable, trendRows);
 
             lines.Add(Heading("Common Incorrect Answers"));
-            AddTable(lines, MistakesTable, data.Mistakes.Select(m => new[] { m.Question, m.Category, m.Errors.ToString() }));
+            AddTable(lines, MistakesTable, data.Mistakes.Select(m => new[] { m.Question, m.Category, m.QuestionType, m.Errors.ToString() }));
 
             lines.Add(Heading("Recommendations"));
             bool firstRec = true;

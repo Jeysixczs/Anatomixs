@@ -79,11 +79,17 @@ namespace Anatomia3D.UI
             public string Category;
             public int Errors;
 
-            public MistakeEntry(string question, string category, int errors)
+            /// <summary>Display label for the question's type (e.g. "Multiple Choice"),
+            /// from QuestionTypeDisplay(). Empty for mistake rows recorded before quiz
+            /// mode/type tracking existed.</summary>
+            public string QuestionType;
+
+            public MistakeEntry(string question, string category, int errors, string questionType = "")
             {
                 Question = question;
                 Category = category;
                 Errors = errors;
+                QuestionType = questionType;
             }
         }
 
@@ -732,7 +738,7 @@ namespace Anatomia3D.UI
                 if (classroomId != _selectedClassroomId || quizId != _selectedQuizExportId) return;
 
                 SetCommonMistakes((mistakes ?? new List<QuizService.MistakeSummary>())
-                    .Select(m => new MistakeEntry(m.QuestionText, CapitalizeCategory(m.Category), m.ErrorCount))
+                    .Select(m => new MistakeEntry(m.QuestionText, CapitalizeCategory(m.Category), m.ErrorCount, QuestionTypeDisplay(m.QuestionTypeSlug)))
                     .ToList());
             });
         }
@@ -836,6 +842,25 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(category)) return category;
             return char.ToUpperInvariant(category[0]) + category.Substring(1);
+        }
+
+        /// <summary>Slug -> display label for the Mistakes tab's quiz-mode/question-type
+        /// badge. Mirrors StudentQuizGameplayController's TypeLabels dictionary - keep both
+        /// in sync if either changes.</summary>
+        private static readonly Dictionary<string, string> QuestionTypeDisplayLabels = new Dictionary<string, string>
+        {
+            { QuestionTypeSlugs.MultipleChoice, "Multiple Choice" },
+            { QuestionTypeSlugs.TrueFalse, "True/False" },
+            { QuestionTypeSlugs.Identification, "Identification" },
+            { QuestionTypeSlugs.Enumeration, "Enumeration" },
+            { QuestionTypeSlugs.MultipleIdentification, "Multiple Identification" },
+            { QuestionTypeSlugs.ImageBased, "Image-Based" }
+        };
+
+        private static string QuestionTypeDisplay(string slug)
+        {
+            if (string.IsNullOrEmpty(slug)) return "";
+            return QuestionTypeDisplayLabels.TryGetValue(slug, out var label) ? label : CapitalizeCategory(slug);
         }
 
         // ---------------- Tabs ----------------
@@ -984,10 +1009,19 @@ namespace Anatomia3D.UI
                 info.AddToClassList("mistake-info");
                 var questionLabel = new Label(mistake.Question);
                 questionLabel.AddToClassList("mistake-question-label");
+                var metaRow = new VisualElement();
+                metaRow.AddToClassList("mistake-meta-row");
                 var categoryLabel = new Label(mistake.Category);
                 categoryLabel.AddToClassList("mistake-category-label");
+                metaRow.Add(categoryLabel);
+                if (!string.IsNullOrEmpty(mistake.QuestionType))
+                {
+                    var typeLabel = new Label(mistake.QuestionType);
+                    typeLabel.AddToClassList("mistake-type-label");
+                    metaRow.Add(typeLabel);
+                }
                 info.Add(questionLabel);
-                info.Add(categoryLabel);
+                info.Add(metaRow);
                 row.Add(info);
 
                 var countCol = new VisualElement();

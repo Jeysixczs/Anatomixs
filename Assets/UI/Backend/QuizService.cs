@@ -127,10 +127,17 @@ namespace Anatomia3D.Backend
             public string QuestionText;
             public bool WasCorrect;
 
-            public QuestionAttemptResult(string questionText, bool wasCorrect)
+            /// <summary>One of the QuestionTypeSlugs constants (e.g. "multiple-choice").
+            /// Flows through to MistakeSummary.QuestionTypeSlug so the admin Mistakes tab
+            /// can show what kind of question each row was. Empty for callers that haven't
+            /// been updated to pass it - those rows just show no type.</summary>
+            public string QuestionTypeSlug;
+
+            public QuestionAttemptResult(string questionText, bool wasCorrect, string questionTypeSlug = "")
             {
                 QuestionText = questionText;
                 WasCorrect = wasCorrect;
+                QuestionTypeSlug = questionTypeSlug;
             }
         }
 
@@ -687,7 +694,8 @@ namespace Anatomia3D.Backend
                         .Select(q => (object)new Dictionary<string, object>
                         {
                             { "questionText", q.QuestionText },
-                            { "correct", q.WasCorrect }
+                            { "correct", q.WasCorrect },
+                            { "questionTypeSlug", q.QuestionTypeSlug ?? "" }
                         })
                         .ToList();
                 }
@@ -1489,6 +1497,11 @@ namespace Anatomia3D.Backend
             public string QuestionText;
             public string Category;
             public int ErrorCount;
+
+            /// <summary>One of the QuestionTypeSlugs constants (e.g. "multiple-choice"),
+            /// carried over from the questionResults entries that fed this row. Empty if
+            /// none of those entries had a type recorded (older attempts).</summary>
+            public string QuestionTypeSlug;
         }
 
         [Serializable]
@@ -1518,7 +1531,7 @@ namespace Anatomia3D.Backend
                     var byQuiz = new Dictionary<string, (string title, List<float> percents)>();
                     var byCategory = new Dictionary<string, List<float>>();
                     var byCategoryQuiz = new Dictionary<string, Dictionary<string, (string title, List<float> percents)>>();
-                    var mistakeCounts = new Dictionary<string, (string category, int count)>();
+                    var mistakeCounts = new Dictionary<string, (string category, string typeSlug, int count)>();
 
                     foreach (var doc in task.Result.Documents)
                     {
@@ -1575,11 +1588,15 @@ namespace Anatomia3D.Backend
                                     string questionText = map.TryGetValue("questionText", out var qt) ? qt.ToString() : "";
                                     if (string.IsNullOrEmpty(questionText)) continue;
 
+                                    string typeSlug = map.TryGetValue("questionTypeSlug", out var ts) ? ts.ToString() : "";
+
                                     if (!mistakeCounts.TryGetValue(questionText, out var mistake))
                                     {
-                                        mistake = (category, 0);
+                                        mistake = (category, typeSlug, 0);
                                     }
-                                    mistakeCounts[questionText] = (mistake.category, mistake.count + 1);
+                                    mistakeCounts[questionText] = (mistake.category,
+                                        string.IsNullOrEmpty(mistake.typeSlug) ? typeSlug : mistake.typeSlug,
+                                        mistake.count + 1);
                                 }
                             }
                         }
@@ -1618,6 +1635,7 @@ namespace Anatomia3D.Backend
                         {
                             QuestionText = kvp.Key,
                             Category = kvp.Value.category,
+                            QuestionTypeSlug = kvp.Value.typeSlug,
                             ErrorCount = kvp.Value.count
                         })
                         .OrderByDescending(m => m.ErrorCount)
@@ -1653,7 +1671,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
 
-                    var mistakeCounts = new Dictionary<string, (string category, int count)>();
+                    var mistakeCounts = new Dictionary<string, (string category, string typeSlug, int count)>();
 
                     foreach (var doc in task.Result.Documents)
                     {
@@ -1672,13 +1690,58 @@ namespace Anatomia3D.Backend
                                 string questionText = map.TryGetValue("questionText", out var qt) ? qt.ToString() : "";
                                 if (string.IsNullOrEmpty(questionText)) continue;
 
+                                string typeSlug = map.TryGetValue("questionTypeSlug", out var ts) ? ts.ToString() : "";
+
                                 if (!mistakeCounts.TryGetValue(questionText, out var mistake))
                                 {
-                                    mistake = (category, 0);
+                                    mistake = (category, typeSlug, 0);
                                 }
-                                mistakeCounts[questionText] = (mistake.category, mistake.count + 1);
+                                mistakeCounts[questionText] = (mistake.category,
+                                    string.IsNullOrEmpty(mistake.typeSlug) ? typeSlug : mistake.typeSlug,
+                                    mistake.count + 1);
                             }
                         }
+                    }
+
+                    // Older quizAttempts docs (recorded before questionTypeSlug was added
+                    // to questionResults) leave typeSlug blank above. Fall back to looking
+                    // the type up on the quiz's current question list, matched by question
+                    // text, so old attempts still show a type as long as the question
+                    // hasn't since been edited/removed from the quiz.
+                    if (mistakeCounts.Values.Any(m => string.IsNullOrEmpty(m.typeSlug)))
+                    {
+                        FetchQuiz(quizId, (ok, _, quiz) =>
+                        {
+                            if (ok && quiz != null)
+                            {
+                                var typeByQuestionText = quiz.Questions
+                                    .Where(q => !string.IsNullOrEmpty(q.QuestionText))
+                                    .GroupBy(q => q.QuestionText)
+                                    .ToDictionary(g => g.Key, g => g.First().QuestionTypeSlug);
+
+                                foreach (var key in mistakeCounts.Keys.ToList())
+                                {
+                                    var m = mistakeCounts[key];
+                                    if (string.IsNullOrEmpty(m.typeSlug) && typeByQuestionText.TryGetValue(key, out var fallbackSlug))
+                                    {
+                                        mistakeCounts[key] = (m.category, fallbackSlug, m.count);
+                                    }
+                                }
+                            }
+
+                            onComplete?.Invoke(mistakeCounts
+                                .Select(kvp => new MistakeSummary
+                                {
+                                    QuestionText = kvp.Key,
+                                    Category = kvp.Value.category,
+                                    QuestionTypeSlug = kvp.Value.typeSlug,
+                                    ErrorCount = kvp.Value.count
+                                })
+                                .OrderByDescending(m => m.ErrorCount)
+                                .Take(10)
+                                .ToList());
+                        });
+                        return;
                     }
 
                     onComplete?.Invoke(mistakeCounts
@@ -1686,6 +1749,7 @@ namespace Anatomia3D.Backend
                         {
                             QuestionText = kvp.Key,
                             Category = kvp.Value.category,
+                            QuestionTypeSlug = kvp.Value.typeSlug,
                             ErrorCount = kvp.Value.count
                         })
                         .OrderByDescending(m => m.ErrorCount)

@@ -682,7 +682,7 @@ namespace Anatomia3D.UI.Quiz
                     ? q.StructureDisplayName
                     : q.QuestionText;
 
-                questionResults.Add(new QuizService.QuestionAttemptResult(mistakeLabel, isCorrect));
+                questionResults.Add(new QuizService.QuestionAttemptResult(mistakeLabel, isCorrect, q.QuestionTypeSlug));
             }
 
             string quizTitle = _quiz.Title;
