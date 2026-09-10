@@ -215,9 +215,9 @@ namespace Anatomia3D.Backend
 
         private static readonly TableSpec TopPerformersTable = new TableSpec
         {
-            Headers = new[] { "#", "Name", "Quizzes", "Points", "Level" },
-            ColumnX = new[] { 0f, 34f, 270f, 350f, 430f },
-            ColumnWidth = new[] { 30f, 226f, 70f, 70f, 80f },
+            Headers = new[] { "#", "Name", "Correct", "Score" },
+            ColumnX = new[] { 0f, 34f, 300f, 400f },
+            ColumnWidth = new[] { 30f, 256f, 90f, 110f },
         };
 
         private static readonly TableSpec ScoreTrendTable = new TableSpec
@@ -348,7 +348,7 @@ namespace Anatomia3D.Backend
             for (int i = 0; i < data.TopPerformers.Count; i++)
             {
                 var p = data.TopPerformers[i];
-                performerRows.Add(new[] { (i + 1).ToString(), p.Name, p.QuizzesCompleted.ToString(), p.Points.ToString(), p.Level.ToString() });
+                performerRows.Add(new[] { (i + 1).ToString(), p.Name, $"{p.ScoreCorrect}/{p.ScoreTotal}", $"{p.PercentScore:F0}%" });
             }
             AddTable(lines, TopPerformersTable, performerRows);
 

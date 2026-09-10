@@ -85,7 +85,7 @@
                 <ui:VisualElement name="students-panel" class="tab-panel">
                     <ui:VisualElement name="top-performers-card" class="report-card">
                         <ui:Label text="Top Performers" class="report-card-title"/>
-                        <ui:Label text="Students with highest points this period" class="report-card-subtitle"/>
+                        <ui:Label text="Highest scorers on the selected quiz" class="report-card-subtitle"/>
                         <ui:VisualElement name="top-performers-list" class="top-performers-list"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="student-activity-card" class="report-card">
@@ -114,7 +114,7 @@
                 <ui:VisualElement name="mistakes-panel" class="tab-panel hidden">
                     <ui:VisualElement name="common-mistakes-card" class="report-card">
                         <ui:Label text="Common Incorrect Answers" class="report-card-title"/>
-                        <ui:Label text="Questions with highest error rates" class="report-card-subtitle"/>
+                        <ui:Label text="Questions with highest error rates on the selected quiz" class="report-card-subtitle"/>
                         <ui:VisualElement name="common-mistakes-list" class="common-mistakes-list"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="recommendations-card" class="report-card">

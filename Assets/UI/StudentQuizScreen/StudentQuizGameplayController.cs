@@ -650,7 +650,8 @@ namespace Anatomia3D.UI.Quiz
             int pointsEarned = 0;
 
             // Per-question right/wrong breakdown - feeds AdminAnalyticsReportsController's
-            // "Common Incorrect Answers" list via QuizService.FetchClassroomReportData.
+            // "Common Incorrect Answers" list via QuizService.FetchClassroomReportData /
+            // FetchQuizMistakes.
             // Without this, that list stays empty no matter how many attempts exist.
             var questionResults = new List<QuizService.QuestionAttemptResult>(_quiz.Questions.Count);
 
@@ -670,7 +671,18 @@ namespace Anatomia3D.UI.Quiz
                     incorrectCount++;
                 }
 
-                questionResults.Add(new QuizService.QuestionAttemptResult(q.QuestionText, isCorrect));
+                // Image-Based questions all share the same generic QuestionText (e.g. "What
+                // is the name of the highlighted bone?" - see AdminQuizManagementController's
+                // auto-fill), which would otherwise merge every different highlighted
+                // structure's misses into a single indistinguishable "Common Incorrect
+                // Answers" row. Use the actual highlighted structure's name instead, so a
+                // miss on "Frontal Bone" and a miss on "Temporal Bone" show up as separate,
+                // identifiable rows on the Mistakes tab.
+                string mistakeLabel = q.QuestionTypeSlug == QuestionTypeSlugs.ImageBased && !string.IsNullOrEmpty(q.StructureDisplayName)
+                    ? q.StructureDisplayName
+                    : q.QuestionText;
+
+                questionResults.Add(new QuizService.QuestionAttemptResult(mistakeLabel, isCorrect));
             }
 
             string quizTitle = _quiz.Title;

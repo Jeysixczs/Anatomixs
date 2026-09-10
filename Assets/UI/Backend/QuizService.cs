@@ -1628,6 +1628,72 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        /// <summary>One quiz's "Common Incorrect Answers": a question text plus how many
+        /// times it was answered wrong, counted across every attempt at quizId within
+        /// classroomId (not just each student's best attempt - every wrong instance counts,
+        /// same convention as FetchClassroomReportData's classroom-wide TopMistakes). Only
+        /// populated from attempts whose submitter passed a questionResults list into
+        /// SubmitQuizAttempt (see that method's doc comment) - attempts submitted before that
+        /// data existed just don't contribute any mistake rows. Used by the quiz-scoped
+        /// Mistakes tab on AdminAnalyticsReportsController.</summary>
+        public void FetchQuizMistakes(string classroomId, string quizId, Action<List<MistakeSummary>> onComplete)
+        {
+            var result = new List<MistakeSummary>();
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(quizId))
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .WhereEqualTo("quizId", quizId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    var mistakeCounts = new Dictionary<string, (string category, int count)>();
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (!doc.ContainsField("questionResults")) continue;
+
+                        string category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "";
+                        var raw = doc.GetValue<List<object>>("questionResults");
+
+                        foreach (var item in raw)
+                        {
+                            if (item is Dictionary<string, object> map)
+                            {
+                                bool correct = map.TryGetValue("correct", out var correctVal) && Convert.ToBoolean(correctVal);
+                                if (correct) continue;
+
+                                string questionText = map.TryGetValue("questionText", out var qt) ? qt.ToString() : "";
+                                if (string.IsNullOrEmpty(questionText)) continue;
+
+                                if (!mistakeCounts.TryGetValue(questionText, out var mistake))
+                                {
+                                    mistake = (category, 0);
+                                }
+                                mistakeCounts[questionText] = (mistake.category, mistake.count + 1);
+                            }
+                        }
+                    }
+
+                    onComplete?.Invoke(mistakeCounts
+                        .Select(kvp => new MistakeSummary
+                        {
+                            QuestionText = kvp.Key,
+                            Category = kvp.Value.category,
+                            ErrorCount = kvp.Value.count
+                        })
+                        .OrderByDescending(m => m.ErrorCount)
+                        .Take(10)
+                        .ToList());
+                });
+        }
+
         /// <summary>Call for the Active Users / Quizzes Done / Completion overview stat cards
         /// on AdminAnalyticsReportsController. Buckets this classroom's quizAttempts into
         /// "this calendar month" vs "last calendar month" (both in UTC) and reports each stat
