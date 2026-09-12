@@ -37,13 +37,21 @@
     width: 0;
     display: none;
 }
-
+.unity-scroll-view__vertical-scroller{
+    width:0;
+    visibility: hidden;
+    
+}
 .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
 {
     padding: 0;
     margin: 0;
     flex-grow: 1;
     height: 100%;
+}
+
+.unity-scroll-view__content-container{
+    height:100%;
 }
 
 /* CRITICAL FIX: Reset the translate transform on the content container */
@@ -746,50 +754,31 @@
 {
     flex-grow: 1;
     flex-shrink: 1;
-    height: 0; /* forces the ScrollView to size from flex-grow, not from its content,
-                  so it only becomes scrollable once content actually overflows */
+    min-height: 0;
     width: 100%;
+    padding: 0;
+    margin: 0;
     -unity-overflow-scrolling: touch;
-}
-
-/* Same content-container fix as .screen-scroll: without this the inner container
-   can report a translate/height that ignores overflow, so the view never scrolls
-   even when the rendered rows are taller than the viewport. */
-.view-all-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    flex-grow: 1;
-}
-
-.view-all-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
-{
-    translate: none;
-    position: relative;
-    top: 0;
-    left: 0;
-    flex-grow: 0;
-    height: auto;
-}
-
-.view-all-scroll .unity-scroller--vertical
-{
-    width: 0;
-    display: none;
-}
-
-.view-all-scroll .unity-scroll-view__vertical-scroller
-{
-    visibility: hidden;
-    width: 0;
 }
 
 .view-all-list
 {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-height: 0;
+
     background-color: white;
     border-radius: 40px;
     margin: 40px 50px 79px 50px;
     padding: 20px 30px;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.05);
+}
+
+.view-all-list .activity-item
+{
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .view-all-no-results
