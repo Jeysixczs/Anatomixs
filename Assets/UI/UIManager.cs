@@ -133,7 +133,7 @@ namespace Anatomia3D.UI
             // see DecideInitialScreen for the actual logic. Short version: online
             // always shows Login; offline with biometric/PIN hardware also shows
             // Login (so the "Sign in with biometrics" button gates access - see
-            // PlayerSessionManager.LoginWithBiometrics); offline with NO hardware
+            // PlayerSessionManager.TryOfflineGate); offline with NO hardware
             // at all falls back to auto-restoring the last cached session
             // (PlayerSessionManager.TryRestoreSessionOffline) straight to Student
             // Explore 3D, since there'd be no way through Login at all otherwise.
@@ -240,7 +240,7 @@ private IEnumerator DecideInitialScreen()
             // button). Typing a password still requires connectivity either way
             // (Firebase Auth needs a network round-trip), so biometrics is what
             // actually lets an offline student back in - see
-            // PlayerSessionManager.LoginWithBiometrics, which is what restores the
+            // PlayerSessionManager.TryOfflineGate, which is what restores the
             // cached profile once that check succeeds.
             ShowStudentLogin();
         }

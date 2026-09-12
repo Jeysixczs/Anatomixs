@@ -1,4 +1,5 @@
 using Anatomia3D.Backend;
+using NativeBiometricAuth;
 using System.Collections;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -62,6 +63,8 @@ namespace Anatomia3D.UI
         private Button _googleButton;
         private Button _adminLoginButton;
         private Button _biometricLoginButton;
+        private VisualElement _biometricIcon;
+        private Label _biometricLabel;
         private Label _statusLabel;
 
         private bool _passwordVisible;
@@ -132,6 +135,8 @@ namespace Anatomia3D.UI
             _googleButton = _root.Q<Button>("google-signin-button");
             _adminLoginButton = _root.Q<Button>("admin-login-button");
             _biometricLoginButton = _root.Q<Button>("biometric-login-button");
+            _biometricIcon = _biometricLoginButton?.Q<VisualElement>("biometric-icon");
+            _biometricLabel = _biometricLoginButton?.Q<Label>("biometric-label");
             _statusLabel = _root.Q<Label>("status-label");
 
         }
@@ -261,17 +266,29 @@ namespace Anatomia3D.UI
             SetStatus("Verifying...");
             _biometricLoginButton.SetEnabled(false);
 
-            PlayerSessionManager.Instance.LoginWithBiometrics((success, errorMessage) =>
+            PlayerSessionManager.Instance.TryOfflineGate((result, message) =>
             {
                 _biometricLoginButton.SetEnabled(true);
 
-                if (success)
+                switch (result)
                 {
-                    UIManager.Instance.ShowStudentDashboard();
-                }
-                else
-                {
-                    SetStatus(errorMessage);
+                    case PlayerSessionManager.OfflineGateResult.EnteredApp:
+                        UIManager.Instance.ShowStudentDashboard();
+                        break;
+
+                    case PlayerSessionManager.OfflineGateResult.NoSecureFallbackAvailable:
+                        // The OS-level check that was available when this device
+                        // opted in no longer exists (e.g. the student removed their
+                        // screen lock) - hide the button instead of leaving it
+                        // sitting there for a prompt that would just fail again.
+                        _biometricLoginButton.EnableInClassList("hidden", true);
+                        SetStatus(message);
+                        break;
+
+                    case PlayerSessionManager.OfflineGateResult.NeedsPasswordLogin:
+                    default:
+                        SetStatus(message);
+                        break;
                 }
             });
         }
@@ -279,11 +296,18 @@ namespace Anatomia3D.UI
         // ---------------- Biometrics ----------------
 
         /// <summary>Shows the "Sign in with biometrics" button only when there's
-        /// actually a local session it could unlock (see
-        /// PlayerSessionManager.IsBiometricLoginAvailable) - e.g. hidden the very
-        /// first time this student uses this device, before any password/Google
-        /// login has happened here. Re-checked every time this screen becomes
-        /// visible (OnEnable) so it reflects reality if the student logged out, or
+        /// both a local session it could unlock (see
+        /// PlayerSessionManager.IsBiometricLoginAvailable) AND a working OS-level
+        /// check to run against it right now (IsBiometricHardwareAvailable, which
+        /// covers biometrics OR a device PIN/pattern/password). Checking both
+        /// matters because opting in doesn't guarantee the OS credential still
+        /// exists later - e.g. a student could remove their screen lock in device
+        /// settings after enabling biometric sign-in here. Hidden entirely (rather
+        /// than shown-then-failing) the very first time this student uses this
+        /// device, before any password/Google login has happened here, and any
+        /// time that OS-level check has since disappeared. Re-checked every time
+        /// this screen becomes visible (OnEnable) so it reflects reality if the
+        /// student logged out, changed their device's lock screen settings, or
         /// signed in successfully on their last visit, since this screen was last
         /// shown.</summary>
         private void UpdateBiometricButtonVisibility()
@@ -291,9 +315,40 @@ namespace Anatomia3D.UI
             if (_biometricLoginButton == null) return;
 
             bool show = PlayerSessionManager.Instance != null
-                && PlayerSessionManager.Instance.IsBiometricLoginAvailable;
+                && PlayerSessionManager.Instance.IsBiometricLoginAvailable
+                && PlayerSessionManager.Instance.IsBiometricHardwareAvailable;
 
             _biometricLoginButton.EnableInClassList("hidden", !show);
+
+            if (show) UpdateBiometricButtonLabel();
+        }
+
+        /// <summary>Swaps the button's icon/text between "Biometrics" and "PIN or
+        /// Password" depending on what this device can actually do right now.
+        /// TryOfflineGate/Biometric.Authenticate(allowDeviceCredential: true)
+        /// already silently falls back to the OS's PIN/pattern/password screen
+        /// when there's no usable fingerprint/face sensor - the button used to
+        /// always say "Sign in with Biometrics" regardless, which meant a student
+        /// with no biometric sensor (or one who removed enrollment) tapped a
+        /// "Biometrics" button and got a PIN prompt with no warning. Re-checked
+        /// alongside visibility so it stays accurate if the student enrolls or
+        /// removes a fingerprint between visits to this screen.</summary>
+        private void UpdateBiometricButtonLabel()
+        {
+            if (_biometricLabel == null) return;
+
+            // SupportedConfigured means "present AND enrolled" - biometrics that
+            // exist but have nothing enrolled yet can't actually be used, so this
+            // deliberately checks Configured, not just "hardware exists".
+            var availability = Biometric.GetAvailability();
+            bool hasBiometric = availability.Biometrics == BiometricAvailability.SupportedConfigured;
+
+            _biometricLabel.text = hasBiometric
+                ? "Sign in with Biometrics"
+                : "Sign in with PIN or Password";
+
+            _biometricIcon?.EnableInClassList("icon-lock", !hasBiometric);
+            _biometricIcon?.EnableInClassList("icon-fingerprint", hasBiometric);
         }
 
         /// <summary>Re-runs UpdateBiometricButtonVisibility every frame for a few
@@ -314,7 +369,9 @@ namespace Anatomia3D.UI
             {
                 UpdateBiometricButtonVisibility();
 
-                if (PlayerSessionManager.Instance != null && PlayerSessionManager.Instance.IsBiometricLoginAvailable)
+                if (PlayerSessionManager.Instance != null
+                    && PlayerSessionManager.Instance.IsBiometricLoginAvailable
+                    && PlayerSessionManager.Instance.IsBiometricHardwareAvailable)
                     yield break;
 
                 yield return null;
