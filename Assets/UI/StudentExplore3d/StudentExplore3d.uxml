@@ -74,7 +74,7 @@
                         </ui:VisualElement>
                         <ui:VisualElement picking-mode="Ignore" class="pro-tip-text-col">
                             <ui:Label text="Pro Tip" picking-mode="Ignore" class="pro-tip-title"/>
-                            <ui:Label text="Use pinch to zoom, rotate with two fingers, and tap on structures to learn more!" picking-mode="Ignore" class="pro-tip-text"/>
+                            <ui:Label text="To use Offline Mode, please set a security password on your device." picking-mode="Ignore" class="pro-tip-text"/>
                         </ui:VisualElement>
                         <ui:Label text="›" picking-mode="Ignore" class="pro-tip-chevron"/>
                     </ui:VisualElement>

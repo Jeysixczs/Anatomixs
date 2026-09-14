@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.Backend
@@ -157,20 +156,63 @@ namespace Anatomia3D.Backend
         private VisualElement _playModeControlsRow;
         private VisualElement _audioRow;
 
-        // One TextField per non-space character of the current question's
-        // DisplayName, in left-to-right order, built fresh by
-        // BuildLetterBoxes for every question. _letterFieldSourceIndex[i]
+        // One display-only TextField per non-space character of the
+        // current question's DisplayName, in left-to-right order, built
+        // fresh by BuildLetterBoxes for every question. _letterFieldSourceIndex[i]
         // is the DisplayName index that _letterFields[i] represents, so a
         // hint (which reveals by DisplayName index) can find the matching
         // box. Spaces never get a TextField - see BuildLetterBoxes.
+        //
+        // These boxes are NOT directly typed into (isReadOnly/non-focusable
+        // - see BuildLetterBoxes) - all real keystrokes go through
+        // _masterInput below, and these are kept in sync as pure display.
+        // See the comment above _masterInput for why.
         private readonly List<TextField> _letterFields = new List<TextField>();
         private readonly List<int> _letterFieldSourceIndex = new List<int>();
 
-        // Which _letterFields index currently has focus, or -1 if none.
-        // Kept up to date by the FocusIn/FocusOut callbacks in
-        // BuildLetterBoxes and read by Update()'s Keyboard.current polling
-        // - see the comment on Update() for why polling is needed at all.
-        private int _focusedLetterFieldIndex = -1;
+        // The single real (hidden) text input every keystroke actually
+        // goes to - see the comment above BuildLetterBoxes for why a
+        // per-box TextField design can't reliably support backspace
+        // on-device, which is what this replaces.
+        private TextField _masterInput;
+
+        // _letterFields indices that are currently typeable, in
+        // left-to-right order - i.e. NOT hint-revealed. _masterInput.value[i]
+        // is always the letter typed for the box at _editableBoxIndices[i];
+        // a hint reveal splices the revealed box's index out of this list
+        // (see RevealLetterField) so subsequent typed characters keep
+        // lining up with the right boxes.
+        private readonly List<int> _editableBoxIndices = new List<int>();
+
+        // Sequence index (into _editableBoxIndices, NOT _letterFields) of
+        // the box the player last tapped directly, so the next character
+        // they type overwrites THAT box instead of appending at the end -
+        // see SelectBoxForEdit/OnMasterInputChanged. -1 means no box is
+        // selected, i.e. normal left-to-right typing.
+        private int _selectedEditSeq = -1;
+
+        // Mirrors _masterInput's value after every programmatic change
+        // (BuildLetterBoxes/RevealLetterField/ClearUnrevealedLetterFields -
+        // see SetMasterValue), so OnMasterInputChanged can tell exactly
+        // which single character the OS keyboard just appended even
+        // though _masterInput is never visibly focused with a real
+        // on-screen cursor (see the class comment above BuildLetterBoxes).
+        private string _masterInputPrevValue = string.Empty;
+
+        // Set right after a box-overwrite splice (see OnMasterInputChanged)
+        // to the exact raw fragment that was just spliced in. The
+        // Blur()+Focus() cycle used to redirect the keyboard back to
+        // _masterInput after a box tap (see _letterRow's PointerDownEvent
+        // handler in WireUi) reliably causes Android's Game Activity
+        // TouchScreenKeyboard to fire a SECOND ChangeEvent carrying that
+        // same fragment again, arriving after _selectedEditSeq has already
+        // been reset to -1 by the first event. Without this guard that
+        // second event is indistinguishable from ordinary sequential
+        // typing and overwrites the whole guess with just that fragment
+        // (see OnMasterInputChanged). Null means no echo is expected;
+        // consumed (checked and cleared) on the very next ChangeEvent
+        // regardless of whether it actually matched.
+        private string _pendingEchoRaw = null;
 
         private void OnEnable()
         {
@@ -300,6 +342,89 @@ namespace Anatomia3D.Backend
                 Debug.LogWarning("[AnatomyPlayModeController] 'PlayModeLetterRow' not found in UXML - " +
                                   "Play Mode's letter-box guessing UI cannot be built. See AnatomyScreen.uxml.");
             }
+
+            // The single real input for the whole guess - see the field
+            // comment above _masterInput. Created fresh per screen visit
+            // (this whole UXML tree is rebuilt each visit anyway) and
+            // parented to _root rather than _letterRow, since BuildLetterBoxes
+            // clears _letterRow's children on every new question and this
+            // needs to survive that. pickingMode = Ignore because it's
+            // never tapped directly - see the _letterRow PointerDownEvent
+            // handler below, which forwards focus to it instead.
+            if (_root != null)
+            {
+                _masterInput = new TextField { isDelayed = false, multiline = false };
+                _masterInput.AddToClassList("letter-master-input");
+                _masterInput.pickingMode = PickingMode.Ignore;
+                _masterInput.RegisterValueChangedCallback(OnMasterInputChanged);
+                _masterInput.RegisterCallback<KeyDownEvent>(OnMasterInputKeyDown, TrickleDown.TrickleDown);
+                _root.Add(_masterInput);
+            }
+
+            // Boxes themselves are isReadOnly/non-focusable display only
+            // (see BuildLetterBoxes) - tapping one should still bring the
+            // keyboard up and resume typing, so forward focus here.
+            //
+            // Deliberately Blur() before Focus() (deferred one frame -
+            // Focus() called in the very same callback as Blur() doesn't
+            // reliably reopen the on-screen keyboard, same reasoning as
+            // other one-frame-deferred UI Toolkit calls in this class -
+            // see StartCoroutineDeferredWire). This matters because
+            // tapping the keyboard's own Done/check key dismisses the OS
+            // on-screen keyboard WITHOUT UI Toolkit's focus state ever
+            // changing to match - _masterInput is still the "focused"
+            // element as far as UI Toolkit is concerned. Calling Focus()
+            // on something already considered focused is a no-op (no
+            // focus change happens), so nothing tells the OS to reopen
+            // the keyboard. Blurring first guarantees an actual focus
+            // transition on the following Focus() regardless of which
+            // state (still-focused vs genuinely blurred) _masterInput was
+            // already in, so tapping a box reliably reopens the keyboard
+            // either way.
+            // TrickleDown.TrickleDown (capture phase): letter boxes are
+            // TextFields, and even readOnly/non-focusable TextFields still
+            // run their own internal pointer-down handling on their inner
+            // TextElement (cursor placement) which calls StopPropagation().
+            // That happens AT the target, before bubble-phase handlers ever
+            // run - so a plain bubble-phase registration here silently never
+            // fires when the tap lands on a box's glyph. Capture phase runs
+            // before the target is reached, so it can't be swallowed.
+            _letterRow?.RegisterCallback<PointerDownEvent>(_ =>
+            {
+                if (_masterInput == null) return;
+                Debug.Log("[AnatomyPlayModeController] _letterRow PointerDownEvent: re-focusing _masterInput.");
+                _masterInput.Blur();
+                _masterInput.schedule.Execute(() => _masterInput?.Focus());
+            }, TrickleDown.TrickleDown);
+
+            // DIAGNOSTIC: capture phase, so this fires before ANY other
+            // handler on this element or its children - even ones that
+            // stop propagation - can swallow it. If a tap on a letter box
+            // logs nothing anywhere else (no "Box tapped", no the bubble
+            // handler above), but this line ALSO never appears, the touch
+            // never reached UI Toolkit's event system at all for that tap.
+            // The leading suspect for that: the OS on-screen keyboard is
+            // up (because _masterInput is focused) and the tap is being
+            // consumed by the OS to dismiss the keyboard instead of being
+            // forwarded to Unity - the same category of platform quirk as
+            // the Done-key case already handled above, just triggered by
+            // tapping elsewhere instead of the keyboard's own dismiss key.
+            // If this DOES log but nothing downstream does, it's a
+            // geometric/hit-test issue instead - evt.target below tells you
+            // which element actually absorbed it.
+            _letterRow?.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                Debug.Log($"[AnatomyPlayModeController] DIAGNOSTIC _letterRow capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
+            }, TrickleDown.TrickleDown);
+
+            // Same idea but at _root, so a tap that lands OUTSIDE
+            // _letterRow entirely (e.g. it's hitting BodyArea underneath
+            // because of a layering/z-order issue) still shows up with
+            // its real target, instead of producing silence everywhere.
+            _root?.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                Debug.Log($"[AnatomyPlayModeController] DIAGNOSTIC _root capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
+            }, TrickleDown.TrickleDown);
 
             // Hidden as a whole (label included) until Play Mode is
             // switched on - see ActivatePlayMode/DeactivatePlayMode. The
@@ -826,7 +951,7 @@ namespace Anatomia3D.Backend
                 BuildLetterBoxes(entry.displayName);
                 RestoreRevealedHints(info.boneName, entry.displayName);
                 SetGuessUiEnabled(true);
-                FocusLetterField(0);
+                _masterInput?.Focus();
 
                 // Reflect today's already-used hint count for the active
                 // system immediately - a student who hit the limit earlier
@@ -841,215 +966,419 @@ namespace Anatomia3D.Backend
         {
             if (_hintButton != null) _hintButton.SetEnabled(enabled);
             if (_submitButton != null) _submitButton.SetEnabled(enabled);
+            if (_masterInput != null) _masterInput.SetEnabled(enabled);
             foreach (var field in _letterFields)
                 field.SetEnabled(enabled);
         }
 
         // ===== Letter-box guessing UI =====
         //
-        // Play Mode is guessed by typing directly into one box per letter
-        // (Wordle-style) instead of a single free-text field. One TextField
-        // per non-space character of DisplayName; spaces are never their
-        // own box - see the plan's section 7/9.
+        // Play Mode is guessed Wordle-style: one box shown per non-space
+        // character of DisplayName. An EARLIER version gave each box its
+        // own real TextField to type into directly, auto-advancing focus
+        // to the next (empty) box after every letter. That broke backspace
+        // on-device: typing auto-advances into an empty box, and on a real
+        // device the on-screen keyboard's backspace on an ALREADY-EMPTY
+        // field raises no event of any kind, on any input path (not
+        // Keyboard.current, not Input.inputString either) - there's
+        // nothing for the OS to report because nothing about the text
+        // actually changed. That's not a detection bug to work around;
+        // it's a real absence of any signal to detect.
         //
-        // Boxes are grouped by word (see BuildLetterBoxes) so a long
-        // answer like "LEFT COSTAL CARTILAGE OF SEVENTH RIB" wraps whole
-        // words onto new lines instead of splitting a word awkwardly
-        // across two rows of tiny boxes - each .letter-word-group is a
-        // single flex item that either fits or moves to the next line as
-        // a whole, while the boxes inside it never wrap. _letterFields /
-        // _letterFieldSourceIndex stay a flat left-to-right list exactly
-        // like before (grouping is purely visual, in which VisualElement
-        // each field is parented to) so every other method below -
-        // RevealLetterField, GatherGuessText, hint/submit/backspace
-        // navigation - needs no changes.
+        // So instead, only ONE real TextField exists at all - _masterInput,
+        // hidden, always holding the FULL currently-typed guess (for the
+        // still-editable boxes) as one continuous string. Backspacing a
+        // box that still has a letter in it now always has a letter in
+        // the underlying string to delete too, so native deletion (which
+        // already reliably raises a value-changed event on-device - the
+        // earlier design relied on exactly this for its non-empty case)
+        // is all that's needed. There is no more "already empty" case to
+        // special-case, so nothing has to poll for a keypress at all.
+        //
+        // The boxes below (_letterFields) are pure display now -
+        // isReadOnly/non-focusable, just kept in sync with _masterInput's
+        // content (see RenderLetterBoxesFromMaster) and with hint reveals
+        // (see RevealLetterField). Grouped by word (see BuildLetterBoxes)
+        // so a long answer like "LEFT COSTAL CARTILAGE OF SEVENTH RIB"
+        // wraps whole words onto new lines instead of splitting a word
+        // awkwardly across two rows of tiny boxes.
 
-        // Rebuilds _letterRow's children from scratch for a new question.
-        // Safe to call with an empty string (e.g. for the already-answered
-        // case) - it just clears the row.
+        // Rebuilds _letterRow's children from scratch for a new question,
+        // and resets _masterInput/_editableBoxIndices to match. Safe to
+        // call with an empty string (e.g. for the already-answered case)
+        // - it just clears the row.
         private void BuildLetterBoxes(string displayName)
         {
             _letterFields.Clear();
             _letterFieldSourceIndex.Clear();
-            if (_letterRow == null) return;
+            _editableBoxIndices.Clear();
+            ClearBoxSelection();
 
-            _letterRow.Clear();
-
-            VisualElement currentWordGroup = null;
-
-            for (int i = 0; i < displayName.Length; i++)
+            if (_letterRow != null)
             {
-                char c = displayName[i];
-                if (char.IsWhiteSpace(c))
+                _letterRow.Clear();
+
+                VisualElement currentWordGroup = null;
+
+                for (int i = 0; i < displayName.Length; i++)
                 {
-                    // Ends the current word group - the next non-space
-                    // character starts a new one. No visual element is
-                    // created for the space itself; the gap comes from
-                    // .letter-word-group's own margin in the USS.
-                    currentWordGroup = null;
-                    continue;
+                    char c = displayName[i];
+                    if (char.IsWhiteSpace(c))
+                    {
+                        // Ends the current word group - the next non-space
+                        // character starts a new one. No visual element is
+                        // created for the space itself; the gap comes from
+                        // .letter-word-group's own margin in the USS.
+                        currentWordGroup = null;
+                        continue;
+                    }
+
+                    if (currentWordGroup == null)
+                    {
+                        currentWordGroup = new VisualElement();
+                        currentWordGroup.AddToClassList("letter-word-group");
+                        _letterRow.Add(currentWordGroup);
+                    }
+
+                    var field = new TextField { isReadOnly = true, focusable = false };
+                    field.AddToClassList("letter-box");
+
+                    // Still-editable boxes accept taps directly (Position) so
+                    // SelectBoxForEdit can tell exactly which one was tapped;
+                    // the tap then also bubbles up to _letterRow's own
+                    // PointerDownEvent handler (see WireUi) which forwards
+                    // focus to _masterInput. Hint-revealed boxes go
+                    // back to Ignore in RevealLetterField, since they can no
+                    // longer be selected for editing.
+                    field.pickingMode = PickingMode.Position;
+                    int capturedFieldIndex = _letterFields.Count; // this box's index, fixed at creation time.
+                    // TrickleDown.TrickleDown: same reasoning as the
+                    // _letterRow re-focus handler in WireUi - TextField's
+                    // own inner TextElement stops the PointerDownEvent
+                    // before it can bubble back up to `field`, so a
+                    // tap that lands on the glyph itself (not the box's
+                    // padding) never reaches a bubble-phase handler here.
+                    field.RegisterCallback<PointerDownEvent>(_ =>
+                    {
+                        Debug.Log($"[AnatomyPlayModeController] Box tapped: fieldIndex={capturedFieldIndex}.");
+                        SelectBoxForEdit(capturedFieldIndex);
+                    }, TrickleDown.TrickleDown);
+
+                    currentWordGroup.Add(field);
+                    _letterFields.Add(field);
+                    _letterFieldSourceIndex.Add(i);
+                    _editableBoxIndices.Add(_letterFields.Count - 1); // none hint-revealed yet at build time.
                 }
+            }
 
-                if (currentWordGroup == null)
-                {
-                    currentWordGroup = new VisualElement();
-                    currentWordGroup.AddToClassList("letter-word-group");
-                    _letterRow.Add(currentWordGroup);
-                }
+            SetMasterValue(string.Empty);
+            if (_masterInput != null)
+            {
+                // +1, not _editableBoxIndices.Count: this is native-level
+                // enforcement, and it fires BEFORE OnMasterInputChanged ever
+                // sees the keystroke. Capping it exactly at the box count
+                // silently eats the keystroke whenever the guess is already
+                // full and the player taps a box to fix a letter - the OS
+                // keyboard appends at the (invisible) end, the field is
+                // already at maxLength, so Unity drops the key and no
+                // ChangeEvent fires at all, which is why the overwrite path
+                // in OnMasterInputChanged looked "dead". Give it one
+                // character of headroom for that append-then-splice
+                // round-trip; FilterMasterInputValue already truncates the
+                // *logical* value back to _editableBoxIndices.Count right
+                // after, so the real cap still holds.
+                _masterInput.maxLength = _editableBoxIndices.Count + 1;
+                Debug.Log($"[AnatomyPlayModeController] BuildLetterBoxes: {_editableBoxIndices.Count} editable box(es), _masterInput.maxLength set to {_masterInput.maxLength}.");
+            }
 
-                var field = new TextField { maxLength = 1, isDelayed = false };
-                field.AddToClassList("letter-box");
+            RenderLetterBoxesFromMaster();
+        }
 
-                int fieldIndex = _letterFields.Count; // captured for the closures below
-                field.RegisterValueChangedCallback(evt => OnLetterFieldChanged(fieldIndex, evt.newValue));
-                field.RegisterCallback<KeyDownEvent>(evt => OnLetterFieldKeyDown(fieldIndex, evt), TrickleDown.TrickleDown);
-                field.RegisterCallback<FocusInEvent>(_ =>
-                {
-                    field.AddToClassList("letter-box-active");
-                    _focusedLetterFieldIndex = fieldIndex;
-                });
-                field.RegisterCallback<FocusOutEvent>(_ =>
-                {
-                    field.RemoveFromClassList("letter-box-active");
-                    if (_focusedLetterFieldIndex == fieldIndex)
-                        _focusedLetterFieldIndex = -1;
-                });
+        // Centralizes every PROGRAMMATIC write to _masterInput's value
+        // (as opposed to the player typing) so _masterInputPrevValue never
+        // drifts out of sync with what's actually in the field - see the
+        // field comment above _masterInputPrevValue for why that matters.
+        private void SetMasterValue(string value)
+        {
+            _masterInputPrevValue = value ?? string.Empty;
+            _masterInput?.SetValueWithoutNotify(_masterInputPrevValue);
 
-                currentWordGroup.Add(field);
-                _letterFields.Add(field);
-                _letterFieldSourceIndex.Add(i);
+            // SetValueWithoutNotify re-syncs the TEXT shown to the native
+            // on-screen (mobile) keyboard, but it does NOT move that
+            // keyboard's cursor - the cursor stays wherever it was last
+            // left (e.g. right after the single character typed into a
+            // just-reset field during a box overwrite - see the comment in
+            // OnMasterInputChanged). Left alone, the next real keystroke
+            // the player types gets inserted at that stale position
+            // instead of continuing from the end, splicing it into the
+            // middle of the word. Explicitly park the cursor at the end of
+            // the new value after every programmatic write so normal
+            // typing always resumes by appending, not inserting.
+            //
+            // This can legitimately fail: the same Blur()+Focus() cycle
+            // that causes the keyboard-echo behaviour documented above
+            // _pendingEchoRaw also leaves the native TouchScreenKeyboard's
+            // own internal text buffer out of sync with the logical value
+            // we just wrote via SetValueWithoutNotify - e.g. the native
+            // buffer may still only contain the single just-typed
+            // fragment (length 1) while _masterInputPrevValue is the full
+            // spliced word (length 8). Asking SelectRange for a position
+            // based on the logical length is then out of range for the
+            // native buffer and ITextSelection.SelectRange throws
+            // ArgumentOutOfRangeException. There's no reliable way to ask
+            // the native keyboard for its real current length up front, so
+            // rather than pre-validating a bound we can't trust, swallow a
+            // failed cursor-park here: losing the cursor-position nicety in
+            // that edge case is harmless, but letting the exception escape
+            // is not - it used to unwind straight out of this method and
+            // abort whatever the caller (OnMasterInputChanged) did next,
+            // which was the call to RenderLetterBoxesFromMaster() that
+            // actually redraws the tapped box with its new letter. That's
+            // why the splice used to succeed internally while the box
+            // visibly never updated.
+            try
+            {
+                _masterInput?.SelectRange(_masterInputPrevValue.Length, _masterInputPrevValue.Length);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Debug.Log($"[AnatomyPlayModeController] SetMasterValue: SelectRange({_masterInputPrevValue.Length}, {_masterInputPrevValue.Length}) rejected by native keyboard (buffer desync after Blur()+Focus()) - ignoring, value is still correctly set. {ex.Message}");
             }
         }
 
-        // Enter submits, same as tapping the Submit button. Backspace is
-        // NOT handled here (see Update() below) - on a physical device
-        // the on-screen keyboard doesn't reliably raise a UI Toolkit
-        // KeyDownEvent for backspace at all, even with a character-code
-        // check, so a handler here would work in the Editor/Simulator
-        // and silently do nothing on-device.
-        private void OnLetterFieldKeyDown(int fieldIndex, KeyDownEvent evt)
+        // Tapping a still-editable letter box selects it as the target for
+        // the NEXT character typed, so that character overwrites just this
+        // box instead of appending at the end of the guess - see
+        // OnMasterInputChanged for how the overwrite itself happens.
+        // Boxes that are already hint-revealed (spliced out of
+        // _editableBoxIndices) and boxes further ahead than anything typed
+        // so far (nothing there yet to overwrite) can't be selected; a tap
+        // on either still forwards focus/keyboard to _masterInput via
+        // _letterRow's own PointerDownEvent handler in WireUi, it just
+        // doesn't arm an overwrite.
+        private void SelectBoxForEdit(int fieldIndex)
+        {
+            int seq = _editableBoxIndices.IndexOf(fieldIndex);
+            string value = _masterInput != null ? (_masterInput.value ?? string.Empty) : string.Empty;
+
+            if (seq < 0)
+            {
+                Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex} is NOT in _editableBoxIndices (likely hint-revealed) - bailing, no selection armed.");
+                return;
+            }
+            if (seq > value.Length)
+            {
+                Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} is past the current guess length ({value.Length}) - nothing typed there yet to overwrite, bailing.");
+                return;
+            }
+
+            _selectedEditSeq = seq;
+            Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} ARMED, currentValueLen={value.Length}, maxLength={_masterInput?.maxLength}.");
+
+            foreach (var f in _letterFields)
+                f.RemoveFromClassList("letter-box-selected");
+            _letterFields[fieldIndex].AddToClassList("letter-box-selected");
+        }
+
+        // Cancels any pending "next character overwrites this box" selection
+        // (see SelectBoxForEdit) and clears its highlight, without touching
+        // _masterInput's actual text. Called whenever that selection is
+        // consumed (a character was typed) or invalidated (a new question
+        // was built).
+        private void ClearBoxSelection()
+        {
+            _selectedEditSeq = -1;
+            foreach (var f in _letterFields)
+                f.RemoveFromClassList("letter-box-selected");
+        }
+
+        // Enter submits, same as tapping the Submit button. Best-effort
+        // only (same as before this rewrite) - a KeyDownEvent isn't
+        // guaranteed to fire on-device for every key, but Enter has a
+        // reliable fallback already: the physical Submit button.
+        private void OnMasterInputKeyDown(KeyDownEvent evt)
         {
             if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
                 OnSubmitClicked();
         }
 
-        // Polls backspace via the new Input System's Keyboard.current
-        // instead of a UI Toolkit KeyDownEvent, for the same reason
-        // UIManager.Update() does for the Android back button: the
-        // on-screen keyboard on a real device doesn't reliably surface
-        // backspace as a VisualElement event when there's nothing in the
-        // focused TextField to delete (no text change, so no
-        // value-changed event either). Keyboard.current DOES see it.
-        //
-        // Only handles the "already empty" case - backspacing a box that
-        // still has a letter goes through the native TextField deletion
-        // -> OnLetterFieldChanged(""), which works fine on-device already.
-        private void Update()
+        // The only place keystrokes are handled at all now - see the
+        // class comment above BuildLetterBoxes for why. Filters out
+        // anything that isn't a plain letter (guards against mobile
+        // autocapitalize/autocomplete/swipe-typing inserting spaces,
+        // punctuation, or a whole suggested word - the same intent the
+        // old per-box maxLength=1 guard had), upper-cases the rest to
+        // match DisplayName's convention, and hard-caps the length at the
+        // number of boxes still open to type into. Works the same for
+        // typing (string grows) and backspacing (string shrinks) - both
+        // are just "the string changed", which is why this never has an
+        // undetectable case the way the old per-box design did.
+        private void OnMasterInputChanged(ChangeEvent<string> evt)
         {
-            if (Keyboard.current == null || !Keyboard.current.backspaceKey.wasPressedThisFrame)
-                return;
+            Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: raw='{evt.newValue}' (len {evt.newValue?.Length ?? 0}), prev='{_masterInputPrevValue}' (len {_masterInputPrevValue.Length}), maxLength={_masterInput?.maxLength}, selectedEditSeq={_selectedEditSeq}.");
 
-            int fieldIndex = _focusedLetterFieldIndex;
-            if (fieldIndex < 0 || fieldIndex >= _letterFields.Count)
-                return;
-
-            if (!string.IsNullOrEmpty(_letterFields[fieldIndex].value))
-                return;
-
-            ClearAndFocusPreviousLetterField(fieldIndex);
-        }
-
-        // Keeps only the last character typed (guards against paste/IME
-        // giving more than one char), upper-cases it to match DisplayName's
-        // convention, then auto-advances to the next box - typing fills the
-        // whole word left to right without needing to tab manually.
-        //
-        // Backspace-to-previous-box also lives here: on a physical device
-        // the on-screen keyboard clears the TextField through the native
-        // IME, which raises this value-changed callback reliably even
-        // when it doesn't raise a matching KeyDownEvent - see Update()
-        // above for the "already empty" case this can't see.
-        private void OnLetterFieldChanged(int fieldIndex, string newValue)
-        {
-            if (fieldIndex < 0 || fieldIndex >= _letterFields.Count) return;
-
-            if (string.IsNullOrEmpty(newValue))
+            // Consume any armed echo-guard before doing anything else - it
+            // only ever guards exactly one ChangeEvent (see the field
+            // comment above _pendingEchoRaw), whether or not this is the
+            // one it was waiting for.
+            bool isDuplicateEcho = _pendingEchoRaw != null && evt.newValue == _pendingEchoRaw;
+            if (isDuplicateEcho)
             {
-                int target = ResolveBackwardFocusIndex(fieldIndex - 1);
-                if (target >= 0 && target < _letterFields.Count)
-                    _letterFields[target].Focus();
-                return;
+                Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: ignoring duplicate echo raw='{evt.newValue}' ...");
+                SetMasterValue(_masterInputPrevValue);
+                RenderLetterBoxesFromMaster();
+                return; // still armed — keep guarding until a non-matching event arrives
+            }
+            _pendingEchoRaw = null; // this event is genuinely new; stop guarding
+
+            string filtered = FilterMasterInputValue(evt.newValue);
+
+            // A box was tapped (see SelectBoxForEdit) and is still waiting
+            // for its overwrite character. _masterInput is never visibly
+            // focused with a real on-screen cursor (see the class comment
+            // above BuildLetterBoxes), so there's no cursor position to
+            // trust - and on mobile there's no reliable length
+            // relationship to _masterInputPrevValue either: the
+            // Blur()+Focus() cycle used to redirect the keyboard back to
+            // _masterInput after a box tap (see _letterRow's
+            // PointerDownEvent handler in WireUi) severs the native
+            // keyboard's connection to whatever text was already in the
+            // field, so the very next ChangeEvent can arrive containing
+            // ONLY the character(s) typed since that reset - e.g. raw="d"
+            // even though _masterInputPrevValue is 7 characters long.
+            // Comparing filtered.Length against _masterInputPrevValue.Length
+            // (as if this were always "one longer than before") silently
+            // fails that comparison and falls through to treating the
+            // reset fragment as the WHOLE new guess, wiping out every
+            // letter that wasn't the one just typed. The only thing we can
+            // trust here is the actual last character that just arrived -
+            // splice THAT into the selected box's position on top of
+            // _masterInputPrevValue instead. An empty raw value (nothing
+            // typed since the reset - e.g. backspace with nothing to
+            // delete) just cancels the pending selection and falls through
+            // to normal sequential editing.
+            if (_selectedEditSeq >= 0)
+            {
+                if (filtered.Length > 0)
+                {
+                    char typed = filtered[filtered.Length - 1]; // the just-typed letter
+                    var sb = new StringBuilder(_masterInputPrevValue);
+                    if (_selectedEditSeq < sb.Length)
+                        sb[_selectedEditSeq] = typed; // overwrite - the box already had a letter.
+                    else
+                        sb.Append(typed); // selected box was the next empty one - same as normal append.
+                    filtered = sb.ToString();
+                    if (filtered.Length > _editableBoxIndices.Count)
+                        filtered = filtered.Substring(0, _editableBoxIndices.Count);
+                    Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: spliced '{typed}' into seq {_selectedEditSeq}, result='{filtered}'.");
+
+                    // Arm the echo guard: the keyboard reliably re-fires this
+                    // exact raw fragment one more time right after this event
+                    // (see the field comment above _pendingEchoRaw) - without
+                    // this, that next event would be mistaken for ordinary
+                    // typing and wipe out the guess we just rebuilt.
+                    _pendingEchoRaw = evt.newValue;
+                }
+                else
+                {
+                    filtered = _masterInputPrevValue; // nothing typed - keep the existing guess intact.
+                    Debug.Log("[AnatomyPlayModeController] OnMasterInputChanged: a box was selected but nothing was typed (raw came back empty) - selection cancelled without an overwrite.");
+                }
+
+                ClearBoxSelection(); // one overwrite consumed (or cancelled) - back to normal typing.
             }
 
-            string single = char.ToUpperInvariant(newValue[newValue.Length - 1]).ToString();
-            if (newValue != single)
-                _letterFields[fieldIndex].SetValueWithoutNotify(single);
-
-            FocusLetterField(fieldIndex + 1);
+            SetMasterValue(filtered);
+            RenderLetterBoxesFromMaster();
         }
 
-        // Shared by Update()'s backspace polling: steps back from
-        // fieldIndex to the nearest editable box (skipping hint-revealed
-        // ones) and clears the letter sitting there, in one action - so
-        // the very first backspace after typing (which auto-advanced to
-        // the next, empty box) actually removes the letter you just
-        // typed instead of just moving focus off of it.
-        private void ClearAndFocusPreviousLetterField(int fieldIndex)
+        private string FilterMasterInputValue(string raw)
         {
-            int target = ResolveBackwardFocusIndex(fieldIndex - 1);
-            if (target < 0 || target >= _letterFields.Count) return;
+            if (string.IsNullOrEmpty(raw)) return string.Empty;
 
-            _letterFields[target].Focus();
-            _letterFields[target].SetValueWithoutNotify(string.Empty);
+            var sb = new StringBuilder(raw.Length);
+            foreach (char ch in raw)
+            {
+                if (char.IsLetter(ch))
+                    sb.Append(char.ToUpperInvariant(ch));
+            }
+
+            if (sb.Length > _editableBoxIndices.Count)
+                sb.Length = _editableBoxIndices.Count;
+
+            return sb.ToString();
         }
 
-        // Focuses the box at index, skipping forward over any already
-        // hint-revealed (read-only) boxes so typing always lands somewhere
-        // editable.
-        private void FocusLetterField(int index)
+        // Pushes _masterInput's current content out to the display-only
+        // boxes: _masterInput.value[i] belongs to the box at
+        // _editableBoxIndices[i]. Also highlights whichever box is next in
+        // line to be typed into. Called after every keystroke and every
+        // hint reveal.
+        private void RenderLetterBoxesFromMaster()
         {
-            while (index >= 0 && index < _letterFields.Count && _letterFields[index].isReadOnly)
-                index++;
+            string value = _masterInput != null ? (_masterInput.value ?? string.Empty) : string.Empty;
 
-            if (index >= 0 && index < _letterFields.Count)
-                _letterFields[index].Focus();
-        }
-
-        // The backward counterpart to FocusLetterField's forward skip -
-        // used when backspacing, so stepping back past a hint-revealed
-        // (read-only) box lands on the nearest editable one instead of a
-        // box we then can't (and shouldn't) clear. Returns -1 if nothing
-        // editable remains to the left.
-        private int ResolveBackwardFocusIndex(int index)
-        {
-            while (index >= 0 && index < _letterFields.Count && _letterFields[index].isReadOnly)
-                index--;
-
-            return index;
+            for (int seq = 0; seq < _editableBoxIndices.Count; seq++)
+            {
+                var box = _letterFields[_editableBoxIndices[seq]];
+                box.SetValueWithoutNotify(seq < value.Length ? value[seq].ToString() : string.Empty);
+                box.EnableInClassList("letter-box-active", seq == value.Length);
+            }
         }
 
         // Fills and locks the box for the hinted DisplayName index so it
         // can't be typed over, then highlights it - see OnHintClicked.
+        // Also splices this box OUT of _editableBoxIndices/_masterInput's
+        // string (removing its slot rather than leaving a gap), so a hint
+        // can land on any not-yet-revealed box - already guessed (even
+        // wrongly) or still blank - without leaving _masterInput's
+        // remaining characters pointing at the wrong boxes afterward.
         private void RevealLetterField(int displayNameIndex, char c)
         {
             int fieldIndex = _letterFieldSourceIndex.IndexOf(displayNameIndex);
             if (fieldIndex < 0 || fieldIndex >= _letterFields.Count) return;
 
+            int seq = _editableBoxIndices.IndexOf(fieldIndex);
+            if (seq >= 0 && _masterInput != null)
+            {
+                string value = _masterInput.value ?? string.Empty;
+                if (seq < value.Length)
+                    value = value.Remove(seq, 1);
+
+                _editableBoxIndices.RemoveAt(seq);
+                // Same +1 headroom as BuildLetterBoxes - see the comment
+                // there for why capping this exactly at the box count
+                // breaks the tap-to-overwrite path once the guess is full.
+                _masterInput.maxLength = _editableBoxIndices.Count + 1;
+                Debug.Log($"[AnatomyPlayModeController] RevealLetterField: box {fieldIndex} revealed, {_editableBoxIndices.Count} editable box(es) remain, _masterInput.maxLength set to {_masterInput.maxLength}.");
+                SetMasterValue(value);
+
+                // This box's slot in _editableBoxIndices is gone, so any
+                // pending tap-to-overwrite selection may now point at the
+                // wrong box (or be out of range entirely) - cancel it
+                // rather than risk overwriting the wrong letter.
+                ClearBoxSelection();
+            }
+
             var field = _letterFields[fieldIndex];
             field.SetValueWithoutNotify(char.ToUpperInvariant(c).ToString());
             field.isReadOnly = true;
             field.AddToClassList("letter-box-revealed");
+            field.pickingMode = PickingMode.Ignore; // no longer selectable - see BuildLetterBoxes.
+
+            RenderLetterBoxesFromMaster();
         }
 
         // Empties every box that wasn't filled in by a hint, for another
         // attempt after an incorrect guess - see HandleIncorrectAnswer.
+        // Hint-revealed boxes were already spliced out of
+        // _editableBoxIndices by RevealLetterField, so clearing
+        // _masterInput can't touch them.
         private void ClearUnrevealedLetterFields()
         {
-            foreach (var field in _letterFields)
-            {
-                if (!field.isReadOnly)
-                    field.SetValueWithoutNotify(string.Empty);
-            }
+            SetMasterValue(string.Empty);
+            ClearBoxSelection();
+            RenderLetterBoxesFromMaster();
         }
 
         // Reassembles the player's current guess from the letter boxes,
@@ -1383,7 +1712,7 @@ namespace Anatomia3D.Backend
             }
 
             ClearUnrevealedLetterFields();
-            FocusLetterField(0);
+            _masterInput?.Focus();
             // Structure stays visible, another attempt is allowed - guess UI stays enabled.
         }
 
