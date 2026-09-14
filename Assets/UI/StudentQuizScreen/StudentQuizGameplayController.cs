@@ -57,6 +57,9 @@ namespace Anatomia3D.UI.Quiz
         private Label _blockedMessageLabel;
         private Button _blockedBackButton;
         private VisualElement _exitConfirmOverlay;
+        private VisualElement _loadingOverlay;
+        private VisualElement _loadingSpinner;
+        private Label _loadingSubmessageLabel;
         private Button _exitCancelButton;
         private Button _exitSubmitButton;
 
@@ -82,6 +85,19 @@ namespace Anatomia3D.UI.Quiz
         // Guards against multiple rapid clicks (or a click racing the auto-submit
         // timer) firing SubmitQuizAttempt() more than once for the same attempt.
         private bool _submitInFlight;
+
+        // Drives the loading overlay's spinner rotation and the delayed "still
+        // submitting" hint (see ShowLoadingOverlay/HideLoadingOverlay) while a
+        // submission is in flight.
+        private IVisualElementScheduledItem _spinnerSchedule;
+        private IVisualElementScheduledItem _slowSubmitHintSchedule;
+        private float _spinnerAngle;
+
+        // On a weak connection SubmitQuizAttempt() can stay in flight well past
+        // what feels instant - past this many ms the overlay swaps in a
+        // reassuring "still working" hint instead of leaving the spinner as the
+        // only feedback.
+        private const long SlowSubmitHintDelayMs = 6000;
 
         private Texture2D _headerGradientTexture;
         private Texture2D _buttonGradientTexture;
@@ -164,6 +180,7 @@ namespace Anatomia3D.UI.Quiz
             // auto-submit) would keep firing in the background after leaving the quiz.
             StopTimer();
             UnregisterCallbacks();
+            StopLoadingSpinner();
 
             if (_headerGradientTexture != null)
             {
@@ -225,6 +242,9 @@ namespace Anatomia3D.UI.Quiz
             _exitConfirmOverlay = _root.Q<VisualElement>("exit-confirm-overlay");
             _exitCancelButton = _root.Q<Button>("exit-cancel-button");
             _exitSubmitButton = _root.Q<Button>("exit-submit-button");
+            _loadingOverlay = _root.Q<VisualElement>("loading-overlay");
+            _loadingSpinner = _root.Q<VisualElement>("loading-spinner");
+            _loadingSubmessageLabel = _root.Q<Label>("loading-submessage-label");
         }
 
         private void WireEvents()
@@ -238,6 +258,7 @@ namespace Anatomia3D.UI.Quiz
             _exitCancelButton?.RegisterCallback<ClickEvent>(OnExitCancelClicked);
             _exitSubmitButton?.RegisterCallback<ClickEvent>(OnExitSubmitClicked);
             _exitConfirmOverlay?.AddToClassList("hidden");
+            _loadingOverlay?.AddToClassList("hidden");
         }
 
         private void OnBlockedBackClicked(ClickEvent evt)
@@ -698,6 +719,7 @@ namespace Anatomia3D.UI.Quiz
             }
 
             StopTimer();
+            ShowLoadingOverlay();
 
             int correctCount = 0;
             int incorrectCount = 0;
@@ -772,6 +794,7 @@ namespace Anatomia3D.UI.Quiz
                         // Submission failed (e.g. network hiccup) - let the student try
                         // again instead of leaving the button permanently disabled.
                         _submitInFlight = false;
+                        HideLoadingOverlay();
                         if (_actionButton != null)
                         {
                             _actionButton.SetEnabled(true);
@@ -784,6 +807,9 @@ namespace Anatomia3D.UI.Quiz
 
                     PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
                     {
+                        // Leave the overlay up straight through to the result screen -
+                        // this callback swaps _root's content out from under us, so
+                        // there's no "submitted" flash to hide it for.
                         UIManager.Instance.ShowStudentQuizResult(
                             quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible);
                     });
@@ -791,6 +817,56 @@ namespace Anatomia3D.UI.Quiz
                 },
                 questionResults: questionResults,
                 timeSpentSeconds: timeSpentSeconds);
+        }
+
+        // ---------------------------------------------------------------
+        // Loading overlay (shown while SubmitQuizAttempt() is in flight)
+        // ---------------------------------------------------------------
+
+        private void ShowLoadingOverlay()
+        {
+            if (_loadingOverlay == null) return;
+
+            _loadingSubmessageLabel?.AddToClassList("hidden");
+            _loadingOverlay.RemoveFromClassList("hidden");
+
+            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
+            // frame-ish tick. USS has no keyframe animation in UI Toolkit, so this
+            // is the standard workaround for a continuously-animating element.
+            _spinnerAngle = 0f;
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSpinner == null) return;
+                _spinnerAngle = (_spinnerAngle + 15f) % 360f;
+                _loadingSpinner.style.rotate = new StyleRotate(new Rotate(_spinnerAngle));
+            }).Every(30);
+
+            // A slow/weak connection can leave SubmitQuizAttempt() pending far
+            // longer than usual - swap in a reassuring hint after a few seconds
+            // instead of letting the spinner alone imply something has frozen.
+            _slowSubmitHintSchedule?.Pause();
+            _slowSubmitHintSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSubmessageLabel == null) return;
+                _loadingSubmessageLabel.text = "Still working - this can take longer on a weak connection.";
+                _loadingSubmessageLabel.RemoveFromClassList("hidden");
+            });
+            _slowSubmitHintSchedule.ExecuteLater(SlowSubmitHintDelayMs);
+        }
+
+        private void HideLoadingOverlay()
+        {
+            _loadingOverlay?.AddToClassList("hidden");
+            StopLoadingSpinner();
+        }
+
+        private void StopLoadingSpinner()
+        {
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = null;
+            _slowSubmitHintSchedule?.Pause();
+            _slowSubmitHintSchedule = null;
         }
 
         // ---------------------------------------------------------------
