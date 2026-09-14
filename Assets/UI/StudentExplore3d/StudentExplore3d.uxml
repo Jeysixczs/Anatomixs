@@ -15,14 +15,14 @@
                 </ui:VisualElement>
                 <ui:Button name="sync-progress-button" class="sync-progress-row">
                     <ui:VisualElement picking-mode="Ignore" class="sync-icon-box">
-                        <ui:Label name="sync-icon" text="☁" picking-mode="Ignore" class="sync-icon"/>
+                        <ui:Image name="sync-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-icon"/>
                     </ui:VisualElement>
                     <ui:VisualElement picking-mode="Ignore" class="sync-text-col">
                         <ui:Label name="sync-title-label" text="Sync Progress" picking-mode="Ignore" class="sync-title-label"/>
                         <ui:Label name="sync-status-label" text="Last synced: Just now" picking-mode="Ignore" class="sync-status-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="sync-status-icon-box" picking-mode="Ignore" class="sync-status-icon-box sync-status-icon-synced">
-                        <ui:Label name="sync-status-icon" text="✓" picking-mode="Ignore" class="sync-status-icon"/>
+                        <ui:Image name="sync-status-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-status-icon"/>
                     </ui:VisualElement>
                 </ui:Button>
             </ui:VisualElement>

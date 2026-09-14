@@ -58,11 +58,25 @@ public class StudentExplore3dController : MonoBehaviour
     private Label _syncTitleLabel;
     private Label _syncStatusLabel;
     private VisualElement _syncStatusIconBox;
-    private Label _syncStatusIcon;
+    private Image _syncStatusIcon;
+    private Image _syncIcon;
 
-    // USS classes swapped onto _syncStatusIconBox / _syncStatusIcon to color
-    // the right-hand status badge per sync state (see .sync-status-icon-*
-    // rules in StudentExplore3d.uss).
+    // Icons are loaded by name from Resources/Icons at runtime (see
+    // LoadSyncIcon below) rather than baked into the UXML, so drop the
+    // corresponding .png/.jpg files into Assets/Resources/Icons/ with these
+    // exact names:
+    //   sync_icon_cloud      - static left-hand icon
+    //   sync_status_synced   - right badge, synced state
+    //   sync_status_pending  - right badge, pending state
+    //   sync_status_failed   - right badge, failed state
+    //   sync_status_syncing  - right badge, syncing state
+    //   sync_status_offline  - right badge, offline state
+    private const string SyncIconResourceFolder = "Icons/";
+
+    // USS classes swapped onto _syncStatusIconBox per sync state (see
+    // .sync-status-icon-* rules in StudentExplore3d.uss). The badge color is
+    // now carried by the icon image itself, but the classes are kept in case
+    // the box background/border still needs to vary per state.
     private static readonly string[] SyncStatusIconClasses =
     {
         "sync-status-icon-synced",
@@ -158,7 +172,12 @@ public class StudentExplore3dController : MonoBehaviour
         _syncTitleLabel = _screenRoot.Q<Label>("sync-title-label");
         _syncStatusLabel = _screenRoot.Q<Label>("sync-status-label");
         _syncStatusIconBox = _screenRoot.Q<VisualElement>("sync-status-icon-box");
-        _syncStatusIcon = _screenRoot.Q<Label>("sync-status-icon");
+        _syncStatusIcon = _screenRoot.Q<Image>("sync-status-icon");
+        _syncIcon = _screenRoot.Q<Image>("sync-icon");
+
+        // Static left-hand cloud icon never changes with sync state, so it's
+        // set once here instead of in HandleSyncStatusChanged.
+        if (_syncIcon != null) _syncIcon.image = LoadSyncIcon("sync_icon_cloud");
 
         _skeletalImageFade = _screenRoot.Q<VisualElement>("skeletal-image-fade");
         _muscularImageFade = _screenRoot.Q<VisualElement>("muscular-image-fade");
@@ -239,7 +258,7 @@ public class StudentExplore3dController : MonoBehaviour
             // offline - just tell the student why nothing happened.
             SetSyncTitleText("No internet connection");
             SetSyncStatusText("Your progress is saved locally and will sync when you're online.");
-            SetSyncStatusIcon("☁", "sync-status-icon-offline");
+            SetSyncStatusIcon("sync_status_offline", "sync-status-icon-offline");
             return;
         }
 
@@ -255,14 +274,14 @@ public class StudentExplore3dController : MonoBehaviour
             case PlayModeSyncState.Syncing:
                 SetSyncTitleText("Syncing...");
                 SetSyncStatusText("Uploading your progress");
-                SetSyncStatusIcon("⟳", "sync-status-icon-syncing");
+                SetSyncStatusIcon("sync_status_syncing", "sync-status-icon-syncing");
                 SetSyncProgressButtonEnabled(false);
                 break;
 
             case PlayModeSyncState.Offline:
                 SetSyncTitleText("Sync Progress");
                 SetSyncStatusText("Offline - progress is saved on this device");
-                SetSyncStatusIcon("☁", "sync-status-icon-offline");
+                SetSyncStatusIcon("sync_status_offline", "sync-status-icon-offline");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
@@ -270,21 +289,21 @@ public class StudentExplore3dController : MonoBehaviour
                 SetSyncTitleText("Sync Progress");
                 SetSyncStatusText(
                     pendingCount == 1 ? "1 answer waiting to sync" : $"{pendingCount} answers waiting to sync");
-                SetSyncStatusIcon("!", "sync-status-icon-pending");
+                SetSyncStatusIcon("sync_status_pending", "sync-status-icon-pending");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
             case PlayModeSyncState.Failed:
                 SetSyncTitleText("Sync failed");
                 SetSyncStatusText("Tap to retry");
-                SetSyncStatusIcon("!", "sync-status-icon-failed");
+                SetSyncStatusIcon("sync_status_failed", "sync-status-icon-failed");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
             case PlayModeSyncState.Synced:
                 SetSyncTitleText("Sync Progress");
                 SetSyncStatusText(FormatLastSyncedText());
-                SetSyncStatusIcon("✓", "sync-status-icon-synced");
+                SetSyncStatusIcon("sync_status_synced", "sync-status-icon-synced");
                 SetSyncProgressButtonEnabled(true);
                 break;
 
@@ -295,7 +314,7 @@ public class StudentExplore3dController : MonoBehaviour
                 // we don't actually know yet.
                 SetSyncTitleText("Sync Progress");
                 SetSyncStatusText("Checking sync status...");
-                SetSyncStatusIcon("⟳", "sync-status-icon-syncing");
+                SetSyncStatusIcon("sync_status_syncing", "sync-status-icon-syncing");
                 SetSyncProgressButtonEnabled(false);
                 break;
         }
@@ -336,11 +355,12 @@ public class StudentExplore3dController : MonoBehaviour
         if (_syncStatusLabel != null) _syncStatusLabel.text = text;
     }
 
-    // Swaps the glyph shown in the right-hand circular badge and its color
-    // class (one of SyncStatusIconClasses) to match the current sync state.
-    private void SetSyncStatusIcon(string glyph, string activeClass)
+    // Swaps the image shown in the right-hand circular badge (loaded from
+    // Resources/Icons/<iconResourceName>) and its state class (one of
+    // SyncStatusIconClasses) to match the current sync state.
+    private void SetSyncStatusIcon(string iconResourceName, string activeClass)
     {
-        if (_syncStatusIcon != null) _syncStatusIcon.text = glyph;
+        if (_syncStatusIcon != null) _syncStatusIcon.image = LoadSyncIcon(iconResourceName);
 
         if (_syncStatusIconBox == null) return;
 
@@ -349,6 +369,20 @@ public class StudentExplore3dController : MonoBehaviour
             if (cls == activeClass) _syncStatusIconBox.AddToClassList(cls);
             else _syncStatusIconBox.RemoveFromClassList(cls);
         }
+    }
+
+    // Loads a sync icon by name from Assets/Resources/Icons/<name>.
+    // Logs a warning (instead of throwing) if the file hasn't been dropped
+    // in yet, so a missing icon just shows blank rather than crashing.
+    private Texture2D LoadSyncIcon(string name)
+    {
+        var texture = Resources.Load<Texture2D>(SyncIconResourceFolder + name);
+        if (texture == null)
+        {
+            Debug.LogWarning($"[StudentExplore3dController] Missing sync icon 'Assets/Resources/Icons/{name}' " +
+                              "- place an image with this exact name in that folder.");
+        }
+        return texture;
     }
 
     private void SetSyncProgressButtonEnabled(bool enabled)
