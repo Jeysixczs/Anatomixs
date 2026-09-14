@@ -32,12 +32,33 @@
                 </ui:ScrollView>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Button name="action-button" text="Next Question" class="action-button"/>
+        <ui:VisualElement name="action-row" class="action-row">
+            <ui:Button name="prev-button" text="◀ Previous" class="prev-button hidden"/>
+            <ui:Button name="action-button" text="Next Question" class="action-button"/>
+        </ui:VisualElement>
         <ui:VisualElement name="blocked-overlay" class="blocked-overlay hidden">
             <ui:VisualElement name="blocked-card" class="blocked-card">
                 <ui:Label text="⛔" class="blocked-icon"/>
                 <ui:Label name="blocked-message-label" text="" class="blocked-message"/>
                 <ui:Button name="blocked-back-button" text="Back" class="blocked-back-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="exit-confirm-overlay" class="blocked-overlay hidden">
+            <ui:VisualElement name="exit-confirm-card" class="blocked-card">
+                <ui:Label text="🚪" class="blocked-icon"/>
+                <ui:Label text="Exit Quiz?" class="exit-confirm-title"/>
+                <ui:Label name="exit-confirm-message-label" text="Any questions you haven&#39;t answered yet will be marked incorrect. Submit your answers and exit now?" class="blocked-message"/>
+                <ui:VisualElement name="exit-confirm-button-row" class="exit-confirm-button-row">
+                    <ui:Button name="exit-cancel-button" text="Cancel" class="exit-cancel-button"/>
+                    <ui:Button name="exit-submit-button" text="Submit &amp; Exit" class="exit-submit-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="loading-overlay" class="loading-overlay hidden">
+            <ui:VisualElement name="loading-card" class="loading-card">
+                <ui:VisualElement name="loading-spinner" class="loading-spinner"/>
+                <ui:Label name="loading-message-label" text="Submitting your quiz..." class="loading-message"/>
+                <ui:Label name="loading-submessage-label" text="" class="loading-submessage hidden"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

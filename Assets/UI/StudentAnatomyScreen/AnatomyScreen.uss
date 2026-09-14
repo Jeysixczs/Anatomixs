@@ -948,6 +948,31 @@
     background-color: rgba(34, 197, 130, 0.08);
 }
 
+/* The box the player just tapped directly, armed to have its letter
+   overwritten by the very next keystroke - see
+   AnatomyPlayModeController.SelectBoxForEdit. Placed after
+   .letter-box-active so a tapped box reads as "selected" (blue) rather
+   than "next in line" (green) even if both classes are present at once. */
+.letter-box-selected > .unity-text-field__input {
+    border-color: rgb(59, 130, 246);
+    border-width: 3px;
+    background-color: rgba(59, 130, 246, 0.12);
+}
+
+/* The single real (hidden) input every Play Mode keystroke goes to - see
+   the comment above AnatomyPlayModeController.BuildLetterBoxes. Can't use
+   display: none (an element with display: none can't receive focus or
+   keyboard input at all) - instead it stays in the layout at a
+   near-zero, fully transparent size, tucked off to the side. */
+.letter-master-input {
+    position: absolute;
+    left: -1000px;
+    top: 0;
+    width: 4px;
+    height: 4px;
+    opacity: 0;
+}
+
 .play-mode-completion-panel {
     position: absolute;
     left: 0;

@@ -236,9 +236,8 @@
 }
 
 .sync-icon {
-    font-size: 34px;
-    color: rgb(46, 170, 120);
-    -unity-text-align: middle-center;
+    width: 40px;
+    height: 40px;
 }
 
 .sync-text-col {
@@ -277,16 +276,15 @@
 }
 
 .sync-status-icon {
-    font-size: 28px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
+    width: 30px;
+    height: 30px;
 }
 
-.sync-status-icon-synced .sync-status-icon { color: rgb(34, 160, 110); }
-.sync-status-icon-pending .sync-status-icon { color: rgb(224, 160, 40); }
-.sync-status-icon-failed .sync-status-icon { color: rgb(224, 60, 60); }
-.sync-status-icon-syncing .sync-status-icon { color: rgb(70, 120, 220); }
-.sync-status-icon-offline .sync-status-icon { color: rgb(140, 140, 150); }
+/* No more per-state color tint here - each state now loads its own colored
+   icon asset (see SetSyncStatusIcon in StudentExplore3dController.cs), so
+   the color lives in the image file itself, not in USS. The
+   .sync-status-icon-* classes are still swapped onto sync-status-icon-box
+   in case you want to vary the badge background/border per state. */
 
 /* ---------------- SCROLL VIEW ---------------- */
 
@@ -649,7 +647,8 @@
 }
 
 .compact .sync-icon {
-    font-size: 26px;
+    width: 32px;
+    height: 32px;
 }
 
 .compact .sync-title-label {
@@ -669,7 +668,8 @@
 }
 
 .compact .sync-status-icon {
-    font-size: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .compact .play-mode-picker-banner {
@@ -818,7 +818,8 @@
 }
 
 .compact-extra .sync-icon {
-    font-size: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .compact-extra .sync-title-label {
@@ -838,7 +839,8 @@
 }
 
 .compact-extra .sync-status-icon {
-    font-size: 18px;
+    width: 20px;
+    height: 20px;
 }
 
 .compact-extra .play-mode-picker-banner {

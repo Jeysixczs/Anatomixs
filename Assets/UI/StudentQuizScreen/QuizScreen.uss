@@ -655,9 +655,15 @@
 
 /* ---------------- ACTION BUTTON ---------------- */
 
+.action-row {
+    flex-direction: row;
+    margin: 12px 36px 42px 36px;
+}
+
 .action-button {
     /* background painted at runtime via generated gradient texture */
-    margin: 12px 36px 42px 36px;
+    flex-grow: 1;
+    flex-basis: 0;
     height: 96px;
     border-radius: 24px;
     border-width: 0;
@@ -668,6 +674,28 @@
 
 .action-button--disabled {
     opacity: 0.55;
+}
+
+.prev-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 96px;
+    margin: 0 18px 0 0;
+    border-radius: 24px;
+    border-width: 2px;
+    border-color: rgb(203, 213, 225);
+    background-color: rgb(255, 255, 255);
+    color: rgb(30, 41, 59);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.prev-button:hover {
+    background-color: rgb(243, 244, 246);
+}
+
+.prev-button.hidden {
+    display: none;
 }
 
 /* ---------------- UTILITY ---------------- */
@@ -726,6 +754,68 @@
     -unity-font-style: bold;
 }
 
+/* ---------------- LOADING OVERLAY (submitting quiz attempt) ----------------
+   Shown while SubmitQuizAttempt() is in flight. Submission can take a while
+   on a weak/flaky connection, so this blocks input and gives the student
+   ongoing feedback instead of leaving the screen looking frozen. The spinner
+   itself is a ring (transparent-ish bottom border) rotated continuously from
+   StudentQuizGameplayController via schedule.Execute, since USS keyframe
+   animation isn't supported by UI Toolkit. */
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 18, 28, 0.72);
+    justify-content: center;
+    align-items: center;
+    padding: 53px;
+}
+
+.loading-card {
+    background-color: rgb(255, 255, 255);
+    border-radius: 32px;
+    padding: 54px 48px;
+    align-items: center;
+    max-width: 620px;
+}
+
+.loading-spinner {
+    width: 64px;
+    height: 64px;
+    border-width: 6px;
+    border-radius: 32px;
+    border-top-color: rgb(47, 111, 237);
+    border-left-color: rgb(47, 111, 237);
+    border-right-color: rgb(47, 111, 237);
+    border-bottom-color: rgba(47, 111, 237, 0.15);
+    margin-bottom: 28px;
+}
+
+.loading-message {
+    font-size: 30px;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.loading-submessage {
+    font-size: 22px;
+    color: rgb(107, 114, 128);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-top: 12px;
+}
+
+.loading-submessage.hidden {
+    display: none;
+}
+
 /* ---------------- COMPACT BREAKPOINT (narrow / small devices) ---------------- */
 
 .compact .question-text {
@@ -744,9 +834,13 @@
     padding: 30px 27px;
 }
 
-.compact .action-button {
-    height: 84px;
+.compact .action-row {
     margin: 9px 24px 30px 24px;
+}
+
+.compact .action-button,
+.compact .prev-button {
+    height: 84px;
 }
 
 /* ---------------- IMAGE BASED (View on 3D Model button) ---------------- */
@@ -769,4 +863,66 @@
 .compact .view-model-button {
     height: 66px;
     font-size: 21px;
+}
+
+/* ---------------- EXIT CONFIRM OVERLAY (close-button tap mid-quiz) ---------------- */
+
+.exit-confirm-title {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(17, 24, 39);
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+.exit-confirm-button-row {
+    flex-direction: row;
+    width: 100%;
+}
+
+.exit-cancel-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 9px 0 0;
+    padding: 0 24px;
+    height: 90px;
+    border-radius: 24px;
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    background-color: rgb(255, 255, 255);
+    color: rgb(31, 36, 48);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.exit-cancel-button:hover {
+    background-color: rgb(243, 244, 246);
+}
+
+.exit-submit-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 0 0 9px;
+    padding: 0 24px;
+    height: 90px;
+    border-radius: 24px;
+    border-width: 0;
+    background-color: rgb(59, 130, 246);
+    color: rgb(255, 255, 255);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.exit-submit-button:hover {
+    background-color: rgb(37, 99, 235);
+}
+
+.compact .exit-confirm-title {
+    font-size: 30px;
+}
+
+.compact .exit-cancel-button,
+.compact .exit-submit-button {
+    height: 78px;
+    font-size: 24px;
 }

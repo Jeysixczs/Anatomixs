@@ -87,16 +87,16 @@ namespace Anatomia3D.UI
             var card = new VisualElement { name = "offline-overlay-card" };
             card.AddToClassList("offline-overlay-card");
             card.style.backgroundColor = Color.white;
-            card.style.borderTopLeftRadius = 24;
-            card.style.borderTopRightRadius = 24;
-            card.style.borderBottomLeftRadius = 24;
-            card.style.borderBottomRightRadius = 24;
-            card.style.paddingTop = 36;
-            card.style.paddingBottom = 30;
-            card.style.paddingLeft = 30;
-            card.style.paddingRight = 30;
-            card.style.width = new Length(84, LengthUnit.Percent);
-            card.style.maxWidth = 460;
+            card.style.borderTopLeftRadius = 32;
+            card.style.borderTopRightRadius = 32;
+            card.style.borderBottomLeftRadius = 32;
+            card.style.borderBottomRightRadius = 32;
+            card.style.paddingTop = 56;
+            card.style.paddingBottom = 48;
+            card.style.paddingLeft = 44;
+            card.style.paddingRight = 44;
+            card.style.width = new Length(88, LengthUnit.Percent);
+            card.style.maxWidth = 680;
             card.style.alignItems = Align.Center;
 
             var icon = new VisualElement { name = "offline-overlay-icon" };
@@ -134,9 +134,9 @@ namespace Anatomia3D.UI
             }
 
          //   icon.style.unityBackgroundScaleMode = new StyleEnum<ScaleMode>(ScaleMode.ScaleToFit);
-            icon.style.width = 64;
-            icon.style.height = 64;
-            icon.style.marginBottom = 18;
+            icon.style.width = 108;
+            icon.style.height = 108;
+            icon.style.marginBottom = 28;
             card.Add(icon);
 
             icon.RegisterCallback<GeometryChangedEvent>(evt =>
@@ -146,19 +146,19 @@ namespace Anatomia3D.UI
             });
 
             var titleLabel = new Label("You're Offline");
-            titleLabel.style.fontSize = 22;
+            titleLabel.style.fontSize = 34;
             titleLabel.style.color = new Color(0.11f, 0.12f, 0.15f);
             titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            titleLabel.style.marginBottom = 10;
+            titleLabel.style.marginBottom = 16;
             titleLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             card.Add(titleLabel);
 
             _messageLabel = new Label(DefaultMessage);
-            _messageLabel.style.fontSize = 14;
+            _messageLabel.style.fontSize = 22;
             _messageLabel.style.color = new Color(0.45f, 0.47f, 0.52f);
             _messageLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             _messageLabel.style.whiteSpace = WhiteSpace.Normal;
-            _messageLabel.style.marginBottom = 26;
+            _messageLabel.style.marginBottom = 40;
             card.Add(_messageLabel);
 
             var buttonsColumn = new VisualElement();
@@ -169,7 +169,7 @@ namespace Anatomia3D.UI
             _retryButton = new Button { text = "Retry" };
             _retryButton.AddToClassList("offline-overlay-retry-button");
             StylePrimaryButton(_retryButton);
-            _retryButton.style.marginBottom = 14;
+            _retryButton.style.marginBottom = 20;
             _retryButton.clicked += HandleRetryClicked;
             buttonsColumn.Add(_retryButton);
 
@@ -194,14 +194,14 @@ namespace Anatomia3D.UI
         private static void StylePrimaryButton(Button button)
         {
             button.style.width = new Length(100, LengthUnit.Percent);
-            button.style.height = 50;
-            button.style.borderTopLeftRadius = 14;
-            button.style.borderTopRightRadius = 14;
-            button.style.borderBottomLeftRadius = 14;
-            button.style.borderBottomRightRadius = 14;
+            button.style.height = 80;
+            button.style.borderTopLeftRadius = 18;
+            button.style.borderTopRightRadius = 18;
+            button.style.borderBottomLeftRadius = 18;
+            button.style.borderBottomRightRadius = 18;
             button.style.backgroundColor = new Color(0.29f, 0.42f, 0.90f); // matches app's blue accent
             button.style.color = Color.white;
-            button.style.fontSize = 16;
+            button.style.fontSize = 24;
             button.style.unityFontStyleAndWeight = FontStyle.Bold;
             button.style.borderLeftWidth = 0;
             button.style.borderRightWidth = 0;
@@ -215,10 +215,10 @@ namespace Anatomia3D.UI
         /// used for the lower-priority "Go back to Dashboard" action.</summary>
         private static void StyleLinkButton(Button button)
         {
-            button.style.height = 24;
+            button.style.height = 40;
             button.style.backgroundColor = new Color(0f, 0f, 0f, 0f);
             button.style.color = new Color(0.29f, 0.42f, 0.90f); // same blue as the primary button
-            button.style.fontSize = 15;
+            button.style.fontSize = 20;
             button.style.unityFontStyleAndWeight = FontStyle.Normal;
             button.style.borderLeftWidth = 0;
             button.style.borderRightWidth = 0;
@@ -227,8 +227,8 @@ namespace Anatomia3D.UI
             button.style.marginLeft = 0;
             button.style.marginRight = 0;
             button.style.marginTop = 0;
-            button.style.paddingLeft = 4;
-            button.style.paddingRight = 4;
+            button.style.paddingLeft = 8;
+            button.style.paddingRight = 8;
         }
 
         /// <summary>Shows the overlay. Pass a custom message to override the default

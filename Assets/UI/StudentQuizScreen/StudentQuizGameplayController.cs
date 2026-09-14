@@ -51,10 +51,17 @@ namespace Anatomia3D.UI.Quiz
         private Label _quizLabel;
         private Label _questionTextLabel;
         private VisualElement _answerContainer;
+        private Button _prevButton;
         private Button _actionButton;
         private VisualElement _blockedOverlay;
         private Label _blockedMessageLabel;
         private Button _blockedBackButton;
+        private VisualElement _exitConfirmOverlay;
+        private VisualElement _loadingOverlay;
+        private VisualElement _loadingSpinner;
+        private Label _loadingSubmessageLabel;
+        private Button _exitCancelButton;
+        private Button _exitSubmitButton;
 
         // --- state ---
         private QuizService.QuizRecord _quiz;
@@ -78,6 +85,19 @@ namespace Anatomia3D.UI.Quiz
         // Guards against multiple rapid clicks (or a click racing the auto-submit
         // timer) firing SubmitQuizAttempt() more than once for the same attempt.
         private bool _submitInFlight;
+
+        // Drives the loading overlay's spinner rotation and the delayed "still
+        // submitting" hint (see ShowLoadingOverlay/HideLoadingOverlay) while a
+        // submission is in flight.
+        private IVisualElementScheduledItem _spinnerSchedule;
+        private IVisualElementScheduledItem _slowSubmitHintSchedule;
+        private float _spinnerAngle;
+
+        // On a weak connection SubmitQuizAttempt() can stay in flight well past
+        // what feels instant - past this many ms the overlay swaps in a
+        // reassuring "still working" hint instead of leaving the spinner as the
+        // only feedback.
+        private const long SlowSubmitHintDelayMs = 6000;
 
         private Texture2D _headerGradientTexture;
         private Texture2D _buttonGradientTexture;
@@ -160,6 +180,7 @@ namespace Anatomia3D.UI.Quiz
             // auto-submit) would keep firing in the background after leaving the quiz.
             StopTimer();
             UnregisterCallbacks();
+            StopLoadingSpinner();
 
             if (_headerGradientTexture != null)
             {
@@ -177,8 +198,11 @@ namespace Anatomia3D.UI.Quiz
         private void UnregisterCallbacks()
         {
             _closeButton?.UnregisterCallback<ClickEvent>(OnCloseClicked);
+            _prevButton?.UnregisterCallback<ClickEvent>(OnPrevButtonClicked);
             _actionButton?.UnregisterCallback<ClickEvent>(OnActionButtonClicked);
             _blockedBackButton?.UnregisterCallback<ClickEvent>(OnBlockedBackClicked);
+            _exitCancelButton?.UnregisterCallback<ClickEvent>(OnExitCancelClicked);
+            _exitSubmitButton?.UnregisterCallback<ClickEvent>(OnExitSubmitClicked);
             _quizRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootResized);
         }
 
@@ -210,19 +234,31 @@ namespace Anatomia3D.UI.Quiz
             _quizLabel = _root.Q<Label>("quiz-label");
             _questionTextLabel = _root.Q<Label>("question-text-label");
             _answerContainer = _root.Q<VisualElement>("answer-container");
+            _prevButton = _root.Q<Button>("prev-button");
             _actionButton = _root.Q<Button>("action-button");
             _blockedOverlay = _root.Q<VisualElement>("blocked-overlay");
             _blockedMessageLabel = _root.Q<Label>("blocked-message-label");
             _blockedBackButton = _root.Q<Button>("blocked-back-button");
+            _exitConfirmOverlay = _root.Q<VisualElement>("exit-confirm-overlay");
+            _exitCancelButton = _root.Q<Button>("exit-cancel-button");
+            _exitSubmitButton = _root.Q<Button>("exit-submit-button");
+            _loadingOverlay = _root.Q<VisualElement>("loading-overlay");
+            _loadingSpinner = _root.Q<VisualElement>("loading-spinner");
+            _loadingSubmessageLabel = _root.Q<Label>("loading-submessage-label");
         }
 
         private void WireEvents()
         {
             _quizRoot?.RegisterCallback<GeometryChangedEvent>(OnRootResized);
             _closeButton?.RegisterCallback<ClickEvent>(OnCloseClicked);
+            _prevButton?.RegisterCallback<ClickEvent>(OnPrevButtonClicked);
             _actionButton?.RegisterCallback<ClickEvent>(OnActionButtonClicked);
             _blockedBackButton?.RegisterCallback<ClickEvent>(OnBlockedBackClicked);
             _blockedOverlay?.AddToClassList("hidden");
+            _exitCancelButton?.RegisterCallback<ClickEvent>(OnExitCancelClicked);
+            _exitSubmitButton?.RegisterCallback<ClickEvent>(OnExitSubmitClicked);
+            _exitConfirmOverlay?.AddToClassList("hidden");
+            _loadingOverlay?.AddToClassList("hidden");
         }
 
         private void OnBlockedBackClicked(ClickEvent evt)
@@ -234,19 +270,57 @@ namespace Anatomia3D.UI.Quiz
 
         private void OnCloseClicked(ClickEvent evt)
         {
+            // Pause the countdown while the confirmation is up so the student doesn't
+            // lose time deliberating - resumed in OnExitCancelClicked if they stay.
             StopTimer();
-            OnCloseRequested?.Invoke();
 
-            // _launchClassroomId is now available here (see LoadQuiz), but
-            // ShowStudentClassroomDetail also needs the classroom's display name and
-            // instructor name to render its header, and neither is threaded through
-            // to this screen today. Wire those through LoadQuiz()/_pendingClassroomId
-            // alongside classroomId if you want this to return to
-            // StudentClassroomDetail instead of the dashboard.
-            UIManager.Instance.ShowStudentDashboard();
+            // No attempt loaded yet (e.g. close tapped during the eligibility/fetch
+            // callbacks in LoadQuiz) - nothing to submit, so just leave directly
+            // instead of showing a confirm dialog for an attempt that doesn't exist.
+            if (_quiz == null)
+            {
+                OnCloseRequested?.Invoke();
+                UIManager.Instance.ShowStudentDashboard();
+                return;
+            }
+
+            _exitConfirmOverlay?.RemoveFromClassList("hidden");
+        }
+
+        private void OnExitCancelClicked(ClickEvent evt)
+        {
+            _exitConfirmOverlay?.AddToClassList("hidden");
+
+            // Resume the countdown that OnCloseClicked paused, same as
+            // ResumeInProgressQuiz's timer-restart guard.
+            if (_quiz.HasTimeLimit && _timeRemaining > 0f && !_timerRunning)
+            {
+                _timerRunning = true;
+                _timerRoutine = StartCoroutine(TimerLoop());
+            }
+        }
+
+        private void OnExitSubmitClicked(ClickEvent evt)
+        {
+            _exitConfirmOverlay?.AddToClassList("hidden");
+
+            // SubmitQuiz() scores whatever's in _answers (unanswered questions just
+            // count as incorrect), writes the attempt, and navigates to the Quiz
+            // Result screen on success - same path the "Submit Quiz" action button
+            // and the auto-submit timer use.
+            OnCloseRequested?.Invoke();
+            SubmitQuiz();
         }
 
         private void OnActionButtonClicked(ClickEvent evt) => HandleNextOrSubmit();
+
+        private void OnPrevButtonClicked(ClickEvent evt)
+        {
+            if (_currentIndex == 0) return;
+
+            _currentIndex--;
+            RenderQuestion(_currentIndex);
+        }
 
         private void OnRootResized(GeometryChangedEvent evt)
         {
@@ -365,6 +439,7 @@ namespace Anatomia3D.UI.Quiz
 
             bool isLast = index == _quiz.Questions.Count - 1;
             _actionButton.text = isLast ? "Submit Quiz" : "Next Question";
+            _prevButton?.EnableInClassList("hidden", index == 0);
             RefreshActionButtonState();
 
             _answerContainer.Clear();
@@ -644,6 +719,7 @@ namespace Anatomia3D.UI.Quiz
             }
 
             StopTimer();
+            ShowLoadingOverlay();
 
             int correctCount = 0;
             int incorrectCount = 0;
@@ -718,6 +794,7 @@ namespace Anatomia3D.UI.Quiz
                         // Submission failed (e.g. network hiccup) - let the student try
                         // again instead of leaving the button permanently disabled.
                         _submitInFlight = false;
+                        HideLoadingOverlay();
                         if (_actionButton != null)
                         {
                             _actionButton.SetEnabled(true);
@@ -730,6 +807,9 @@ namespace Anatomia3D.UI.Quiz
 
                     PlayerSessionManager.Instance.RefreshCurrentStudent(_ =>
                     {
+                        // Leave the overlay up straight through to the result screen -
+                        // this callback swaps _root's content out from under us, so
+                        // there's no "submitted" flash to hide it for.
                         UIManager.Instance.ShowStudentQuizResult(
                             quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible);
                     });
@@ -737,6 +817,56 @@ namespace Anatomia3D.UI.Quiz
                 },
                 questionResults: questionResults,
                 timeSpentSeconds: timeSpentSeconds);
+        }
+
+        // ---------------------------------------------------------------
+        // Loading overlay (shown while SubmitQuizAttempt() is in flight)
+        // ---------------------------------------------------------------
+
+        private void ShowLoadingOverlay()
+        {
+            if (_loadingOverlay == null) return;
+
+            _loadingSubmessageLabel?.AddToClassList("hidden");
+            _loadingOverlay.RemoveFromClassList("hidden");
+
+            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
+            // frame-ish tick. USS has no keyframe animation in UI Toolkit, so this
+            // is the standard workaround for a continuously-animating element.
+            _spinnerAngle = 0f;
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSpinner == null) return;
+                _spinnerAngle = (_spinnerAngle + 15f) % 360f;
+                _loadingSpinner.style.rotate = new StyleRotate(new Rotate(_spinnerAngle));
+            }).Every(30);
+
+            // A slow/weak connection can leave SubmitQuizAttempt() pending far
+            // longer than usual - swap in a reassuring hint after a few seconds
+            // instead of letting the spinner alone imply something has frozen.
+            _slowSubmitHintSchedule?.Pause();
+            _slowSubmitHintSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSubmessageLabel == null) return;
+                _loadingSubmessageLabel.text = "Still working - this can take longer on a weak connection.";
+                _loadingSubmessageLabel.RemoveFromClassList("hidden");
+            });
+            _slowSubmitHintSchedule.ExecuteLater(SlowSubmitHintDelayMs);
+        }
+
+        private void HideLoadingOverlay()
+        {
+            _loadingOverlay?.AddToClassList("hidden");
+            StopLoadingSpinner();
+        }
+
+        private void StopLoadingSpinner()
+        {
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = null;
+            _slowSubmitHintSchedule?.Pause();
+            _slowSubmitHintSchedule = null;
         }
 
         // ---------------------------------------------------------------
