@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Anatomia3D.Backend
@@ -82,6 +83,27 @@ namespace Anatomia3D.Backend
         private bool _isolateUnansweredEnabled;
         private bool _isPlayModeActive;
 
+        // ===== Baseline Assessment (Pretest/Posttest) mode =====
+        //
+        // A restricted variant of Play Mode used ONLY by BaselineAssessmentController
+        // for the student's one-time pretest/posttest: fixed set of structures
+        // (baselineTargetKeys, always Skeletal in practice), no hints, and
+        // completion/scoring measured against that fixed set instead of every
+        // structure in the current system. Deliberately uses its own counters
+        // (_baselineCorrectCount/_baselinePoints) rather than _totalPoints/
+        // _correctAnswers, so a baseline session never contaminates the student's
+        // real, ongoing Play Mode stats or completed-structures list - nothing
+        // here is written to AnatomyPlayModeLocalStorage/AnatomyPlayModeFirebase
+        // at all (see HandleCorrectAnswer/HandleIncorrectAnswer's _isBaselineMode
+        // branches). Every other Play Mode code path is unchanged when this is
+        // false, which it is unless StartBaselineAssessment was just called.
+        private bool _isBaselineMode;
+        private HashSet<string> _baselineTargetKeys;
+        private int _baselineCorrectCount;
+        private int _baselinePoints;
+        private Action<int, int, int> _onBaselineCompleted; // (correctCount, totalCount, totalPoints)
+        private Action<string> _onBaselineStructureIdentified; // (structureKey just answered correctly)
+
         // Set by RequestPlayModeOnOpen (called from UIManager when the
         // student launched this system from Student Explore 3D's Play Mode
         // picker - the only way Play Mode ever starts). WireUi runs one
@@ -143,6 +165,12 @@ namespace Anatomia3D.Backend
         // box. Spaces never get a TextField - see BuildLetterBoxes.
         private readonly List<TextField> _letterFields = new List<TextField>();
         private readonly List<int> _letterFieldSourceIndex = new List<int>();
+
+        // Which _letterFields index currently has focus, or -1 if none.
+        // Kept up to date by the FocusIn/FocusOut callbacks in
+        // BuildLetterBoxes and read by Update()'s Keyboard.current polling
+        // - see the comment on Update() for why polling is needed at all.
+        private int _focusedLetterFieldIndex = -1;
 
         private void OnEnable()
         {
@@ -354,17 +382,108 @@ namespace Anatomia3D.Backend
             ActivatePlayMode();
         }
 
+        /// <summary>Called by BaselineAssessmentController to start the student's
+        /// pretest/posttest: same tap-the-model/type-the-name interaction as normal
+        /// Play Mode, but restricted to targetKeys only (every other structure on
+        /// the model is hidden via the same Isolate mechanism Answered/Unanswered
+        /// already use), with hints disabled entirely. onStructureIdentified fires
+        /// after each individual correct answer (structureKey just answered) - lets
+        /// the caller advance whatever "current question" prompt it's showing.
+        /// onCompleted fires exactly once, when every key in targetKeys has been
+        /// answered correctly, with (correctCount, totalCount, totalPoints) -
+        /// BaselineAssessmentController uses that to record the attempt and
+        /// navigate away; this class does not navigate or save anywhere itself.
+        /// Safe to call before WireUi has run, same as RequestPlayModeOnOpen.</summary>
+        public void StartBaselineAssessment(IEnumerable<string> targetKeys, Action<string> onStructureIdentified, Action<int, int, int> onCompleted)
+        {
+            _isBaselineMode = true;
+
+            // Normalized (NormalizeKey: trims/collapses whitespace, strips a
+            // "(Clone)" suffix, lower-cases) - the JSON's StructureKey values
+            // are hand-typed and may not match a clicked GameObject's raw
+            // name byte-for-byte, exactly the mismatch BoneDatabaseService
+            // already solves for everywhere else bone names are matched.
+            // Every comparison against this set below normalizes info.boneName
+            // the same way before checking it, so both sides are on equal footing.
+            _baselineTargetKeys = new HashSet<string>(targetKeys.Select(BoneDatabaseService.NormalizeKey));
+            _baselineCorrectCount = 0;
+            _baselinePoints = 0;
+            _onBaselineStructureIdentified = onStructureIdentified;
+            _onBaselineCompleted = onCompleted;
+            _pendingAutoStart = true;
+            TryConsumePendingAutoStart();
+        }
+
+        /// <summary>Called by BaselineAssessmentController's Finish button - ends
+        /// the session immediately with whatever's been answered so far, instead
+        /// of only completing once every target key is found. totalCount stays
+        /// the full target count (not just what was attempted), so an early
+        /// finish is scored as "X out of 10" rather than "X out of X" - an
+        /// honest partial result rather than one that looks complete. No-op if
+        /// baseline mode isn't active or has already completed/been finished
+        /// (guards against a stray double-click firing the callback twice).</summary>
+        public void FinishBaselineAssessmentEarly()
+        {
+            if (!_isBaselineMode || _onBaselineCompleted == null)
+            {
+                Debug.LogWarning($"[AnatomyPlayModeController] FinishBaselineAssessmentEarly: no-op " +
+                                  $"(_isBaselineMode={_isBaselineMode}, _onBaselineCompleted null={_onBaselineCompleted == null}).");
+                return;
+            }
+
+            var callback = _onBaselineCompleted;
+            int correctCount = _baselineCorrectCount;
+            int totalCount = _baselineTargetKeys.Count;
+            int points = _baselinePoints;
+            _onBaselineCompleted = null; // fire exactly once, same as natural completion
+            Debug.Log($"[AnatomyPlayModeController] FinishBaselineAssessmentEarly: {correctCount}/{totalCount}, {points} pts.");
+            callback.Invoke(correctCount, totalCount, points);
+        }
+
+        /// <summary>Explicitly leaves Play Mode (normal or baseline), running
+        /// the same cleanup DeactivatePlayMode always has - undoing Isolate
+        /// Answered, baseline isolation to the fixed 10-structure set,
+        /// hidden Play Mode buttons, etc.
+        ///
+        /// This exists because that cleanup previously only ran from
+        /// OnDisable, but this component's OnEnable/OnDisable only fire
+        /// once for the GameObject's entire lifetime - UIManager's screen
+        /// navigation (ShowScreen/InitializeControllerAfterUI) only toggles
+        /// AnatomyScreenController's enabled flag on each visit, never this
+        /// component's (see the OnEnable comment above). Without an
+        /// explicit call like this, ending a baseline assessment and
+        /// navigating to Explore 3D left the model still isolated down to
+        /// just the pretest/posttest's 10 structures. Called by
+        /// BaselineAssessmentController.OnAssessmentCompleted before it
+        /// navigates away. No-op if Play Mode isn't currently active.</summary>
+        public void ExitPlayMode()
+        {
+            if (_isPlayModeActive)
+                DeactivatePlayMode();
+        }
+
         private void ActivatePlayMode()
         {
             _isPlayModeActive = true;
 
-            // Restore this student's completed structures from local
-            // storage before anything else below can generate or allow a
-            // question - see the plan's section 5 ("Populate
-            // _completedKeys before generating or allowing new questions").
-            // This works with no internet connection, since local storage
-            // never touches Firebase.
-            LoadCompletedKeysFromLocalStorage();
+            if (_isBaselineMode)
+            {
+                // A baseline session is always a fresh, in-memory-only set of
+                // completed keys - never mixed with the student's real,
+                // persisted Play Mode progress (see the class-level comment on
+                // _isBaselineMode above).
+                _completedKeys.Clear();
+            }
+            else
+            {
+                // Restore this student's completed structures from local
+                // storage before anything else below can generate or allow a
+                // question - see the plan's section 5 ("Populate
+                // _completedKeys before generating or allowing new questions").
+                // This works with no internet connection, since local storage
+                // never touches Firebase.
+                LoadCompletedKeysFromLocalStorage();
+            }
 
             // Play Mode's own Isolate Answered must never fight Explore
             // Mode's Isolate Selected Bone / Hide - turn those off first so
@@ -394,7 +513,47 @@ namespace Anatomia3D.Backend
             // Explore Mode's default (top: 58%) - see SetInfoPanelPlayModeStartPosition.
             _screen.SetInfoPanelPlayModeStartPosition(true);
 
+            if (_isBaselineMode)
+            {
+                // Restrict the visible/tappable model to exactly the fixed
+                // baseline set, reusing the same Isolate mechanism Answered/
+                // Unanswered already use elsewhere in this class - this is a
+                // controlled test, not free exploration, so every other
+                // structure on the skeleton is hidden rather than merely
+                // "not asked about".
+                _screen.SetIsolateAnsweredActive(true, info => info != null && _baselineTargetKeys.Contains(BoneDatabaseService.NormalizeKey(info.boneName)));
+
+                // Reset re-enables every bone's renderer/collider unconditionally
+                // (correct for ordinary Explore/Play Mode) - re-apply the same
+                // isolation immediately after, or a student tapping Reset mid-test
+                // would suddenly see and be able to tap the entire skeleton.
+                _screen.AfterReset += ReapplyBaselineIsolation;
+
+                // Isolate Answered/Unanswered and Random all assume the full
+                // AllBoneData pool - none of them make sense against a fixed
+                // 10-structure test, so they're hidden rather than adapted.
+                if (_isolateAnsweredButton != null) _isolateAnsweredButton.style.display = DisplayStyle.None;
+                if (_unansweredButton != null) _unansweredButton.style.display = DisplayStyle.None;
+                if (_randomButton != null) _randomButton.style.display = DisplayStyle.None;
+
+                // No hints during a formal assessment - hide the button
+                // entirely rather than merely disabling it, so there's no
+                // ambiguity about why it doesn't work.
+                if (_hintButton != null) _hintButton.style.display = DisplayStyle.None;
+            }
+
             UpdateProgressLabel();
+        }
+
+        /// <summary>Re-applies the baseline isolation after AnatomyScreenController's
+        /// Reset button unconditionally re-enables every bone - see the
+        /// _screen.AfterReset subscription above. No-op once baseline mode has
+        /// ended (guarded by _isBaselineMode) so a stray late-firing event can't
+        /// re-isolate a screen that's moved on to something else.</summary>
+        private void ReapplyBaselineIsolation()
+        {
+            if (!_isBaselineMode) return;
+            _screen.SetIsolateAnsweredActive(true, info => info != null && _baselineTargetKeys.Contains(BoneDatabaseService.NormalizeKey(info.boneName)));
         }
 
         private void DeactivatePlayMode()
@@ -418,6 +577,24 @@ namespace Anatomia3D.Backend
 
             // Back to Explore Mode's own default Info Panel position.
             _screen.SetInfoPanelPlayModeStartPosition(false);
+
+            if (_isBaselineMode)
+            {
+                // Undo the isolation/hidden-controls changes ActivatePlayMode
+                // made for the baseline session, so a later NORMAL Play Mode
+                // visit starts from the same clean state it always has.
+                _screen.SetIsolateAnsweredActive(false, null);
+                _screen.AfterReset -= ReapplyBaselineIsolation;
+                if (_isolateAnsweredButton != null) _isolateAnsweredButton.style.display = DisplayStyle.Flex;
+                if (_unansweredButton != null) _unansweredButton.style.display = DisplayStyle.Flex;
+                if (_randomButton != null) _randomButton.style.display = DisplayStyle.Flex;
+                if (_hintButton != null) _hintButton.style.display = DisplayStyle.Flex;
+
+                _isBaselineMode = false;
+                _baselineTargetKeys = null;
+                _onBaselineCompleted = null;
+                _onBaselineStructureIdentified = null;
+            }
 
             _currentQuestion = null;
             HideCompletionPanel();
@@ -480,6 +657,12 @@ namespace Anatomia3D.Backend
         public void RefreshCompletedKeys()
         {
             if (!_isPlayModeActive) return;
+
+            // A baseline session's _completedKeys is deliberately its own
+            // fresh, in-memory-only set (see ActivatePlayMode) - a background
+            // sync completing mid-test must never overwrite it with the
+            // student's real, persisted Play Mode progress.
+            if (_isBaselineMode) return;
 
             int before = _completedKeys.Count;
             LoadCompletedKeysFromLocalStorage();
@@ -564,6 +747,13 @@ namespace Anatomia3D.Backend
         // back on the same one.
         private void OnRandomClicked()
         {
+            // Unreachable while _isBaselineMode is true - the Random button
+            // is hidden entirely during a baseline session (see
+            // ActivatePlayMode) since a fixed 10-structure test has nothing
+            // meaningful for it to jump to. Guarded anyway in case a stale
+            // click is already queued the instant the button hides.
+            if (_isBaselineMode) return;
+
             var unanswered = _screen.AllBoneData
                 .Where(b => b != null && !_completedKeys.Contains(b.boneName))
                 .ToList();
@@ -600,6 +790,12 @@ namespace Anatomia3D.Backend
         private void OnStructureSelected(AnatomyScreenController.BoneInfo info)
         {
             if (!_isPlayModeActive || info == null) return;
+
+            // Structures outside the fixed set are hidden/non-tappable
+            // already (see ActivatePlayMode's SetIsolateAnsweredActive
+            // call) - this is a safety net, not the primary guard.
+            if (_isBaselineMode && (_baselineTargetKeys == null || !_baselineTargetKeys.Contains(BoneDatabaseService.NormalizeKey(info.boneName))))
+                return;
 
             if (!_screen.TryGetBoneDatabaseEntry(info, out var entry) || string.IsNullOrEmpty(entry.displayName))
             {
@@ -707,8 +903,17 @@ namespace Anatomia3D.Backend
                 int fieldIndex = _letterFields.Count; // captured for the closures below
                 field.RegisterValueChangedCallback(evt => OnLetterFieldChanged(fieldIndex, evt.newValue));
                 field.RegisterCallback<KeyDownEvent>(evt => OnLetterFieldKeyDown(fieldIndex, evt), TrickleDown.TrickleDown);
-                field.RegisterCallback<FocusInEvent>(_ => field.AddToClassList("letter-box-active"));
-                field.RegisterCallback<FocusOutEvent>(_ => field.RemoveFromClassList("letter-box-active"));
+                field.RegisterCallback<FocusInEvent>(_ =>
+                {
+                    field.AddToClassList("letter-box-active");
+                    _focusedLetterFieldIndex = fieldIndex;
+                });
+                field.RegisterCallback<FocusOutEvent>(_ =>
+                {
+                    field.RemoveFromClassList("letter-box-active");
+                    if (_focusedLetterFieldIndex == fieldIndex)
+                        _focusedLetterFieldIndex = -1;
+                });
 
                 currentWordGroup.Add(field);
                 _letterFields.Add(field);
@@ -716,16 +921,65 @@ namespace Anatomia3D.Backend
             }
         }
 
+        // Enter submits, same as tapping the Submit button. Backspace is
+        // NOT handled here (see Update() below) - on a physical device
+        // the on-screen keyboard doesn't reliably raise a UI Toolkit
+        // KeyDownEvent for backspace at all, even with a character-code
+        // check, so a handler here would work in the Editor/Simulator
+        // and silently do nothing on-device.
+        private void OnLetterFieldKeyDown(int fieldIndex, KeyDownEvent evt)
+        {
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                OnSubmitClicked();
+        }
+
+        // Polls backspace via the new Input System's Keyboard.current
+        // instead of a UI Toolkit KeyDownEvent, for the same reason
+        // UIManager.Update() does for the Android back button: the
+        // on-screen keyboard on a real device doesn't reliably surface
+        // backspace as a VisualElement event when there's nothing in the
+        // focused TextField to delete (no text change, so no
+        // value-changed event either). Keyboard.current DOES see it.
+        //
+        // Only handles the "already empty" case - backspacing a box that
+        // still has a letter goes through the native TextField deletion
+        // -> OnLetterFieldChanged(""), which works fine on-device already.
+        private void Update()
+        {
+            if (Keyboard.current == null || !Keyboard.current.backspaceKey.wasPressedThisFrame)
+                return;
+
+            int fieldIndex = _focusedLetterFieldIndex;
+            if (fieldIndex < 0 || fieldIndex >= _letterFields.Count)
+                return;
+
+            if (!string.IsNullOrEmpty(_letterFields[fieldIndex].value))
+                return;
+
+            ClearAndFocusPreviousLetterField(fieldIndex);
+        }
+
         // Keeps only the last character typed (guards against paste/IME
         // giving more than one char), upper-cases it to match DisplayName's
         // convention, then auto-advances to the next box - typing fills the
         // whole word left to right without needing to tab manually.
+        //
+        // Backspace-to-previous-box also lives here: on a physical device
+        // the on-screen keyboard clears the TextField through the native
+        // IME, which raises this value-changed callback reliably even
+        // when it doesn't raise a matching KeyDownEvent - see Update()
+        // above for the "already empty" case this can't see.
         private void OnLetterFieldChanged(int fieldIndex, string newValue)
         {
             if (fieldIndex < 0 || fieldIndex >= _letterFields.Count) return;
 
             if (string.IsNullOrEmpty(newValue))
+            {
+                int target = ResolveBackwardFocusIndex(fieldIndex - 1);
+                if (target >= 0 && target < _letterFields.Count)
+                    _letterFields[target].Focus();
                 return;
+            }
 
             string single = char.ToUpperInvariant(newValue[newValue.Length - 1]).ToString();
             if (newValue != single)
@@ -734,20 +988,19 @@ namespace Anatomia3D.Backend
             FocusLetterField(fieldIndex + 1);
         }
 
-        // Backspace on an empty box steps back to the previous box (so
-        // clearing a whole guess reads naturally right to left); Enter
-        // submits, same as tapping the Submit button.
-        private void OnLetterFieldKeyDown(int fieldIndex, KeyDownEvent evt)
+        // Shared by Update()'s backspace polling: steps back from
+        // fieldIndex to the nearest editable box (skipping hint-revealed
+        // ones) and clears the letter sitting there, in one action - so
+        // the very first backspace after typing (which auto-advanced to
+        // the next, empty box) actually removes the letter you just
+        // typed instead of just moving focus off of it.
+        private void ClearAndFocusPreviousLetterField(int fieldIndex)
         {
-            if (evt.keyCode == KeyCode.Backspace)
-            {
-                if (fieldIndex >= 0 && fieldIndex < _letterFields.Count && string.IsNullOrEmpty(_letterFields[fieldIndex].value))
-                    FocusLetterField(fieldIndex - 1);
-                return;
-            }
+            int target = ResolveBackwardFocusIndex(fieldIndex - 1);
+            if (target < 0 || target >= _letterFields.Count) return;
 
-            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
-                OnSubmitClicked();
+            _letterFields[target].Focus();
+            _letterFields[target].SetValueWithoutNotify(string.Empty);
         }
 
         // Focuses the box at index, skipping forward over any already
@@ -760,6 +1013,19 @@ namespace Anatomia3D.Backend
 
             if (index >= 0 && index < _letterFields.Count)
                 _letterFields[index].Focus();
+        }
+
+        // The backward counterpart to FocusLetterField's forward skip -
+        // used when backspacing, so stepping back past a hint-revealed
+        // (read-only) box lands on the nearest editable one instead of a
+        // box we then can't (and shouldn't) clear. Returns -1 if nothing
+        // editable remains to the left.
+        private int ResolveBackwardFocusIndex(int index)
+        {
+            while (index >= 0 && index < _letterFields.Count && _letterFields[index].isReadOnly)
+                index--;
+
+            return index;
         }
 
         // Fills and locks the box for the hinted DisplayName index so it
@@ -847,6 +1113,10 @@ namespace Anatomia3D.Backend
 
         private void OnHintClicked()
         {
+            // No hints during a formal assessment - the button is hidden
+            // entirely in ActivatePlayMode, this is just a hard backstop.
+            if (_isBaselineMode) return;
+
             if (_currentQuestion == null) return;
             if (!_screen.TryGetBoneDatabaseEntry(_currentQuestion, out var entry)) return;
 
@@ -993,15 +1263,34 @@ namespace Anatomia3D.Backend
 
             int questionPoints = pointsPerCorrectAnswer;
 
-            _totalPoints += questionPoints;
-            _correctAnswers++;
-            _completedKeys.Add(info.boneName);
-            CleanupRevealedHints(info.boneName);
-
             _screen.SetInfoPanelTitle(entry.displayName);
             _screen.SetInfoPanelDescription($"Correct! +{questionPoints} points.");
             SetGuessUiEnabled(false);
             _letterRow?.AddToClassList("hidden");
+
+            if (_isBaselineMode)
+            {
+                // Separate counters, and deliberately NO SaveCorrectAnswer/
+                // CleanupRevealedHints call - a baseline attempt must never
+                // touch the student's real Play Mode points, completed-
+                // structures list, or Firestore/local-storage records (see
+                // the class-level comment on _isBaselineMode). _completedKeys
+                // is still used here since CheckForCompletion/UpdateProgressLabel
+                // already key off it and it was cleared fresh in ActivatePlayMode.
+                _baselineCorrectCount++;
+                _baselinePoints += questionPoints;
+                _completedKeys.Add(info.boneName);
+
+                _onBaselineStructureIdentified?.Invoke(info.boneName);
+                UpdateProgressLabel();
+                CheckForCompletion();
+                return;
+            }
+
+            _totalPoints += questionPoints;
+            _correctAnswers++;
+            _completedKeys.Add(info.boneName);
+            CleanupRevealedHints(info.boneName);
 
             SaveCorrectAnswer(info.boneName, entry.displayName, questionPoints);
 
@@ -1079,13 +1368,18 @@ namespace Anatomia3D.Backend
 
         private void HandleIncorrectAnswer()
         {
-            _incorrectAnswers++;
+            if (!_isBaselineMode)
+                _incorrectAnswers++;
 
             if (_screen.TryGetBoneDatabaseEntry(_currentQuestion, out var entry))
             {
                 _screen.SetInfoPanelDescription("Not quite - try again.");
 
-                firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0);
+                // Baseline attempts never write to the real Play Mode
+                // Firestore log - see the class-level comment on
+                // _isBaselineMode.
+                if (!_isBaselineMode)
+                    firebase?.SaveAnswer(_currentQuestion.boneName, entry.displayName, false, _currentHints, 0);
             }
 
             ClearUnrevealedLetterFields();
@@ -1098,12 +1392,31 @@ namespace Anatomia3D.Backend
         private void UpdateProgressLabel()
         {
             if (_progressLabel == null) return;
-            int total = _screen.AllBoneData.Count;
+            int total = _isBaselineMode ? _baselineTargetKeys.Count : _screen.AllBoneData.Count;
             _progressLabel.text = $"Progress: {_completedKeys.Count} / {total}";
         }
 
         private void CheckForCompletion()
         {
+            if (_isBaselineMode)
+            {
+                int baselineTotal = _baselineTargetKeys.Count;
+                if (baselineTotal == 0 || _baselineCorrectCount < baselineTotal) return;
+
+                // No completion panel here - BaselineAssessmentController owns
+                // what the student sees next (it records the attempt, then
+                // navigates away) via the callback below. DeactivatePlayMode
+                // is NOT called here: the controller decides when to leave
+                // Play Mode, same as normal completion leaves the panel up
+                // until the student closes it themselves.
+                var callback = _onBaselineCompleted;
+                int correctCount = _baselineCorrectCount;
+                int points = _baselinePoints;
+                _onBaselineCompleted = null; // fire exactly once
+                callback?.Invoke(correctCount, baselineTotal, points);
+                return;
+            }
+
             int total = _screen.AllBoneData.Count;
             if (total == 0 || _completedKeys.Count < total) return;
 

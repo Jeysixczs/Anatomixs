@@ -1,0 +1,124 @@
+{
+  "questions": [
+    {
+      "QuestionText": "Which bone forms your forehead and shields the front of your brain?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Frontal bone",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Frontal bone",
+      "StructureDisplayName": "Frontal bone"
+    },
+    {
+      "QuestionText": "Which is the longest and strongest bone in the human body, found in your thigh?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Femur",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Femur.r",
+      "StructureDisplayName": "Right Femur"
+    },
+    {
+      "QuestionText": "Which is the only bone in the skull that can move, forming your lower jaw?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Mandible",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Mandible",
+      "StructureDisplayName": "Mandible"
+    },
+    {
+      "QuestionText": "Which butterfly-shaped bone at the base of the skull has a central hollow that cradles the pituitary gland?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Sphenoid bone",
+      "Difficulty": "Hard",
+      "Points": 20,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Sphenoid bone",
+      "StructureDisplayName": "Sphenoid bone"
+    },
+    {
+      "QuestionText": "Which long bone of the upper arm connects your shoulder to your elbow?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Humerus",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Humerus.r",
+      "StructureDisplayName": "Right Humerus"
+    },
+    {
+      "QuestionText": "Which shinbone bears most of your body's weight between your knee and ankle?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Tibia",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Tibia.r",
+      "StructureDisplayName": "Right Tibia"
+    },
+    {
+      "QuestionText": "Which flat, triangular bone on your upper back forms your shoulder blade?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Scapula",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Scapula.r",
+      "StructureDisplayName": "Right Scapula"
+    },
+    {
+      "QuestionText": "Which S-shaped bone struts your shoulder blade away from your sternum and is the most commonly fractured bone in the body?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Clavicle",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Clavicle.r",
+      "StructureDisplayName": "Right Clavicle"
+    },
+    {
+      "QuestionText": "Which is the largest sesamoid bone in the body, sitting in front of your knee joint?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Patella",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Patella.r",
+      "StructureDisplayName": "Right Patella"
+    },
+    {
+      "QuestionText": "Which ring-shaped first cervical vertebra supports your skull and lets you nod \"yes\"?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Atlas (C1)",
+      "Difficulty": "Hard",
+      "Points": 20,
+      "AnatomySystemKey": "skeletal",
+      "AnatomySystemDisplayName": "Skeletal System",
+      "StructureKey": "Atlas (C1)",
+      "StructureDisplayName": "Atlas (C1)"
+    }
+  ]
+}

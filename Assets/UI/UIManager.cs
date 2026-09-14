@@ -308,7 +308,44 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(forgotPasswordScreen, _forgotPasswordController);
         }
 
+        /// <summary>The single choke point every path to the dashboard already
+        /// goes through (email login, Google sign-in, returning from any other
+        /// screen) - so it's also the one place that needs to check whether this
+        /// student still owes their one-time Pretest baseline assessment. If they
+        /// do, the pretest opens instead of the dashboard. Once the student
+        /// finishes it, BaselineAssessmentController.NavigateAfterCompletion
+        /// goes straight to ShowStudentDashboardSkipBaselineGate() instead of
+        /// calling back in here - re-querying GetStatus immediately after the
+        /// write that made it true risks a stale read of that same write.
+        /// Fails open (shows the dashboard) if BaselineAssessmentService isn't in
+        /// the scene or Firebase isn't reachable, rather than ever blocking a
+        /// student from reaching the app.</summary>
         public void ShowStudentDashboard()
+        {
+            if (BaselineAssessmentService.Instance != null)
+            {
+                BaselineAssessmentService.Instance.GetStatus((pretestDone, _) =>
+                {
+                    if (!pretestDone)
+                        ShowStudentAnatomyScreenForBaselineAssessment(BaselineAssessmentType.Pretest);
+                    else
+                        ShowScreen(studentDashboardScreen, _studentdashboardController);
+                });
+                return;
+            }
+
+            ShowScreen(studentDashboardScreen, _studentdashboardController);
+        }
+
+        /// <summary>Shows the dashboard directly, skipping the Pretest gate
+        /// check ShowStudentDashboard() normally does. For callers that just
+        /// finished recording the pretest themselves and already know the
+        /// gate condition is satisfied - re-querying GetStatus immediately
+        /// after the write that made it true risks reading a stale snapshot
+        /// that hasn't caught up with that write yet, which would otherwise
+        /// bounce the student straight back into the pretest they just
+        /// finished. See BaselineAssessmentController.NavigateAfterCompletion.</summary>
+        public void ShowStudentDashboardSkipBaselineGate()
         {
             ShowScreen(studentDashboardScreen, _studentdashboardController);
         }
@@ -462,6 +499,29 @@ private IEnumerator DecideInitialScreen()
                 else
                     Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForQuizHighlight: no " +
                                       "AnatomyQuizHighlightController was found on the Anatomy Screen GameObject.");
+            });
+        }
+
+        /// <summary>Opens the Anatomy Screen for the student's one-time Pretest/
+        /// Posttest baseline assessment (see BaselineAssessmentController) - a
+        /// fixed, Skeletal-only set of structures with no hints, distinct from
+        /// both normal Play Mode and the classroom quiz's Image-Based highlight
+        /// flow. Called once from ShowStudentDashboard (pretest gate, before the
+        /// dashboard itself shows) and from the Progress screen's "Take
+        /// Posttest" button.</summary>
+        public void ShowStudentAnatomyScreenForBaselineAssessment(BaselineAssessmentType type)
+        {
+            ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
+            {
+                var baseline = _studentAnatomyScreenController != null
+                    ? _studentAnatomyScreenController.GetComponent<BaselineAssessmentController>()
+                    : null;
+
+                if (baseline != null)
+                    baseline.RequestBaselineAssessmentOnOpen(type);
+                else
+                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForBaselineAssessment: no " +
+                                      "BaselineAssessmentController was found on the Anatomy Screen GameObject.");
             });
         }
 

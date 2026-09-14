@@ -36,6 +36,23 @@
                     <ui:Label text="Points needed for every level" class="level-roadmap-subtitle"/>
                     <ui:VisualElement name="level-roadmap-list" class="level-roadmap-list"/>
                 </ui:VisualElement>
+                <ui:VisualElement name="baseline-assessment-card" class="category-card">
+                    <ui:Label text="Pretest / Posttest" class="section-title"/>
+                    <ui:VisualElement name="baseline-pretest-row" class="category-item">
+                        <ui:VisualElement class="category-header-row">
+                            <ui:Label text="Pretest" class="category-name"/>
+                            <ui:Label name="baseline-pretest-score" text="Not yet taken" class="category-count"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="baseline-posttest-row" class="category-item category-item-last">
+                        <ui:VisualElement class="category-header-row">
+                            <ui:Label text="Posttest" class="category-name"/>
+                            <ui:Label name="baseline-posttest-score" text="Not yet taken" class="category-count"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="baseline-improvement-label" text="" class="level-caption hidden"/>
+                    <ui:Button name="baseline-take-posttest-button" text="Take Posttest" class="tab-button hidden"/>
+                </ui:VisualElement>
                 <ui:VisualElement name="stats-row-1" class="stats-row">
                     <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
                         <ui:VisualElement class="stat-icon stat-icon-blue icon-book" style="background-color: rgb(241, 243, 247); background-image: none;">
