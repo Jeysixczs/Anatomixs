@@ -133,18 +133,56 @@ namespace Anatomia3D.Backend
             PlayerPrefs.Save();
         }
 
+        /// <summary>Outcome of TryOfflineGate - deliberately three-way instead of a
+        /// plain bool, so the login screen can tell "wrong PIN/fingerprint, try
+        /// again or use your password" apart from "there is no OS credential on
+        /// this device at all, offline sign-in genuinely isn't possible here."
+        /// Collapsing those into one failure message would tell a student with a
+        /// broken sensor to "try again" forever with no way through.</summary>
+        public enum OfflineGateResult
+        {
+            EnteredApp,
+            NeedsPasswordLogin,
+            NoSecureFallbackAvailable
+        }
+
         /// <summary>Call from StudentLoginController's biometric button. Requires the
         /// OS-level biometric/device-credential check to succeed BEFORE touching any
         /// session state - only then does this restore the profile from cache
         /// (same as TryRestoreSessionOffline) and kick off a background refresh so
         /// stale cached points/level get corrected the moment there's connectivity,
         /// without making the student wait for a network round-trip just to see
-        /// their dashboard.</summary>
-        public void LoginWithBiometrics(Action<bool, string> onComplete)
+        /// their dashboard.
+        ///
+        /// Supersedes the old LoginWithBiometrics(Action&lt;bool,string&gt;) - same
+        /// underlying OS check, but reports NoSecureFallbackAvailable separately from
+        /// a failed/cancelled attempt. That distinction matters because opting in to
+        /// biometric sign-in (SetBiometricLoginEnabled) doesn't guarantee the OS
+        /// credential still exists later - e.g. a student could enable biometrics,
+        /// then remove their screen lock in device settings before the next offline
+        /// launch. Biometric.IsAvailable(allowDeviceCredential: true), read via
+        /// IsBiometricHardwareAvailable, is what actually reflects "is there still an
+        /// OS-level check to run right now."</summary>
+        public void TryOfflineGate(Action<OfflineGateResult, string> onComplete)
         {
             if (!IsBiometricLoginAvailable)
             {
-                onComplete?.Invoke(false, "Biometric sign-in isn't set up on this device yet. Please sign in with your password.");
+                onComplete?.Invoke(OfflineGateResult.NeedsPasswordLogin,
+                    "Sign in with your password to enable offline sign-in on this device.");
+                return;
+            }
+
+            if (!IsBiometricHardwareAvailable)
+            {
+                // Opted in previously, but there's no biometric AND no device
+                // credential (PIN/pattern/password) available right now - most
+                // likely the student removed their screen lock since opting in.
+                // There's no OS-verified check left to run, so don't show a
+                // biometric prompt that would just fail confusingly.
+                onComplete?.Invoke(OfflineGateResult.NoSecureFallbackAvailable,
+                    "This device has no fingerprint, face, or screen lock set up, so " +
+                    "offline sign-in isn't available. Please connect to the internet to " +
+                    "sign in, or set up a screen lock in your device settings.");
                 return;
             }
 
@@ -155,11 +193,12 @@ namespace Anatomia3D.Backend
                     if (TryRestoreSessionOffline())
                     {
                         RefreshCurrentStudent();
-                        onComplete?.Invoke(true, null);
+                        onComplete?.Invoke(OfflineGateResult.EnteredApp, null);
                     }
                     else
                     {
-                        onComplete?.Invoke(false, "Could not restore your session. Please sign in with your password.");
+                        onComplete?.Invoke(OfflineGateResult.NeedsPasswordLogin,
+                            "Could not restore your session. Please sign in with your password.");
                     }
                 },
                 onFailure: reason =>
@@ -170,12 +209,12 @@ namespace Anatomia3D.Backend
                     // purely so `adb logcat -s Unity` shows WHY the OS-level check
                     // failed (no hardware, nothing enrolled, user cancelled,
                     // lockout, etc.) instead of us having to guess.
-                    Debug.Log($"[PlayerSessionManager] Biometric authentication failed: {reason}");
+                    Debug.Log($"[PlayerSessionManager] Offline gate failed: {reason}");
 
                     bool offline = Application.internetReachability == NetworkReachability.NotReachable;
-                    onComplete?.Invoke(false, offline
-                        ? "Biometric authentication failed. Please try again once your device recognizes you, or reconnect to sign in with your password."
-                        : "Biometric authentication failed. Please sign in with your password.");
+                    onComplete?.Invoke(OfflineGateResult.NeedsPasswordLogin, offline
+                        ? "Authentication failed. Please try again once your device recognizes you, or reconnect to sign in with your password."
+                        : "Authentication failed. Please sign in with your password.");
                 });
         }
 

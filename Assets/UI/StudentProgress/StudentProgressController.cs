@@ -105,6 +105,12 @@ namespace Anatomia3D.UI
         // to Anatomy Play Mode later.
         private VisualElement _categoryNervousRow;
 
+        // ===== Baseline Assessment (Pretest/Posttest) =====
+        private Label _baselinePretestScoreLabel;
+        private Label _baselinePosttestScoreLabel;
+        private Label _baselineImprovementLabel;
+        private Button _baselineTakePosttestButton;
+
         private readonly Dictionary<int, LevelRoadmapRowRefs> _roadmapRowsByLevel = new Dictionary<int, LevelRoadmapRowRefs>();
 
         private void OnEnable()
@@ -233,6 +239,7 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.UnregisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _baselineTakePosttestButton?.UnregisterCallback<ClickEvent>(OnTakePosttestClicked);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
 
@@ -285,6 +292,11 @@ namespace Anatomia3D.UI
             _categoryCardiovascularPercent = _screenRoot.Q<Label>("category-cardiovascular-percent");
             _categoryCardiovascularCount = _screenRoot.Q<Label>("category-cardiovascular-count");
 
+            _baselinePretestScoreLabel = _screenRoot.Q<Label>("baseline-pretest-score");
+            _baselinePosttestScoreLabel = _screenRoot.Q<Label>("baseline-posttest-score");
+            _baselineImprovementLabel = _screenRoot.Q<Label>("baseline-improvement-label");
+            _baselineTakePosttestButton = _screenRoot.Q<Button>("baseline-take-posttest-button");
+
             // Nervous isn't supported by Anatomy Play Mode - hide the whole
             // row (see the plan's section 1) rather than deleting it from
             // the UXML, so re-enabling it later is a one-line change.
@@ -305,6 +317,7 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.RegisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _baselineTakePosttestButton?.RegisterCallback<ClickEvent>(OnTakePosttestClicked);
 
             if (_screenRoot != null)
             {
@@ -406,6 +419,60 @@ namespace Anatomia3D.UI
         {
             RefreshAnatomyPerformance();
             RefreshWeeklyActivity();
+            RefreshBaselineAssessmentSection();
+        }
+
+        /// <summary>Populates the Pretest/Posttest card: each score once taken, a
+        /// "Take Posttest" button that only shows once the pretest is done and the
+        /// posttest isn't, and an improvement line once both exist. Reads through
+        /// BaselineAssessmentService.Instance.GetFullResult - a single Firestore
+        /// read, same call UIManager's pretest gate uses the lighter GetStatus
+        /// overload of. Safe to call with no BaselineAssessmentService in the
+        /// scene (leaves the card exactly as the UXML default).</summary>
+        private void RefreshBaselineAssessmentSection()
+        {
+            if (BaselineAssessmentService.Instance == null) return;
+
+            BaselineAssessmentService.Instance.GetFullResult((pretestDone, pretest, posttestDone, posttest) =>
+            {
+                if (_baselinePretestScoreLabel != null)
+                {
+                    _baselinePretestScoreLabel.text = pretestDone
+                        ? $"{pretest.CorrectCount}/{pretest.TotalCount} ({pretest.Points} pts)"
+                        : "Not yet taken";
+                }
+
+                if (_baselinePosttestScoreLabel != null)
+                {
+                    _baselinePosttestScoreLabel.text = posttestDone
+                        ? $"{posttest.CorrectCount}/{posttest.TotalCount} ({posttest.Points} pts)"
+                        : "Not yet taken";
+                }
+
+                // Only worth offering once the pretest is done and the posttest
+                // isn't - there's nothing to compare against before the pretest,
+                // and no reason to retake after the posttest (one-shot by design).
+                _baselineTakePosttestButton?.EnableInClassList("hidden", !(pretestDone && !posttestDone));
+
+                if (pretestDone && posttestDone && pretest.TotalCount > 0 && _baselineImprovementLabel != null)
+                {
+                    float prePercent = 100f * pretest.CorrectCount / pretest.TotalCount;
+                    float postPercent = 100f * posttest.CorrectCount / posttest.TotalCount;
+                    float improvement = postPercent - prePercent;
+                    string sign = improvement >= 0 ? "+" : "";
+                    _baselineImprovementLabel.text = $"{sign}{improvement:0}% improvement";
+                    _baselineImprovementLabel.RemoveFromClassList("hidden");
+                }
+                else
+                {
+                    _baselineImprovementLabel?.AddToClassList("hidden");
+                }
+            });
+        }
+
+        private void OnTakePosttestClicked(ClickEvent evt)
+        {
+            UIManager.Instance?.ShowStudentAnatomyScreenForBaselineAssessment(BaselineAssessmentType.Posttest);
         }
 
         /// <summary>Populates the Performance Panel from the student's REAL Anatomy

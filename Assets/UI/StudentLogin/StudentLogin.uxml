@@ -25,8 +25,8 @@
                         <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
                         <ui:Button name="forgot-password-button" text="Forgot Password?" class="forgot-password-link"/>
                         <ui:Button name="biometric-login-button" class="biometric-button hidden">
-                            <ui:VisualElement class="icon-fingerprint"/>
-                            <ui:Label text="Sign in with Biometrics" class="biometric-button-text"/>
+                            <ui:VisualElement name="biometric-icon" class="icon-fingerprint"/>
+                            <ui:Label name="biometric-label" text="Sign in with Biometrics" class="biometric-button-text"/>
                         </ui:Button>
                         <ui:Button name="sign-in-button" text="Sign In" class="sign-in-button"/>
                         <ui:VisualElement class="divider-row">

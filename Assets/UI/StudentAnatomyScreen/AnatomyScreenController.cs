@@ -214,6 +214,18 @@ public class AnatomyScreenController : MonoBehaviour
     // responsible for clearing this back to null once its mode ends.
     public System.Action BackNavigationOverride;
 
+    // Fired at the end of OnResetClicked, after it has already re-enabled every
+    // bone's renderer/collider (Reset's normal, correct behavior for ordinary
+    // Explore/Play Mode). A sibling controller running a restricted mode that
+    // isolates the model down to a fixed subset (currently only
+    // BaselineAssessmentController's pretest/posttest) subscribes here to
+    // re-apply that isolation immediately after - otherwise a student tapping
+    // Reset mid-test would suddenly see and be able to tap the entire skeleton.
+    // Same "this class stays completely agnostic of the caller" approach as
+    // BackNavigationOverride; the subscriber is responsible for unsubscribing
+    // once its mode ends.
+    public System.Action AfterReset;
+
     // Whether Isolate is currently active, so a second tap of the same
     // button toggles it back off instead of stacking another isolate on
     // top. _isolateUndo is the exact same delegate handed to PushUndo when
@@ -2575,6 +2587,14 @@ public class AnatomyScreenController : MonoBehaviour
         _isHideModeActive = false;
         _hideButton.RemoveFromClassList("toolbar-btn-active");
         if (_hideLabel != null) _hideLabel.text = "Hide Off";
+
+        // Lets a restricted mode (currently only BaselineAssessmentController's
+        // pretest/posttest) re-apply whatever it had isolated the model down to,
+        // since everything above just unconditionally re-enabled every bone's
+        // renderer/collider. Same "public hook another controller sets" pattern
+        // as BackNavigationOverride - AnatomyScreenController itself has no idea
+        // what baseline mode is.
+        AfterReset?.Invoke();
     }
 
     private void OnIsolateClicked()
@@ -2964,6 +2984,19 @@ public class AnatomyScreenController : MonoBehaviour
             var col = rend.GetComponent<Collider>();
             if (col != null) col.enabled = visible;
         }
+    }
+
+    /// <summary>Hides/shows the top bar's Back button entirely - used by
+    /// BaselineAssessmentController so a student can't exit the mandatory
+    /// Pretest/Posttest by backing out mid-test. Unlike BackNavigationOverride
+    /// (which only redirects where Back goes), this removes the option
+    /// completely. Callers are responsible for setting this back to true
+    /// once their restricted mode ends, the same way every other mode
+    /// restores whatever screen chrome it changed.</summary>
+    public void SetBackButtonVisible(bool visible)
+    {
+        if (_backButton == null) return;
+        _backButton.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     private void OnBackClicked()
