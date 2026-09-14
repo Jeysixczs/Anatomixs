@@ -102,6 +102,24 @@ namespace Anatomia3D.UI
         private Label _statusLabel;
         private Button _saveChangesButton;
 
+        private VisualElement _loadingOverlay;
+        private VisualElement _loadingSpinner;
+        private Label _loadingSubmessageLabel;
+
+        // Drives the loading overlay's spinner rotation and the delayed "still
+        // saving" hint (see ShowLoadingOverlay/HideLoadingOverlay) while
+        // Save Changes is in flight. Same pattern as
+        // StudentQuizGameplayController's submit-loading overlay.
+        private IVisualElementScheduledItem _spinnerSchedule;
+        private IVisualElementScheduledItem _slowSaveHintSchedule;
+        private float _spinnerAngle;
+
+        // On a weak connection saving can stay in flight well past what feels
+        // instant - past this many ms the overlay swaps in a reassuring
+        // "still working" hint instead of leaving the spinner as the only
+        // feedback.
+        private const long SlowSaveHintDelayMs = 6000;
+
         private bool _passwordsVisible;
         private string _loadedEmail;
 
@@ -146,6 +164,7 @@ namespace Anatomia3D.UI
             ClearAllErrors();
             SetStatus(string.Empty);
             ClosePasswordOverlay();
+            HideLoadingOverlay();
 
             _pendingAvatarBytes = null;
             RefreshAvatarPreview();
@@ -165,6 +184,7 @@ namespace Anatomia3D.UI
         {
             UnregisterCallbacks();
             StopVerificationPolling();
+            StopLoadingSpinner();
 
             if (PlayerSessionManager.Instance != null)
             {
@@ -245,6 +265,10 @@ namespace Anatomia3D.UI
 
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
+
+            _loadingOverlay = _screenRoot.Q<VisualElement>("loading-overlay");
+            _loadingSpinner = _screenRoot.Q<VisualElement>("loading-spinner");
+            _loadingSubmessageLabel = _screenRoot.Q<Label>("loading-submessage-label");
 
             Debug.Log($"[StudentEditProfileController] Found name field: {_fullNameField != null}, save button: {_saveChangesButton != null}");
         }
@@ -682,12 +706,14 @@ namespace Anatomia3D.UI
 
             SetStatus("Saving changes...");
             _saveChangesButton.SetEnabled(false);
+            ShowLoadingOverlay();
 
             PlayerSessionManager.Instance.UpdateProfile(fullName, email, currentPassword, (success, error) =>
             {
                 if (!success)
                 {
                     Debug.LogError($"[StudentEditProfileController] Profile update failed: {error}");
+                    HideLoadingOverlay();
                     SetStatus(error ?? "Failed to save changes. Please try again.");
                     _saveChangesButton.SetEnabled(true);
                     return;
@@ -705,6 +731,7 @@ namespace Anatomia3D.UI
                         else
                         {
                             Debug.LogError($"[StudentEditProfileController] Password change failed: {pwError}");
+                            HideLoadingOverlay();
                             SetStatus(pwError ?? "Failed to change password. Please try again.");
                             _saveChangesButton.SetEnabled(true);
                         }
@@ -742,6 +769,7 @@ namespace Anatomia3D.UI
             }
 
             SetStatus("Saving changes... uploading photo...");
+            SetLoadingMessage("Uploading photo...");
 
             CloudinaryAvatarUploadService.Instance.UploadAvatar(_pendingAvatarBytes, uid, (uploadSuccess, avatarUrl) =>
             {
@@ -766,6 +794,7 @@ namespace Anatomia3D.UI
 
         private void OnSaveComplete(bool emailChanged, string newEmail)
         {
+            HideLoadingOverlay();
             _saveChangesButton.SetEnabled(true);
 
             // Clear password fields either way; they're never re-displayed.
@@ -845,6 +874,69 @@ namespace Anatomia3D.UI
                 _statusLabel.AddToClassList("hidden");
             else
                 _statusLabel.RemoveFromClassList("hidden");
+        }
+
+        // ---------------------------------------------------------------
+        // Loading overlay (shown while Save Changes is in flight) - same
+        // pattern as StudentQuizGameplayController's submit-loading overlay.
+        // ---------------------------------------------------------------
+
+        private void ShowLoadingOverlay()
+        {
+            if (_loadingOverlay == null) return;
+
+            SetLoadingMessage("Saving changes...");
+            _loadingSubmessageLabel?.AddToClassList("hidden");
+            _loadingOverlay.RemoveFromClassList("hidden");
+
+            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
+            // frame-ish tick. USS has no keyframe animation in UI Toolkit, so this
+            // is the standard workaround for a continuously-animating element.
+            _spinnerAngle = 0f;
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSpinner == null) return;
+                _spinnerAngle = (_spinnerAngle + 15f) % 360f;
+                _loadingSpinner.style.rotate = new StyleRotate(new Rotate(_spinnerAngle));
+            }).Every(30);
+
+            // A slow/weak connection can leave the save pending far longer than
+            // usual - swap in a reassuring hint after a few seconds instead of
+            // letting the spinner alone imply something has frozen.
+            _slowSaveHintSchedule?.Pause();
+            _slowSaveHintSchedule = _loadingOverlay.schedule.Execute(() =>
+            {
+                if (_loadingSubmessageLabel == null) return;
+                _loadingSubmessageLabel.text = "Still working - this can take longer on a weak connection.";
+                _loadingSubmessageLabel.RemoveFromClassList("hidden");
+            });
+            _slowSaveHintSchedule.ExecuteLater(SlowSaveHintDelayMs);
+        }
+
+        private void HideLoadingOverlay()
+        {
+            _loadingOverlay?.AddToClassList("hidden");
+            StopLoadingSpinner();
+        }
+
+        private void StopLoadingSpinner()
+        {
+            _spinnerSchedule?.Pause();
+            _spinnerSchedule = null;
+            _slowSaveHintSchedule?.Pause();
+            _slowSaveHintSchedule = null;
+        }
+
+        /// <summary>Updates the loading overlay's headline while it's already
+        /// showing (e.g. switching from "Saving changes..." to "Uploading
+        /// photo..." during FinalizeSave) without resetting the spinner or the
+        /// delayed "still working" hint.</summary>
+        private void SetLoadingMessage(string message)
+        {
+            if (_loadingOverlay == null) return;
+            var label = _loadingOverlay.Q<Label>("loading-message-label");
+            if (label != null) label.text = message;
         }
 
         // ---------------- Responsive layout ----------------
