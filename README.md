@@ -4,7 +4,7 @@
 [![C%23](https://img.shields.io/badge/C%23-Programming_Language-239120?logo=csharp)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android)](https://www.android.com/)
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?logo=firebase)](https://firebase.google.com/)
-[![GitHub](https://img.shields.io/badge/Repository-GitHub-181717?logo=github)](https://github.com/Jeysixczs/Anatomia)
+[![GitHub](https://img.shields.io/badge/Repository-GitHub-181717?logo=github)](https://github.com/Jeysixczs/Anatomixs)
 
 Anatomia is a gamified mobile application designed to support interactive human anatomy learning for Radiologic Technology (RadTech) students. It combines interactive 3D anatomy models, game-based identification activities, quizzes, classroom learning, gamification, progress tracking, and Firebase-powered services.
 
