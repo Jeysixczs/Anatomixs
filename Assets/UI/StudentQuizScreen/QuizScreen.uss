@@ -655,9 +655,15 @@
 
 /* ---------------- ACTION BUTTON ---------------- */
 
+.action-row {
+    flex-direction: row;
+    margin: 12px 36px 42px 36px;
+}
+
 .action-button {
     /* background painted at runtime via generated gradient texture */
-    margin: 12px 36px 42px 36px;
+    flex-grow: 1;
+    flex-basis: 0;
     height: 96px;
     border-radius: 24px;
     border-width: 0;
@@ -668,6 +674,28 @@
 
 .action-button--disabled {
     opacity: 0.55;
+}
+
+.prev-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 96px;
+    margin: 0 18px 0 0;
+    border-radius: 24px;
+    border-width: 2px;
+    border-color: rgb(203, 213, 225);
+    background-color: rgb(255, 255, 255);
+    color: rgb(30, 41, 59);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.prev-button:hover {
+    background-color: rgb(243, 244, 246);
+}
+
+.prev-button.hidden {
+    display: none;
 }
 
 /* ---------------- UTILITY ---------------- */
@@ -744,9 +772,13 @@
     padding: 30px 27px;
 }
 
-.compact .action-button {
-    height: 84px;
+.compact .action-row {
     margin: 9px 24px 30px 24px;
+}
+
+.compact .action-button,
+.compact .prev-button {
+    height: 84px;
 }
 
 /* ---------------- IMAGE BASED (View on 3D Model button) ---------------- */
@@ -769,4 +801,66 @@
 .compact .view-model-button {
     height: 66px;
     font-size: 21px;
+}
+
+/* ---------------- EXIT CONFIRM OVERLAY (close-button tap mid-quiz) ---------------- */
+
+.exit-confirm-title {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgb(17, 24, 39);
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+.exit-confirm-button-row {
+    flex-direction: row;
+    width: 100%;
+}
+
+.exit-cancel-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 9px 0 0;
+    padding: 0 24px;
+    height: 90px;
+    border-radius: 24px;
+    border-width: 2px;
+    border-color: rgb(229, 231, 235);
+    background-color: rgb(255, 255, 255);
+    color: rgb(31, 36, 48);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.exit-cancel-button:hover {
+    background-color: rgb(243, 244, 246);
+}
+
+.exit-submit-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 0 0 9px;
+    padding: 0 24px;
+    height: 90px;
+    border-radius: 24px;
+    border-width: 0;
+    background-color: rgb(59, 130, 246);
+    color: rgb(255, 255, 255);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.exit-submit-button:hover {
+    background-color: rgb(37, 99, 235);
+}
+
+.compact .exit-confirm-title {
+    font-size: 30px;
+}
+
+.compact .exit-cancel-button,
+.compact .exit-submit-button {
+    height: 78px;
+    font-size: 24px;
 }

@@ -51,10 +51,14 @@ namespace Anatomia3D.UI.Quiz
         private Label _quizLabel;
         private Label _questionTextLabel;
         private VisualElement _answerContainer;
+        private Button _prevButton;
         private Button _actionButton;
         private VisualElement _blockedOverlay;
         private Label _blockedMessageLabel;
         private Button _blockedBackButton;
+        private VisualElement _exitConfirmOverlay;
+        private Button _exitCancelButton;
+        private Button _exitSubmitButton;
 
         // --- state ---
         private QuizService.QuizRecord _quiz;
@@ -177,8 +181,11 @@ namespace Anatomia3D.UI.Quiz
         private void UnregisterCallbacks()
         {
             _closeButton?.UnregisterCallback<ClickEvent>(OnCloseClicked);
+            _prevButton?.UnregisterCallback<ClickEvent>(OnPrevButtonClicked);
             _actionButton?.UnregisterCallback<ClickEvent>(OnActionButtonClicked);
             _blockedBackButton?.UnregisterCallback<ClickEvent>(OnBlockedBackClicked);
+            _exitCancelButton?.UnregisterCallback<ClickEvent>(OnExitCancelClicked);
+            _exitSubmitButton?.UnregisterCallback<ClickEvent>(OnExitSubmitClicked);
             _quizRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootResized);
         }
 
@@ -210,19 +217,27 @@ namespace Anatomia3D.UI.Quiz
             _quizLabel = _root.Q<Label>("quiz-label");
             _questionTextLabel = _root.Q<Label>("question-text-label");
             _answerContainer = _root.Q<VisualElement>("answer-container");
+            _prevButton = _root.Q<Button>("prev-button");
             _actionButton = _root.Q<Button>("action-button");
             _blockedOverlay = _root.Q<VisualElement>("blocked-overlay");
             _blockedMessageLabel = _root.Q<Label>("blocked-message-label");
             _blockedBackButton = _root.Q<Button>("blocked-back-button");
+            _exitConfirmOverlay = _root.Q<VisualElement>("exit-confirm-overlay");
+            _exitCancelButton = _root.Q<Button>("exit-cancel-button");
+            _exitSubmitButton = _root.Q<Button>("exit-submit-button");
         }
 
         private void WireEvents()
         {
             _quizRoot?.RegisterCallback<GeometryChangedEvent>(OnRootResized);
             _closeButton?.RegisterCallback<ClickEvent>(OnCloseClicked);
+            _prevButton?.RegisterCallback<ClickEvent>(OnPrevButtonClicked);
             _actionButton?.RegisterCallback<ClickEvent>(OnActionButtonClicked);
             _blockedBackButton?.RegisterCallback<ClickEvent>(OnBlockedBackClicked);
             _blockedOverlay?.AddToClassList("hidden");
+            _exitCancelButton?.RegisterCallback<ClickEvent>(OnExitCancelClicked);
+            _exitSubmitButton?.RegisterCallback<ClickEvent>(OnExitSubmitClicked);
+            _exitConfirmOverlay?.AddToClassList("hidden");
         }
 
         private void OnBlockedBackClicked(ClickEvent evt)
@@ -234,19 +249,57 @@ namespace Anatomia3D.UI.Quiz
 
         private void OnCloseClicked(ClickEvent evt)
         {
+            // Pause the countdown while the confirmation is up so the student doesn't
+            // lose time deliberating - resumed in OnExitCancelClicked if they stay.
             StopTimer();
-            OnCloseRequested?.Invoke();
 
-            // _launchClassroomId is now available here (see LoadQuiz), but
-            // ShowStudentClassroomDetail also needs the classroom's display name and
-            // instructor name to render its header, and neither is threaded through
-            // to this screen today. Wire those through LoadQuiz()/_pendingClassroomId
-            // alongside classroomId if you want this to return to
-            // StudentClassroomDetail instead of the dashboard.
-            UIManager.Instance.ShowStudentDashboard();
+            // No attempt loaded yet (e.g. close tapped during the eligibility/fetch
+            // callbacks in LoadQuiz) - nothing to submit, so just leave directly
+            // instead of showing a confirm dialog for an attempt that doesn't exist.
+            if (_quiz == null)
+            {
+                OnCloseRequested?.Invoke();
+                UIManager.Instance.ShowStudentDashboard();
+                return;
+            }
+
+            _exitConfirmOverlay?.RemoveFromClassList("hidden");
+        }
+
+        private void OnExitCancelClicked(ClickEvent evt)
+        {
+            _exitConfirmOverlay?.AddToClassList("hidden");
+
+            // Resume the countdown that OnCloseClicked paused, same as
+            // ResumeInProgressQuiz's timer-restart guard.
+            if (_quiz.HasTimeLimit && _timeRemaining > 0f && !_timerRunning)
+            {
+                _timerRunning = true;
+                _timerRoutine = StartCoroutine(TimerLoop());
+            }
+        }
+
+        private void OnExitSubmitClicked(ClickEvent evt)
+        {
+            _exitConfirmOverlay?.AddToClassList("hidden");
+
+            // SubmitQuiz() scores whatever's in _answers (unanswered questions just
+            // count as incorrect), writes the attempt, and navigates to the Quiz
+            // Result screen on success - same path the "Submit Quiz" action button
+            // and the auto-submit timer use.
+            OnCloseRequested?.Invoke();
+            SubmitQuiz();
         }
 
         private void OnActionButtonClicked(ClickEvent evt) => HandleNextOrSubmit();
+
+        private void OnPrevButtonClicked(ClickEvent evt)
+        {
+            if (_currentIndex == 0) return;
+
+            _currentIndex--;
+            RenderQuestion(_currentIndex);
+        }
 
         private void OnRootResized(GeometryChangedEvent evt)
         {
@@ -365,6 +418,7 @@ namespace Anatomia3D.UI.Quiz
 
             bool isLast = index == _quiz.Questions.Count - 1;
             _actionButton.text = isLast ? "Submit Quiz" : "Next Question";
+            _prevButton?.EnableInClassList("hidden", index == 0);
             RefreshActionButtonState();
 
             _answerContainer.Clear();
