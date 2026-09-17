@@ -34,9 +34,15 @@ public class BoneDatabaseService
 
 
 
-    public void Load(string json)
+    /// <param name="additive">Pass true to MERGE these entries into whatever is
+    /// already loaded instead of replacing it - used when one screen shows more
+    /// than one anatomy system's model at the same time and therefore needs more
+    /// than one database (see AnatomyScreenController's combined-systems mode).
+    /// On a key collision the entry already loaded wins, so load order decides
+    /// which database owns a name shared by two systems.</param>
+    public void Load(string json, bool additive = false)
     {
-        _byNormalizedKey.Clear();
+        if (!additive) _byNormalizedKey.Clear();
 
         if (string.IsNullOrEmpty(json))
         {

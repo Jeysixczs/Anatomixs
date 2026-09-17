@@ -26,7 +26,7 @@
                 <ui:VisualElement name="developers-card" class="menu-card">
                     <ui:VisualElement name="developers-list" class="developers-list"/>
                 </ui:VisualElement>
-                <ui:Label name="version-label" text="SANATOMIA  v1.0.0" class="version-label"/>
+                <ui:Label name="version-label" text="ANATOMIA  v0.1.0" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

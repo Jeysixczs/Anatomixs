@@ -1180,7 +1180,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
   appName: ANATOMIA
   appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
-  appVersion: 1.0.0
+  appVersion: 0.1.0
   appDescription: ANATOMIA is a gamified mobile application that makes learning human
     anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
     it transforms traditional anatomy lessons into a fun and immersive learning experience
@@ -1323,7 +1323,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   appName: ANATOMIA
   appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
-  appVersion: 1.0.0
+  appVersion: 0.1.0
   appDescription: ANATOMIA is a gamified mobile application that makes learning human
     anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
     it transforms traditional anatomy lessons into a fun and immersive learning experience
