@@ -223,5 +223,12 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="BaselineSavingOverlay" class="baseline-saving-overlay hidden">
+            <ui:VisualElement name="BaselineSavingCard" class="baseline-saving-card">
+                <ui:VisualElement name="BaselineSavingSpinner" class="baseline-saving-spinner"/>
+                <ui:Label name="BaselineSavingMessageLabel" text="Saving your results..." class="baseline-saving-message"/>
+                <ui:Label name="BaselineSavingSubmessageLabel" text="" class="baseline-saving-submessage hidden"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

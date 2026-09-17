@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.UI;
-using Unity.Loading;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -76,6 +75,24 @@ namespace Anatomia3D.Backend
         private Label _confirmMessage;
         private Button _confirmYesButton;
         private Button _confirmCancelButton;
+
+        private VisualElement _savingOverlay;
+        private VisualElement _savingSpinner;
+        private Label _savingSubmessageLabel;
+
+        // Drives the saving overlay's spinner rotation and the delayed "still
+        // working" hint (see ShowSavingOverlay) while OnAssessmentCompleted's
+        // BaselineAssessmentService.RecordAttempt write is in flight. Same
+        // pattern as StudentEditProfileController's Save Changes overlay.
+        private IVisualElementScheduledItem _savingSpinnerSchedule;
+        private IVisualElementScheduledItem _savingSlowHintSchedule;
+        private float _savingSpinnerAngle;
+
+        // On a weak connection the write can stay in flight far longer than
+        // usual - past this many ms the overlay swaps in a reassuring "still
+        // working" hint instead of leaving the spinner as the only feedback.
+        private const long SlowSaveHintDelayMs = 6000;
+
 
         private bool _pendingActivate;
         private BaselineAssessmentType _pendingType;
@@ -408,6 +425,64 @@ namespace Anatomia3D.Backend
             return uiDocument != null ? uiDocument.rootVisualElement : null;
         }
 
+        // ---------------------------------------------------------------
+        // Saving overlay (shown while the finished attempt is being recorded)
+        // - same pattern as StudentEditProfileController's Save Changes
+        // overlay: a ring spinner nudged every tick (UI Toolkit has no USS
+        // keyframe animation) plus a delayed "still working" hint for slow
+        // connections.
+        // ---------------------------------------------------------------
+
+        private void ShowSavingOverlay()
+        {
+            if (_savingOverlay == null)
+            {
+                var root = GetRoot();
+                _savingOverlay = root?.Q<VisualElement>("BaselineSavingOverlay");
+                _savingSpinner = root?.Q<VisualElement>("BaselineSavingSpinner");
+                _savingSubmessageLabel = root?.Q<Label>("BaselineSavingSubmessageLabel");
+            }
+
+            if (_savingOverlay == null)
+            {
+                Debug.LogWarning("[BaselineAssessmentController] ShowSavingOverlay: BaselineSavingOverlay not found in the UXML tree.");
+                return;
+            }
+
+            _savingSubmessageLabel?.AddToClassList("hidden");
+            _savingOverlay.RemoveFromClassList("hidden");
+
+            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
+            // frame-ish tick.
+            _savingSpinnerAngle = 0f;
+            _savingSpinnerSchedule?.Pause();
+            _savingSpinnerSchedule = _savingOverlay.schedule.Execute(() =>
+            {
+                if (_savingSpinner == null) return;
+                _savingSpinnerAngle = (_savingSpinnerAngle + 15f) % 360f;
+                _savingSpinner.style.rotate = new StyleRotate(new Rotate(_savingSpinnerAngle));
+            }).Every(30);
+
+            _savingSlowHintSchedule?.Pause();
+            _savingSlowHintSchedule = _savingOverlay.schedule.Execute(() =>
+            {
+                if (_savingSubmessageLabel == null) return;
+                _savingSubmessageLabel.text = "Still working - this can take longer on a weak connection.";
+                _savingSubmessageLabel.RemoveFromClassList("hidden");
+            });
+            _savingSlowHintSchedule.ExecuteLater(SlowSaveHintDelayMs);
+        }
+
+        private void HideSavingOverlay()
+        {
+            _savingOverlay?.AddToClassList("hidden");
+            _savingSpinnerSchedule?.Pause();
+            _savingSpinnerSchedule = null;
+            _savingSlowHintSchedule?.Pause();
+            _savingSlowHintSchedule = null;
+        }
+
+
         /// <summary>Sets the header's AppSubtitle to e.g. "SKELETAL SYSTEM -
         /// PRETEST" - AnatomyScreenController.SetAnatomySystem already set it to
         /// plain "SKELETAL SYSTEM" a moment earlier (see ResolveAnatomySystem),
@@ -484,10 +559,18 @@ namespace Anatomia3D.Backend
             if (subtitleLabel != null && !string.IsNullOrEmpty(_originalSubtitleText))
                 subtitleLabel.text = _originalSubtitleText;
 
+            // Covers the gap between finishing the last structure (or tapping
+            // Finish Now) and actually landing on the Dashboard/Progress screen -
+            // the write to BaselineAssessmentService below can take a moment, and
+            // without this the student would otherwise sit on a screen that looks
+            // like nothing is happening.
+            ShowSavingOverlay();
+
             if (BaselineAssessmentService.Instance == null)
             {
                 Debug.LogError("[BaselineAssessmentController] No BaselineAssessmentService in the scene - " +
                                 "result cannot be recorded. Navigating away without saving.");
+                HideSavingOverlay();
                 NavigateAfterCompletion(type);
                 return;
             }
@@ -506,15 +589,11 @@ namespace Anatomia3D.Backend
                                       "(or it was already completed).");
                 }
 
+                HideSavingOverlay();
                 NavigateAfterCompletion(type);
             });
 
-            
-            //reset camera position and rotation to default values after the assessment is completed
             _screen.OnResetClicked();
-
-
-
         }
 
         private void NavigateAfterCompletion(BaselineAssessmentType type)
@@ -525,8 +604,5 @@ namespace Anatomia3D.Backend
             else
                 UIManager.Instance.ShowStudentProgress();
         }
-
-      
-     
     }
 }

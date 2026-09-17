@@ -1442,3 +1442,68 @@
     padding: 0 24px;
 }
 
+
+/* ---------------- BASELINE SAVING OVERLAY (saving pretest/posttest result) ----------------
+   Shown while OnAssessmentCompleted is recording the finished session via
+   BaselineAssessmentService (Firebase write) and about to navigate away. Same
+   pattern as StudentEditProfile's loading overlay: a ring spinner rotated
+   continuously from the controller via schedule.Execute (UI Toolkit has no USS
+   keyframe animation), plus a delayed "still working" hint for slow connections. */
+
+.baseline-saving-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 18, 28, 0.72);
+    justify-content: center;
+    align-items: center;
+    padding: 60px;
+}
+
+.baseline-saving-card {
+    background-color: rgb(255, 255, 255);
+    border-radius: 32px;
+    padding: 54px 48px;
+    align-items: center;
+    max-width: 620px;
+}
+
+.baseline-saving-spinner {
+    width: 64px;
+    height: 64px;
+    border-width: 6px;
+    border-radius: 32px;
+    border-top-color: rgb(136, 45, 226);
+    border-left-color: rgb(136, 45, 226);
+    border-right-color: rgb(136, 45, 226);
+    border-bottom-color: rgba(136, 45, 226, 0.15);
+    margin-bottom: 28px;
+}
+
+.baseline-saving-message {
+    font-size: 30px;
+    color: rgb(31, 36, 48);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.baseline-saving-submessage {
+    font-size: 22px;
+    color: rgb(107, 114, 128);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-top: 12px;
+}
+
+.baseline-saving-submessage.hidden {
+    display: none;
+}
+
+.compact .baseline-saving-overlay {
+    padding: 30px;
+}

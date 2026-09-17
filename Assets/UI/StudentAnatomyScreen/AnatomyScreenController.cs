@@ -2865,8 +2865,8 @@ public class AnatomyScreenController : MonoBehaviour
 
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend != null) rend.enabled = true;
+            foreach (var rend in GetBoneRenderers(info))
+                rend.enabled = true;
 
             if (info.worldBone != null)
             {
@@ -2878,10 +2878,11 @@ public class AnatomyScreenController : MonoBehaviour
         // Restore the Mesh Collider's enabled state for every bone, in case any were disabled by Hide or Isolate.
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = true;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = true;
+            }
         }
 
         if (modelCamera != null && skeletonRoot != null)
@@ -2958,12 +2959,13 @@ public class AnatomyScreenController : MonoBehaviour
         var prevColliderStates = new Dictionary<Collider, bool>();
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-            prevRendererStates[rend] = rend.enabled;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                prevRendererStates[rend] = rend.enabled;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) prevColliderStates[col] = col.enabled;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) prevColliderStates[col] = col.enabled;
+            }
         }
 
         ApplyIsolateVisibility();
@@ -3011,18 +3013,31 @@ public class AnatomyScreenController : MonoBehaviour
     // toggle-off) - it only flips current enabled state, so the eventual
     // restore is unaffected by however many different bones got isolated
     // in between.
+    // Every Renderer that actually belongs to this bone - a bone can be made
+    // of more than one mesh piece (see EnsureBoneCollider's own "BUG FIX"
+    // comment above for why that matters for colliders), so anything that
+    // shows/hides a bone has to walk all of them, not just the first one
+    // GetComponentInChildren happens to find. Empty (never null) if the bone
+    // has no world Transform.
+    private static Renderer[] GetBoneRenderers(BoneInfo info)
+    {
+        return info?.worldBone != null
+            ? info.worldBone.GetComponentsInChildren<Renderer>(true)
+            : new Renderer[0];
+    }
+
     private void ApplyIsolateVisibility()
     {
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-
             bool visible = (info == _selectedBone);
-            rend.enabled = visible;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                rend.enabled = visible;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = visible;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = visible;
+            }
         }
     }
 
@@ -3053,20 +3068,27 @@ public class AnatomyScreenController : MonoBehaviour
     {
         if (info?.worldBone == null) return;
 
-        var rend = info.worldBone.GetComponentInChildren<Renderer>();
-        if (rend == null) return;
+        var renderers = GetBoneRenderers(info);
+        if (renderers.Length == 0) return;
 
-        // The raycast in TryPickBoneAt hits this same GameObject's Collider
-        // independently of the Renderer - disabling only the renderer left
-        // the mesh invisible but still tappable. Disable both so a hidden
-        // bone can no longer be selected via mesh tap.
-        var col = rend.GetComponent<Collider>();
-
+        // The raycast in TryPickBoneAt hits a piece's Collider independently
+        // of its Renderer - disabling only the renderer left the mesh
+        // invisible but still tappable. Disable both, for every mesh piece
+        // this bone is made of, so a hidden bone can no longer be selected
+        // via mesh tap.
         var hiddenBone = info;
-        bool prevEnabled = rend.enabled;
-        bool prevColEnabled = col != null && col.enabled;
-        rend.enabled = false;
-        if (col != null) col.enabled = false;
+        var prevRendererStates = new Dictionary<Renderer, bool>();
+        var prevColliderStates = new Dictionary<Collider, bool>();
+        foreach (var rend in renderers)
+        {
+            prevRendererStates[rend] = rend.enabled;
+            rend.enabled = false;
+
+            var col = rend.GetComponent<Collider>();
+            if (col == null) continue;
+            prevColliderStates[col] = col.enabled;
+            col.enabled = false;
+        }
 
 
         // The outline was being built from this bone's renderer; leaving it
@@ -3091,11 +3113,13 @@ public class AnatomyScreenController : MonoBehaviour
 
         PushUndo(() =>
         {
-            rend.enabled = prevEnabled;
-            if (col != null) col.enabled = prevColEnabled;
+            foreach (var kv in prevRendererStates)
+                kv.Key.enabled = kv.Value;
+            foreach (var kv in prevColliderStates)
+                kv.Key.enabled = kv.Value;
 
             // Restore the outline too, but only if this bone is still selected.
-            if (prevEnabled && boneOutlineController != null && _selectedBone == hiddenBone)
+            if (boneOutlineController != null && _selectedBone == hiddenBone && hiddenBone.worldBone != null)
                 boneOutlineController.SetSelectedBone(hiddenBone.worldBone);
         });
     }
@@ -3349,14 +3373,14 @@ public class AnatomyScreenController : MonoBehaviour
     {
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-
             bool visible = !active || (isAnswered != null && isAnswered(info));
-            rend.enabled = visible;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                rend.enabled = visible;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = visible;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = visible;
+            }
         }
     }
 
