@@ -6,11 +6,11 @@
                 <ui:Button name="close-button" text="✕" class="icon-button"/>
                 <ui:VisualElement name="badges-row" class="badges-row">
                     <ui:VisualElement name="timer-pill" class="pill">
-                        <ui:Label text="🕑" class="pill-icon"/>
+                        <ui:VisualElement name="timer-icon" class="pill-icon pill-icon--timer"/>
                         <ui:Label name="timer-label" text="10:00" class="pill-label"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="points-pill" class="pill">
-                        <ui:Label text="🏆" class="pill-icon"/>
+                        <ui:VisualElement name="points-icon" class="pill-icon pill-icon--points" style="-unity-background-image-tint-color: rgb(0, 0, 0);"/>
                         <ui:Label name="points-label" text="10 pts" class="pill-label"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -47,7 +47,7 @@
             <ui:VisualElement name="exit-confirm-card" class="blocked-card">
                 <ui:Label text="🚪" class="blocked-icon"/>
                 <ui:Label text="Exit Quiz?" class="exit-confirm-title"/>
-                <ui:Label name="exit-confirm-message-label" text="Any questions you haven&#39;t answered yet will be marked incorrect. Submit your answers and exit now?" class="blocked-message"/>
+                <ui:Label name="exit-confirm-message-label" text="Any questions you haven&apos;t answered yet will be marked incorrect. Submit your answers and exit now?" class="blocked-message"/>
                 <ui:VisualElement name="exit-confirm-button-row" class="exit-confirm-button-row">
                     <ui:Button name="exit-cancel-button" text="Cancel" class="exit-cancel-button"/>
                     <ui:Button name="exit-submit-button" text="Submit &amp; Exit" class="exit-submit-button"/>

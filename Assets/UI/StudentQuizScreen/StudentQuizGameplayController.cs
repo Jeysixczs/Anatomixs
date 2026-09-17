@@ -27,6 +27,20 @@ namespace Anatomia3D.UI.Quiz
     [RequireComponent(typeof(UIDocument))]
     public class StudentQuizGameplayController : MonoBehaviour
     {
+        [Header("Randomization")]
+        [Tooltip("Shuffle the question order every time a student starts an attempt, so two students (or two retakes) never see the same sequence.")]
+        [SerializeField] private bool shuffleQuestionOrder = true;
+
+        [Tooltip("Also shuffle the answer choices of Multiple Choice / Multiple Identification questions. True/False is deliberately left in its natural order.")]
+        [SerializeField] private bool shuffleAnswerOptions = true;
+
+        [Header("Header Pill Icons")]
+        [Tooltip("Optional. Overrides the timer pill's icon from QuizScreen.uss (.pill-icon--timer). Any sprite/texture in Assets/UI/Icons works.")]
+        [SerializeField] private Texture2D timerIcon;
+
+        [Tooltip("Optional. Overrides the points pill's icon from QuizScreen.uss (.pill-icon--points).")]
+        [SerializeField] private Texture2D pointsIcon;
+
         [Header("Gradient Colors")]
         [SerializeField] private Color gradientStart = new Color32(0x0E, 0xA5, 0x8A, 0xFF); // teal/green
         [SerializeField] private Color gradientEnd = new Color32(0x2F, 0x6F, 0xED, 0xFF);   // blue
@@ -43,6 +57,9 @@ namespace Anatomia3D.UI.Quiz
         private VisualElement _header;
         private ScrollView _answerScroll;
         private Button _closeButton;
+        private VisualElement _timerPill;
+        private VisualElement _timerIconElement;
+        private VisualElement _pointsIconElement;
         private Label _timerLabel;
         private Label _pointsLabel;
         private VisualElement _progressFill;
@@ -59,16 +76,42 @@ namespace Anatomia3D.UI.Quiz
         private VisualElement _exitConfirmOverlay;
         private VisualElement _loadingOverlay;
         private VisualElement _loadingSpinner;
+        private Label _loadingMessageLabel;
         private Label _loadingSubmessageLabel;
         private Button _exitCancelButton;
         private Button _exitSubmitButton;
 
         // --- state ---
         private QuizService.QuizRecord _quiz;
+
+        // The question order THIS attempt is actually played in. Kept separate from
+        // _questions (which stays in the admin-authored order) so shuffling can
+        // never leak back into the cached QuizRecord, and so a resume from the 3D
+        // Anatomy Screen round trip lands on the same question the student left.
+        // Every index in this class - _currentIndex, the _answers keys, the
+        // questionResults loop in SubmitQuiz - is an index into THIS list.
+        private List<QuizService.QuestionRecord> _questions = new List<QuizService.QuestionRecord>();
+
+        // Per-question shuffled answer choices, keyed by the same index as _questions.
+        // Built once per attempt so re-rendering a question (Previous/Next, or coming
+        // back from the 3D model) never reshuffles the options under the student.
+        private readonly Dictionary<int, List<string>> _shuffledOptions = new Dictionary<int, List<string>>();
+
         private int _currentIndex;
         private float _timeRemaining;
         private bool _timerRunning;
         private Coroutine _timerRoutine;
+
+        // Wall-clock instant the countdown should hit zero. The loop below compares
+        // against this instead of subtracting a fixed amount per tick, so a dropped
+        // frame, a long Firestore callback or a Time.timeScale change (the Anatomy
+        // Play Mode screen touches it) can't make the timer drift slow and hand the
+        // student extra time.
+        private float _timerDeadlineRealtime;
+
+        // Set when the countdown reached zero, so SubmitQuiz can tell an auto-submit
+        // apart from the student tapping "Submit Quiz".
+        private bool _autoSubmitted;
 
         // Wall-clock time the current attempt started, used to compute timeSpentSeconds
         // for SubmitQuizAttempt (the Scores tab's "Time: Xm Ys" field). realtimeSinceStartup
@@ -226,8 +269,12 @@ namespace Anatomia3D.UI.Quiz
                 _answerScroll.touchScrollBehavior = ScrollView.TouchScrollBehavior.Clamped;
             }
             _closeButton = _root.Q<Button>("close-button");
+            _timerPill = _root.Q<VisualElement>("timer-pill");
+            _timerIconElement = _root.Q<VisualElement>("timer-icon");
+            _pointsIconElement = _root.Q<VisualElement>("points-icon");
             _timerLabel = _root.Q<Label>("timer-label");
             _pointsLabel = _root.Q<Label>("points-label");
+            ApplyPillIcons();
             _progressFill = _root.Q<VisualElement>("progress-fill");
             _questionCounterLabel = _root.Q<Label>("question-counter-label");
             _typeLabel = _root.Q<Label>("type-label");
@@ -244,7 +291,21 @@ namespace Anatomia3D.UI.Quiz
             _exitSubmitButton = _root.Q<Button>("exit-submit-button");
             _loadingOverlay = _root.Q<VisualElement>("loading-overlay");
             _loadingSpinner = _root.Q<VisualElement>("loading-spinner");
+            _loadingMessageLabel = _root.Q<Label>("loading-message-label");
             _loadingSubmessageLabel = _root.Q<Label>("loading-submessage-label");
+        }
+
+        /// <summary>The pill icons default to whatever QuizScreen.uss sets on
+        /// .pill-icon--timer / .pill-icon--points. Assigning timerIcon/pointsIcon in
+        /// the Inspector overrides those without touching the stylesheet - handy for
+        /// swapping in a different PNG from Assets/UI/Icons per scene.</summary>
+        private void ApplyPillIcons()
+        {
+            if (timerIcon != null && _timerIconElement != null)
+                _timerIconElement.style.backgroundImage = new StyleBackground(timerIcon);
+
+            if (pointsIcon != null && _pointsIconElement != null)
+                _pointsIconElement.style.backgroundImage = new StyleBackground(pointsIcon);
         }
 
         private void WireEvents()
@@ -404,6 +465,9 @@ namespace Anatomia3D.UI.Quiz
             _currentIndex = 0;
             _answers.Clear();
             _submitInFlight = false;
+            _autoSubmitted = false;
+
+            BuildQuestionOrder(quiz);
             _quizStartRealtime = Time.realtimeSinceStartup;
             _quizLabel.text = quiz.Title;
 
@@ -425,19 +489,86 @@ namespace Anatomia3D.UI.Quiz
             }
         }
 
+        // ---------------------------------------------------------------
+        // Question / answer randomization
+        // ---------------------------------------------------------------
+
+        /// <summary>Fills _questions (and, when enabled, _shuffledOptions) for a fresh
+        /// attempt. Always copies into a NEW list rather than sorting quiz.Questions in
+        /// place - QuizRecord instances are handed out by QuizService and reused by other
+        /// screens (the admin preview, the mistakes report), which all expect the
+        /// admin-authored order.</summary>
+        private void BuildQuestionOrder(QuizService.QuizRecord quiz)
+        {
+            _questions = quiz.Questions != null
+                ? new List<QuizService.QuestionRecord>(quiz.Questions)
+                : new List<QuizService.QuestionRecord>();
+
+            _shuffledOptions.Clear();
+
+            // A fresh RNG per attempt (rather than one shared static) means a retake
+            // gets a genuinely different order from the attempt before it.
+            var rng = new System.Random();
+
+            if (shuffleQuestionOrder)
+                Shuffle(_questions, rng);
+
+            if (!shuffleAnswerOptions) return;
+
+            for (int i = 0; i < _questions.Count; i++)
+            {
+                var q = _questions[i];
+
+                // True/False is skipped on purpose - "False, True" reads as a glitch,
+                // not as randomization. Identification / Enumeration / Image-Based have
+                // no options list to shuffle in the first place.
+                bool hasShuffleableOptions =
+                    (q.QuestionTypeSlug == QuestionTypeSlugs.MultipleChoice ||
+                     q.QuestionTypeSlug == QuestionTypeSlugs.MultipleIdentification) &&
+                    q.Options != null && q.Options.Count > 1;
+
+                if (!hasShuffleableOptions) continue;
+
+                var options = new List<string>(q.Options);
+                Shuffle(options, rng);
+                _shuffledOptions[i] = options;
+            }
+        }
+
+        /// <summary>Standard Fisher-Yates. Unbiased, in place, O(n).</summary>
+        private static void Shuffle<T>(IList<T> list, System.Random rng)
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                T temp = list[i];
+                list[i] = list[j];
+                list[j] = temp;
+            }
+        }
+
+        /// <summary>The choices to draw for the question at <paramref name="index"/> -
+        /// the shuffled copy when there is one, otherwise the question's own list.
+        /// Scoring is unaffected either way: IsAnswerCorrect compares the selected
+        /// text against CorrectAnswer, never a position.</summary>
+        private List<string> OptionsFor(int index, QuizService.QuestionRecord q)
+        {
+            return _shuffledOptions.TryGetValue(index, out var shuffled) ? shuffled : q.Options;
+        }
+
         private void RenderQuestion(int index)
         {
-            var q = _quiz.Questions[index];
+            var q = _questions[index];
 
             _typeLabel.text = TypeLabels.TryGetValue(q.QuestionTypeSlug, out var label) ? label : q.QuestionTypeSlug.ToUpperInvariant();
             _questionTextLabel.text = q.QuestionText;
-            _questionCounterLabel.text = $"Question {index + 1} of {_quiz.Questions.Count}";
+            _questionCounterLabel.text = $"Question {index + 1} of {_questions.Count}";
             _pointsLabel.text = $"{q.Points} pts";
 
-            float progress = (index + 1) / (float)_quiz.Questions.Count;
+            float progress = (index + 1) / (float)_questions.Count;
             _progressFill.style.width = new Length(progress * 100f, LengthUnit.Percent);
 
-            bool isLast = index == _quiz.Questions.Count - 1;
+            bool isLast = index == _questions.Count - 1;
             _actionButton.text = isLast ? "Submit Quiz" : "Next Question";
             _prevButton?.EnableInClassList("hidden", index == 0);
             RefreshActionButtonState();
@@ -485,7 +616,9 @@ namespace Anatomia3D.UI.Quiz
             // The admin form only collects Options for Multiple Choice / Multiple
             // Identification - True/False has no options saved, so those two choices
             // are hardcoded here instead of reading an always-empty list.
-            var choices = q.QuestionTypeSlug == QuestionTypeSlugs.TrueFalse ? TrueFalseChoices : q.Options;
+            var choices = q.QuestionTypeSlug == QuestionTypeSlugs.TrueFalse
+                ? TrueFalseChoices
+                : OptionsFor(_currentIndex, q);
 
             foreach (var choice in choices)
             {
@@ -516,7 +649,7 @@ namespace Anatomia3D.UI.Quiz
             helper.AddToClassList("helper-text");
             _answerContainer.Add(helper);
 
-            foreach (var choice in q.Options)
+            foreach (var choice in OptionsFor(_currentIndex, q))
             {
                 var row = CreateOptionRow(choice, isCheckbox: true);
                 row.EnableInClassList("option-row--selected", selected.Contains(choice));
@@ -669,7 +802,7 @@ namespace Anatomia3D.UI.Quiz
 
         private void RefreshActionButtonState()
         {
-            bool isLast = _currentIndex == _quiz.Questions.Count - 1;
+            bool isLast = _currentIndex == _questions.Count - 1;
             _actionButton.EnableInClassList("action-button--disabled", isLast && !HasAnswer(_currentIndex));
         }
 
@@ -693,7 +826,7 @@ namespace Anatomia3D.UI.Quiz
 
         private void HandleNextOrSubmit()
         {
-            bool isLast = _currentIndex == _quiz.Questions.Count - 1;
+            bool isLast = _currentIndex == _questions.Count - 1;
 
             if (isLast)
             {
@@ -729,11 +862,11 @@ namespace Anatomia3D.UI.Quiz
             // "Common Incorrect Answers" list via QuizService.FetchClassroomReportData /
             // FetchQuizMistakes.
             // Without this, that list stays empty no matter how many attempts exist.
-            var questionResults = new List<QuizService.QuestionAttemptResult>(_quiz.Questions.Count);
+            var questionResults = new List<QuizService.QuestionAttemptResult>(_questions.Count);
 
-            for (int i = 0; i < _quiz.Questions.Count; i++)
+            for (int i = 0; i < _questions.Count; i++)
             {
-                var q = _quiz.Questions[i];
+                var q = _questions[i];
 
                 _answers.TryGetValue(i, out var answer);
                 bool isCorrect = IsAnswerCorrect(q, answer);
@@ -794,6 +927,7 @@ namespace Anatomia3D.UI.Quiz
                         // Submission failed (e.g. network hiccup) - let the student try
                         // again instead of leaving the button permanently disabled.
                         _submitInFlight = false;
+                        _autoSubmitted = false;
                         HideLoadingOverlay();
                         if (_actionButton != null)
                         {
@@ -811,7 +945,7 @@ namespace Anatomia3D.UI.Quiz
                         // this callback swaps _root's content out from under us, so
                         // there's no "submitted" flash to hide it for.
                         UIManager.Instance.ShowStudentQuizResult(
-                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible);
+                            quizTitle, correctCount, incorrectCount, pointsEarned, pointsPossible, timeSpentSeconds);
                     });
 
                 },
@@ -828,6 +962,17 @@ namespace Anatomia3D.UI.Quiz
             if (_loadingOverlay == null) return;
 
             _loadingSubmessageLabel?.AddToClassList("hidden");
+
+            // Time-up submissions say so explicitly - otherwise a student who was
+            // mid-question when the clock ran out just sees the screen take over with
+            // no explanation of why.
+            if (_loadingMessageLabel != null)
+            {
+                _loadingMessageLabel.text = _autoSubmitted
+                    ? "Time's up! Submitting your quiz..."
+                    : "Submitting your quiz...";
+            }
+
             _loadingOverlay.RemoveFromClassList("hidden");
 
             // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
@@ -989,26 +1134,76 @@ namespace Anatomia3D.UI.Quiz
 
         private IEnumerator TimerLoop()
         {
-            while (_timerRunning && _timeRemaining > 0f)
+            // Anchor to a deadline rather than counting ticks down: a hitch, a slow
+            // Firestore callback or a paused/altered Time.timeScale can each cost a
+            // tick, and every lost tick would otherwise hand the student free time.
+            // _timeRemaining is still kept current so pause/resume (the exit dialog
+            // and the 3D-model round trip) can restart from where it left off.
+            _timerDeadlineRealtime = Time.realtimeSinceStartup + _timeRemaining;
+
+            while (_timerRunning)
             {
+                _timeRemaining = _timerDeadlineRealtime - Time.realtimeSinceStartup;
+
+                if (_timeRemaining <= 0f) break;
+
                 UpdateTimerLabel(_timeRemaining);
-                yield return new WaitForSeconds(1f);
-                _timeRemaining -= 1f;
+
+                // Quarter-second ticks so the displayed value never sits a whole
+                // second behind, and WaitForSecondsRealtime so a timeScale of 0
+                // can't freeze the countdown.
+                yield return new WaitForSecondsRealtime(0.25f);
             }
 
-            if (_timerRunning)
-            {
-                UpdateTimerLabel(0f);
-                SubmitQuiz(); // time's up - auto-submit whatever was answered
-            }
+            // Loop exited because StopTimer() was called (exit dialog, leaving for the
+            // 3D model, submitting manually) rather than because time ran out.
+            if (!_timerRunning) yield break;
+
+            _timeRemaining = 0f;
+            _timerRunning = false;
+            _timerRoutine = null;
+            UpdateTimerLabel(0f);
+
+            HandleTimeExpired();
+        }
+
+        /// <summary>The countdown hit zero - submit whatever the student has answered so
+        /// far. Unanswered questions simply score as incorrect (see the SubmitQuiz loop),
+        /// so there is nothing extra to fill in here.</summary>
+        private void HandleTimeExpired()
+        {
+            // Nothing loaded, or a submission already in flight (e.g. the student tapped
+            // "Submit Quiz" in the same frame the clock expired) - SubmitQuiz's own
+            // _submitInFlight guard would catch this too, but bailing here keeps the
+            // "Time's up" overlay text from replacing an already-correct message.
+            if (_quiz == null || _submitInFlight) return;
+
+            _autoSubmitted = true;
+
+            // Either confirmation dialog could still be up if the student was mid-
+            // deliberation when the clock ran out. Close both - the decision has been
+            // made for them now.
+            _exitConfirmOverlay?.AddToClassList("hidden");
+            _blockedOverlay?.AddToClassList("hidden");
+
+            // Typed answers need no flushing here: the TextFields built by
+            // BuildIdentification / BuildEnumeration / BuildImageBased are not delayed,
+            // so their RegisterValueChangedCallback has already written every keystroke
+            // into _answers - including one typed in the same moment the clock expired.
+            SubmitQuiz();
         }
 
         private void UpdateTimerLabel(float seconds)
         {
+            if (_timerLabel == null) return;
+
             int totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, seconds));
             int minutes = totalSeconds / 60;
             int secs = totalSeconds % 60;
             _timerLabel.text = $"{minutes}:{secs:00}";
+
+            // Turns the pill red for the final minute (.pill--danger in QuizScreen.uss).
+            _timerPill?.EnableInClassList("pill--danger", totalSeconds <= 60);
         }
 
         private void OnDestroy()

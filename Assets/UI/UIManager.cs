@@ -561,11 +561,12 @@ private IEnumerator DecideInitialScreen()
             int correctCount,
             int incorrectCount,
             int pointsEarned,
-            int pointsPossible)
+            int pointsPossible,
+            int timeSpentSeconds = 0)
         {
             ShowScreen(studentQuizResultScreen, _studentQuizResultController, () =>
             {
-                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible);
+                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible, timeSpentSeconds);
             });
         }
 
@@ -584,6 +585,22 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
             {
                 _studentClassroomDetailController?.SetClassroomIdentity(classroomId, classroomName, instructorName);
+            });
+        }
+
+        /// <summary>Same as ShowStudentClassroomDetail, but lands on the Available Quizzes
+        /// tab. Used by FCMNotificationService when a student taps a "quiz closes soon"
+        /// reminder - they came for the quiz, not the Overview tab's announcements.</summary>
+        public void ShowStudentClassroomDetailOnQuizzesTab(string classroomId, string classroomName, string instructorName)
+        {
+            ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
+            {
+                if (_studentClassroomDetailController == null) return;
+
+                // Identity first: it triggers the content load, and OnEnable has already
+                // forced the Overview tab by this point, so the tab switch has to come after.
+                _studentClassroomDetailController.SetClassroomIdentity(classroomId, classroomName, instructorName);
+                _studentClassroomDetailController.OpenQuizzesTab();
             });
         }
 
