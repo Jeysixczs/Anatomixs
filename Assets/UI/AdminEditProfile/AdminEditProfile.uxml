@@ -83,12 +83,5 @@
                 <ui:Button name="close-password-card-button" text="Done" class="close-password-card-button"/>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="loading-overlay" class="loading-overlay hidden">
-            <ui:VisualElement name="loading-card" class="loading-card">
-                <ui:VisualElement name="loading-spinner" class="loading-spinner"/>
-                <ui:Label name="loading-message-label" text="Saving changes..." class="loading-message"/>
-                <ui:Label name="loading-submessage-label" text="" class="loading-submessage hidden"/>
-            </ui:VisualElement>
-        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

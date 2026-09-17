@@ -69,6 +69,8 @@ namespace Anatomia3D.UI
 
         private bool _passwordVisible;
 
+        private LoadingOverlay _loadingOverlay;
+
         private void OnEnable()
         {
             Debug.Log("[AdminLoginController] OnEnable called");
@@ -110,6 +112,8 @@ namespace Anatomia3D.UI
             ClearError(_emailError);
             ClearError(_passwordError);
             SetStatus(string.Empty);
+
+            _loadingOverlay = new LoadingOverlay(_root);
         }
 
         private void OnDisable()
@@ -133,6 +137,8 @@ namespace Anatomia3D.UI
                 Destroy(_buttonGradientTexture);
                 _buttonGradientTexture = null;
             }
+
+            _loadingOverlay?.Dispose();
         }
 
         private void UnregisterCallbacks()
@@ -282,7 +288,7 @@ namespace Anatomia3D.UI
 
             SetStatus("Signing in...");
             _secureLoginButton.SetEnabled(false);
-
+            _loadingOverlay.Show("Signing in...");
             // TODO: replace with your real admin auth call, e.g.:
             // AdminAuthService.Instance.LoginAdmin(email, _passwordField.value, OnLoginResult);
 
@@ -291,6 +297,7 @@ namespace Anatomia3D.UI
                 if (success)
                 {
                     Debug.Log("[AdminLoginController] Admin login successful.");
+                    _loadingOverlay.Hide();
                     UIManager.Instance.ShowAdminDashboard();
                 }
                 else
@@ -300,18 +307,10 @@ namespace Anatomia3D.UI
                     _secureLoginButton.SetEnabled(true);
                 }
             });
-            Invoke(nameof(FakeLoginComplete), 0.4f);
+        
         }
 
-        private void FakeLoginComplete()
-        {
-            _secureLoginButton.SetEnabled(true);
-            SetStatus(string.Empty);
-            Debug.Log("[AdminLoginController] Sign in stub complete - hook up AdminAuthService here.");
-
-            // TODO: only navigate once your real auth call reports success, e.g.:
-            // UIManager.Instance.ShowAdminDashboard();
-        }
+     
 
         // ---------------- Helpers ----------------
 

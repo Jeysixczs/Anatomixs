@@ -76,22 +76,14 @@ namespace Anatomia3D.Backend
         private Button _confirmYesButton;
         private Button _confirmCancelButton;
 
-        private VisualElement _savingOverlay;
-        private VisualElement _savingSpinner;
-        private Label _savingSubmessageLabel;
-
-        // Drives the saving overlay's spinner rotation and the delayed "still
-        // working" hint (see ShowSavingOverlay) while OnAssessmentCompleted's
-        // BaselineAssessmentService.RecordAttempt write is in flight. Same
-        // pattern as StudentEditProfileController's Save Changes overlay.
-        private IVisualElementScheduledItem _savingSpinnerSchedule;
-        private IVisualElementScheduledItem _savingSlowHintSchedule;
-        private float _savingSpinnerAngle;
-
-        // On a weak connection the write can stay in flight far longer than
-        // usual - past this many ms the overlay swaps in a reassuring "still
-        // working" hint instead of leaving the spinner as the only feedback.
-        private const long SlowSaveHintDelayMs = 6000;
+        // Shown while OnAssessmentCompleted's BaselineAssessmentService.RecordAttempt
+        // write is in flight - see the reusable LoadingOverlay class (built entirely
+        // in code, same drop-in pattern as OfflineOverlay) for what it does. Rebuilt
+        // fresh at the start of every session (see StartSession) rather than reused
+        // across sessions, since UIManager.ShowScreen clones a brand new UXML tree
+        // for each pretest/posttest open and an overlay parented into the old tree
+        // would already be gone.
+        private LoadingOverlay _savingOverlay;
 
 
         private bool _pendingActivate;
@@ -294,6 +286,14 @@ namespace Anatomia3D.Backend
             _confirmYesButton = null;
             _confirmCancelButton = null;
 
+            // This session's saving overlay is parented into the tree UIManager
+            // just cloned for this open - drop any instance from a previous
+            // session (it was parented into that OLD, now-discarded tree) and
+            // let ShowSavingOverlay build a fresh one against this one, lazily,
+            // the first time it's actually needed.
+            _savingOverlay?.Dispose();
+            _savingOverlay = null;
+
             // No way to back out of a mandatory assessment, and a clear label so
             // the student knows this is a formal Pretest/Posttest, not normal
             // Play Mode. Both are restored in OnAssessmentCompleted, since this
@@ -426,60 +426,19 @@ namespace Anatomia3D.Backend
         }
 
         // ---------------------------------------------------------------
-        // Saving overlay (shown while the finished attempt is being recorded)
-        // - same pattern as StudentEditProfileController's Save Changes
-        // overlay: a ring spinner nudged every tick (UI Toolkit has no USS
-        // keyframe animation) plus a delayed "still working" hint for slow
-        // connections.
+        // Saving overlay (shown while the finished attempt is being recorded) -
+        // thin wrapper around the reusable LoadingOverlay class.
         // ---------------------------------------------------------------
 
         private void ShowSavingOverlay()
         {
-            if (_savingOverlay == null)
-            {
-                var root = GetRoot();
-                _savingOverlay = root?.Q<VisualElement>("BaselineSavingOverlay");
-                _savingSpinner = root?.Q<VisualElement>("BaselineSavingSpinner");
-                _savingSubmessageLabel = root?.Q<Label>("BaselineSavingSubmessageLabel");
-            }
-
-            if (_savingOverlay == null)
-            {
-                Debug.LogWarning("[BaselineAssessmentController] ShowSavingOverlay: BaselineSavingOverlay not found in the UXML tree.");
-                return;
-            }
-
-            _savingSubmessageLabel?.AddToClassList("hidden");
-            _savingOverlay.RemoveFromClassList("hidden");
-
-            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
-            // frame-ish tick.
-            _savingSpinnerAngle = 0f;
-            _savingSpinnerSchedule?.Pause();
-            _savingSpinnerSchedule = _savingOverlay.schedule.Execute(() =>
-            {
-                if (_savingSpinner == null) return;
-                _savingSpinnerAngle = (_savingSpinnerAngle + 15f) % 360f;
-                _savingSpinner.style.rotate = new StyleRotate(new Rotate(_savingSpinnerAngle));
-            }).Every(30);
-
-            _savingSlowHintSchedule?.Pause();
-            _savingSlowHintSchedule = _savingOverlay.schedule.Execute(() =>
-            {
-                if (_savingSubmessageLabel == null) return;
-                _savingSubmessageLabel.text = "Still working - this can take longer on a weak connection.";
-                _savingSubmessageLabel.RemoveFromClassList("hidden");
-            });
-            _savingSlowHintSchedule.ExecuteLater(SlowSaveHintDelayMs);
+            if (_savingOverlay == null) _savingOverlay = new LoadingOverlay(GetRoot());
+            _savingOverlay.Show("Saving your results...");
         }
 
         private void HideSavingOverlay()
         {
-            _savingOverlay?.AddToClassList("hidden");
-            _savingSpinnerSchedule?.Pause();
-            _savingSpinnerSchedule = null;
-            _savingSlowHintSchedule?.Pause();
-            _savingSlowHintSchedule = null;
+            _savingOverlay?.Hide();
         }
 
 
@@ -592,7 +551,6 @@ namespace Anatomia3D.Backend
                 HideSavingOverlay();
                 NavigateAfterCompletion(type);
             });
-
             _screen.OnResetClicked();
         }
 
