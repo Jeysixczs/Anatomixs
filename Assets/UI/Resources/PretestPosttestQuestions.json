@@ -1,18 +1,6 @@
 {
   "questions": [
     {
-      "QuestionText": "Which bone forms your forehead and shields the front of your brain?",
-      "QuestionTypeSlug": "image-based",
-      "Options": [],
-      "CorrectAnswer": "Frontal bone",
-      "Difficulty": "Easy",
-      "Points": 10,
-      "AnatomySystemKey": "skeletal",
-      "AnatomySystemDisplayName": "Skeletal System",
-      "StructureKey": "Frontal bone",
-      "StructureDisplayName": "Frontal bone"
-    },
-    {
       "QuestionText": "Which is the longest and strongest bone in the human body, found in your thigh?",
       "QuestionTypeSlug": "image-based",
       "Options": [],
@@ -25,30 +13,6 @@
       "StructureDisplayName": "Right Femur"
     },
     {
-      "QuestionText": "Which is the only bone in the skull that can move, forming your lower jaw?",
-      "QuestionTypeSlug": "image-based",
-      "Options": [],
-      "CorrectAnswer": "Mandible",
-      "Difficulty": "Medium",
-      "Points": 15,
-      "AnatomySystemKey": "skeletal",
-      "AnatomySystemDisplayName": "Skeletal System",
-      "StructureKey": "Mandible",
-      "StructureDisplayName": "Mandible"
-    },
-    {
-      "QuestionText": "Which butterfly-shaped bone at the base of the skull has a central hollow that cradles the pituitary gland?",
-      "QuestionTypeSlug": "image-based",
-      "Options": [],
-      "CorrectAnswer": "Sphenoid bone",
-      "Difficulty": "Hard",
-      "Points": 20,
-      "AnatomySystemKey": "skeletal",
-      "AnatomySystemDisplayName": "Skeletal System",
-      "StructureKey": "Sphenoid bone",
-      "StructureDisplayName": "Sphenoid bone"
-    },
-    {
       "QuestionText": "Which long bone of the upper arm connects your shoulder to your elbow?",
       "QuestionTypeSlug": "image-based",
       "Options": [],
@@ -59,18 +23,6 @@
       "AnatomySystemDisplayName": "Skeletal System",
       "StructureKey": "Humerus.r",
       "StructureDisplayName": "Right Humerus"
-    },
-    {
-      "QuestionText": "Which shinbone bears most of your body's weight between your knee and ankle?",
-      "QuestionTypeSlug": "image-based",
-      "Options": [],
-      "CorrectAnswer": "Right Tibia",
-      "Difficulty": "Easy",
-      "Points": 10,
-      "AnatomySystemKey": "skeletal",
-      "AnatomySystemDisplayName": "Skeletal System",
-      "StructureKey": "Tibia.r",
-      "StructureDisplayName": "Right Tibia"
     },
     {
       "QuestionText": "Which flat, triangular bone on your upper back forms your shoulder blade?",
@@ -97,18 +49,6 @@
       "StructureDisplayName": "Right Clavicle"
     },
     {
-      "QuestionText": "Which is the largest sesamoid bone in the body, sitting in front of your knee joint?",
-      "QuestionTypeSlug": "image-based",
-      "Options": [],
-      "CorrectAnswer": "Right Patella",
-      "Difficulty": "Medium",
-      "Points": 15,
-      "AnatomySystemKey": "skeletal",
-      "AnatomySystemDisplayName": "Skeletal System",
-      "StructureKey": "Patella.r",
-      "StructureDisplayName": "Right Patella"
-    },
-    {
       "QuestionText": "Which ring-shaped first cervical vertebra supports your skull and lets you nod \"yes\"?",
       "QuestionTypeSlug": "image-based",
       "Options": [],
@@ -119,6 +59,126 @@
       "AnatomySystemDisplayName": "Skeletal System",
       "StructureKey": "Atlas (C1)",
       "StructureDisplayName": "Atlas (C1)"
+    },
+    {
+      "QuestionText": "Which dome-shaped muscle separates your chest and abdominal cavities and does most of the work when you breathe in?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Diaphragm",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "muscular",
+      "AnatomySystemDisplayName": "Muscular System",
+      "StructureKey": "Diaphragm",
+      "StructureDisplayName": "Diaphragm"
+    },
+    {
+      "QuestionText": "Which is the largest and heaviest muscle in the human body, forming the bulk of your buttock?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Gluteus maximus muscle",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "muscular",
+      "AnatomySystemDisplayName": "Muscular System",
+      "StructureKey": "Gluteus maximus muscle.r",
+      "StructureDisplayName": "Right Gluteus maximus muscle"
+    },
+    {
+      "QuestionText": "Which neck muscle lets you tilt your head to one side while turning your face toward the opposite shoulder?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Sternocleidomastoid muscle",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "muscular",
+      "AnatomySystemDisplayName": "Muscular System",
+      "StructureKey": "Sternocleidomastoid muscle.r",
+      "StructureDisplayName": "Right Sternocleidomastoid muscle"
+    },
+    {
+      "QuestionText": "Which straight, two-joint muscle runs down the front of your thigh and is one of the four heads of the quadriceps?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Rectus femoris muscle",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "muscular",
+      "AnatomySystemDisplayName": "Muscular System",
+      "StructureKey": "Rectus femoris muscle.r",
+      "StructureDisplayName": "Right Rectus femoris muscle"
+    },
+    {
+      "QuestionText": "Which upper-back muscle's descending fibers let you shrug or elevate your shoulders?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right Descending part of trapezius muscle",
+      "Difficulty": "Hard",
+      "Points": 20,
+      "AnatomySystemKey": "muscular",
+      "AnatomySystemDisplayName": "Muscular System",
+      "StructureKey": "Descending part of trapezius muscle.r",
+      "StructureDisplayName": "Right Descending part of trapezius muscle"
+    },
+    {
+      "QuestionText": "Which heart chamber receives deoxygenated blood returning from the body through the venae cavae?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Right atrium",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "cardiovascular",
+      "AnatomySystemDisplayName": "Cardiovascular System",
+      "StructureKey": "Right atrium",
+      "StructureDisplayName": "Right atrium"
+    },
+    {
+      "QuestionText": "Which heart chamber has the thickest muscular wall because it pumps blood to your entire body?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Left ventricle",
+      "Difficulty": "Easy",
+      "Points": 10,
+      "AnatomySystemKey": "cardiovascular",
+      "AnatomySystemDisplayName": "Cardiovascular System",
+      "StructureKey": "Left ventricle",
+      "StructureDisplayName": "Left ventricle"
+    },
+    {
+      "QuestionText": "Which large vein drains blood from your head, neck, and arms back into the right atrium?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Superior vena cava",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "cardiovascular",
+      "AnatomySystemDisplayName": "Cardiovascular System",
+      "StructureKey": "Superior vena cava",
+      "StructureDisplayName": "Superior vena cava"
+    },
+    {
+      "QuestionText": "Which vessel carries deoxygenated blood from the right ventricle toward the lungs?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Pulmonary trunk",
+      "Difficulty": "Medium",
+      "Points": 15,
+      "AnatomySystemKey": "cardiovascular",
+      "AnatomySystemDisplayName": "Cardiovascular System",
+      "StructureKey": "Pulmonary trunk",
+      "StructureDisplayName": "Pulmonary trunk"
+    },
+    {
+      "QuestionText": "Which curved part of the body's largest artery gives rise to the vessels that supply your head, neck, and arms?",
+      "QuestionTypeSlug": "image-based",
+      "Options": [],
+      "CorrectAnswer": "Aortic arch",
+      "Difficulty": "Hard",
+      "Points": 20,
+      "AnatomySystemKey": "cardiovascular",
+      "AnatomySystemDisplayName": "Cardiovascular System",
+      "StructureKey": "Aortic arch",
+      "StructureDisplayName": "Aortic arch"
     }
   ]
 }

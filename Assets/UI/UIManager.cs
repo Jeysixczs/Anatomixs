@@ -502,15 +502,46 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
+        /// <summary>The BaselineAssessmentController that lives on the Anatomy
+        /// Screen's own GameObject. Resolved through GetComponent (rather than a
+        /// cached field) because both baseline entry points below need it while
+        /// that GameObject is still disabled, which GetComponent handles fine.</summary>
+        private BaselineAssessmentController GetBaselineAssessmentController()
+        {
+            var controller = _studentAnatomyScreenController != null
+                ? _studentAnatomyScreenController.GetComponent<BaselineAssessmentController>()
+                : null;
+
+            if (controller == null)
+                Debug.LogWarning("[UIManager] No BaselineAssessmentController was found on the Anatomy Screen GameObject.");
+
+            return controller;
+        }
+
         /// <summary>Opens the Anatomy Screen for the student's one-time Pretest/
         /// Posttest baseline assessment (see BaselineAssessmentController) - a
-        /// fixed, Skeletal-only set of structures with no hints, distinct from
-        /// both normal Play Mode and the classroom quiz's Image-Based highlight
-        /// flow. Called once from ShowStudentDashboard (pretest gate, before the
+        /// fixed set of structures with no hints, shown across all three systems'
+        /// models at once, distinct from both normal Play Mode and the classroom
+        /// quiz's Image-Based highlight flow. Called once from ShowStudentDashboard (pretest gate, before the
         /// dashboard itself shows) and from the Progress screen's "Take
         /// Posttest" button.</summary>
         public void ShowStudentAnatomyScreenForBaselineAssessment(BaselineAssessmentType type)
         {
+            // Skeletal is the anchor system (see
+            // BaselineAssessmentController.SessionSystemOrder) - set explicitly so
+            // ResolveAnatomySystem has a sane "current" system regardless of
+            // whatever the screen last happened to be showing (e.g. a student
+            // coming from Explore 3D -> Cardiovascular straight into the pretest
+            // gate). The combined list below is what decides which models come up.
+            _studentAnatomyScreenController?.SetAnatomySystem(AnatomySystem.Skeletal);
+
+            // Brings up all three systems' models together, each restricted to just
+            // this assessment's structures - BEFORE ShowScreen re-enables the
+            // controller, since AnatomyScreenController.OnEnable is what walks the
+            // models and builds a collider per mesh piece. See
+            // BaselineAssessmentController.PrepareCombinedSession.
+            GetBaselineAssessmentController()?.PrepareCombinedSession();
+
             ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
             {
                 var baseline = _studentAnatomyScreenController != null
@@ -530,11 +561,12 @@ private IEnumerator DecideInitialScreen()
             int correctCount,
             int incorrectCount,
             int pointsEarned,
-            int pointsPossible)
+            int pointsPossible,
+            int timeSpentSeconds = 0)
         {
             ShowScreen(studentQuizResultScreen, _studentQuizResultController, () =>
             {
-                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible);
+                _studentQuizResultController?.SetResult(quizName, correctCount, incorrectCount, pointsEarned, pointsPossible, timeSpentSeconds);
             });
         }
 
@@ -553,6 +585,22 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
             {
                 _studentClassroomDetailController?.SetClassroomIdentity(classroomId, classroomName, instructorName);
+            });
+        }
+
+        /// <summary>Same as ShowStudentClassroomDetail, but lands on the Available Quizzes
+        /// tab. Used by FCMNotificationService when a student taps a "quiz closes soon"
+        /// reminder - they came for the quiz, not the Overview tab's announcements.</summary>
+        public void ShowStudentClassroomDetailOnQuizzesTab(string classroomId, string classroomName, string instructorName)
+        {
+            ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
+            {
+                if (_studentClassroomDetailController == null) return;
+
+                // Identity first: it triggers the content load, and OnEnable has already
+                // forced the Overview tab by this point, so the tab switch has to come after.
+                _studentClassroomDetailController.SetClassroomIdentity(classroomId, classroomName, instructorName);
+                _studentClassroomDetailController.OpenQuizzesTab();
             });
         }
 

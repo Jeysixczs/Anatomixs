@@ -8,38 +8,65 @@ using UnityEngine.UIElements;
 namespace Anatomia3D.Backend
 {
     /// <summary>
-    /// Student's one-time Pretest/Posttest baseline assessment: a fixed set of
-    /// Skeletal structures (loaded from Assets/Resources/PretestPosttestQuestions.json),
-    /// answered through AnatomyPlayModeController's restricted "baseline mode"
-    /// (tap the model yourself, type the name, no hints - see
-    /// AnatomyPlayModeController.StartBaselineAssessment), then recorded through
-    /// BaselineAssessmentService.
+    /// Student's one-time Pretest/Posttest baseline assessment: the fixed set of
+    /// structures selected per AnatomySystem (Skeletal, Muscular, Cardiovascular)
+    /// in Assets/Resources/PretestPosttestQuestions.json - all three models shown
+    /// TOGETHER in one session (see PrepareCombinedSession/StartSession), each one
+    /// reduced to only its selected structures.
+    ///
+    /// All three at once is affordable BECAUSE of that reduction, not in spite of
+    /// it: AnatomyScreenController builds bone data plus a MeshCollider per mesh
+    /// piece for whatever it is given, so three FULL models in one open would lag
+    /// badly - three models' worth of five structures each is 15 pieces total.
+    /// SetCombinedSystems + SetStructureFilter do that together, before the screen
+    /// opens; the other structures are never built, so there is nothing heavy to
+    /// hide afterward.
+    ///
+    /// The session is answered through AnatomyPlayModeController's restricted
+    /// "baseline mode" (tap the model yourself, type the name, no hints - see
+    /// AnatomyPlayModeController.StartBaselineAssessment); once every structure is
+    /// identified the result is recorded through BaselineAssessmentService.
     ///
     /// Contains NO 3D-interaction/guessing logic itself - all of that is reused
     /// from AnatomyPlayModeController exactly the way AnatomyQuizHighlightController
     /// and AnatomyTeacherSelectionController already reuse it for their own
-    /// purposes. This class only: loads the fixed question set, starts the
-    /// restricted session, and decides what happens on completion.
+    /// purposes. This class only: loads the fixed question set, splits it into
+    /// per-system phases, starts each phase's restricted session in turn, and
+    /// decides what happens on completion.
     ///
     /// Attach to the SAME GameObject as AnatomyScreenController/
     /// AnatomyPlayModeController (same requirement those two already have).
-    /// Only ever triggered via UIManager.ShowStudentAnatomyScreenForBaselineAssessment,
-    /// the same "Request...OnOpen, consumed once WireUi/GetComponent is ready"
-    /// pattern AnatomyPlayModeController/AnatomyQuizHighlightController use.
+    /// Triggered via UIManager.ShowStudentAnatomyScreenForBaselineAssessment,
+    /// which prepares the combined systems + structure filter before the screen
+    /// opens and then follows the same "Request...OnOpen, consumed once
+    /// WireUi/GetComponent is ready" pattern AnatomyPlayModeController/
+    /// AnatomyQuizHighlightController use.
     /// </summary>
     [RequireComponent(typeof(AnatomyScreenController))]
     public class BaselineAssessmentController : MonoBehaviour
     {
         private const string QuestionsResourcePath = "PretestPosttestQuestions"; // Assets/Resources/PretestPosttestQuestions.json
 
-        // Pretest/Posttest is a short fixed-length check, not a full survey
-        // of every structure in the question bank - only the first 10
-        // questions (in the JSON file's own order) are used per session.
-        // Applied in BeginAssessment right after LoadQuestions, before
-        // anything else reads _questions, so every downstream consumer
-        // (targetKeys, progress totals, OnBaselineStructureSelected's
-        // per-structure question lookup) only ever sees these 10.
-        private const int MaxQuestionsPerAssessment = 10;
+        // The systems shown together for the whole assessment. Order matters
+        // only in that the first one becomes the camera/orbit anchor - see
+        // AnatomyScreenController.ResolveCombinedSystems. Every question
+        // curated per AnatomySystemKey in the JSON is used; there is no cap on
+        // question count, since what keeps this light is the per-model
+        // structure filter, not how many questions there are.
+        private static readonly AnatomySystem[] SessionSystemOrder =
+        {
+            AnatomySystem.Skeletal,
+            AnatomySystem.Muscular,
+            AnatomySystem.Cardiovascular
+        };
+
+        private static readonly Dictionary<string, AnatomySystem> AnatomySystemKeyMap =
+            new Dictionary<string, AnatomySystem>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "skeletal", AnatomySystem.Skeletal },
+                { "muscular", AnatomySystem.Muscular },
+                { "cardiovascular", AnatomySystem.Cardiovascular }
+            };
 
         private AnatomyScreenController _screen;
         private AnatomyPlayModeController _playMode;
@@ -49,14 +76,36 @@ namespace Anatomia3D.Backend
         private Button _confirmYesButton;
         private Button _confirmCancelButton;
 
+        // Shown while OnAssessmentCompleted's BaselineAssessmentService.RecordAttempt
+        // write is in flight - see the reusable LoadingOverlay class (built entirely
+        // in code, same drop-in pattern as OfflineOverlay) for what it does. Rebuilt
+        // fresh at the start of every session (see StartSession) rather than reused
+        // across sessions, since UIManager.ShowScreen clones a brand new UXML tree
+        // for each pretest/posttest open and an overlay parented into the old tree
+        // would already be gone.
+        private LoadingOverlay _savingOverlay;
+
+
         private bool _pendingActivate;
         private BaselineAssessmentType _pendingType;
 
-        // Current session's questions and progress - kept as fields (not locals)
-        // so OnBaselineStructureSelected can look up each tapped structure's
-        // question text (and skip already-answered ones) without re-loading
-        // the JSON on every tap.
-        private List<QuestionRecordJson> _questions;
+        // Every question in this session, across all three systems at once -
+        // what OnBaselineStructureSelected looks up a tapped structure's
+        // question text against, and what the target structure list handed to
+        // AnatomyPlayModeController is built from.
+        private List<QuestionRecordJson> _sessionQuestions;
+        private BaselineAssessmentType _sessionType;
+
+        // How many structures this session asks about (15 as curated), kept so
+        // the Finish confirmation can report progress before
+        // AnatomyPlayModeController's onCompleted has fired.
+        private int _sessionTotal;
+
+        // Every structure identified correctly so far THIS SESSION - kept as a
+        // field (not local) so OnBaselineStructureSelected
+        // can look up each tapped structure's question text (and skip
+        // already-answered ones) without re-loading the JSON on every tap,
+        // and so the Finish confirmation can report whole-session progress.
         private readonly HashSet<string> _answeredKeys = new HashSet<string>();
         private string _originalSubtitleText;
 
@@ -81,10 +130,77 @@ namespace Anatomia3D.Backend
             public List<QuestionRecordJson> questions;
         }
 
+        // Cached across the whole session (and across sessions) so
+        // PrepareCombinedSession - which runs from UIManager before the screen
+        // is even enabled, and again on a later posttest - doesn't re-read and
+        // re-parse the JSON every time.
+        private List<QuestionRecordJson> _cachedQuestions;
+
         private void Awake()
         {
             _screen = GetComponent<AnatomyScreenController>();
             _playMode = GetComponent<AnatomyPlayModeController>();
+        }
+
+        /// <summary>Brings up all three systems' models at once
+        /// (AnatomyScreenController.SetCombinedSystems) with each one reduced to only
+        /// the structures this assessment asks about (SetStructureFilter) - the 5 per
+        /// system, 15 in total, curated in PretestPosttestQuestions.json.
+        ///
+        /// Called by UIManager.ShowStudentAnatomyScreenForBaselineAssessment immediately
+        /// BEFORE ShowScreen re-enables the controller, for exactly the same reason
+        /// SetAnatomySystem is called there: AnatomyScreenController.OnEnable is what
+        /// walks the models, registers every structure and generates a MeshCollider per
+        /// mesh piece, so both the combined list and the filter have to be in place
+        /// first. Three FULL models built in one open is precisely the lag this avoids;
+        /// filtered, all three together cost less than one unfiltered model did.
+        ///
+        /// Safe to call on a disabled GameObject (before Awake has ever run), hence the
+        /// GetComponent fallback - same pattern RequestBaselineAssessmentOnOpen relies
+        /// on.</summary>
+        public void PrepareCombinedSession()
+        {
+            if (_screen == null) _screen = GetComponent<AnatomyScreenController>();
+            if (_screen == null) return;
+
+            if (_cachedQuestions == null || _cachedQuestions.Count == 0)
+                _cachedQuestions = LoadQuestions();
+
+            var keys = _cachedQuestions?
+                .Where(q => AnatomySystemKeyMap.ContainsKey(q.AnatomySystemKey ?? string.Empty))
+                .Select(q => q.StructureKey)
+                .Where(k => !string.IsNullOrEmpty(k))
+                .ToList();
+
+            // Only systems that actually have curated questions are brought up -
+            // a model with nothing to identify on it is just a model the student
+            // can't do anything with.
+            var systems = new List<AnatomySystem>();
+            if (_cachedQuestions != null)
+            {
+                foreach (var system in SessionSystemOrder)
+                {
+                    bool hasQuestions = _cachedQuestions.Any(q =>
+                        AnatomySystemKeyMap.TryGetValue(q.AnatomySystemKey ?? string.Empty, out var mapped) && mapped == system);
+
+                    if (hasQuestions) systems.Add(system);
+                }
+            }
+
+            if (keys == null || keys.Count == 0 || systems.Count == 0)
+            {
+                // Nothing to scope to - leave the screen in its normal
+                // one-system, unfiltered state rather than opening an empty
+                // model; BeginAssessment logs the real error.
+                _screen.ClearStructureFilter();
+                _screen.ClearCombinedSystems();
+                return;
+            }
+
+            Debug.Log($"[BaselineAssessmentController] PrepareCombinedSession: {systems.Count} model(s) shown together, " +
+                      $"restricted to {keys.Count} structure(s).");
+            _screen.SetCombinedSystems(systems);
+            _screen.SetStructureFilter(keys);
         }
 
         /// <summary>Called by UIManager.ShowStudentAnatomyScreenForBaselineAssessment
@@ -101,35 +217,82 @@ namespace Anatomia3D.Backend
 
         private void Update()
         {
-            if (!_pendingActivate) return;
-            if (_playMode == null) _playMode = GetComponent<AnatomyPlayModeController>();
-            if (_playMode == null) return;
+            if (_pendingActivate)
+            {
+                if (_playMode == null) _playMode = GetComponent<AnatomyPlayModeController>();
+                if (_playMode == null) return;
 
-            _pendingActivate = false;
-            BeginAssessment(_pendingType);
+                _pendingActivate = false;
+                BeginAssessment(_pendingType);
+            }
         }
 
         private void BeginAssessment(BaselineAssessmentType type)
         {
-            _questions = LoadQuestions();
-            if (_questions == null || _questions.Count == 0)
+            var questions = _cachedQuestions != null && _cachedQuestions.Count > 0
+                ? _cachedQuestions
+                : (_cachedQuestions = LoadQuestions());
+            if (questions == null || questions.Count == 0)
             {
                 Debug.LogError("[BaselineAssessmentController] No questions loaded from " +
                                 $"Resources/{QuestionsResourcePath}.json - cannot start {type}.");
                 return;
             }
 
-            if (_questions.Count > MaxQuestionsPerAssessment)
-                _questions = _questions.Take(MaxQuestionsPerAssessment).ToList();
+            // Every question whose AnatomySystemKey maps to a real system, in
+            // JSON order - one flat session across all three models rather than
+            // one slice per model, since all three are on screen together.
+            _sessionQuestions = questions
+                .Where(q => AnatomySystemKeyMap.ContainsKey(q.AnatomySystemKey ?? string.Empty))
+                .ToList();
 
+            if (_sessionQuestions.Count == 0)
+            {
+                Debug.LogError("[BaselineAssessmentController] None of the questions in " +
+                                $"Resources/{QuestionsResourcePath}.json have a recognized " +
+                                "AnatomySystemKey (skeletal/muscular/cardiovascular) - cannot start " +
+                                $"{type}.");
+                return;
+            }
+
+            _sessionType = type;
+            _sessionTotal = _sessionQuestions.Count;
             _answeredKeys.Clear();
 
-            var targetKeys = _questions.Select(q => q.StructureKey).Where(k => !string.IsNullOrEmpty(k)).ToList();
+            StartSession();
+        }
 
-            // Always Skeletal for the pretest/posttest, per the fixed question set -
-            // set explicitly rather than trusting whatever system the screen last
-            // happened to be on.
-            _screen.SetAnatomySystem(AnatomySystem.Skeletal);
+        /// <summary>Starts the one and only session. By the time this runs the
+        /// Anatomy Screen is already showing all three systems' models, each
+        /// restricted to this assessment's structures - see
+        /// PrepareCombinedSession, which UIManager called before the screen
+        /// opened. This hands that same structure list to
+        /// AnatomyPlayModeController so tapping any of them, on any of the three
+        /// models, is answerable.</summary>
+        private void StartSession()
+        {
+            var targetKeys = _sessionQuestions
+                .Select(q => q.StructureKey)
+                .Where(k => !string.IsNullOrEmpty(k))
+                .ToList();
+
+            // Every open of this screen clones a fresh UXML tree, so anything
+            // queried from a previous session's tree is stale - null them so
+            // ShowFinishButton/WireConfirmPanel below re-query the current one
+            // instead of silently no-op'ing against dead references.
+            _finishButton = null;
+            _confirmPanel = null;
+            _confirmMessage = null;
+            _confirmYesButton = null;
+            _confirmCancelButton = null;
+
+            // This session's saving overlay is parented into the tree UIManager
+            // just cloned for this open - drop any instance from a previous
+            // session (it was parented into that OLD, now-discarded tree) and
+            // let ShowSavingOverlay build a fresh one against this one, lazily,
+            // the first time it's actually needed.
+            _savingOverlay?.Dispose();
+            _savingOverlay = null;
 
             // No way to back out of a mandatory assessment, and a clear label so
             // the student knows this is a formal Pretest/Posttest, not normal
@@ -137,15 +300,15 @@ namespace Anatomia3D.Backend
             // same Anatomy Screen GameObject is reused later for Explore/Play
             // Mode/Quiz - leftover state here would otherwise bleed into those.
             _screen.SetBackButtonVisible(false);
-            SetSubtitle(type);
+            SetSubtitle(_sessionType);
             ShowFinishButton();
 
-            // -= before += since BeginAssessment can run twice on this same
-            // persistent GameObject (pretest, then later posttest). Added
-            // here (after _playMode.StartBaselineAssessment below subscribes
-            // its own OnStructureSelected handler during Awake/OnEnable,
-            // which already happened before this ever runs) so this handler
-            // sits later in the invocation list and its InfoPanel text wins.
+            // -= before += since this can run again on the same persistent
+            // GameObject (pretest, then later posttest). Added here (after
+            // _playMode.StartBaselineAssessment below subscribes its own
+            // OnStructureSelected handler during Awake/OnEnable, which already
+            // happened before this ever runs) so this handler sits later in the
+            // invocation list and its InfoPanel text wins.
             _screen.OnStructureSelected -= OnBaselineStructureSelected;
             _screen.OnStructureSelected += OnBaselineStructureSelected;
 
@@ -153,7 +316,7 @@ namespace Anatomia3D.Backend
                 targetKeys,
                 onStructureIdentified: structureKey => _answeredKeys.Add(structureKey),
                 onCompleted: (correctCount, totalCount, points) =>
-                    OnAssessmentCompleted(type, correctCount, totalCount, points));
+                    OnAssessmentCompleted(_sessionType, correctCount, _sessionTotal, points));
         }
 
         /// <summary>Fires for every structure tap (hotspot / search / mesh-tap),
@@ -168,9 +331,9 @@ namespace Anatomia3D.Backend
         /// identified. Great work!" message untouched.</summary>
         private void OnBaselineStructureSelected(AnatomyScreenController.BoneInfo info)
         {
-            if (info == null || _questions == null || _answeredKeys.Contains(info.boneName)) return;
+            if (info == null || _sessionQuestions == null || _answeredKeys.Contains(info.boneName)) return;
 
-            var question = _questions.FirstOrDefault(q =>
+            var question = _sessionQuestions.FirstOrDefault(q =>
                 BoneDatabaseService.NormalizeKey(q.StructureKey) == BoneDatabaseService.NormalizeKey(info.boneName));
             if (question == null || string.IsNullOrEmpty(question.QuestionText)) return;
 
@@ -228,7 +391,7 @@ namespace Anatomia3D.Backend
 
             Debug.Log("[BaselineAssessmentController] Finish tapped - showing confirm dialog.");
             int answered = _answeredKeys.Count;
-            int total = _questions?.Count ?? 0;
+            int total = _sessionTotal;
             if (_confirmMessage != null)
             {
                 _confirmMessage.text = answered < total
@@ -248,6 +411,11 @@ namespace Anatomia3D.Backend
         {
             Debug.Log("[BaselineAssessmentController] Finish Now confirmed - calling FinishBaselineAssessmentEarly.");
             HideConfirmPanel();
+
+            // FinishBaselineAssessmentEarly fires the same onCompleted callback a
+            // natural completion would, just with the partial counts - so it
+            // lands in OnAssessmentCompleted and gets recorded as an honest
+            // partial score.
             _playMode.FinishBaselineAssessmentEarly();
         }
 
@@ -256,6 +424,23 @@ namespace Anatomia3D.Backend
             var uiDocument = GetComponent<UIDocument>();
             return uiDocument != null ? uiDocument.rootVisualElement : null;
         }
+
+        // ---------------------------------------------------------------
+        // Saving overlay (shown while the finished attempt is being recorded) -
+        // thin wrapper around the reusable LoadingOverlay class.
+        // ---------------------------------------------------------------
+
+        private void ShowSavingOverlay()
+        {
+            if (_savingOverlay == null) _savingOverlay = new LoadingOverlay(GetRoot());
+            _savingOverlay.Show("Saving your results...");
+        }
+
+        private void HideSavingOverlay()
+        {
+            _savingOverlay?.Hide();
+        }
+
 
         /// <summary>Sets the header's AppSubtitle to e.g. "SKELETAL SYSTEM -
         /// PRETEST" - AnatomyScreenController.SetAnatomySystem already set it to
@@ -296,29 +481,55 @@ namespace Anatomia3D.Backend
             // otherwise a later visit would incorrectly show no Back button, a
             // leftover question in the InfoPanel, or the wrong AppSubtitle.
             // Unsubscribing OnBaselineStructureSelected matters most here -
-            // OnStructureSelected fires for every tap app-wide, and _questions/
+            // OnStructureSelected fires for every tap app-wide, and _sessionQuestions/
             // _answeredKeys aren't cleared, so without this a later Explore/Play
             // Mode session would keep overwriting the InfoPanel with stale
             // pretest/posttest question text.
             //
             // ExitPlayMode() belongs in this same cleanup block: it's what
-            // actually lifts the isolation that restricted the model to just
-            // this assessment's 10 structures. Without it, opening Explore 3D
-            // -> Skeletal right after finishing a pretest/posttest would still
-            // show only those 10 bones instead of the full skeleton.
+            // actually lifts the isolation that restricted the models to just
+            // this session's selected structures. Without it, opening Explore 3D
+            // -> whichever system was the anchor right after finishing a
+            // pretest/posttest would still show only those few structures
+            // instead of the full model.
             _screen.SetBackButtonVisible(true);
             _screen.OnStructureSelected -= OnBaselineStructureSelected;
             _playMode.ExitPlayMode();
+
+            // Hide the models BEFORE anything else touches them. The model
+            // camera renders these roots whether or not this screen's UI is
+            // showing, so leaving them active means all three full systems keep
+            // being rendered behind the dashboard the student just landed on -
+            // which is what made finishing lag.
+            _screen.HideActiveModels();
+
+            // With the models already hidden, restoring the renderers/colliders
+            // the filter switched off changes nothing on screen, so it is
+            // deferred to the next open rather than spent on this frame - the
+            // student is mid-navigation and the attempt is about to be written
+            // to Firebase. ClearCombinedSystems puts the screen back to one
+            // model per open; without it, opening Explore 3D right after
+            // finishing would bring up all three systems at once.
+            _screen.ClearStructureFilter(deferRestore: true);
+            _screen.ClearCombinedSystems();
             _finishButton?.AddToClassList("hidden");
             _confirmPanel?.AddToClassList("hidden");
             var subtitleLabel = GetRoot()?.Q<Label>("AppSubtitle");
             if (subtitleLabel != null && !string.IsNullOrEmpty(_originalSubtitleText))
                 subtitleLabel.text = _originalSubtitleText;
 
+            // Covers the gap between finishing the last structure (or tapping
+            // Finish Now) and actually landing on the Dashboard/Progress screen -
+            // the write to BaselineAssessmentService below can take a moment, and
+            // without this the student would otherwise sit on a screen that looks
+            // like nothing is happening.
+            ShowSavingOverlay();
+
             if (BaselineAssessmentService.Instance == null)
             {
                 Debug.LogError("[BaselineAssessmentController] No BaselineAssessmentService in the scene - " +
                                 "result cannot be recorded. Navigating away without saving.");
+                HideSavingOverlay();
                 NavigateAfterCompletion(type);
                 return;
             }
@@ -337,8 +548,10 @@ namespace Anatomia3D.Backend
                                       "(or it was already completed).");
                 }
 
+                HideSavingOverlay();
                 NavigateAfterCompletion(type);
             });
+            _screen.OnResetClicked();
         }
 
         private void NavigateAfterCompletion(BaselineAssessmentType type)

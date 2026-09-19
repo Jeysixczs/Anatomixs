@@ -60,6 +60,7 @@ namespace Anatomia3D.UI
 
         private VisualElement _passwordEyeIcon;
 
+        private LoadingOverlay _loadingOverlay;
         private void OnEnable()
         {
             if (_document == null)
@@ -77,6 +78,8 @@ namespace Anatomia3D.UI
 
             _passwordField.isPasswordField = true;
             _confirmPasswordField.isPasswordField = true;
+
+            _loadingOverlay = new LoadingOverlay(_root);
         }
 
         private void OnDisable()
@@ -97,6 +100,7 @@ namespace Anatomia3D.UI
             _confirmPasswordField?.UnregisterCallback<ChangeEvent<string>>(OnConfirmPasswordChanged);
 
             _root.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            _loadingOverlay.Dispose();
         }
 
         private void QueryElements()
@@ -338,7 +342,9 @@ namespace Anatomia3D.UI
         private void OnGoogleSignupClicked(ClickEvent evt)
         {
             SetStatus("Connecting to Google...");
+          
             Debug.Log("[CreateAccountController] Google signup clicked");
+            
             _googleSignupButton.SetEnabled(false);
 
             PlayerSessionManager.Instance?.LoginWithGoogle((success, errorMessage) =>
@@ -379,24 +385,29 @@ namespace Anatomia3D.UI
                 SetStatus("Please accept the Terms of Service");
                 return;
             }
-
+          
             SetStatus("Creating account...");
+           
             _createAccountButton.SetEnabled(false);
-
+            _loadingOverlay.Show("Creating account...");
             PlayerSessionManager.Instance?.CreateStudentAccount(
                 fullName: $"{_firstNameField.value.Trim()} {_lastNameField.value.Trim()}",
                 email: _emailField.value.Trim(),
                 password: _passwordField.value,
                 onComplete: (success, errorMessage) =>
                 {
+                    
                     if (success)
                     {
+                        
                         Debug.Log("[CreateAccountController] Account created successfully");
                         SetStatus("Account created successfully! Redirecting...");
+                        _loadingOverlay.Show("Account created successfully! Redirecting...");
                         Invoke(nameof(RedirectToLogin), 1.5f);
                     }
                     else
                     {
+                        _loadingOverlay.Hide();
                         Debug.LogError($"[CreateAccountController] Account creation failed: {errorMessage}");
                         SetStatus($"Account creation failed: {errorMessage}");
                         _createAccountButton.SetEnabled(true);
@@ -407,6 +418,7 @@ namespace Anatomia3D.UI
 
         private void RedirectToLogin()
         {
+            _loadingOverlay.Hide();
             UIManager.Instance?.ShowStudentLogin();
         }
 

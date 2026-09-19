@@ -44,6 +44,13 @@
                         <ui:Label name="points-mini-value-label" text="+10" class="mini-value"/>
                         <ui:Label text="Points" class="mini-label"/>
                     </ui:VisualElement>
+                    <ui:VisualElement name="time-mini-card" class="mini-card mini-card-right">
+                        <ui:VisualElement class="mini-icon-box mini-icon-gold">
+                            <ui:VisualElement class="mini-icon icon-clock" style="background-image: url(&quot;project://database/Assets/UI/Icons/time-icon.png?fileID=2800000&amp;guid=e010bec633279364a9a425f3c1234729&amp;type=3#time-icon&quot;);"/>
+                        </ui:VisualElement>
+                        <ui:Label name="time-mini-value-label" text="0:00" class="mini-value"/>
+                        <ui:Label text="Time" class="mini-label"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Button name="back-to-dashboard-button" class="back-to-dashboard-button">
                     <ui:VisualElement class="back-to-dashboard-icon icon-home" style="background-image: url(&quot;project://database/Assets/UI/Icons/share-icon.png?fileID=2800000&amp;guid=f1fe6e7c9a36c3946ab9415bdb9b5fdc&amp;type=3#share-icon&quot;); height: 70px; width: 68px;"/>

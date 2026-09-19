@@ -119,6 +119,170 @@ public class AnatomyScreenController : MonoBehaviour
     // ever being created (breaking mesh-tap selection entirely).
     private readonly Dictionary<string, Transform> _boneTransformsByName = new Dictionary<string, Transform>();
 
+    // ===== Combined systems (show more than one model at once) =====
+    // Normally exactly one anatomy system's model is active and skeletonRoot
+    // points at it (see ResolveAnatomySystem). When this list is non-empty,
+    // every system in it is activated TOGETHER and treated as one model:
+    // bones are collected from all of their roots, all of their databases are
+    // loaded (additively), the camera frames all of them, and taps can land on
+    // any of them. skeletonRoot still points at the FIRST system in the list,
+    // since it remains the orbit/back-navigation anchor.
+    //
+    // Used by BaselineAssessmentController so the Pretest/Posttest can show
+    // Skeletal + Muscular + Cardiovascular at the same time. This is only
+    // affordable together with a structure filter (below) - a combined open
+    // with no filter would build all three models in full.
+    //
+    // Set BEFORE this controller is enabled, same lifecycle requirement as
+    // SetAnatomySystem/SetStructureFilter.
+    private readonly List<AnatomySystem> _combinedSystems = new List<AnatomySystem>();
+
+    // The model roots this open is actually working across - one entry
+    // (skeletonRoot) in the normal single-system case, one per combined system
+    // otherwise. Rebuilt by ResolveAnatomySystem on every open; everything that
+    // used to walk skeletonRoot directly (bone collection, filter visibility,
+    // auto-framing, back-navigation teardown) walks this instead.
+    private readonly List<Transform> _activeRoots = new List<Transform>();
+
+    /// <summary>Shows every listed system's model simultaneously on the next
+    /// open, instead of just one. Must be called BEFORE this controller is
+    /// enabled - see _combinedSystems. Pass null or an empty list for the
+    /// normal one-system-at-a-time behavior.</summary>
+    public void SetCombinedSystems(IEnumerable<AnatomySystem> systems)
+    {
+        _combinedSystems.Clear();
+        if (systems == null) return;
+
+        foreach (var system in systems)
+            if (!_combinedSystems.Contains(system))
+                _combinedSystems.Add(system);
+    }
+
+    /// <summary>Back to one active system per open. Callers that set combined
+    /// systems are responsible for clearing them once their mode ends, or a
+    /// later Explore/Play Mode visit would still bring up all three models.</summary>
+    public void ClearCombinedSystems() => _combinedSystems.Clear();
+
+    public bool HasCombinedSystems => _combinedSystems.Count > 0;
+
+    // ===== Structure filter (Pretest/Posttest "load only these structures") =====
+    // When non-empty, this model is treated as if it contained ONLY these
+    // structures: PopulateBoneDataFromSkeleton registers nothing else (so
+    // EnsureBoneCollider never generates the hundreds of non-convex
+    // MeshColliders that make opening a full model lag), and
+    // ApplyStructureFilterVisibility switches off every other piece's
+    // renderer/collider so only these are drawn and tappable.
+    //
+    // Set by BaselineAssessmentController (via UIManager) BEFORE this
+    // controller is re-enabled, for the same reason SetAnatomySystem is -
+    // OnEnable is what builds boneData, so a filter arriving afterward
+    // would be too late to save the work. Keys are normalized through
+    // BoneDatabaseService.NormalizeKey, matching how every other lookup
+    // in this class compares structure names.
+    private HashSet<string> _structureFilter;
+
+    // Exactly the renderers/colliders ApplyStructureFilterVisibility turned
+    // off, so ClearStructureFilter can restore those and only those - never
+    // blanket-enabling pieces that were already off for some other reason
+    // (Hide, Isolate, a previous mode).
+    private readonly List<Renderer> _filterHiddenRenderers = new List<Renderer>();
+    private readonly List<Collider> _filterHiddenColliders = new List<Collider>();
+
+    // Set by ClearStructureFilter(deferRestore: true): the lists above are kept
+    // as-is and re-enabled at the START of the next OnEnable instead of right
+    // now (see RestorePendingFilterVisibility). Re-enabling hundreds of
+    // renderers is work the frame a mandatory assessment is being submitted
+    // does not need to do - especially since the models are being hidden at the
+    // same moment anyway, so nothing would render differently for it.
+    private bool _filterRestorePending;
+
+    /// <summary>Restricts this model to just the named structures for the next
+    /// (and every subsequent) open, until ClearStructureFilter is called. Must
+    /// be called BEFORE this controller is enabled - see _structureFilter.
+    /// Passing null or an empty set is the same as clearing the filter.</summary>
+    public void SetStructureFilter(IEnumerable<string> structureKeys)
+    {
+        ClearStructureFilter();
+        if (structureKeys == null) return;
+
+        var keys = new HashSet<string>();
+        foreach (var key in structureKeys)
+        {
+            if (string.IsNullOrEmpty(key)) continue;
+            keys.Add(BoneDatabaseService.NormalizeKey(key));
+        }
+
+        if (keys.Count == 0) return;
+        _structureFilter = keys;
+    }
+
+    /// <summary>Lifts the restriction and restores every renderer/collider
+    /// ApplyStructureFilterVisibility switched off. Callers that set a filter
+    /// are responsible for clearing it once their mode ends - otherwise the
+    /// next Explore/Play Mode visit to that same system would still show only
+    /// those few structures.</summary>
+    /// <param name="deferRestore">Pass true to hand the restore work to the next
+    /// open instead of doing it here - the filter stops applying immediately
+    /// either way, but the renderers/colliders it switched off are only switched
+    /// back on at the start of the next OnEnable. Use this when leaving the
+    /// screen (the models are about to be hidden, so nothing is visibly
+    /// different) and the current frame is already busy - see
+    /// BaselineAssessmentController.OnAssessmentCompleted.</param>
+    public void ClearStructureFilter(bool deferRestore = false)
+    {
+        _structureFilter = null;
+
+        if (deferRestore)
+        {
+            _filterRestorePending = _filterHiddenRenderers.Count > 0 || _filterHiddenColliders.Count > 0;
+            return;
+        }
+
+        RestoreFilterVisibility();
+    }
+
+    // The actual restore, shared by ClearStructureFilter and
+    // RestorePendingFilterVisibility. Only ever touches what
+    // ApplyStructureFilterVisibility itself switched off.
+    private void RestoreFilterVisibility()
+    {
+        foreach (var rend in _filterHiddenRenderers)
+            if (rend != null) rend.enabled = true;
+        foreach (var col in _filterHiddenColliders)
+            if (col != null) col.enabled = true;
+
+        _filterHiddenRenderers.Clear();
+        _filterHiddenColliders.Clear();
+        _filterRestorePending = false;
+    }
+
+    // Runs first thing in OnEnable, before ResolveAnatomySystem/
+    // PopulateBoneDataFromSkeleton - so a deferred restore is always paid off
+    // before this open decides what to build, and a fresh filter for THIS open
+    // is never confused with the previous one's leftovers.
+    private void RestorePendingFilterVisibility()
+    {
+        if (!_filterRestorePending) return;
+        RestoreFilterVisibility();
+    }
+
+    /// <summary>Deactivates every model root this open was working across - the
+    /// same thing OnBackClicked does, exposed for modes that navigate away
+    /// WITHOUT going through the Back button (see
+    /// BaselineAssessmentController.OnAssessmentCompleted). The model camera
+    /// renders these roots whether or not this screen's own UI is showing, so a
+    /// mode that leaves them active leaves three full models being rendered
+    /// behind whatever screen comes next.</summary>
+    public void HideActiveModels()
+    {
+        foreach (var root in _activeRoots)
+        {
+            if (root != null) root.gameObject.SetActive(false);
+        }
+    }
+
+    public bool HasStructureFilter => _structureFilter != null && _structureFilter.Count > 0;
+
     // Shown in the Info Panel for a clicked bone whose GameObject name has
     // no matching entry in BoneDatabase.json.
     private const string BoneInfoNotAvailableText = "Bone information not available.";
@@ -528,6 +692,11 @@ public class AnatomyScreenController : MonoBehaviour
     {
         _root = GetComponent<UIDocument>().rootVisualElement;
 
+        // Pay off any restore the previous mode deferred (see
+        // ClearStructureFilter) before anything below inspects or rebuilds the
+        // model's renderers.
+        RestorePendingFilterVisibility();
+
         // Must run before anything below reads skeletonRoot/boneDatabaseJson
         // (PopulateBoneDataFromSkeleton, the 3D Model View auto-frame block,
         // etc.) - see ResolveAnatomySystem's own comment for why the
@@ -729,6 +898,10 @@ public class AnatomyScreenController : MonoBehaviour
                 Debug.LogWarning("[AnatomyScreenController] skeletonRoot is not assigned in the Inspector - no bone colliders will be created, so mesh-tap selection can't work.");
             }
         }
+
+        // Must run after the loop above (it needs every BoneInfo.worldBone
+        // resolved) and before the auto-frame block below.
+        ApplyStructureFilterVisibility();
 
         // --- 3D model view ---
         _bodyArea = _root.Q<VisualElement>("BodyArea");
@@ -940,6 +1113,16 @@ public class AnatomyScreenController : MonoBehaviour
         // defaultAnatomySystem rather than silently repeating a stale value.
         _hasPendingSystem = false;
 
+        // Combined mode: every listed system stays active and the first one
+        // becomes the anchor (skeletonRoot/_currentSystem), so anything that
+        // still needs a single "current" system - the per-system hint limit,
+        // back navigation - has a sane one. See _combinedSystems.
+        if (_combinedSystems.Count > 0)
+        {
+            ResolveCombinedSystems();
+            return;
+        }
+
         AnatomySystemConfig config = anatomySystems.Find(c => c != null && c.system == _currentSystem);
         if (config == null)
         {
@@ -961,6 +1144,9 @@ public class AnatomyScreenController : MonoBehaviour
             c.modelRoot.gameObject.SetActive(c == config);
         }
 
+        _activeRoots.Clear();
+        if (skeletonRoot != null) _activeRoots.Add(skeletonRoot);
+
         // Header subtitle mirrors whichever system is now active (UXML
         // ships with a static "SKELETAL SYSTEM" placeholder - see
         // AnatomyScreen.uxml's AppSubtitle label).
@@ -971,6 +1157,94 @@ public class AnatomyScreenController : MonoBehaviour
                 ? config.subtitleText
                 : _currentSystem.ToString().ToUpperInvariant() + " SYSTEM";
         }
+    }
+
+    // The combined-systems counterpart of the block above: activates EVERY
+    // listed system's model root (deactivating any that aren't listed), points
+    // skeletonRoot/_currentSystem/boneDatabaseJson at the first of them as the
+    // anchor, and records all of them in _activeRoots so bone collection,
+    // filter visibility and auto-framing cover the whole set. The databases
+    // themselves are merged in LoadActiveDatabases, called from
+    // PopulateBoneDataFromSkeleton.
+    private void ResolveCombinedSystems()
+    {
+        _activeRoots.Clear();
+
+        var configs = new List<AnatomySystemConfig>();
+        foreach (var system in _combinedSystems)
+        {
+            var match = anatomySystems.Find(c => c != null && c.system == system);
+            if (match == null || match.modelRoot == null)
+            {
+                Debug.LogWarning($"[AnatomyScreenController] Combined systems included '{system}' but no " +
+                                  "'Anatomy Systems' entry with a Model Root is configured for it - skipping it.");
+                continue;
+            }
+            configs.Add(match);
+        }
+
+        foreach (var c in anatomySystems)
+        {
+            if (c == null || c.modelRoot == null) continue;
+            c.modelRoot.gameObject.SetActive(configs.Contains(c));
+        }
+
+        if (configs.Count == 0)
+        {
+            Debug.LogError("[AnatomyScreenController] Combined systems mode was requested but none of the listed " +
+                            "systems are configured - nothing will be shown.");
+            return;
+        }
+
+        foreach (var c in configs)
+            _activeRoots.Add(c.modelRoot);
+
+        var anchor = configs[0];
+        _currentSystem = anchor.system;
+        skeletonRoot = anchor.modelRoot;
+        if (anchor.databaseJson != null) boneDatabaseJson = anchor.databaseJson;
+
+        var combinedSubtitle = _root?.Q<Label>("AppSubtitle");
+        if (combinedSubtitle != null) combinedSubtitle.text = "ALL SYSTEMS";
+
+        Debug.Log($"[AnatomyScreenController] ResolveCombinedSystems: {configs.Count} model(s) active simultaneously " +
+                  $"(anchor '{anchor.system}').");
+    }
+
+    // Loads the database JSON for every active root - just the one in the
+    // normal single-system case, or all of the combined systems' databases
+    // merged together (additively, first one wins on a shared key) so a bone
+    // from ANY visible model still resolves to a title/description.
+    private void LoadActiveDatabases()
+    {
+        if (_combinedSystems.Count == 0)
+        {
+            if (boneDatabaseJson == null)
+                Debug.LogWarning("[AnatomyScreenController] boneDatabaseJson is not assigned - the Info Panel will show fallback text for every bone.");
+            else
+                _boneDatabaseService.Load(boneDatabaseJson.text);
+            return;
+        }
+
+        bool loadedAny = false;
+        for (int i = 0; i < _combinedSystems.Count; i++)
+        {
+            var config = anatomySystems.Find(c => c != null && c.system == _combinedSystems[i]);
+            if (config == null || config.databaseJson == null)
+            {
+                Debug.LogWarning($"[AnatomyScreenController] No Database Json configured for combined system " +
+                                  $"'{_combinedSystems[i]}' - its structures will show fallback info text.");
+                continue;
+            }
+
+            // additive for every load after the first, so each system's
+            // database adds to the set rather than wiping the previous one.
+            _boneDatabaseService.Load(config.databaseJson.text, additive: loadedAny);
+            loadedAny = true;
+        }
+
+        if (!loadedAny)
+            Debug.LogWarning("[AnatomyScreenController] No databases could be loaded for the combined systems - the Info Panel will show fallback text for every structure.");
     }
 
     // Clears every piece of runtime state that belongs to whichever
@@ -1016,23 +1290,37 @@ public class AnatomyScreenController : MonoBehaviour
         _boneTransformsByName.Clear();
         _boneTransformSet.Clear();
 
-        if (boneDatabaseJson == null)
-            Debug.LogWarning("[AnatomyScreenController] boneDatabaseJson is not assigned - the Info Panel will show fallback text for every bone.");
-        else
-            _boneDatabaseService.Load(boneDatabaseJson.text);
+        LoadActiveDatabases();
 
-        if (skeletonRoot == null)
+        if (_activeRoots.Count == 0)
         {
-            Debug.LogWarning("[AnatomyScreenController] skeletonRoot is not assigned - no bones to populate.");
+            Debug.LogWarning("[AnatomyScreenController] No active model root - no bones to populate.");
             return;
         }
 
+        // Every active root, not just skeletonRoot - in combined-systems mode
+        // that's all three models' pieces collected into the one boneData list,
+        // which is what lets a tap on any of them resolve normally.
         var descendants = new List<Transform>();
-        CollectDescendants(skeletonRoot, descendants);
+        foreach (var root in _activeRoots)
+        {
+            if (root == null) continue;
+            CollectDescendants(root, descendants);
+        }
 
         foreach (var t in descendants)
         {
             string rawName = t.name;
+
+            // A structure filter is active (Pretest/Posttest) - this model is
+            // only allowed to contribute the handful of structures actually
+            // being asked about. Skipping the rest here is what keeps the
+            // assessment light: nothing else gets a BoneInfo, so nothing else
+            // reaches EnsureBoneCollider's per-mesh MeshCollider generation,
+            // the search index, or the per-frame hotspot loop in Update.
+            if (_structureFilter != null && !_structureFilter.Contains(BoneDatabaseService.NormalizeKey(rawName)))
+                continue;
+
             bool found = _boneDatabaseService.TryGetEntry(rawName, out BoneDatabaseEntry entry);
 
             var meshFilter = t.GetComponent<MeshFilter>();
@@ -1079,6 +1367,34 @@ public class AnatomyScreenController : MonoBehaviour
         // is keyed by the raw GameObject name, so a direct raw-to-raw
         // comparison here would wrongly flag entries that only differ by
         // case or stray whitespace as "missing".
+        // The full database-coverage audit below is meaningless while a
+        // structure filter is active - practically every entry is "missing"
+        // by design then, so it would log hundreds of warnings about
+        // structures nobody asked for. Audit the filter itself instead: a
+        // filtered key that matched no GameObject means that structure simply
+        // won't be drawn or answerable, which is worth one clear warning
+        // rather than a silently short assessment.
+        if (_structureFilter != null)
+        {
+            foreach (var key in _structureFilter)
+            {
+                bool matched = false;
+                foreach (var info in boneData)
+                {
+                    if (BoneDatabaseService.NormalizeKey(info.boneName) != key) continue;
+                    matched = true;
+                    break;
+                }
+
+                if (!matched)
+                    Debug.LogWarning($"[AnatomyScreenController] Filtered structure '{key}' has no matching GameObject under " +
+                                      $"'{skeletonRoot.name}' - it will not be shown or selectable. Check the StructureKey spelling " +
+                                      "against the model's GameObject names.");
+            }
+
+            return;
+        }
+
         var matchedNormalizedKeys = new HashSet<string>();
         foreach (var rawName in _boneTransformsByName.Keys)
             matchedNormalizedKeys.Add(BoneDatabaseService.NormalizeKey(rawName));
@@ -2318,10 +2634,15 @@ public class AnatomyScreenController : MonoBehaviour
     // pivot happens to sit relative to the actual geometry.
     private Bounds ComputeSkeletonBounds()
     {
-        var renderers = skeletonRoot.GetComponentsInChildren<Renderer>();
+        var renderers = new List<Renderer>();
+        foreach (var root in _activeRoots)
+        {
+            if (root == null) continue;
+            renderers.AddRange(root.GetComponentsInChildren<Renderer>());
+        }
 
         // Pass 1: collect every renderer with real (non-zero) geometry.
-        var candidates = new List<Renderer>(renderers.Length);
+        var candidates = new List<Renderer>(renderers.Count);
         foreach (var r in renderers)
         {
             if (r.bounds.size.sqrMagnitude < 0.0001f)
@@ -2524,7 +2845,7 @@ public class AnatomyScreenController : MonoBehaviour
 
     // ===== Toolbar actions =====
 
-    private void OnResetClicked()
+    public void OnResetClicked()
     {
         ClearSearch();
         HideInfoPanel();
@@ -2544,8 +2865,8 @@ public class AnatomyScreenController : MonoBehaviour
 
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend != null) rend.enabled = true;
+            foreach (var rend in GetBoneRenderers(info))
+                rend.enabled = true;
 
             if (info.worldBone != null)
             {
@@ -2557,10 +2878,11 @@ public class AnatomyScreenController : MonoBehaviour
         // Restore the Mesh Collider's enabled state for every bone, in case any were disabled by Hide or Isolate.
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = true;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = true;
+            }
         }
 
         if (modelCamera != null && skeletonRoot != null)
@@ -2637,12 +2959,13 @@ public class AnatomyScreenController : MonoBehaviour
         var prevColliderStates = new Dictionary<Collider, bool>();
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-            prevRendererStates[rend] = rend.enabled;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                prevRendererStates[rend] = rend.enabled;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) prevColliderStates[col] = col.enabled;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) prevColliderStates[col] = col.enabled;
+            }
         }
 
         ApplyIsolateVisibility();
@@ -2690,18 +3013,31 @@ public class AnatomyScreenController : MonoBehaviour
     // toggle-off) - it only flips current enabled state, so the eventual
     // restore is unaffected by however many different bones got isolated
     // in between.
+    // Every Renderer that actually belongs to this bone - a bone can be made
+    // of more than one mesh piece (see EnsureBoneCollider's own "BUG FIX"
+    // comment above for why that matters for colliders), so anything that
+    // shows/hides a bone has to walk all of them, not just the first one
+    // GetComponentInChildren happens to find. Empty (never null) if the bone
+    // has no world Transform.
+    private static Renderer[] GetBoneRenderers(BoneInfo info)
+    {
+        return info?.worldBone != null
+            ? info.worldBone.GetComponentsInChildren<Renderer>(true)
+            : new Renderer[0];
+    }
+
     private void ApplyIsolateVisibility()
     {
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-
             bool visible = (info == _selectedBone);
-            rend.enabled = visible;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                rend.enabled = visible;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = visible;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = visible;
+            }
         }
     }
 
@@ -2732,20 +3068,27 @@ public class AnatomyScreenController : MonoBehaviour
     {
         if (info?.worldBone == null) return;
 
-        var rend = info.worldBone.GetComponentInChildren<Renderer>();
-        if (rend == null) return;
+        var renderers = GetBoneRenderers(info);
+        if (renderers.Length == 0) return;
 
-        // The raycast in TryPickBoneAt hits this same GameObject's Collider
-        // independently of the Renderer - disabling only the renderer left
-        // the mesh invisible but still tappable. Disable both so a hidden
-        // bone can no longer be selected via mesh tap.
-        var col = rend.GetComponent<Collider>();
-
+        // The raycast in TryPickBoneAt hits a piece's Collider independently
+        // of its Renderer - disabling only the renderer left the mesh
+        // invisible but still tappable. Disable both, for every mesh piece
+        // this bone is made of, so a hidden bone can no longer be selected
+        // via mesh tap.
         var hiddenBone = info;
-        bool prevEnabled = rend.enabled;
-        bool prevColEnabled = col != null && col.enabled;
-        rend.enabled = false;
-        if (col != null) col.enabled = false;
+        var prevRendererStates = new Dictionary<Renderer, bool>();
+        var prevColliderStates = new Dictionary<Collider, bool>();
+        foreach (var rend in renderers)
+        {
+            prevRendererStates[rend] = rend.enabled;
+            rend.enabled = false;
+
+            var col = rend.GetComponent<Collider>();
+            if (col == null) continue;
+            prevColliderStates[col] = col.enabled;
+            col.enabled = false;
+        }
 
 
         // The outline was being built from this bone's renderer; leaving it
@@ -2770,11 +3113,13 @@ public class AnatomyScreenController : MonoBehaviour
 
         PushUndo(() =>
         {
-            rend.enabled = prevEnabled;
-            if (col != null) col.enabled = prevColEnabled;
+            foreach (var kv in prevRendererStates)
+                kv.Key.enabled = kv.Value;
+            foreach (var kv in prevColliderStates)
+                kv.Key.enabled = kv.Value;
 
             // Restore the outline too, but only if this bone is still selected.
-            if (prevEnabled && boneOutlineController != null && _selectedBone == hiddenBone)
+            if (boneOutlineController != null && _selectedBone == hiddenBone && hiddenBone.worldBone != null)
                 boneOutlineController.SetSelectedBone(hiddenBone.worldBone);
         });
     }
@@ -2971,18 +3316,71 @@ public class AnatomyScreenController : MonoBehaviour
     /// Isolate Answered is a Play Mode concept and was never meant to be
     /// undoable through Explore Mode's Undo button. Passing active=false
     /// restores every structure to visible/tappable.</summary>
+    /// <summary>Switches off the renderer and collider of every piece of the
+    /// active model that isn't part of a filtered-in structure, so a filtered
+    /// open draws (and can be tapped on) only those structures. Runs once per
+    /// open from OnEnable; a no-op when no filter is set.
+    ///
+    /// boneData has already been narrowed to the filtered structures by
+    /// PopulateBoneDataFromSkeleton, so "keep" is simply every renderer in a
+    /// registered bone's subtree. The colliders being switched off here are
+    /// ones an EARLIER unfiltered open of this same model already generated -
+    /// this open doesn't create any for them, and disabling them is what stops
+    /// a tap on a hidden structure from still selecting it.</summary>
+    private void ApplyStructureFilterVisibility()
+    {
+        _filterHiddenRenderers.Clear();
+        _filterHiddenColliders.Clear();
+
+        if (_structureFilter == null || _activeRoots.Count == 0) return;
+
+        var keep = new HashSet<Renderer>();
+        foreach (var info in boneData)
+        {
+            if (info.worldBone == null) continue;
+            foreach (var rend in info.worldBone.GetComponentsInChildren<Renderer>(true))
+                keep.Add(rend);
+        }
+
+        foreach (var root in _activeRoots)
+        {
+            if (root == null) continue;
+
+            foreach (var rend in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (keep.Contains(rend)) continue;
+
+                if (rend.enabled)
+                {
+                    rend.enabled = false;
+                    _filterHiddenRenderers.Add(rend);
+                }
+
+                var col = rend.GetComponent<Collider>();
+                if (col != null && col.enabled)
+                {
+                    col.enabled = false;
+                    _filterHiddenColliders.Add(col);
+                }
+            }
+        }
+
+        Debug.Log($"[AnatomyScreenController] ApplyStructureFilterVisibility: showing {boneData.Count} filtered structure(s) " +
+                  $"across {_activeRoots.Count} active model(s), hid {_filterHiddenRenderers.Count} other renderer(s).");
+    }
+
     public void SetIsolateAnsweredActive(bool active, System.Func<BoneInfo, bool> isAnswered)
     {
         foreach (var info in boneData)
         {
-            var rend = info.worldBone != null ? info.worldBone.GetComponentInChildren<Renderer>() : null;
-            if (rend == null) continue;
-
             bool visible = !active || (isAnswered != null && isAnswered(info));
-            rend.enabled = visible;
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                rend.enabled = visible;
 
-            var col = rend.GetComponent<Collider>();
-            if (col != null) col.enabled = visible;
+                var col = rend.GetComponent<Collider>();
+                if (col != null) col.enabled = visible;
+            }
         }
     }
 
@@ -3005,8 +3403,7 @@ public class AnatomyScreenController : MonoBehaviour
         OnResetClicked();
 
         // hide the active fbx
-        if (skeletonRoot != null)
-            skeletonRoot.gameObject.SetActive(false);
+        HideActiveModels();
 
         if (BackNavigationOverride != null)
             BackNavigationOverride.Invoke();

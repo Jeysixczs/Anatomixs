@@ -1650,6 +1650,13 @@ namespace Anatomia3D.UI
             _screenScroll?.RemoveFromClassList("hidden");
         }
 
+        /// <summary>Opens this screen on the Available Quizzes tab instead of Overview.
+        /// Call AFTER SetClassroomIdentity(), since OnEnable always resets to Overview and
+        /// SetClassroomIdentity is what UIManager invokes once the screen is up. Used by the
+        /// quiz-deadline reminder notification tap (FCMNotificationService), where the
+        /// student is clearly after the quiz list rather than announcements.</summary>
+        public void OpenQuizzesTab() => ShowQuizzesTab();
+
         private void OnOverviewTabClicked(ClickEvent evt) => ShowOverviewTab();
         private void OnStudentsTabClicked(ClickEvent evt) => ShowStudentsTab();
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();

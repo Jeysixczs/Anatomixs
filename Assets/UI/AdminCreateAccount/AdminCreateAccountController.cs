@@ -86,6 +86,8 @@ namespace Anatomia3D.UI
         private bool _passwordVisible;
         private bool _confirmPasswordVisible;
 
+        private LoadingOverlay _loadingOverlay;
+
         private void OnEnable()
         {
             Debug.Log("[AdminCreateAccountController] OnEnable called");
@@ -134,6 +136,8 @@ namespace Anatomia3D.UI
 
             _termsAccepted = false;
             _termsCheckbox?.RemoveFromClassList("checked");
+
+            _loadingOverlay = new LoadingOverlay(_root);
         }
 
         private void OnDisable()
@@ -157,6 +161,8 @@ namespace Anatomia3D.UI
                 Destroy(_buttonGradientTexture);
                 _buttonGradientTexture = null;
             }
+
+            _loadingOverlay?.Dispose();
         }
 
         private void UnregisterCallbacks()
@@ -453,6 +459,7 @@ namespace Anatomia3D.UI
             SetStatus("Creating admin account...");
             _createAccountButton.SetEnabled(false);
 
+            _loadingOverlay?.Show("Creating account...");
             // TODO: replace with your real admin account creation call, e.g.:
             // AdminAuthService.Instance.CreateAdminAccount(firstName, lastName, email, password, OnAccountCreated);
             AdminAuthService.Instance?.CreateAdminAccount(
@@ -465,6 +472,7 @@ namespace Anatomia3D.UI
                     {
                         Debug.Log("[CreateAccountController] Account created successfully");
                         SetStatus("Account created successfully! Redirecting...");
+                        _loadingOverlay.Show("Account created successfully! Redirecting...");
                         Invoke(nameof(RedirectToAdminLogin), 1.5f);
                     }
                     else
@@ -479,6 +487,7 @@ namespace Anatomia3D.UI
 
         private void RedirectToAdminLogin()
         {
+            _loadingOverlay.Hide();
             UIManager.Instance?.ShowAdminLogin();
         }
 

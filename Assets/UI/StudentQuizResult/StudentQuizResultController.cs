@@ -63,6 +63,7 @@ namespace Anatomia3D.UI
         private VisualElement _pointsProgressFill;
 
         private Label _pointsMiniValueLabel;
+        private Label _timeMiniValueLabel;
 
 
         private Button _backToDashboardButton;
@@ -164,6 +165,7 @@ namespace Anatomia3D.UI
             _pointsProgressFill = _screenRoot.Q<VisualElement>("points-progress-fill");
 
             _pointsMiniValueLabel = _screenRoot.Q<Label>("points-mini-value-label");
+            _timeMiniValueLabel = _screenRoot.Q<Label>("time-mini-value-label");
       
 
             _backToDashboardButton = _screenRoot.Q<Button>("back-to-dashboard-button");
@@ -201,7 +203,8 @@ namespace Anatomia3D.UI
             int correctCount,
             int incorrectCount,
             int pointsEarned,
-            int pointsPossible)
+            int pointsPossible,
+            int timeSpentSeconds = 0)
         {
             _lastQuizName = quizName;
 
@@ -228,7 +231,12 @@ namespace Anatomia3D.UI
             }
 
             if (_pointsMiniValueLabel != null) _pointsMiniValueLabel.text = $"+{pointsEarned}";
-    
+
+            if (_timeMiniValueLabel != null)
+            {
+                int seconds = Mathf.Max(0, timeSpentSeconds);
+                _timeMiniValueLabel.text = $"{seconds / 60}:{seconds % 60:00}";
+            }
 
             ApplyGradientForScore(percent);
         }

@@ -321,6 +321,12 @@
     -unity-background-image-tint-color: rgb(217, 119, 6);
 }
 
+.icon-clock
+{
+    background-image: url("project://database/Assets/UI/Icons/time-icon.png");
+    -unity-background-image-tint-color: rgb(217, 119, 6);
+}
+
 .mini-value
 {
     font-size: 34px;

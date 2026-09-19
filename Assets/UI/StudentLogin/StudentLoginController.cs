@@ -70,6 +70,7 @@ namespace Anatomia3D.UI
         private bool _passwordVisible;
         private Coroutine _biometricVisibilityRoutine;
 
+        private LoadingOverlay _loadingOverlay;
         private void OnEnable()
         {
             if (_document == null)
@@ -94,6 +95,9 @@ namespace Anatomia3D.UI
             // doesn't get stuck showing a hidden button for the rest of this
             // screen's lifetime just because Firebase was a beat slow.
             _biometricVisibilityRoutine = StartCoroutine(RefreshBiometricButtonVisibilityWhenReady());
+           
+            _loadingOverlay = new LoadingOverlay(_root);
+           
         }
 
         private void OnDisable()
@@ -114,6 +118,8 @@ namespace Anatomia3D.UI
             _createAccountButton?.UnregisterCallback<ClickEvent>(OnCreateAccountClicked);
             _forgotPasswordButton?.UnregisterCallback<ClickEvent>(OnForgotPasswordClicked);
             _root.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
+            _loadingOverlay?.Dispose();
         }
 
         private void QueryElements()
@@ -211,16 +217,19 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            SetStatus("Signing in...");
+            
+            _loadingOverlay.Show("Signing in...");
             _signInButton.SetEnabled(false);
 
             // TODO: replace with your real auth call, e.g.:
             // PlayerSessionManager.Instance.LoginStudent(email, _passwordField.value, OnLoginResult);
             PlayerSessionManager.Instance.LoginStudent(email, _passwordField.value, (success, errorMessage) =>
             {
+                _loadingOverlay.Hide();
                 if (success)
                 {
                     // Navigate to the student dashboard on successful login
+                   
                     UIManager.Instance.ShowStudentDashboard();
                 }
                 else
@@ -237,16 +246,17 @@ namespace Anatomia3D.UI
 
         private void OnGoogleClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentLoginController] Google sign-in tapped.");
-            SetStatus("Signing in with Google...");
+           
+       
             _googleButton.SetEnabled(false);
 
             PlayerSessionManager.Instance.LoginWithGoogle((success, errorMessage) =>
             {
                 _googleButton.SetEnabled(true);
-
+            
                 if (success)
                 {
+                    
                     UIManager.Instance.ShowStudentDashboard();
                 }
                 else
