@@ -166,9 +166,15 @@ namespace Anatomia3D.UI
             /// QuizStartBlock. Always None until LoadQuizStartEligibility() resolves.</summary>
             public QuizStartBlock StartBlock;
 
+            /// <summary>Anatomia3D.Backend.SubmissionTypes.Question (default) or
+            /// .File - decides whether OnStartQuizClicked opens
+            /// StudentQuizGameplayController or StudentFileSubmissionController.</summary>
+            public string SubmissionType;
+
             public QuizCardInfo(string quizId, string title, string subject, int questions, int timeMinutes,
                 bool hasTimeLimit, int maxAttempts, bool isDeadlineEnabled, DateTime? deadlineUtc,
-                int points, string difficulty, bool isAvailable, QuizStartBlock startBlock = QuizStartBlock.None)
+                int points, string difficulty, bool isAvailable, QuizStartBlock startBlock = QuizStartBlock.None,
+                string submissionType = null)
             {
                 QuizId = quizId;
                 Title = title;
@@ -183,6 +189,7 @@ namespace Anatomia3D.UI
                 Difficulty = difficulty;
                 IsAvailable = isAvailable;
                 StartBlock = startBlock;
+                SubmissionType = SubmissionTypes.Normalize(submissionType);
             }
         }
 
@@ -834,14 +841,15 @@ namespace Anatomia3D.UI
                 var q = quizzes[i];
                 int index = i;
 
-                QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
+                Action<bool, bool> resolve = (checkOk, canStart) =>
                 {
                     var block = QuizStartBlock.None;
-                    if (checkOk && eligibility != null && !eligibility.CanStart)
+                    if (checkOk && !canStart)
                     {
-                        // Mirrors CheckAttemptEligibility's own priority (deadline checked
+                        // Mirrors the eligibility check's own priority (deadline checked
                         // before attempts), so the reason shown here always matches what
-                        // LoadQuiz()'s re-check would report if the button were clickable.
+                        // the real submit-time re-check would report if the button were
+                        // clickable.
                         bool deadlinePassed = q.IsDeadlineEnabled && q.DeadlineUtc.HasValue
                             && DateTime.UtcNow > q.DeadlineUtc.Value;
                         block = deadlinePassed ? QuizStartBlock.DeadlineExpired : QuizStartBlock.NoAttemptsLeft;
@@ -854,7 +862,22 @@ namespace Anatomia3D.UI
                     {
                         SetQuizzes(cards.ToList());
                     }
-                });
+                };
+
+                // File Submission assignments track attempts/eligibility through
+                // FileSubmissionService (their attempt records live in
+                // `fileSubmissions`, not `quizAttempts`) - everything else about this
+                // pre-flight check is identical to a question quiz.
+                if (SubmissionTypes.IsFileSubmission(q.SubmissionType))
+                {
+                    FileSubmissionService.Instance.CheckSubmitEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanSubmit));
+                }
+                else
+                {
+                    QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanStart));
+                }
             }
         }
 
@@ -863,7 +886,7 @@ namespace Anatomia3D.UI
             return new QuizCardInfo(
                 q.QuizId, q.Title, q.Category, q.QuestionCount, q.TimeLimitMinutes, q.HasTimeLimit,
                 q.MaxAttempts, q.IsDeadlineEnabled, q.DeadlineUtc,
-                q.TotalPoints, Capitalize(q.Difficulty), true, startBlock);
+                q.TotalPoints, Capitalize(q.Difficulty), true, startBlock, q.SubmissionType);
         }
 
         /// <summary>Push the two glass header stat cards.</summary>
@@ -1347,7 +1370,8 @@ namespace Anatomia3D.UI
                 && a.Questions == b.Questions && a.TimeMinutes == b.TimeMinutes && a.HasTimeLimit == b.HasTimeLimit
                 && a.MaxAttempts == b.MaxAttempts && a.IsDeadlineEnabled == b.IsDeadlineEnabled
                 && a.DeadlineUtc == b.DeadlineUtc && a.Points == b.Points && a.Difficulty == b.Difficulty
-                && a.IsAvailable == b.IsAvailable && a.StartBlock == b.StartBlock;
+                && a.IsAvailable == b.IsAvailable && a.StartBlock == b.StartBlock
+                && a.SubmissionType == b.SubmissionType;
         }
 
         private VisualElement BuildMetaChip(string text)
@@ -1705,12 +1729,19 @@ namespace Anatomia3D.UI
             // BuildQuizCard() already disables Start (and relabels it "Deadline Expired" /
             // "No More Attempts") once QuizStartBlock != None, so this handler only ever
             // fires for a quiz this student was eligible for at load time. The real
-            // enforcement point remains the gameplay screen itself
-            // (StudentQuizGameplayController.LoadQuiz -> QuizService.CheckAttemptEligibility),
-            // which re-checks fresh in case the deadline passed or another attempt was
-            // used since this tab loaded - it shows the blocking message there if so,
-            // rather than trusting this now-stale card state.
-            UIManager.Instance.ShowStudentQuizGameplay(_classroomId, quiz.QuizId);
+            // enforcement point remains the destination screen itself
+            // (StudentQuizGameplayController.LoadQuiz / StudentFileSubmissionController.
+            // LoadAssignment), which re-checks fresh in case the deadline passed or
+            // another attempt was used since this tab loaded - it shows the blocking
+            // message there if so, rather than trusting this now-stale card state.
+            if (SubmissionTypes.IsFileSubmission(quiz.SubmissionType))
+            {
+                UIManager.Instance.ShowStudentFileSubmission(_classroomId, quiz.QuizId, _classroomName, _instructorName);
+            }
+            else
+            {
+                UIManager.Instance.ShowStudentQuizGameplay(_classroomId, quiz.QuizId);
+            }
         }
 
         // ---------------- Responsive layout ----------------

@@ -1,0 +1,114 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/AdminSubmissionReview/AdminSubmissionReview.uss?fileID=7433441132597879392&amp;guid=d28fda970f8ac5443963f259e27cb487&amp;type=3#AdminSubmissionReview"/>
+    <ui:VisualElement name="submission-review-root" class="sr-root">
+        <ui:VisualElement name="sr-header" class="sr-header">
+            <ui:VisualElement class="sr-header-top-row">
+                <ui:Button name="sr-back-button" class="sr-icon-button">
+                    <ui:VisualElement class="sr-back-icon"/>
+                </ui:Button>
+                <ui:VisualElement class="sr-header-text-col">
+                    <ui:Label name="sr-title-label" text="Submissions" class="sr-title"/>
+                    <ui:Label name="sr-subtitle-label" text="" class="sr-subtitle"/>
+                    <ui:Label name="sr-classroom-label" text="" class="sr-classroom-pill hidden"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="sr-stat-row">
+                <ui:VisualElement class="sr-stat-card sr-stat-card--passed">
+                    <ui:Label name="sr-passed-value" text="0" class="sr-stat-value"/>
+                    <ui:Label text="Passed" class="sr-stat-label"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="sr-stat-card sr-stat-card--review">
+                    <ui:Label name="sr-toreview-value" text="0" class="sr-stat-value"/>
+                    <ui:Label text="To Review" class="sr-stat-label"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="sr-stat-card sr-stat-card--missing sr-stat-card-last">
+                    <ui:Label name="sr-missing-value" text="0" class="sr-stat-value"/>
+                    <ui:Label text="Not Submitted" class="sr-stat-label"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:ScrollView name="sr-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="sr-scroll">
+            <ui:VisualElement class="sr-content">
+                <ui:VisualElement name="sr-classroom-section" class="sr-section hidden">
+                    <ui:Label text="Classroom" class="sr-section-label"/>
+                    <ui:VisualElement name="sr-classroom-chips" class="sr-chip-row"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="sr-filter-row" class="sr-chip-row sr-filter-row hidden"/>
+                <ui:VisualElement name="sr-list" class="sr-list"/>
+                <ui:VisualElement name="sr-empty-state" class="sr-empty-state hidden">
+                    <ui:VisualElement class="sr-empty-icon"/>
+                    <ui:Label name="sr-empty-label" text="No submissions yet." class="sr-empty"/>
+                </ui:VisualElement>
+                <ui:Label name="sr-status-label" text="" class="sr-status hidden"/>
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement name="sr-review-overlay" class="sr-modal-overlay hidden">
+            <ui:VisualElement name="sr-review-card" class="sr-modal-card">
+                <ui:VisualElement class="sr-modal-header">
+                    <ui:VisualElement name="sr-review-avatar" class="sr-avatar sr-modal-avatar">
+                        <ui:Label name="sr-review-avatar-label" text="" class="sr-avatar-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="sr-modal-title-col">
+                        <ui:Label name="sr-review-student-label" text="" class="sr-modal-title"/>
+                        <ui:Label name="sr-review-attempt-pill" text="" class="sr-modal-attempt-pill"/>
+                    </ui:VisualElement>
+                    <ui:Button name="sr-review-close-button" class="sr-modal-close">
+                        <ui:VisualElement class="sr-modal-close-icon"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:ScrollView mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="sr-modal-scroll">
+                    <ui:VisualElement class="sr-modal-body">
+                        <ui:VisualElement class="sr-info-grid">
+                            <ui:VisualElement class="sr-info-card">
+                                <ui:Label text="File" class="sr-info-label"/>
+                                <ui:Label name="sr-review-file-label" text="" class="sr-info-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="sr-info-card">
+                                <ui:Label text="Size" class="sr-info-label"/>
+                                <ui:Label name="sr-review-size-label" text="" class="sr-info-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="sr-info-card">
+                                <ui:Label text="Attempt" class="sr-info-label"/>
+                                <ui:Label name="sr-review-attempt-label" text="" class="sr-info-value"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="sr-info-card">
+                                <ui:Label text="Submitted" class="sr-info-label"/>
+                                <ui:Label name="sr-review-submitted-label" text="" class="sr-info-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Button name="sr-open-file-button" class="sr-open-button">
+                            <ui:VisualElement class="sr-open-icon"/>
+                            <ui:Label text="Open / Download File" class="sr-open-button-label"/>
+                        </ui:Button>
+                        <ui:VisualElement class="sr-divider"/>
+                        <ui:VisualElement class="sr-score-row">
+                            <ui:VisualElement class="sr-score-field-col">
+                                <ui:Label name="sr-score-field-label" text="Score" class="sr-field-label"/>
+                                <ui:TextField name="sr-score-field" value="0" class="sr-text-field sr-score-field"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="sr-score-preview" class="sr-score-preview">
+                                <ui:Label name="sr-score-preview-label" text="" class="sr-score-preview-label"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="Feedback" class="sr-field-label"/>
+                        <ui:TextField name="sr-feedback-field" multiline="true" placeholder-text="Optional comments for the student" class="sr-text-field sr-text-area"/>
+                        <ui:Label name="sr-review-error" text="" class="sr-error hidden"/>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement class="sr-modal-footer">
+                    <ui:Button name="sr-review-cancel-button" text="Cancel" class="sr-cancel-button"/>
+                    <ui:Button name="sr-review-save-button" class="sr-save-button">
+                        <ui:VisualElement class="sr-save-icon"/>
+                        <ui:Label text="Save &amp; Mark Reviewed" class="sr-save-button-label"/>
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="sr-working-overlay" class="sr-working-overlay hidden">
+            <ui:VisualElement class="sr-working-card">
+                <ui:VisualElement class="sr-working-spinner"/>
+                <ui:Label name="sr-working-label" text="Loading submissions..." class="sr-working-label"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

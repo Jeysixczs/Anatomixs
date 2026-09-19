@@ -129,10 +129,12 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="quiz-overview-types-card">
+                        <ui:VisualElement name="quiz-detail-question-types-card" class="quiz-overview-types-card">
                             <ui:Label text="Question Types" class="quiz-overview-types-title"/>
                             <ui:VisualElement name="quiz-detail-question-types-row" class="quiz-overview-types-row"/>
                         </ui:VisualElement>
+                        <!-- File Submission only - hidden for a Question-Based quiz. -->
+                        <ui:Button name="quiz-detail-view-submissions-button" text="View Submissions" class="view-submissions-button hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="quiz-detail-questions-panel" class="quiz-detail-panel hidden">
                         <ui:VisualElement name="quiz-detail-questions-list" class="questions-list"/>
@@ -160,7 +162,20 @@
                 <ui:VisualElement name="create-quiz-progress-row" class="wizard-progress-row" style="padding-right: 32px; padding-left: 32px;">
                     <ui:VisualElement name="create-quiz-progress-1" class="wizard-progress-segment wizard-progress-segment-last"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="create-quiz-step-1" class="wizard-step wizard-step-static">
+                <ui:ScrollView name="create-quiz-step-1" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="wizard-step wizard-step-scroll">
+                    <ui:VisualElement name="submission-type-row" class="field-label-spaced">
+                        <ui:Label text="Submission Type" class="field-label"/>
+                        <ui:VisualElement class="submission-type-cards-row">
+                            <ui:Button name="submission-type-card-question" class="question-type-card submission-type-card">
+                                <ui:Label text="Question-Based" class="question-type-card-title"/>
+                                <ui:Label text="Multiple choice, identification, etc." class="question-type-card-subtitle"/>
+                            </ui:Button>
+                            <ui:Button name="submission-type-card-file" class="question-type-card submission-type-card">
+                                <ui:Label text="File Submission" class="question-type-card-title"/>
+                                <ui:Label text="Students upload a file as their answer" class="question-type-card-subtitle"/>
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                     <ui:Label text="Quiz Title" class="field-label field-label-spaced"/>
                     <ui:TextField name="quiz-title-field" placeholder-text="Enter quiz title" class="text-field"/>
                     <ui:Label name="quiz-title-error" text="" class="field-error hidden"/>
@@ -170,9 +185,41 @@
                     </ui:VisualElement>
                     <ui:TextField name="quiz-category-field" placeholder-text="e.g. Science, History, General Knowledge" class="text-field"/>
                     <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
-                    <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
-                    <ui:TextField name="quiz-time-limit-custom-field" value="10" tooltip="Custom time limit, in minutes" class="text-field field-label-spaced hidden"/>
+
+                    <!-- File Submission only. Hidden entirely for a Question-Based quiz. -->
+                    <ui:VisualElement name="file-settings-group" class="hidden">
+                        <ui:Label text="Instructions" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-file-instructions-field" multiline="true" placeholder-text="e.g. Submit your research paper about the skeletal system." class="text-field text-area"/>
+
+                        <ui:VisualElement class="field-label-row field-label-spaced">
+                            <ui:Label text="Allowed File Types" class="field-label"/>
+                            <ui:Label text="Select all that apply" class="field-hint"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="file-extensions-row" class="file-extensions-row">
+                            <ui:Toggle name="file-ext-toggle-pdf" text="PDF" class="file-extension-toggle"/>
+                            <ui:Toggle name="file-ext-toggle-doc" text="DOC" class="file-extension-toggle"/>
+                            <ui:Toggle name="file-ext-toggle-docx" text="DOCX" class="file-extension-toggle"/>
+                            <ui:Toggle name="file-ext-toggle-xls" text="XLS" class="file-extension-toggle"/>
+                            <ui:Toggle name="file-ext-toggle-xlsx" text="XLSX" class="file-extension-toggle"/>
+                            <ui:Toggle name="file-ext-toggle-txt" text="TXT" class="file-extension-toggle"/>
+                        </ui:VisualElement>
+                        <ui:Label name="quiz-file-extensions-error" text="" class="field-error hidden"/>
+
+                        <ui:Label text="Maximum File Size (MB)" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-file-max-size-field" value="25" class="text-field"/>
+                        <ui:Label name="quiz-file-max-size-error" text="" class="field-error hidden"/>
+
+                        <ui:Label text="Points" class="field-label field-label-spaced"/>
+                        <ui:TextField name="quiz-file-points-field" value="100" class="text-field"/>
+                        <ui:Label name="quiz-file-points-error" text="" class="field-error hidden"/>
+                    </ui:VisualElement>
+
+                    <!-- Question-Based only - a timer only makes sense for a live gameplay session. -->
+                    <ui:VisualElement name="time-limit-group">
+                        <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
+                        <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
+                        <ui:TextField name="quiz-time-limit-custom-field" value="10" tooltip="Custom time limit, in minutes" class="text-field field-label-spaced hidden"/>
+                    </ui:VisualElement>
                     <ui:Label text="Passing Score" class="field-label field-label-spaced"/>
                     <ui:VisualElement class="percent-field-wrapper">
                         <ui:TextField name="quiz-passing-score-field" value="70" class="text-field percent-field"/>
@@ -198,7 +245,7 @@
                             <ui:Label name="create-quiz-submit-label" text="Create Quiz" class="modal-submit-label"/>
                         </ui:Button>
                     </ui:VisualElement>
-                </ui:VisualElement>
+                </ui:ScrollView>
                 <ui:VisualElement name="create-quiz-success-view" class="success-view hidden">
                     <ui:VisualElement class="success-icon-circle">
                         <ui:Label text="✓" class="success-icon-check"/>

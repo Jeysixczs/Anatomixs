@@ -2422,9 +2422,12 @@
     width: 100%;
 }
 
-/* Create Quiz step 1 is intentionally not a ScrollView.
-   Keep it as a normal fixed wizard section so dragging cannot reveal
-   empty space above or below the form. */
+/* Create Quiz step 1 is a ScrollView (see the UXML). It used to be a fixed,
+   non-scrolling section, but choosing File Submission adds Instructions,
+   Allowed File Types, Max File Size and Points on top of the normal fields.
+   That no longer fit the card, so every field was squeezed (flex-shrink)
+   instead of the form scrolling. Touch scrolling is set to Clamped in the UXML
+   so a drag can't pull the form past its ends and reveal empty space. */
 #create-quiz-step-1
 {
     flex-grow: 1;
@@ -2438,6 +2441,13 @@
 {
     width: 100%;
     flex-direction: column;
+}
+
+/* Fields inside the scrolling Create Quiz step keep their natural height -
+   the step scrolls when they don't fit, they never compress. */
+#create-quiz-step-1 .unity-scroll-view__content-container > *
+{
+    flex-shrink: 0;
 }
 
 .wizard-step-scroll
@@ -4521,4 +4531,124 @@
     height: 52px;
     border-radius: 26px;
     font-size: 21px;
+}
+
+/* ---------------- File Submission assignment type (Create Quiz) ---------------- */
+
+.submission-type-cards-row
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 18px;
+}
+
+.submission-type-card
+{
+    width: 47%;
+}
+
+.file-extensions-row
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+/* Each allowed file type is a tappable chip: the whole pill (checkbox + type)
+   is the Toggle's input, so tapping anywhere on it flips it. Unchecked is a
+   quiet outlined pill; checked turns green with a filled checkbox, the same
+   green the Multiple Identification checkboxes use. */
+.file-extension-toggle
+{
+    width: 31.5%;
+    margin: 0 0 16px 0;
+    padding: 0;
+}
+
+.file-extension-toggle > .unity-toggle__input
+{
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    padding: 18px 20px;
+    min-height: 88px;
+    border-width: 2px;
+    border-color: rgb(230, 232, 238);
+    border-radius: 24px;
+    background-color: rgb(255, 255, 255);
+    transition-property: border-color, background-color;
+    transition-duration: 0.12s;
+}
+
+.file-extension-toggle:hover > .unity-toggle__input
+{
+    border-color: rgb(156, 163, 175);
+}
+
+.file-extension-toggle:checked > .unity-toggle__input
+{
+    border-color: rgb(16, 185, 129);
+    background-color: rgba(16, 185, 129, 0.08);
+}
+
+.file-extension-toggle .unity-toggle__checkmark
+{
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    margin: 0 14px 0 0;
+    background-color: rgb(237, 238, 243);
+    border-width: 0;
+}
+
+.file-extension-toggle:checked .unity-toggle__checkmark
+{
+    background-color: rgb(16, 185, 129);
+    -unity-background-image-tint-color: white;
+}
+
+.file-extension-toggle .unity-toggle__text
+{
+    margin: 0;
+    padding: 0;
+    font-size: 28px;
+    color: rgb(55, 65, 81);
+    -unity-font-style: bold;
+}
+
+.file-extension-toggle:checked .unity-toggle__text
+{
+    color: rgb(4, 120, 87);
+}
+
+/* ---------------- Quiz detail: View Submissions (File Submission quizzes) ---------------- */
+
+.view-submissions-button
+{
+    height: 104px;
+    border-radius: 24px;
+    border-width: 0;
+    background-color: rgb(37, 99, 235);
+    color: rgb(255, 255, 255);
+    font-size: 28px;
+    -unity-font-style: bold;
+    margin-top: 24px;
+}
+
+.view-submissions-button:hover
+{
+    background-color: rgb(29, 78, 216);
+}
+
+.compact .submission-type-card
+{
+    width: 100%;
+}
+
+.compact .file-extension-toggle
+{
+    width: 48.5%;
 }

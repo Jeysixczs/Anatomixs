@@ -728,6 +728,12 @@ namespace Anatomia3D.Backend
             public DateTime? DeadlineUtc;
             public int TotalPoints;
             public string Difficulty; // hardest difficulty among the quiz's questions
+
+            /// <summary>SubmissionTypes.Question (default) or SubmissionTypes.File -
+            /// tells StudentClassroomDetailController which screen "Start"/"View"
+            /// should open (StudentQuizGameplayController vs
+            /// StudentFileSubmissionController).</summary>
+            public string SubmissionType = SubmissionTypes.Question;
         }
 
         /// <summary>Call when showing the Available Quizzes tab. Reads the classroom's
@@ -909,6 +915,17 @@ namespace Anatomia3D.Backend
                 }
             }
 
+            string submissionType = SubmissionTypes.Normalize(
+                doc.ContainsField("submissionType") ? doc.GetValue<string>("submissionType") : null);
+
+            // A File Submission assignment has no questions[] - totalPoints comes
+            // straight from pointsPossible instead (set via
+            // QuizService.SetFileSubmissionPoints), or the sum above stays 0.
+            if (SubmissionTypes.IsFileSubmission(submissionType) && doc.ContainsField("pointsPossible"))
+            {
+                totalPoints = doc.GetValue<int>("pointsPossible");
+            }
+
             return new QuizSummary
             {
                 QuizId = doc.Id,
@@ -925,7 +942,8 @@ namespace Anatomia3D.Backend
                     ? doc.GetValue<Timestamp>("deadline").ToDateTime()
                     : (DateTime?)null,
                 TotalPoints = totalPoints,
-                Difficulty = difficulty
+                Difficulty = difficulty,
+                SubmissionType = submissionType
             };
         }
 

@@ -25,6 +25,13 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset studentClassroomScreen;
         [SerializeField] private VisualTreeAsset studentQuizSelectionScreen;
         [SerializeField] private VisualTreeAsset studentQuizGameplayScreen;
+        // File Submission assignment type - shown instead of studentQuizGameplayScreen
+        // when the quiz's submissionType is "file" (see ShowStudentFileSubmission).
+        [SerializeField] private VisualTreeAsset studentFileSubmissionScreen;
+        // Teacher's "View Submissions" screen for a File Submission assignment
+        // (see ShowAdminSubmissionReview) - separate asset from
+        // adminQuizManagementScreen, reached from its quiz detail view.
+        [SerializeField] private VisualTreeAsset adminSubmissionReviewScreen;
         [SerializeField] private VisualTreeAsset studentProgressScreen;
         [SerializeField] private VisualTreeAsset studentQuizResultScreen;
         [SerializeField] private VisualTreeAsset studentClassroomHubScreen;
@@ -46,6 +53,7 @@ namespace Anatomia3D.UI
         private StudentClassroomController _studentClassroomController;
         private StudentQuizSelectionController _studentQuizSelectionController;
         private StudentQuizGameplayController _studentQuizGameplayController;
+        private Anatomia3D.UI.StudentFileSubmissionController _studentFileSubmissionController;
         private StudentQuizResultController _studentQuizResultController;
         private StudentProgressController _studentProgressController;
         private StudentClassroomHubController _studentClassroomHubController;
@@ -80,6 +88,7 @@ namespace Anatomia3D.UI
         private AdminClassroomCreatedController _adminClassroomCreatedController;
         private AdminGamificationSettingsController _adminGamificationSettingsController;
         private AdminQuizManagementController _adminQuizManagementController;
+        private Anatomia3D.UI.AdminSubmissionReviewController _adminSubmissionReviewController;
         private AdminAnalyticsReportsController _adminAnalyticsController;
         private AdminClassroomDetailController _adminClassroomDetailController;
         private AdminProfileController _adminProfileController;
@@ -259,6 +268,7 @@ private IEnumerator DecideInitialScreen()
             _studentClassroomController = GetComponent<StudentClassroomController>();
             _studentQuizSelectionController = GetComponent<StudentQuizSelectionController>();
             _studentQuizGameplayController = GetComponent<StudentQuizGameplayController>();
+            _studentFileSubmissionController = GetComponent<Anatomia3D.UI.StudentFileSubmissionController>();
             _studentQuizResultController = GetComponent<StudentQuizResultController>();
             _studentProgressController = GetComponent<StudentProgressController>();
             _studentClassroomHubController = GetComponent<StudentClassroomHubController>();
@@ -276,6 +286,7 @@ private IEnumerator DecideInitialScreen()
             _adminClassroomCreatedController = GetComponent<AdminClassroomCreatedController>();
             _adminGamificationSettingsController = GetComponent<AdminGamificationSettingsController>();
             _adminQuizManagementController = GetComponent<AdminQuizManagementController>();
+            _adminSubmissionReviewController = GetComponent<Anatomia3D.UI.AdminSubmissionReviewController>();
             _adminAnalyticsController = GetComponent<AdminAnalyticsReportsController>();
             _adminClassroomDetailController = GetComponent<AdminClassroomDetailController>();
             _adminProfileController = GetComponent<AdminProfileController>();
@@ -411,6 +422,24 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentQuizGameplayScreen, _studentQuizGameplayController, () =>
             {
                 _studentQuizGameplayController?.LoadQuiz(classroomId, quizId);
+            });
+        }
+
+        /// <summary>Opens the File Submission screen instead of
+        /// StudentQuizGameplayController - called from
+        /// StudentClassroomDetailController.OnStartQuizClicked when the tapped
+        /// quiz's SubmissionType is SubmissionTypes.File.</summary>
+        /// <param name="classroomId">Same role as in ShowStudentQuizGameplay - the
+        /// classroom this assignment was opened from.</param>
+        /// <param name="classroomName">/<param name="instructorName">Carried through
+        /// only so the screen's back button can return to
+        /// ShowStudentClassroomDetailOnQuizzesTab with the same header the student
+        /// already saw, without an extra Firestore read.</param>
+        public void ShowStudentFileSubmission(string classroomId, string quizId, string classroomName, string instructorName)
+        {
+            ShowScreen(studentFileSubmissionScreen, _studentFileSubmissionController, () =>
+            {
+                _studentFileSubmissionController?.LoadAssignment(classroomId, quizId, classroomName, instructorName);
             });
         }
 
@@ -687,6 +716,18 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(adminAnalyticsReportsScreen, _adminAnalyticsController);
         }
 
+        /// <summary>Teacher's "View Submissions" list for one File Submission
+        /// assignment - called from AdminQuizManagementController's quiz detail
+        /// view, which only shows that button for a quiz whose SubmissionType is
+        /// SubmissionTypes.File.</summary>
+        public void ShowAdminSubmissionReview(string quizId, string classroomId, string quizTitle, int pointsPossible, int passingScorePercent)
+        {
+            ShowScreen(adminSubmissionReviewScreen, _adminSubmissionReviewController, () =>
+            {
+                _adminSubmissionReviewController?.LoadSubmissions(quizId, classroomId, quizTitle, pointsPossible, passingScorePercent);
+            });
+        }
+
         public void ShowAdminClassroomDetail(
             string classroomId,
             string classroomName,
@@ -847,6 +888,7 @@ private IEnumerator DecideInitialScreen()
             if (_studentClassroomController != null) _studentClassroomController.enabled = false;
             if (_studentQuizSelectionController != null) _studentQuizSelectionController.enabled = false;
             if (_studentQuizGameplayController != null) _studentQuizGameplayController.enabled = false;
+            if (_studentFileSubmissionController != null) _studentFileSubmissionController.enabled = false;
             if (_studentQuizResultController != null) _studentQuizResultController.enabled = false;
             if (_studentProgressController != null) _studentProgressController.enabled = false;
             if (_studentClassroomHubController != null) _studentClassroomHubController.enabled = false;
@@ -864,6 +906,7 @@ private IEnumerator DecideInitialScreen()
             if (_adminClassroomCreatedController != null) _adminClassroomCreatedController.enabled = false;
             if (_adminGamificationSettingsController != null) _adminGamificationSettingsController.enabled = false;
             if (_adminQuizManagementController != null) _adminQuizManagementController.enabled = false;
+            if (_adminSubmissionReviewController != null) _adminSubmissionReviewController.enabled = false;
             if (_adminAnalyticsController != null) _adminAnalyticsController.enabled = false;
             if (_adminClassroomDetailController != null) _adminClassroomDetailController.enabled = false;
             if (_adminProfileController != null) _adminProfileController.enabled = false;
