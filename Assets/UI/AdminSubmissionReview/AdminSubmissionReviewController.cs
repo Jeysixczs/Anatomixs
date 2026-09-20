@@ -68,6 +68,8 @@ namespace Anatomia3D.UI
         private VisualElement _emptyState;
         private Label _emptyLabel;
         private Label _statusLabel;
+        private ScrollView _listScroll;
+        private ScrollView _modalScroll;
 
         private VisualElement _reviewOverlay;
         private VisualElement _reviewAvatar;
@@ -154,6 +156,7 @@ namespace Anatomia3D.UI
 
         private FileSubmissionService.SubmissionRecord _reviewing;
         private bool _isSaving;
+        private bool _clampingListScroll;
 
         // ==================================================================
         // Lifecycle
@@ -213,6 +216,19 @@ namespace Anatomia3D.UI
             _emptyState = _root.Q<VisualElement>("sr-empty-state");
             _emptyLabel = _root.Q<Label>("sr-empty-label");
             _statusLabel = _root.Q<Label>("sr-status-label");
+            _listScroll = _root.Q<ScrollView>("sr-scroll");
+            _modalScroll = _root.Q<ScrollView>("sr-modal-scroll");
+
+            // The "touch-scroll-type" UXML attribute is affected by a long-standing,
+            // acknowledged Unity binding bug (its name doesn't match the C# field
+            // "touchScrollBehavior", so the value written in the .uxml isn't reliably
+            // applied at load time). Setting it directly on the ScrollView object here
+            // is the documented-working path: it guarantees dragging is clamped to the
+            // real content bounds - i.e. a short list that already fits on screen simply
+            // can't be dragged at all - rather than depending on the UXML parser picking
+            // up the attribute correctly.
+            if (_listScroll != null) _listScroll.touchScrollBehavior = ScrollView.TouchScrollBehavior.Clamped;
+            if (_modalScroll != null) _modalScroll.touchScrollBehavior = ScrollView.TouchScrollBehavior.Clamped;
 
             _reviewOverlay = _root.Q<VisualElement>("sr-review-overlay");
             _reviewAvatar = _root.Q<VisualElement>("sr-review-avatar");
@@ -247,6 +263,13 @@ namespace Anatomia3D.UI
             _openFileButton?.RegisterCallback<ClickEvent>(OnOpenFileClicked);
             _scoreField?.RegisterValueChangedCallback(OnScoreFieldChanged);
             _screenRoot?.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
+            if (_listScroll != null)
+            {
+                _listScroll.verticalScroller.valueChanged += OnListScrollChanged;
+                _listScroll.contentContainer.RegisterCallback<GeometryChangedEvent>(OnListScrollGeometryChanged);
+                _listScroll.contentViewport.RegisterCallback<GeometryChangedEvent>(OnListScrollGeometryChanged);
+            }
         }
 
         private void UnregisterCallbacks()
@@ -258,6 +281,47 @@ namespace Anatomia3D.UI
             _openFileButton?.UnregisterCallback<ClickEvent>(OnOpenFileClicked);
             _scoreField?.UnregisterValueChangedCallback(OnScoreFieldChanged);
             _screenRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
+            if (_listScroll != null)
+            {
+                _listScroll.verticalScroller.valueChanged -= OnListScrollChanged;
+                _listScroll.contentContainer.UnregisterCallback<GeometryChangedEvent>(OnListScrollGeometryChanged);
+                _listScroll.contentViewport.UnregisterCallback<GeometryChangedEvent>(OnListScrollGeometryChanged);
+            }
+        }
+
+        // ==================================================================
+        // List scroll clamp
+        // ==================================================================
+
+        private void OnListScrollChanged(float _) => ClampListScroll();
+
+        private void OnListScrollGeometryChanged(GeometryChangedEvent evt) => ClampListScroll();
+
+        /// <summary>
+        /// Keeps the student list's scroll offset inside [0, contentHeight - viewportHeight].
+        /// When the content is SHORTER than the viewport the scroller's range collapses
+        /// to a negative/inverted range, and the ScrollView (even in Clamped mode) then
+        /// lets the content be dragged DOWN, leaving blank space above the first row.
+        /// Forcing the offset back into the real range pins the list to the top, and
+        /// still lets a long list scroll normally.
+        /// </summary>
+        private void ClampListScroll()
+        {
+            if (_listScroll == null || _clampingListScroll) return;
+
+            var viewport = _listScroll.contentViewport;
+            var content = _listScroll.contentContainer;
+            if (viewport == null || content == null) return;
+
+            float maxScroll = Mathf.Max(0f, content.layout.height - viewport.layout.height);
+            Vector2 offset = _listScroll.scrollOffset;
+            float clampedY = Mathf.Clamp(offset.y, 0f, maxScroll);
+            if (Mathf.Approximately(offset.y, clampedY)) return;
+
+            _clampingListScroll = true;
+            try { _listScroll.scrollOffset = new Vector2(offset.x, clampedY); }
+            finally { _clampingListScroll = false; }
         }
 
         // ==================================================================
@@ -622,6 +686,7 @@ namespace Anatomia3D.UI
 
             _emptyState?.AddToClassList("hidden");
             foreach (var entry in visible) _list.Add(BuildRow(entry));
+            _list.Children().LastOrDefault()?.AddToClassList("sr-row--last");
         }
 
         private string EmptyMessageForFilter()

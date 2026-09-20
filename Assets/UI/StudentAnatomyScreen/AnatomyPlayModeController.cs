@@ -337,6 +337,20 @@ namespace Anatomia3D.Backend
             _playModeControlsRow = _root.Q<VisualElement>("PlayModeControls");
             _audioRow = _root.Q<VisualElement>("AudioRow");
 
+            // This controller lives on the persistent UIManager GameObject and is
+            // enabled at app start, so OnEnable -> HandleScreenReady -> WireUi also
+            // runs while Student Login (or any other non-Anatomy screen) is showing.
+            // None of the Anatomy screen's elements exist then, and wiring anyway
+            // would add the _masterInput TextField to the shared root, where it
+            // shows up as a stray, unstyled "unity-text-input" (its
+            // .letter-master-input style lives in the Anatomy screen's stylesheet,
+            // which UIManager clears on every screen change). Bail out quietly.
+            if (_letterRow == null && _questionControlsSection == null &&
+                _playModeControlsRow == null && _submitButton == null)
+            {
+                return;
+            }
+
             if (_letterRow == null)
             {
                 Debug.LogWarning("[AnatomyPlayModeController] 'PlayModeLetterRow' not found in UXML - " +
@@ -353,6 +367,7 @@ namespace Anatomia3D.Backend
             // handler below, which forwards focus to it instead.
             if (_root != null)
             {
+                _masterInput?.RemoveFromHierarchy(); // WireUi can run twice on the same tree - never keep two
                 _masterInput = new TextField { isDelayed = false, multiline = false };
                 _masterInput.AddToClassList("letter-master-input");
                 _masterInput.pickingMode = PickingMode.Ignore;

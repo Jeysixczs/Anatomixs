@@ -27,13 +27,15 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:ScrollView name="sr-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="sr-scroll">
+        <ui:VisualElement name="sr-top-controls" class="sr-top-controls">
+            <ui:VisualElement name="sr-classroom-section" class="sr-section hidden">
+                <ui:Label text="Classroom" class="sr-section-label"/>
+                <ui:VisualElement name="sr-classroom-chips" class="sr-chip-row"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="sr-filter-row" class="sr-chip-row sr-filter-row hidden"/>
+        </ui:VisualElement>
+        <ui:ScrollView name="sr-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="sr-scroll">
             <ui:VisualElement class="sr-content">
-                <ui:VisualElement name="sr-classroom-section" class="sr-section hidden">
-                    <ui:Label text="Classroom" class="sr-section-label"/>
-                    <ui:VisualElement name="sr-classroom-chips" class="sr-chip-row"/>
-                </ui:VisualElement>
-                <ui:VisualElement name="sr-filter-row" class="sr-chip-row sr-filter-row hidden"/>
                 <ui:VisualElement name="sr-list" class="sr-list"/>
                 <ui:VisualElement name="sr-empty-state" class="sr-empty-state hidden">
                     <ui:VisualElement class="sr-empty-icon"/>
@@ -56,7 +58,7 @@
                         <ui:VisualElement class="sr-modal-close-icon"/>
                     </ui:Button>
                 </ui:VisualElement>
-                <ui:ScrollView mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="sr-modal-scroll">
+                <ui:ScrollView name="sr-modal-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="sr-modal-scroll">
                     <ui:VisualElement class="sr-modal-body">
                         <ui:VisualElement class="sr-info-grid">
                             <ui:VisualElement class="sr-info-card">
