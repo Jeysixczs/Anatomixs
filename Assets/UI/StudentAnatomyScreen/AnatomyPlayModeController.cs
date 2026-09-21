@@ -44,6 +44,15 @@ namespace Anatomia3D.Backend
     [RequireComponent(typeof(AnatomyScreenController))]
     public class AnatomyPlayModeController : MonoBehaviour
     {
+        // Verbose diagnostics. [Conditional] removes every call - INCLUDING
+        // the string-interpolation arguments - from device builds, so the
+        // per-keystroke logging in the letter-box input path no longer
+        // costs allocations + logcat I/O on every key press. Logs still
+        // appear in the Editor; add ANATOMY_VERBOSE_LOG to Scripting
+        // Define Symbols to get them in a device build too.
+        [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("ANATOMY_VERBOSE_LOG")]
+        private static void Log(string message) => Debug.Log(message);
+
         [Header("Points")]
         [Tooltip("Points awarded for every correct answer, regardless of how many hints were used.")]
         [SerializeField] private int pointsPerCorrectAnswer = 1;
@@ -145,6 +154,11 @@ namespace Anatomia3D.Backend
         private Button _randomButton;
         private Label _progressLabel;
         private Button _hintButton;
+        // The Hint button is built in UXML with its OWN child Labels (icon +
+        // text). Setting Button.text draws a SECOND text on top of those
+        // children (the "two hints overlapping" bug), so the caption is
+        // changed on this child label instead - never on the button itself.
+        private Label _hintButtonLabel;
         private VisualElement _letterRow;
         private Button _submitButton;
         private VisualElement _completionPanel;
@@ -326,6 +340,7 @@ namespace Anatomia3D.Backend
             _randomButton = _root.Q<Button>("RandomButton");
             _progressLabel = _root.Q<Label>("PlayModeProgressLabel");
             _hintButton = _root.Q<Button>("PlayModeHintButton");
+            _hintButtonLabel = _hintButton?.Q<Label>(className: "play-mode-btn-label");
             _letterRow = _root.Q<VisualElement>("PlayModeLetterRow");
             _submitButton = _root.Q<Button>("PlayModeSubmitButton");
             _completionPanel = _root.Q<VisualElement>("PlayModeCompletionPanel");
@@ -370,6 +385,11 @@ namespace Anatomia3D.Backend
                 _masterInput?.RemoveFromHierarchy(); // WireUi can run twice on the same tree - never keep two
                 _masterInput = new TextField { isDelayed = false, multiline = false };
                 _masterInput.AddToClassList("letter-master-input");
+                // Autocorrect/predictive text keeps a "composing" region open
+                // in the Android IME; every text write-back into the field
+                // resets it and swallows fast keystrokes. The guess is letters
+                // only, so there is nothing useful to correct anyway.
+                _masterInput.autoCorrection = false;
                 _masterInput.pickingMode = PickingMode.Ignore;
                 _masterInput.RegisterValueChangedCallback(OnMasterInputChanged);
                 _masterInput.RegisterCallback<KeyDownEvent>(OnMasterInputKeyDown, TrickleDown.TrickleDown);
@@ -407,7 +427,7 @@ namespace Anatomia3D.Backend
             _letterRow?.RegisterCallback<PointerDownEvent>(_ =>
             {
                 if (_masterInput == null) return;
-                Debug.Log("[AnatomyPlayModeController] _letterRow PointerDownEvent: re-focusing _masterInput.");
+                Log("[AnatomyPlayModeController] _letterRow PointerDownEvent: re-focusing _masterInput.");
                 _masterInput.Blur();
                 _masterInput.schedule.Execute(() => _masterInput?.Focus());
             }, TrickleDown.TrickleDown);
@@ -429,7 +449,7 @@ namespace Anatomia3D.Backend
             // which element actually absorbed it.
             _letterRow?.RegisterCallback<PointerDownEvent>(evt =>
             {
-                Debug.Log($"[AnatomyPlayModeController] DIAGNOSTIC _letterRow capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
+                Log($"[AnatomyPlayModeController] DIAGNOSTIC _letterRow capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
             }, TrickleDown.TrickleDown);
 
             // Same idea but at _root, so a tap that lands OUTSIDE
@@ -438,7 +458,7 @@ namespace Anatomia3D.Backend
             // its real target, instead of producing silence everywhere.
             _root?.RegisterCallback<PointerDownEvent>(evt =>
             {
-                Debug.Log($"[AnatomyPlayModeController] DIAGNOSTIC _root capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
+                Log($"[AnatomyPlayModeController] DIAGNOSTIC _root capture-phase PointerDownEvent: target={evt.target}, position={evt.position}, pointerId={evt.pointerId}.");
             }, TrickleDown.TrickleDown);
 
             // Hidden as a whole (label included) until Play Mode is
@@ -576,7 +596,7 @@ namespace Anatomia3D.Backend
             int totalCount = _baselineTargetKeys.Count;
             int points = _baselinePoints;
             _onBaselineCompleted = null; // fire exactly once, same as natural completion
-            Debug.Log($"[AnatomyPlayModeController] FinishBaselineAssessmentEarly: {correctCount}/{totalCount}, {points} pts.");
+            Log($"[AnatomyPlayModeController] FinishBaselineAssessmentEarly: {correctCount}/{totalCount}, {points} pts.");
             callback.Invoke(correctCount, totalCount, points);
         }
 
@@ -1075,7 +1095,7 @@ namespace Anatomia3D.Backend
                     // padding) never reaches a bubble-phase handler here.
                     field.RegisterCallback<PointerDownEvent>(_ =>
                     {
-                        Debug.Log($"[AnatomyPlayModeController] Box tapped: fieldIndex={capturedFieldIndex}.");
+                        Log($"[AnatomyPlayModeController] Box tapped: fieldIndex={capturedFieldIndex}.");
                         SelectBoxForEdit(capturedFieldIndex);
                     }, TrickleDown.TrickleDown);
 
@@ -1103,7 +1123,7 @@ namespace Anatomia3D.Backend
                 // *logical* value back to _editableBoxIndices.Count right
                 // after, so the real cap still holds.
                 _masterInput.maxLength = _editableBoxIndices.Count + 1;
-                Debug.Log($"[AnatomyPlayModeController] BuildLetterBoxes: {_editableBoxIndices.Count} editable box(es), _masterInput.maxLength set to {_masterInput.maxLength}.");
+                Log($"[AnatomyPlayModeController] BuildLetterBoxes: {_editableBoxIndices.Count} editable box(es), _masterInput.maxLength set to {_masterInput.maxLength}.");
             }
 
             RenderLetterBoxesFromMaster();
@@ -1157,7 +1177,7 @@ namespace Anatomia3D.Backend
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                Debug.Log($"[AnatomyPlayModeController] SetMasterValue: SelectRange({_masterInputPrevValue.Length}, {_masterInputPrevValue.Length}) rejected by native keyboard (buffer desync after Blur()+Focus()) - ignoring, value is still correctly set. {ex.Message}");
+                Log($"[AnatomyPlayModeController] SetMasterValue: SelectRange({_masterInputPrevValue.Length}, {_masterInputPrevValue.Length}) rejected by native keyboard (buffer desync after Blur()+Focus()) - ignoring, value is still correctly set. {ex.Message}");
             }
         }
 
@@ -1174,21 +1194,21 @@ namespace Anatomia3D.Backend
         private void SelectBoxForEdit(int fieldIndex)
         {
             int seq = _editableBoxIndices.IndexOf(fieldIndex);
-            string value = _masterInput != null ? (_masterInput.value ?? string.Empty) : string.Empty;
+            string value = _masterInputPrevValue ?? string.Empty;
 
             if (seq < 0)
             {
-                Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex} is NOT in _editableBoxIndices (likely hint-revealed) - bailing, no selection armed.");
+                Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex} is NOT in _editableBoxIndices (likely hint-revealed) - bailing, no selection armed.");
                 return;
             }
             if (seq > value.Length)
             {
-                Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} is past the current guess length ({value.Length}) - nothing typed there yet to overwrite, bailing.");
+                Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} is past the current guess length ({value.Length}) - nothing typed there yet to overwrite, bailing.");
                 return;
             }
 
             _selectedEditSeq = seq;
-            Debug.Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} ARMED, currentValueLen={value.Length}, maxLength={_masterInput?.maxLength}.");
+            Log($"[AnatomyPlayModeController] SelectBoxForEdit: fieldIndex={fieldIndex}, seq={seq} ARMED, currentValueLen={value.Length}, maxLength={_masterInput?.maxLength}.");
 
             foreach (var f in _letterFields)
                 f.RemoveFromClassList("letter-box-selected");
@@ -1230,7 +1250,7 @@ namespace Anatomia3D.Backend
         // undetectable case the way the old per-box design did.
         private void OnMasterInputChanged(ChangeEvent<string> evt)
         {
-            Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: raw='{evt.newValue}' (len {evt.newValue?.Length ?? 0}), prev='{_masterInputPrevValue}' (len {_masterInputPrevValue.Length}), maxLength={_masterInput?.maxLength}, selectedEditSeq={_selectedEditSeq}.");
+            Log($"[AnatomyPlayModeController] OnMasterInputChanged: raw='{evt.newValue}' (len {evt.newValue?.Length ?? 0}), prev='{_masterInputPrevValue}' (len {_masterInputPrevValue.Length}), maxLength={_masterInput?.maxLength}, selectedEditSeq={_selectedEditSeq}.");
 
             // Consume any armed echo-guard before doing anything else - it
             // only ever guards exactly one ChangeEvent (see the field
@@ -1239,7 +1259,7 @@ namespace Anatomia3D.Backend
             bool isDuplicateEcho = _pendingEchoRaw != null && evt.newValue == _pendingEchoRaw;
             if (isDuplicateEcho)
             {
-                Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: ignoring duplicate echo raw='{evt.newValue}' ...");
+                Log($"[AnatomyPlayModeController] OnMasterInputChanged: ignoring duplicate echo raw='{evt.newValue}' ...");
                 SetMasterValue(_masterInputPrevValue);
                 RenderLetterBoxesFromMaster();
                 return; // still armed — keep guarding until a non-matching event arrives
@@ -1247,6 +1267,7 @@ namespace Anatomia3D.Backend
             _pendingEchoRaw = null; // this event is genuinely new; stop guarding
 
             string filtered = FilterMasterInputValue(evt.newValue);
+            bool forceFieldRewrite = false;
 
             // A box was tapped (see SelectBoxForEdit) and is still waiting
             // for its overwrite character. _masterInput is never visibly
@@ -1285,7 +1306,7 @@ namespace Anatomia3D.Backend
                     filtered = sb.ToString();
                     if (filtered.Length > _editableBoxIndices.Count)
                         filtered = filtered.Substring(0, _editableBoxIndices.Count);
-                    Debug.Log($"[AnatomyPlayModeController] OnMasterInputChanged: spliced '{typed}' into seq {_selectedEditSeq}, result='{filtered}'.");
+                    Log($"[AnatomyPlayModeController] OnMasterInputChanged: spliced '{typed}' into seq {_selectedEditSeq}, result='{filtered}'.");
 
                     // Arm the echo guard: the keyboard reliably re-fires this
                     // exact raw fragment one more time right after this event
@@ -1297,13 +1318,30 @@ namespace Anatomia3D.Backend
                 else
                 {
                     filtered = _masterInputPrevValue; // nothing typed - keep the existing guess intact.
-                    Debug.Log("[AnatomyPlayModeController] OnMasterInputChanged: a box was selected but nothing was typed (raw came back empty) - selection cancelled without an overwrite.");
+                    Log("[AnatomyPlayModeController] OnMasterInputChanged: a box was selected but nothing was typed (raw came back empty) - selection cancelled without an overwrite.");
                 }
 
                 ClearBoxSelection(); // one overwrite consumed (or cancelled) - back to normal typing.
+                forceFieldRewrite = true; // field only holds the raw fragment - resync it to the spliced guess.
             }
 
-            SetMasterValue(filtered);
+            // PERFORMANCE / DROPPED-KEYSTROKE FIX: on a phone, every write into
+            // _masterInput (SetValueWithoutNotify + SelectRange, see
+            // SetMasterValue) is pushed into the native TouchScreenKeyboard
+            // and restarts the IME's input connection - characters typed in
+            // the meantime are silently lost when typing fast. So on ordinary
+            // typing we leave the field alone and only record the logical
+            // value; the field is rewritten only when it really disagrees with
+            // it (junk characters, overflow past the box count) or when a
+            // box overwrite/cancel just happened. Case differences alone
+            // don't count: the field is hidden, so "cat" vs "CAT" is
+            // irrelevant and _masterInputPrevValue is what the boxes show.
+            string raw = evt.newValue ?? string.Empty;
+            if (forceFieldRewrite || !string.Equals(raw, filtered, StringComparison.OrdinalIgnoreCase))
+                SetMasterValue(filtered);
+            else
+                _masterInputPrevValue = filtered;
+
             RenderLetterBoxesFromMaster();
         }
 
@@ -1331,13 +1369,23 @@ namespace Anatomia3D.Backend
         // hint reveal.
         private void RenderLetterBoxesFromMaster()
         {
-            string value = _masterInput != null ? (_masterInput.value ?? string.Empty) : string.Empty;
+            string value = _masterInputPrevValue ?? string.Empty;
 
             for (int seq = 0; seq < _editableBoxIndices.Count; seq++)
             {
                 var box = _letterFields[_editableBoxIndices[seq]];
-                box.SetValueWithoutNotify(seq < value.Length ? value[seq].ToString() : string.Empty);
-                box.EnableInClassList("letter-box-active", seq == value.Length);
+
+                // Only touch boxes whose text actually changed: each
+                // TextField.SetValueWithoutNotify re-generates the text mesh,
+                // and doing that for EVERY box on EVERY keystroke is wasted
+                // work on a phone (the guess can be 20+ boxes long).
+                string want = seq < value.Length ? value[seq].ToString() : string.Empty;
+                if (box.value != want)
+                    box.SetValueWithoutNotify(want);
+
+                bool active = seq == value.Length;
+                if (box.ClassListContains("letter-box-active") != active)
+                    box.EnableInClassList("letter-box-active", active);
             }
         }
 
@@ -1356,7 +1404,7 @@ namespace Anatomia3D.Backend
             int seq = _editableBoxIndices.IndexOf(fieldIndex);
             if (seq >= 0 && _masterInput != null)
             {
-                string value = _masterInput.value ?? string.Empty;
+                string value = _masterInputPrevValue ?? string.Empty;
                 if (seq < value.Length)
                     value = value.Remove(seq, 1);
 
@@ -1365,7 +1413,7 @@ namespace Anatomia3D.Backend
                 // there for why capping this exactly at the box count
                 // breaks the tap-to-overwrite path once the guess is full.
                 _masterInput.maxLength = _editableBoxIndices.Count + 1;
-                Debug.Log($"[AnatomyPlayModeController] RevealLetterField: box {fieldIndex} revealed, {_editableBoxIndices.Count} editable box(es) remain, _masterInput.maxLength set to {_masterInput.maxLength}.");
+                Log($"[AnatomyPlayModeController] RevealLetterField: box {fieldIndex} revealed, {_editableBoxIndices.Count} editable box(es) remain, _masterInput.maxLength set to {_masterInput.maxLength}.");
                 SetMasterValue(value);
 
                 // This box's slot in _editableBoxIndices is gone, so any
@@ -1543,7 +1591,12 @@ namespace Anatomia3D.Backend
             if (_hintButton == null || _screen == null || localStorage == null) return;
 
             bool limitReached = localStorage.GetHintCountToday(_screen.CurrentSystem) >= AnatomyPlayModeLocalStorage.MaxHintsPerSystemPerDay;
-            _hintButton.text = limitReached ? "No more hints" : "Hint";
+            // Update the existing child label, and make sure the button's own
+            // text stays empty so nothing is drawn on top of it.
+            if (_hintButtonLabel != null)
+                _hintButtonLabel.text = limitReached ? "No more hints" : "Hint";
+            if (!string.IsNullOrEmpty(_hintButton.text))
+                _hintButton.text = string.Empty;
 
             // Deliberately left enabled even at the limit (unlike the old
             // SetEnabled(!limitReached)) - a disabled button can't be
