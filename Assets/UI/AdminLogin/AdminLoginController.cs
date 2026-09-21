@@ -78,6 +78,10 @@ namespace Anatomia3D.UI
 
         private LoadingOverlay _loadingOverlay;
         private const long RequestTimeoutMs = 25000; // stop waiting on the server after 25s
+        // Google's account picker is a native screen the user takes their time on, so the
+        // Google overlay's safety timeout is far longer than RequestTimeoutMs above.
+        private const long GoogleRequestTimeoutMs = 90000;
+        private const string GoogleSlowHint = "Still connecting to Google - this can take longer on a weak connection.";
         private FitToScreen _fitToScreen;
 
         private void OnEnable()
@@ -264,10 +268,20 @@ namespace Anatomia3D.UI
         {
             Debug.Log("[AdminLoginController] Google sign-in tapped.");
             SetStatus("Signing in with Google...");
+
+            // Full-screen loading overlay until LoginWithGoogle calls back (it always does,
+            // including on cancel/error); the timeout is only a safety net for a hung request.
+            _loadingOverlay?.ShowWithTimeout("Signing in with Google...", GoogleRequestTimeoutMs, () =>
+            {
+                Debug.LogWarning("[AdminLoginController] Timed out waiting for Google sign-in - closing the overlay.");
+                SetStatus("This is taking too long. Check your connection and try again.");
+                _googleSigninButton.SetEnabled(true);
+            }, GoogleSlowHint);
             _googleSigninButton.SetEnabled(false);
 
             AdminAuthService.Instance.LoginWithGoogle((success, errorMessage) =>
             {
+                _loadingOverlay?.Hide();
                 _googleSigninButton.SetEnabled(true);
 
                 if (success)
