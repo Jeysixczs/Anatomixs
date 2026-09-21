@@ -136,6 +136,11 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _joinClassroomSubmitButton = _screenRoot.Q<Button>("join-classroom-submit-button");
 
+            // Android's UI Toolkit TextField doesn't surface the native long-press
+            // paste bubble, so wire up a long-press-to-paste gesture here instead.
+            // Trim/uppercase to match how the code is validated on submit.
+            _classroomCodeField?.EnableLongPressPaste(s => s.Trim().ToUpperInvariant());
+
             Debug.Log($"[StudentClassroomController] Found submit button: {_joinClassroomSubmitButton != null}, header: {_header != null}");
         }
 

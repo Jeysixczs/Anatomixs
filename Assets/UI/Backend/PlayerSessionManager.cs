@@ -396,14 +396,44 @@ namespace Anatomia3D.Backend
 
             // GoogleSignIn.SignIn() silently reuses a cached credential from a
             // previous session if one exists, which is why the account chooser
-            // stops appearing after the first sign-in. Signing out immediately
-            // beforehand clears that cached credential (this is a local/plugin-side
-            // reset, not a network call) so the native picker is shown every time,
-            // letting the user pick a different Google account.
-            GoogleSignIn.DefaultInstance.SignOut();
+            // stops appearing after the first sign-in. SignOut() alone isn't
+            // enough to prevent this - it only clears the plugin's local
+            // session, while Android/Google Play Services still remembers this
+            // app's authorized account and silently reselects it. Disconnect()
+            // revokes that grant entirely, which is what actually forces the
+            // native picker (and consent screen) to appear again so the user
+            // can pick a different account. Wrapped in try/catch since
+            // Disconnect() throws if there's no active grant to revoke yet
+            // (e.g. the very first sign-in on this device).
+            //
+            // TEMPORARY DIAGNOSTIC LOGGING: if the picker still doesn't show
+            // even after Disconnect(), these two log lines tell us whether
+            // Disconnect() actually ran (vs threw and got swallowed) and
+            // roughly how long SignIn() took to resolve - a near-instant
+            // resolve (a few ms) strongly suggests SignIn() silently reused a
+            // cached credential rather than showing any native UI at all,
+            // which would point at a deeper OS/Play-Services level cache this
+            // plugin's Disconnect() isn't reaching. Safe to remove once this
+            // is sorted out.
+            var diagnosticStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                GoogleSignIn.DefaultInstance.Disconnect();
+                Debug.Log("[PlayerSessionManager] Disconnect() completed without throwing.");
+            }
+            catch (System.Exception disconnectEx)
+            {
+                Debug.LogWarning($"[PlayerSessionManager] Disconnect() threw (expected on first-ever sign-in): {disconnectEx.Message}");
+            }
 
             GoogleSignIn.DefaultInstance.SignIn().ContinueWithOnMainThread(signInTask =>
             {
+                diagnosticStopwatch.Stop();
+                Debug.Log($"[PlayerSessionManager] SignIn() resolved in {diagnosticStopwatch.ElapsedMilliseconds}ms " +
+                          $"(canceled={signInTask.IsCanceled}, faulted={signInTask.IsFaulted}). " +
+                          "A near-instant resolve here with no visible UI means it reused a cached " +
+                          "credential rather than showing the picker.");
+
                 if (signInTask.IsCanceled)
                 {
                     onComplete?.Invoke(false, "Google sign-in was cancelled.");
