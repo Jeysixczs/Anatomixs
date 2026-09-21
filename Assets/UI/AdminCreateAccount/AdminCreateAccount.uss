@@ -185,6 +185,8 @@
 
     padding-left: 28px;
     padding-right: 18px;
+
+    overflow: hidden;
 }
 
 .input-container-focused
@@ -232,24 +234,31 @@
 
 .icon-eye
 {
-    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-image: url("project://database/Assets/UI/Icons/eye-on-white.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     width: 38px;
     height: 38px;
-    -unity-background-image-tint-color: rgb(180,168,204);
+    -unity-background-image-tint-color: white;
 }
 
 .icon-eye-off
 {
-    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
+    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     width: 38px;
     height: 38px;
-    -unity-background-image-tint-color: rgb(180,168,204);
+    -unity-background-image-tint-color: white;
+}
+
+/* Two-class selector so the "off" image always wins over .icon-eye,
+   no matter which rule comes first in this file. */
+.icon-eye.icon-eye-off
+{
+    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
 }
 
 /* ---------- TextField ---------- */
@@ -257,6 +266,10 @@
 .input-field
 {
     flex-grow: 1;
+    flex-shrink: 1;
+    /* Without min-width: 0 a long value makes the field grow past its
+       container, which pushes the lock/eye icons sideways. */
+    min-width: 0;
 
     font-size: 30px;
 
@@ -272,6 +285,12 @@
     background-color: transparent;
     border-width: 0;
     color: rgb(240,236,248);
+
+    /* Keep the inner text area inside the field so long text scrolls
+       inside it instead of stretching the row. */
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .input-field-with-right-icon

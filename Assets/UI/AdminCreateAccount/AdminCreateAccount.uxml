@@ -1,65 +1,48 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AdminCreateAccount/AdminCreateAccount.uss"/>
+    <Style src="project://database/Assets/UI/AdminCreateAccount/AdminCreateAccount.uss?fileID=7433441132597879392&amp;guid=2a98d02ef39c0df4183d56f4763123ff&amp;type=3#AdminCreateAccount"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:VisualElement name="screen-container" class="screen-container">
-            <ui:ScrollView name="scroll-view" class="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden">
+            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
                     <ui:VisualElement name="logo-circle" class="logo-circle">
                         <ui:VisualElement name="logo-icon" class="logo-icon icon-shield"/>
                     </ui:VisualElement>
-                    <ui:Label name="app-title" text="Administrator Access" class="app-title"/>
+                    <ui:Label name="app-title" text="Teacher Access" class="app-title"/>
                     <ui:Label name="app-subtitle" text="Create your admin account" class="app-subtitle"/>
-
                     <ui:VisualElement name="create-account-card" class="create-account-card">
                         <ui:Label text="First Name" class="field-label"/>
                         <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-user"/>
+                            <ui:VisualElement class="input-icon icon-user" style="background-image: url(&quot;project://database/Assets/UI/Icons/name-icons.png?fileID=2800000&amp;guid=ee66b0403bea941459c683a50a530416&amp;type=3#name-icons&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                             <ui:TextField name="firstname-field" placeholder-text="John" hide-placeholder-on-focus="true" class="input-field"/>
                         </ui:VisualElement>
                         <ui:Label name="firstname-error" class="field-error hidden"/>
-
                         <ui:Label text="Last Name" class="field-label field-label-spaced"/>
                         <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-user"/>
+                            <ui:VisualElement class="input-icon icon-user" style="background-image: url(&quot;project://database/Assets/UI/Icons/name-icons.png?fileID=2800000&amp;guid=ee66b0403bea941459c683a50a530416&amp;type=3#name-icons&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                             <ui:TextField name="lastname-field" placeholder-text="Doe" hide-placeholder-on-focus="true" class="input-field"/>
                         </ui:VisualElement>
                         <ui:Label name="lastname-error" class="field-error hidden"/>
-
                         <ui:Label text="Admin Email" class="field-label field-label-spaced"/>
                         <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-email"/>
+                            <ui:VisualElement class="input-icon icon-email" style="background-image: url(&quot;project://database/Assets/UI/Icons/email-white.png?fileID=2800000&amp;guid=2d18eaa7247e99d47b6d34e00e6b7219&amp;type=3#email-white&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                             <ui:TextField name="email-field" placeholder-text="admin@anatomylearn.com" hide-placeholder-on-focus="true" class="input-field"/>
                         </ui:VisualElement>
                         <ui:Label name="email-error" class="field-error hidden"/>
-
                         <ui:Label text="Password" class="field-label field-label-spaced"/>
                         <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-lock"/>
+                            <ui:VisualElement class="input-icon icon-lock" style="background-image: url(&quot;project://database/Assets/UI/Icons/lock-white.png?fileID=2800000&amp;guid=769e71b3805e9434bb7c983827f13efa&amp;type=3#lock-white&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                             <ui:TextField name="password-field" password="true" placeholder-text="Enter password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
-                            <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
+                            <ui:Button name="toggle-password-button" class="input-icon-button icon-eye" style="height: 56px; width: 55px;"/>
                         </ui:VisualElement>
                         <ui:Label name="password-error" class="field-error hidden"/>
-
                         <ui:Label text="Confirm Password" class="field-label field-label-spaced"/>
                         <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-lock"/>
+                            <ui:VisualElement class="input-icon icon-lock" style="background-image: url(&quot;project://database/Assets/UI/Icons/lock-white.png?fileID=2800000&amp;guid=769e71b3805e9434bb7c983827f13efa&amp;type=3#lock-white&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
                             <ui:TextField name="confirm-password-field" password="true" placeholder-text="Confirm password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
-                            <ui:Button name="toggle-confirm-password-button" class="input-icon-button icon-eye"/>
+                            <ui:Button name="toggle-confirm-password-button" class="input-icon-button icon-eye" style="height: 52px; width: 52px;"/>
                         </ui:VisualElement>
                         <ui:Label name="confirm-password-error" class="field-error hidden"/>
-
-                        <ui:VisualElement name="terms-row" class="terms-row">
-                            <ui:Button name="terms-checkbox" class="terms-checkbox"/>
-                            <ui:VisualElement class="terms-label-container">
-                                <ui:Label text="I agree to the " class="terms-text"/>
-                                <ui:Button text="Terms of Service" class="terms-link-button"/>
-                                <ui:Label text=" and " class="terms-text"/>
-                                <ui:Button text="Privacy Policy" class="terms-link-button"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-
                         <ui:Button name="create-account-button" text="Create Admin Account" class="create-account-button"/>
-
                         <ui:VisualElement class="divider-row">
                             <ui:VisualElement class="divider-line"/>
                             <ui:Label text="Or continue with" class="divider-text"/>
@@ -70,14 +53,11 @@
                             <ui:Label text="Continue with Google" class="google-button-text"/>
                         </ui:Button>
                     </ui:VisualElement>
-
                     <ui:VisualElement class="bottom-links">
                         <ui:Label text="Already have an admin account?" class="bottom-link-text"/>
                         <ui:Button name="back-to-admin-login-button" text="Sign In" class="bottom-link-button"/>
                     </ui:VisualElement>
-
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
-                    <ui:Label name="footer-warning-label" text="This is a restricted area. All access attempts are logged and monitored." class="footer-warning-label"/>
                 </ui:VisualElement>
             </ui:ScrollView>
         </ui:VisualElement>

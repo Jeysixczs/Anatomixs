@@ -38,6 +38,12 @@ namespace Anatomia3D.UI
         [Header("Compact breakpoint (px, reference is 1080x1920)")]
         [SerializeField] private int compactWidthThreshold = 900;
 
+        [Header("Password eye icons (drag your eye-on-white / eye-off-white textures here)")]
+        [Tooltip("Shown while the password is hidden. When both are assigned the icon swap is done in code, independent of the USS.")]
+        [SerializeField] private Texture2D eyeOnIcon;
+        [Tooltip("Shown while the password is visible.")]
+        [SerializeField] private Texture2D eyeOffIcon;
+
         private static readonly Regex EmailRegex =
             new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
@@ -57,7 +63,8 @@ namespace Anatomia3D.UI
 
         private TextField _passwordField;
         private Label _passwordError;
-        private Button _togglePasswordButton;
+        // VisualElement (not Button) so it is found and clickable whatever element type the UXML uses.
+        private VisualElement _togglePasswordButton;
 
         private Button _forgotPasswordButton;
         private Button _googleSigninButton;
@@ -70,6 +77,8 @@ namespace Anatomia3D.UI
         private bool _passwordVisible;
 
         private LoadingOverlay _loadingOverlay;
+        private const long RequestTimeoutMs = 25000; // stop waiting on the server after 25s
+        private FitToScreen _fitToScreen;
 
         private void OnEnable()
         {
@@ -109,11 +118,21 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
+            // The screen tree is rebuilt on every show, so the password field always starts
+            // hidden. Reset our flag to match, otherwise a leftover "true" makes the first
+            // tap appear to do nothing.
+            _passwordVisible = false;
+            if (_passwordField != null) _passwordField.isPasswordField = true;
+            ApplyEyeIcon(_passwordEyeIcon, false);
+
             ClearError(_emailError);
             ClearError(_passwordError);
             SetStatus(string.Empty);
 
             _loadingOverlay = new LoadingOverlay(_root);
+
+            // No scrolling: keep the whole form centered and shrink it to fit small/short screens.
+            _fitToScreen = new FitToScreen(_screenRoot.Q<VisualElement>("scroll-view"), _screenRoot.Q<VisualElement>("content-wrapper"));
         }
 
         private void OnDisable()
@@ -139,6 +158,8 @@ namespace Anatomia3D.UI
             }
 
             _loadingOverlay?.Dispose();
+            _fitToScreen?.Dispose();
+            _fitToScreen = null;
         }
 
         private void UnregisterCallbacks()
@@ -171,8 +192,10 @@ namespace Anatomia3D.UI
 
             _passwordField = _screenRoot.Q<TextField>("password-field");
             _passwordError = _screenRoot.Q<Label>("password-error");
-            _togglePasswordButton = _screenRoot.Q<Button>("toggle-password-button");
-            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye");
+            _togglePasswordButton = _screenRoot.Q<VisualElement>("toggle-password-button");
+            // In the admin screens the "icon-eye" class is on the button itself, not on a
+            // child, and Q() only searches descendants - so fall back to the button.
+            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye") ?? _togglePasswordButton;
 
             _forgotPasswordButton = _screenRoot.Q<Button>("forgot-password-button");
             _googleSigninButton = _screenRoot.Q<Button>("google-signin-button");
@@ -207,10 +230,22 @@ namespace Anatomia3D.UI
             _passwordVisible = !_passwordVisible;
             _passwordField.isPasswordField = !_passwordVisible;
 
-            if (_passwordEyeIcon != null)
-            {
-                _passwordEyeIcon.EnableInClassList("icon-eye-off", _passwordVisible);
-            }
+            ApplyEyeIcon(_passwordEyeIcon, _passwordVisible);
+        }
+
+        /// <summary>Swaps the eye icon. Toggles the "icon-eye-off" USS class AND, when the
+        /// eyeOn/eyeOff textures are assigned in the Inspector, sets the background image
+        /// inline (inline styles beat USS, so this can't be overridden or mis-pathed).</summary>
+        private void ApplyEyeIcon(VisualElement icon, bool passwordVisible)
+        {
+            if (icon == null) return;
+
+            icon.EnableInClassList("icon-eye-off", passwordVisible);
+
+            var tex = passwordVisible ? eyeOffIcon : eyeOnIcon;
+            icon.style.backgroundImage = tex != null
+                ? new StyleBackground(tex)
+                : new StyleBackground(StyleKeyword.Null); // no texture assigned -> fall back to USS
         }
 
         private void OnBackToStudentLoginClicked(ClickEvent evt)
@@ -288,16 +323,25 @@ namespace Anatomia3D.UI
 
             SetStatus("Signing in...");
             _secureLoginButton.SetEnabled(false);
-            _loadingOverlay.Show("Signing in...");
+            _loadingOverlay.ShowWithTimeout("Signing in...", RequestTimeoutMs, () =>
+            {
+                Debug.LogWarning("[AdminLoginController] Timed out waiting for the server - closing the overlay.");
+                SetStatus("This is taking too long. Check your connection and try again.");
+                _secureLoginButton.SetEnabled(true);
+            });
             // TODO: replace with your real admin auth call, e.g.:
             // AdminAuthService.Instance.LoginAdmin(email, _passwordField.value, OnLoginResult);
 
             AdminAuthService.Instance.LoginAdmin(email, _passwordField.value, (success, errorMessage) =>
             {
+                // Always dismiss the overlay first - on failure it used to stay up,
+                // covering the screen (and the status message underneath it).
+                _loadingOverlay.Hide();
+
                 if (success)
                 {
                     Debug.Log("[AdminLoginController] Admin login successful.");
-                    _loadingOverlay.Hide();
+                    SetStatus(string.Empty);
                     UIManager.Instance.ShowAdminDashboard();
                 }
                 else

@@ -711,6 +711,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Student.StudentLoginController
   gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  eyeOnIcon: {fileID: 2800000, guid: 0189665e15811c44e901e9116cc261a6, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: 737d9792ad11ddb4bb90c30ac38fe564, type: 3}
   compactWidthThreshold: 340
   compactHeightThreshold: 700
   landscapeHeightThreshold: 550
@@ -826,6 +828,8 @@ MonoBehaviour:
   gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 0189665e15811c44e901e9116cc261a6, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: 737d9792ad11ddb4bb90c30ac38fe564, type: 3}
   minimumPasswordLength: 8
 --- !u!114 &1051780013
 MonoBehaviour:
@@ -928,6 +932,8 @@ MonoBehaviour:
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
   backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 75a1bb60b8ff3cd4e814dc6ab6dfb72d, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: e0e412575a7d3c746b4baae60a2fad7d, type: 3}
 --- !u!114 &1051780021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -965,6 +971,8 @@ MonoBehaviour:
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
   backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 75a1bb60b8ff3cd4e814dc6ab6dfb72d, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: e0e412575a7d3c746b4baae60a2fad7d, type: 3}
   minimumPasswordLength: 8
 --- !u!114 &1051780023
 MonoBehaviour:

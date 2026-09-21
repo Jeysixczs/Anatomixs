@@ -375,7 +375,9 @@ namespace Anatomia3D.UI
             _offlineOverlay = new OfflineOverlay(_screenRoot, OnOfflineRetry, OnOfflineGoToDashboard);
 
             NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             NetworkStatusMonitor.OnConnectivityChanged += OnConnectivityStatusChanged;
+            NetworkStatusMonitor.OnAppResumed += HandleAppResumed;
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back).
             // Only refetch if this is a DIFFERENT classroom than what's currently
@@ -404,6 +406,7 @@ namespace Anatomia3D.UI
             StopClassroomListeners();
 
             NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             _offlineOverlay?.Dispose();
             _offlineOverlay = null;
 
@@ -434,6 +437,17 @@ namespace Anatomia3D.UI
                 LoadClassroomContent();
             }
         }
+        /// <summary>App came back from the background (NetworkStatusMonitor.OnAppResumed, which
+        /// only fires while online). LoadClassroomContent() stops and re-attaches all of this
+        /// classroom's live listeners (details, announcements, roster, available quizzes) and
+        /// re-fetches the score history, and hides the offline overlay itself.</summary>
+        private void HandleAppResumed(float secondsAway)
+        {
+            if (_offlineOverlay == null || string.IsNullOrEmpty(_classroomId)) return;
+
+            LoadClassroomContent();
+        }
+
 
         private void OnOfflineRetry()
         {

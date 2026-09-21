@@ -97,6 +97,24 @@
     flex-direction: column;
 }
 
+/* ---------- Fit-to-screen (login screens: no scrolling) ----------
+   The screen root carries .fit-screen. Content is centered by flex and scaled
+   down in code (FitToScreen.cs) if it doesn't fit, so it never scrolls.
+   Scoped with .fit-screen so screens that share this file and still use a
+   ScrollView (e.g. create account) are not affected. */
+
+.fit-screen .scroll-view
+{
+    justify-content: center;
+    align-items: center;
+}
+
+.fit-screen .content-wrapper
+{
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
 /* ---------- Logo ---------- */
 
 .logo-circle
@@ -237,6 +255,8 @@
 
     padding-left: 30px;
     padding-right: 20px;
+
+    overflow: hidden;
 }
 
 .input-container-focused
@@ -276,24 +296,31 @@
 
 .icon-eye
 {
-    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-image: url("project://database/Assets/UI/Icons/eye-on-white.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     width: 40px;
     height: 40px;
-    -unity-background-image-tint-color: rgb(180,168,204);
+    -unity-background-image-tint-color: white;
 }
 
 .icon-eye-off
 {
-    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
+    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     width: 40px;
     height: 40px;
-    -unity-background-image-tint-color: rgb(180,168,204);
+    -unity-background-image-tint-color: white;
+}
+
+/* Two-class selector so the "off" image always wins over .icon-eye,
+   no matter which rule comes first in this file. */
+.icon-eye.icon-eye-off
+{
+    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
 }
 
 /* ---------- TextField ---------- */
@@ -318,6 +345,11 @@
     background-color: transparent;
     border-width: 0;
     color: rgb(240,236,248);
+
+    /* Keep long text scrolling inside the field instead of stretching the row. */
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .input-field-with-right-icon

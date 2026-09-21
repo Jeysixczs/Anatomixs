@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss?fileID=7433441132597879392&amp;guid=e188d20bee8fcba44a3b70d245d72c03&amp;type=3#StudentLogin"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <ui:VisualElement name="screen-root" class="screen-root fit-screen">
         <ui:VisualElement name="screen-container" class="screen-container">
-            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="scroll-view">
+            <ui:VisualElement name="scroll-view" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
                     <ui:VisualElement name="logo-circle" class="logo-circle">
                         <ui:VisualElement name="logo-icon" class="logo-icon"/>
@@ -46,7 +46,7 @@
                     <ui:Button name="admin-login-button" text="Admin Login" class="admin-login-link"/>
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
                 </ui:VisualElement>
-            </ui:ScrollView>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

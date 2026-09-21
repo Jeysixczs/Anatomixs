@@ -80,7 +80,7 @@
                         </ui:VisualElement>
                         <ui:Button name="sr-open-file-button" class="sr-open-button">
                             <ui:VisualElement class="sr-open-icon"/>
-                            <ui:Label text="Open / Download File" class="sr-open-button-label"/>
+                            <ui:Label text="Open File" class="sr-open-button-label"/>
                         </ui:Button>
                         <ui:VisualElement class="sr-divider"/>
                         <ui:VisualElement class="sr-score-row">

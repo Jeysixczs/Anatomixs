@@ -157,6 +157,8 @@ namespace Anatomia3D.UI
         private FileSubmissionService.SubmissionRecord _reviewing;
         private bool _isSaving;
         private bool _clampingListScroll;
+        // Bumped on every silent resume refresh so only the newest one applies.
+        private int _silentRefreshId;
 
         // ==================================================================
         // Lifecycle
@@ -180,6 +182,8 @@ namespace Anatomia3D.UI
             }
 
             UnregisterCallbacks();
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
+            NetworkStatusMonitor.OnAppResumed += HandleAppResumed;
             QueryElements();
             WireCallbacks();
             ApplyGradients();
@@ -188,6 +192,7 @@ namespace Anatomia3D.UI
 
         private void OnDisable()
         {
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             UnregisterCallbacks();
 
             if (_headerGradientTexture != null)
@@ -460,6 +465,76 @@ namespace Anatomia3D.UI
                 Finish();
             });
         }
+        // ==================================================================
+        // App resume
+        // ==================================================================
+
+        /// <summary>App came back from the background (NetworkStatusMonitor.OnAppResumed, which
+        /// only fires while online) - e.g. the teacher opened a submitted file in another app.
+        /// The student list is loaded with one-shot fetches, so reload it now: students may have
+        /// submitted in the meantime.</summary>
+        private void HandleAppResumed(float secondsAway) => RefreshSelectedClassroomSilently();
+
+        /// <summary>Re-fetches the selected classroom's roster and submissions WITHOUT the
+        /// full-screen "Loading..." state, without clearing what is on screen, and without
+        /// touching the review dialog (so a score or feedback being typed is kept). The new data
+        /// replaces the old only when BOTH fetches succeed, and is dropped if the teacher
+        /// switched classroom, a full reload started, or a save began in the meantime.</summary>
+        private void RefreshSelectedClassroomSilently()
+        {
+            var classroom = _selectedClassroom;
+            if (classroom == null || !_classroomsLoaded || _isSaving) return;
+            if (AdminClassroomService.Instance == null || FileSubmissionService.Instance == null) return;
+
+            int loadToken = _loadToken;
+            int refreshId = ++_silentRefreshId;
+
+            var roster = new List<AdminClassroomService.StudentStat>();
+            var submissions = new List<FileSubmissionService.SubmissionRecord>();
+            bool rosterOk = false;
+            bool submissionsOk = false;
+            int remaining = 2;
+
+            void Finish()
+            {
+                remaining--;
+                if (remaining > 0) return;
+                if (loadToken != _loadToken || refreshId != _silentRefreshId || _isSaving) return;
+                if (!rosterOk || !submissionsOk) return; // keep what is on screen; the next resume retries
+
+                Vector2 scrollOffset = _listScroll != null ? _listScroll.scrollOffset : Vector2.zero;
+
+                _roster.Clear();
+                _roster.AddRange(roster);
+                _rosterLoaded = true;
+                _submissions.Clear();
+                _submissions.AddRange(submissions);
+
+                RebuildEntries();
+                SetStatus(null);
+                RefreshAll();
+
+                // The rebuild resets the list; put the teacher back where they were
+                // (ClampListScroll keeps it inside the new content's range).
+                if (_listScroll != null)
+                    _listScroll.schedule.Execute(() => _listScroll.scrollOffset = scrollOffset).ExecuteLater(0);
+            }
+
+            AdminClassroomService.Instance.FetchClassroomMembers(classroom.ClassroomId, (ok, error, members) =>
+            {
+                rosterOk = ok;
+                if (ok && members != null) roster.AddRange(members);
+                Finish();
+            });
+
+            FileSubmissionService.Instance.FetchSubmissionsForQuiz(classroom.ClassroomId, _quizId, (ok, error, results) =>
+            {
+                submissionsOk = ok;
+                if (results != null) submissions.AddRange(results);
+                Finish();
+            });
+        }
+
 
         // ==================================================================
         // Student entries (roster + submissions)
@@ -890,7 +965,40 @@ namespace Anatomia3D.UI
             _reviewing = null;
         }
 
+        /// <summary>"Open File": downloads the file, then opens it straight in the phone's own
+        /// viewer app (Adobe / WPS / Word / Excel / Photos...) - see FileOpener. The viewer app
+        /// itself offers Save / Share, so no separate download button is needed. If no viewer
+        /// can be launched (iOS, Editor, no app for this file type, FileProvider not set up) it
+        /// falls back to the Save As / share sheet.</summary>
         private void OnOpenFileClicked(ClickEvent evt)
+        {
+            if (NativeFilePicker.IsFilePickerBusy()) return;
+
+            DownloadSubmissionFile(path =>
+            {
+                if (FileOpener.TryOpen(path, out string openError))
+                    return;
+
+                // No viewer app for this file type - tell the teacher why, then fall through.
+                if (!string.IsNullOrEmpty(openError))
+                    SetReviewError(openError);
+
+                ExportToDevice(path);
+            });
+        }
+
+        private static void ExportToDevice(string path)
+        {
+            NativeFilePicker.ExportFile(path, success =>
+            {
+                if (!success) Debug.Log("[AdminSubmissionReviewController] File export cancelled.");
+            });
+        }
+
+        /// <summary>Downloads the submission being reviewed into the cache folder and calls
+        /// <paramref name="onReady"/> with the local path. Shows the working overlay and reports
+        /// any failure in the review dialog, so both file buttons behave the same.</summary>
+        private void DownloadSubmissionFile(Action<string> onReady)
         {
             if (_reviewing == null) return;
 
@@ -899,8 +1007,6 @@ namespace Anatomia3D.UI
                 SetReviewError("You need an internet connection to open this file.");
                 return;
             }
-
-            if (NativeFilePicker.IsFilePickerBusy()) return;
 
             var submission = _reviewing;
             SetReviewError(null);
@@ -916,9 +1022,6 @@ namespace Anatomia3D.UI
                     return;
                 }
 
-                // Same cache-then-hand-off-to-the-OS flow AdminAnalyticsReportsController
-                // uses for exported reports, so the teacher gets the real
-                // Save As / share sheet instead of a file stranded in the cache.
                 string fileName = SafeFileName($"{submission.StudentName}_{submission.FileName}");
                 string path = Path.Combine(Application.temporaryCachePath, fileName);
 
@@ -933,10 +1036,7 @@ namespace Anatomia3D.UI
                     return;
                 }
 
-                NativeFilePicker.ExportFile(path, success =>
-                {
-                    if (!success) Debug.Log("[AdminSubmissionReviewController] File export cancelled.");
-                });
+                onReady(path);
             });
         }
 

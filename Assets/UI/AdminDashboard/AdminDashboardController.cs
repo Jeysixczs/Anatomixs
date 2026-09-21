@@ -278,11 +278,14 @@ namespace Anatomia3D.UI
             // changes made from elsewhere (e.g. a student joining one of these
             // classrooms from their own device, which a one-shot fetch could
             // never catch). See AdminClassroomService.ListenToMyClassrooms.
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
+            NetworkStatusMonitor.OnAppResumed += HandleAppResumed;
             StartListeningToClassrooms();
         }
 
         private void OnDisable()
         {
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             UnregisterCallbacks();
             StopListeningToClassrooms();
             StopListeningToRecentActivity();
@@ -602,6 +605,21 @@ namespace Anatomia3D.UI
                 RefreshRecentActivitySources(summaries);
             });
         }
+        /// <summary>The app just came back from the background (NetworkStatusMonitor.OnAppResumed).
+        /// Firestore normally re-syncs listeners by itself, but re-attaching them here guarantees
+        /// the classroom list, the stats and the Student Activity feed are never left showing
+        /// pre-background data. Re-attaching serves the cached snapshot instantly and then only
+        /// pulls what changed. The classrooms snapshot also re-subscribes the quiz-activity
+        /// listener and re-fetches classroom joins (see RefreshRecentActivitySources).</summary>
+        private void HandleAppResumed(float secondsAway)
+        {
+            if (_screenRoot == null) return;
+
+            RefreshActivityTimeLabels(); // "5m ago" labels shouldn't wait for the 30s tick
+            StopListeningToClassrooms();
+            StartListeningToClassrooms();
+        }
+
 
         private void StopListeningToClassrooms()
         {

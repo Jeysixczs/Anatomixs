@@ -29,6 +29,12 @@ namespace Anatomia3D.UI
         [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f); // purple
         [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);   // pink
 
+        [Header("Password eye icons (optional - drag textures here to force the swap in code)")]
+        [Tooltip("Shown while the password is hidden. Leave empty to use the USS .icon-eye image.")]
+        [SerializeField] private Texture2D eyeOnIcon;
+        [Tooltip("Shown while the password is visible. Leave empty to use the USS .icon-eye-off image.")]
+        [SerializeField] private Texture2D eyeOffIcon;
+
         [Header("Compact breakpoints (px, logical panel size)")]
         [SerializeField] private int compactWidthThreshold = 900;
         // Also go compact when the panel is short - e.g. a phone rotated to
@@ -71,6 +77,8 @@ namespace Anatomia3D.UI
         private Coroutine _biometricVisibilityRoutine;
 
         private LoadingOverlay _loadingOverlay;
+        private const long RequestTimeoutMs = 25000; // stop waiting on the server after 25s
+        private FitToScreen _fitToScreen;
         private void OnEnable()
         {
             if (_document == null)
@@ -88,6 +96,13 @@ namespace Anatomia3D.UI
             UpdateResponsiveLayout();
             UpdateBiometricButtonVisibility();
 
+            // The screen tree is rebuilt on every show, so the password field always starts
+            // hidden. Reset our flag to match, otherwise a leftover "true" makes the first
+            // tap appear to do nothing.
+            _passwordVisible = false;
+            if (_passwordField != null) _passwordField.isPasswordField = true;
+            ApplyEyeIcon(_passwordEyeIcon, false);
+
             // A single check right here can catch Firebase mid-restore on a
             // real device (Auth.CurrentUser not populated yet), even when
             // online - it's not just an offline-startup thing. Poll briefly
@@ -97,6 +112,9 @@ namespace Anatomia3D.UI
             _biometricVisibilityRoutine = StartCoroutine(RefreshBiometricButtonVisibilityWhenReady());
            
             _loadingOverlay = new LoadingOverlay(_root);
+
+            // No scrolling: keep the whole form centered and shrink it to fit small/short screens.
+            _fitToScreen = new FitToScreen(_root.Q<VisualElement>("scroll-view"), _root.Q<VisualElement>("content-wrapper"));
            
         }
 
@@ -120,6 +138,8 @@ namespace Anatomia3D.UI
             _root.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
             _loadingOverlay?.Dispose();
+            _fitToScreen?.Dispose();
+            _fitToScreen = null;
         }
 
         private void QueryElements()
@@ -136,7 +156,9 @@ namespace Anatomia3D.UI
             _togglePasswordButton = _root.Q<Button>("toggle-password-button");
             _forgotPasswordButton = _root.Q<Button>("forgot-password-button");
             // Get the eye icon element inside the toggle button
-            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye");
+            // In StudentLogin.uxml the "icon-eye" class is on the button itself, not on a child,
+            // and Q() only searches descendants - so fall back to the button.
+            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye") ?? _togglePasswordButton;
 
             _googleButton = _root.Q<Button>("google-signin-button");
             _adminLoginButton = _root.Q<Button>("admin-login-button");
@@ -170,10 +192,22 @@ namespace Anatomia3D.UI
             _passwordField.isPasswordField = !_passwordVisible;
 
 
-            if (_passwordEyeIcon != null)
-            {
-                _passwordEyeIcon.EnableInClassList("icon-eye-off", _passwordVisible);
-            }
+            ApplyEyeIcon(_passwordEyeIcon, _passwordVisible);
+        }
+
+        /// <summary>Swaps an eye icon. Toggles the "icon-eye-off" USS class AND, when the
+        /// eyeOn/eyeOff textures are assigned in the Inspector, sets the background image
+        /// inline (inline styles beat USS). With nothing assigned it relies on the USS only.</summary>
+        private void ApplyEyeIcon(VisualElement icon, bool passwordVisible)
+        {
+            if (icon == null) return;
+
+            icon.EnableInClassList("icon-eye-off", passwordVisible);
+
+            var tex = passwordVisible ? eyeOffIcon : eyeOnIcon;
+            icon.style.backgroundImage = tex != null
+                ? new StyleBackground(tex)
+                : new StyleBackground(StyleKeyword.Null);
         }
 
         private void OnForgotPasswordClicked(ClickEvent evt)
@@ -218,7 +252,12 @@ namespace Anatomia3D.UI
             }
 
             
-            _loadingOverlay.Show("Signing in...");
+            _loadingOverlay.ShowWithTimeout("Signing in...", RequestTimeoutMs, () =>
+            {
+                Debug.LogWarning("[StudentLoginController] Timed out waiting for the server - closing the overlay.");
+                SetStatus("This is taking too long. Check your connection and try again.");
+                _signInButton.SetEnabled(true);
+            });
             _signInButton.SetEnabled(false);
 
             // TODO: replace with your real auth call, e.g.:

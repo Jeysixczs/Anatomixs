@@ -74,6 +74,7 @@ namespace Anatomia3D.UI
 
         private VisualElement _workingOverlay;
         private Label _workingLabel;
+        private ScrollView _scroll;
 
         // ---------------- State ----------------
 
@@ -90,6 +91,7 @@ namespace Anatomia3D.UI
         private string _pendingFileName;
         private long _pendingFileSize;
         private bool _isSubmitting;
+        private bool _clampingScroll;
 
         // ==================================================================
         // Lifecycle
@@ -164,6 +166,11 @@ namespace Anatomia3D.UI
 
             _workingOverlay = _root.Q<VisualElement>("fs-working-overlay");
             _workingLabel = _root.Q<Label>("fs-working-label");
+
+            _scroll = _root.Q<ScrollView>("fs-scroll");
+            // Set in code rather than relying on the UXML attribute (see
+            // ClampScroll below for why Clamped alone is still not enough).
+            if (_scroll != null) _scroll.touchScrollBehavior = ScrollView.TouchScrollBehavior.Clamped;
         }
 
         private void WireCallbacks()
@@ -173,6 +180,13 @@ namespace Anatomia3D.UI
             _clearFileButton?.RegisterCallback<ClickEvent>(OnClearFileClicked);
             _submitButton?.RegisterCallback<ClickEvent>(OnSubmitClicked);
             _screenRoot?.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
+            if (_scroll != null)
+            {
+                _scroll.verticalScroller.valueChanged += OnScrollChanged;
+                _scroll.contentContainer.RegisterCallback<GeometryChangedEvent>(OnScrollGeometryChanged);
+                _scroll.contentViewport.RegisterCallback<GeometryChangedEvent>(OnScrollGeometryChanged);
+            }
         }
 
         private void UnregisterCallbacks()
@@ -182,6 +196,47 @@ namespace Anatomia3D.UI
             _clearFileButton?.UnregisterCallback<ClickEvent>(OnClearFileClicked);
             _submitButton?.UnregisterCallback<ClickEvent>(OnSubmitClicked);
             _screenRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
+            if (_scroll != null)
+            {
+                _scroll.verticalScroller.valueChanged -= OnScrollChanged;
+                _scroll.contentContainer.UnregisterCallback<GeometryChangedEvent>(OnScrollGeometryChanged);
+                _scroll.contentViewport.UnregisterCallback<GeometryChangedEvent>(OnScrollGeometryChanged);
+            }
+        }
+
+        // ==================================================================
+        // Scroll clamp
+        // ==================================================================
+
+        private void OnScrollChanged(float _) => ClampScroll();
+
+        private void OnScrollGeometryChanged(GeometryChangedEvent evt) => ClampScroll();
+
+        /// <summary>
+        /// Keeps the scroll offset inside [0, contentHeight - viewportHeight].
+        /// When the content is SHORTER than the viewport the scroller's range goes
+        /// negative/inverted, and the ScrollView (even in Clamped mode) then lets
+        /// the content be dragged DOWN, leaving blank space above the first card.
+        /// Forcing the offset back into the real range pins short content to the
+        /// top, and still lets long content scroll normally.
+        /// </summary>
+        private void ClampScroll()
+        {
+            if (_scroll == null || _clampingScroll) return;
+
+            var viewport = _scroll.contentViewport;
+            var content = _scroll.contentContainer;
+            if (viewport == null || content == null) return;
+
+            float maxScroll = Mathf.Max(0f, content.layout.height - viewport.layout.height);
+            Vector2 offset = _scroll.scrollOffset;
+            float clampedY = Mathf.Clamp(offset.y, 0f, maxScroll);
+            if (Mathf.Approximately(offset.y, clampedY)) return;
+
+            _clampingScroll = true;
+            try { _scroll.scrollOffset = new Vector2(offset.x, clampedY); }
+            finally { _clampingScroll = false; }
         }
 
         // ==================================================================
