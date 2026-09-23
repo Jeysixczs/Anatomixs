@@ -19,10 +19,13 @@
                     <ui:Label text="Points Configuration" class="section-card-title"/>
                     <ui:Label text="Easy Question Points" class="field-label field-label-spaced"/>
                     <ui:TextField name="easy-points-field" value="10" class="text-field"/>
+                    <ui:Label name="easy-points-error" text="" class="field-error hidden"/>
                     <ui:Label text="Medium Question Points" class="field-label field-label-spaced"/>
                     <ui:TextField name="medium-points-field" value="20" class="text-field"/>
+                    <ui:Label name="medium-points-error" text="" class="field-error hidden"/>
                     <ui:Label text="Hard Question Points" class="field-label field-label-spaced"/>
                     <ui:TextField name="hard-points-field" value="30" class="text-field"/>
+                    <ui:Label name="hard-points-error" text="" class="field-error hidden"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="badges-section" class="section-card">
                     <ui:VisualElement name="badges-header-row" class="section-header-row">
@@ -76,6 +79,16 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="leave-dialog-overlay" class="dialog-overlay hidden">
+            <ui:VisualElement name="leave-dialog-card" class="dialog-card">
+                <ui:Label text="Unsaved Changes" class="dialog-title"/>
+                <ui:Label text="You have unsaved changes to your points configuration or badges. Leave without saving?" class="dialog-message"/>
+                <ui:VisualElement name="leave-dialog-button-row" class="dialog-button-row">
+                    <ui:Button name="leave-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
+                    <ui:Button name="leave-dialog-confirm-button" text="Leave Without Saving" class="dialog-button dialog-button-danger"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="add-badge-modal-overlay" class="modal-overlay hidden">
             <ui:VisualElement name="add-badge-modal-card" class="modal-card">
                 <ui:VisualElement class="modal-header-row">
@@ -90,6 +103,7 @@
                 <ui:Label name="badge-name-error" text="" class="field-error hidden"/>
                 <ui:Label text="Points Required" class="field-label field-label-spaced"/>
                 <ui:TextField name="badge-points-field" value="0" class="text-field"/>
+                <ui:Label name="badge-points-error" text="" class="field-error hidden"/>
                 <ui:Label text="Badge Icon" class="field-label field-label-spaced"/>
                 <ui:VisualElement name="badge-icon-grid" class="icon-grid"/>
                 <ui:Label name="add-badge-status-label" text="" class="status-label hidden"/>

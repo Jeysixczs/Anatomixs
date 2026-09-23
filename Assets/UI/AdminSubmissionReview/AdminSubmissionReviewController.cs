@@ -266,6 +266,9 @@ namespace Anatomia3D.UI
             _reviewCancelButton?.RegisterCallback<ClickEvent>(OnReviewCloseClicked);
             _reviewSaveButton?.RegisterCallback<ClickEvent>(OnReviewSaveClicked);
             _openFileButton?.RegisterCallback<ClickEvent>(OnOpenFileClicked);
+            // Registered before OnScoreFieldChanged so the digit filter has already
+            // corrected field.value by the time the preview reads it.
+            _scoreField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _scoreField?.RegisterValueChangedCallback(OnScoreFieldChanged);
             _screenRoot?.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
@@ -285,6 +288,7 @@ namespace Anatomia3D.UI
             _reviewSaveButton?.UnregisterCallback<ClickEvent>(OnReviewSaveClicked);
             _openFileButton?.UnregisterCallback<ClickEvent>(OnOpenFileClicked);
             _scoreField?.UnregisterValueChangedCallback(OnScoreFieldChanged);
+            _scoreField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _screenRoot?.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
             if (_listScroll != null)
@@ -1041,6 +1045,22 @@ namespace Anatomia3D.UI
         }
 
         private void OnScoreFieldChanged(ChangeEvent<string> evt) => UpdateScorePreview();
+
+        /// <summary>Live keystroke filter so the score field only ever holds a whole
+        /// number - a TextField has no built-in "digits only" mode, so without this a
+        /// teacher can type letters/symbols and only find out it's rejected on save.
+        /// Same shared pattern as AdminQuizManagementController.OnNumericFieldChanged.</summary>
+        private void OnNumericFieldChanged(ChangeEvent<string> evt)
+        {
+            var field = evt.target as TextField;
+            if (field == null) return;
+
+            string digitsOnly = new string((evt.newValue ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (digitsOnly != evt.newValue)
+            {
+                field.SetValueWithoutNotify(digitsOnly);
+            }
+        }
 
         /// <summary>Live "would this pass?" preview next to the score field, so the
         /// teacher doesn't have to save first to find out.</summary>

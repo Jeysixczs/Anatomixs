@@ -239,6 +239,16 @@ namespace Anatomia3D.UI
         /// live/pre-submit message matches whatever the backend would reject with.</summary>
         public const string PastDeadlineErrorMessage = "The selected date and time must be later than the current date and time.";
 
+        // Basic-info field limits, enforced in OnCreateQuizSubmitClicked. Generous enough
+        // for any real quiz title/category but tight enough to keep the quiz list row
+        // ("title - one-line meta summary") and Firestore doc from taking arbitrary text.
+        private const int QuizTitleMaxLength = 100;
+        private const int QuizCategoryMaxLength = 40;
+        private const int PassingScoreMin = 0;
+        private const int PassingScoreMax = 100;
+        private const int CustomTimeLimitMinMinutes = 1;
+        private const int CustomTimeLimitMaxMinutes = 999;
+
         // Preset minute choices shown in the Time Limit dropdown, plus "Custom" and "No Time Limit".
         private const string TimeLimitCustomChoice = "Custom";
         private const string TimeLimitNoLimitChoice = "No Time Limit";
@@ -370,6 +380,7 @@ namespace Anatomia3D.UI
         // File Submission only - hidden for a Question-Based quiz.
         private VisualElement _fileSettingsGroup;
         private TextField _quizFileInstructionsField;
+        private Label _quizFileInstructionsError;
         private Dictionary<string, Toggle> _fileExtensionToggles;
         private Label _quizFileExtensionsError;
         private TextField _quizFileMaxSizeField;
@@ -387,7 +398,9 @@ namespace Anatomia3D.UI
 
         private DropdownField _quizTimeLimitDropdown;
         private TextField _quizTimeLimitCustomField;
+        private Label _quizTimeLimitError;
         private TextField _quizPassingScoreField;
+        private Label _quizPassingScoreError;
         private DropdownField _quizMaxAttemptsDropdown;
 
         private Button _quizDeadlineSelectorButton;
@@ -704,6 +717,10 @@ namespace Anatomia3D.UI
             _createQuizCancelButton?.UnregisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.UnregisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.UnregisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _quizTimeLimitCustomField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizPassingScoreField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizFileMaxSizeField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizFilePointsField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _submissionTypeCardQuestion?.UnregisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
             _submissionTypeCardFile?.UnregisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
 
@@ -857,6 +874,7 @@ namespace Anatomia3D.UI
 
             _fileSettingsGroup = _screenRoot.Q<VisualElement>("file-settings-group");
             _quizFileInstructionsField = _screenRoot.Q<TextField>("quiz-file-instructions-field");
+            _quizFileInstructionsError = _screenRoot.Q<Label>("quiz-file-instructions-error");
             _fileExtensionToggles = new Dictionary<string, Toggle>
             {
                 { "pdf", _screenRoot.Q<Toggle>("file-ext-toggle-pdf") },
@@ -881,7 +899,9 @@ namespace Anatomia3D.UI
 
             _quizTimeLimitDropdown = _screenRoot.Q<DropdownField>("quiz-time-limit-dropdown");
             _quizTimeLimitCustomField = _screenRoot.Q<TextField>("quiz-time-limit-custom-field");
+            _quizTimeLimitError = _screenRoot.Q<Label>("quiz-time-limit-error");
             _quizPassingScoreField = _screenRoot.Q<TextField>("quiz-passing-score-field");
+            _quizPassingScoreError = _screenRoot.Q<Label>("quiz-passing-score-error");
             _quizMaxAttemptsDropdown = _screenRoot.Q<DropdownField>("quiz-max-attempts-dropdown");
 
             if (_quizTimeLimitDropdown != null)
@@ -1152,6 +1172,10 @@ namespace Anatomia3D.UI
             _createQuizCancelButton?.RegisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.RegisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.RegisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _quizTimeLimitCustomField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizPassingScoreField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizFileMaxSizeField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _quizFilePointsField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _submissionTypeCardQuestion?.RegisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
             _submissionTypeCardFile?.RegisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
 
@@ -1781,6 +1805,7 @@ namespace Anatomia3D.UI
             ClearError(_quizFileExtensionsError);
             ClearError(_quizFileMaxSizeError);
             ClearError(_quizFilePointsError);
+            ClearError(_quizFileInstructionsError);
 
             // ---- Basic info ----
             if (_quizTitleField != null) _quizTitleField.value = editing ? _editingQuiz.Title : string.Empty;
@@ -1792,6 +1817,8 @@ namespace Anatomia3D.UI
             SetTimeLimitFields(editing ? _editingQuiz.HasTimeLimit : true, editing ? _editingQuiz.TimeLimitMinutes : 10);
             if (_quizPassingScoreField != null) _quizPassingScoreField.value = editing ? _editingQuiz.PassingScorePercent.ToString() : "70";
             SetMaxAttemptsField(editing ? _editingQuiz.MaxAttempts : 3);
+            ClearError(_quizTimeLimitError);
+            ClearError(_quizPassingScoreError);
 
             // ---- Availability: deadline ----
             _quizDeadlineLocal = editing && _editingQuiz.IsDeadlineEnabled && _editingQuiz.DeadlineUtc.HasValue
@@ -2263,6 +2290,11 @@ namespace Anatomia3D.UI
                 SetError(_quizTitleError, "Please enter a quiz title");
                 valid = false;
             }
+            else if (title.Length > QuizTitleMaxLength)
+            {
+                SetError(_quizTitleError, $"Quiz title must be {QuizTitleMaxLength} characters or fewer.");
+                valid = false;
+            }
             else
             {
                 ClearError(_quizTitleError);
@@ -2273,9 +2305,58 @@ namespace Anatomia3D.UI
                 SetError(_quizCategoryError, "Please enter a category");
                 valid = false;
             }
+            else if (category.Length > QuizCategoryMaxLength)
+            {
+                SetError(_quizCategoryError, $"Category must be {QuizCategoryMaxLength} characters or fewer.");
+                valid = false;
+            }
             else
             {
                 ClearError(_quizCategoryError);
+            }
+
+            // Passing score - always required (both quiz types show it), so validate it
+            // as a whole-number percentage rather than silently falling back to 70 via
+            // ParseIntOrDefault like the read below does for a value that's already valid.
+            if (!int.TryParse(_quizPassingScoreField?.value, out int passingScoreInput))
+            {
+                SetError(_quizPassingScoreError, "Enter the passing score as a whole number.");
+                valid = false;
+            }
+            else if (passingScoreInput < PassingScoreMin || passingScoreInput > PassingScoreMax)
+            {
+                SetError(_quizPassingScoreError, $"Passing score must be between {PassingScoreMin} and {PassingScoreMax}.");
+                valid = false;
+            }
+            else
+            {
+                ClearError(_quizPassingScoreError);
+            }
+
+            // Custom time limit - only shown/relevant when "Custom" is selected in the
+            // dropdown; ReadTimeLimit() below would otherwise silently clamp a bad value
+            // to 1 minute instead of telling the teacher what they typed was rejected.
+            bool customTimeLimitSelected = _quizTimeLimitDropdown != null && _quizTimeLimitDropdown.value == TimeLimitCustomChoice;
+            if (customTimeLimitSelected)
+            {
+                if (!int.TryParse(_quizTimeLimitCustomField?.value, out int customMinutesInput))
+                {
+                    SetError(_quizTimeLimitError, "Enter the time limit in minutes as a whole number.");
+                    valid = false;
+                }
+                else if (customMinutesInput < CustomTimeLimitMinMinutes || customMinutesInput > CustomTimeLimitMaxMinutes)
+                {
+                    SetError(_quizTimeLimitError, $"Time limit must be between {CustomTimeLimitMinMinutes} and {CustomTimeLimitMaxMinutes} minutes.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizTimeLimitError);
+                }
+            }
+            else
+            {
+                ClearError(_quizTimeLimitError);
             }
 
             bool deadlineEnabled = _quizDeadlineLocal.HasValue;
@@ -2303,6 +2384,17 @@ namespace Anatomia3D.UI
 
             if (isFile)
             {
+                string instructionsInput = _quizFileInstructionsField?.value?.Trim();
+                if (string.IsNullOrEmpty(instructionsInput))
+                {
+                    SetError(_quizFileInstructionsError, "Please enter instructions for this file submission.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizFileInstructionsError);
+                }
+
                 var checkedExtensions = (_fileExtensionToggles ?? new Dictionary<string, Toggle>())
                     .Where(kvp => kvp.Value != null && kvp.Value.value)
                     .Select(kvp => kvp.Key)
@@ -3302,6 +3394,25 @@ namespace Anatomia3D.UI
         }
 
         // ---------------- Helpers ----------------
+
+        /// <summary>Live keystroke filter for TextFields that should only ever hold a
+        /// whole number (passing score, custom time limit, max file size, file points).
+        /// A TextField has no built-in "digits only" mode, so without this a teacher can
+        /// type letters/symbols into it and only find out it's rejected on submit - this
+        /// strips anything non-digit as it's typed instead. Shared across every numeric
+        /// TextField (registered as the same delegate on each) so Wire/UnregisterCallbacks
+        /// only need one pair of calls per field.</summary>
+        private void OnNumericFieldChanged(ChangeEvent<string> evt)
+        {
+            var field = evt.target as TextField;
+            if (field == null) return;
+
+            string digitsOnly = new string((evt.newValue ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (digitsOnly != evt.newValue)
+            {
+                field.SetValueWithoutNotify(digitsOnly);
+            }
+        }
 
         private static int ParseIntOrDefault(TextField field, int fallback)
         {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
@@ -115,9 +116,25 @@ namespace Anatomia3D.UI
         private Button _backButton;
         private Button _saveChangesButton;
 
+        // Shown while Save Changes is in flight - see the reusable
+        // LoadingOverlay class (built entirely in code, no matching .uxml/.uss
+        // needed). Rebuilt fresh every OnEnable rather than reused, since
+        // UIManager.ShowScreen clones a brand new UXML tree on every visit to
+        // this screen and an overlay parented into the old tree would already
+        // be gone. Same pattern as StudentEditProfileController.
+        private LoadingOverlay _loading;
+
+        // Leave-without-saving confirm dialog
+        private VisualElement _leaveDialogOverlay;
+        private Button _leaveDialogCancelButton;
+        private Button _leaveDialogConfirmButton;
+
         private TextField _easyPointsField;
         private TextField _mediumPointsField;
         private TextField _hardPointsField;
+        private Label _easyPointsError;
+        private Label _mediumPointsError;
+        private Label _hardPointsError;
 
         private Button _addBadgeButton;
         private VisualElement _badgesEmptyLabel;
@@ -141,6 +158,7 @@ namespace Anatomia3D.UI
         private TextField _badgeNameField;
         private Label _badgeNameError;
         private TextField _badgePointsField;
+        private Label _badgePointsError;
         private VisualElement _badgeIconGrid;
         private Label _addBadgeStatusLabel;
         private string _selectedBadgeIcon;
@@ -153,6 +171,12 @@ namespace Anatomia3D.UI
             new BadgeData("Anatomist", 1000, "\U0001F9E0"),
             new BadgeData("Expert", 2000, "\U0001F451"),
         };
+
+        /// <summary>Snapshot of _currentBadges as of the last load/save, used by
+        /// HasUnsavedChanges() to detect an added/removed/edited badge that
+        /// hasn't been persisted yet. Kept in sync with _currentBadges in
+        /// SetBadges() (on load) and OnSaveChangesClicked()'s success callback.</summary>
+        private List<BadgeData> _savedBadges = new List<BadgeData>();
 
         /// <summary>
         /// Placeholder shown until the real global level thresholds are loaded
@@ -219,6 +243,13 @@ namespace Anatomia3D.UI
             UnregisterCallbacks();
 
             QueryElements();
+
+            // Rebuilt against THIS open's freshly-cloned tree - see the
+            // _loading field comment for why a previous open's instance can't
+            // be reused here.
+            _loading?.Dispose();
+            _loading = new LoadingOverlay(_screenRoot);
+
             ApplyGradients();
             WireCallbacks();
             UpdateResponsiveLayout();
@@ -228,7 +259,13 @@ namespace Anatomia3D.UI
             RefreshPreview();
             SetPointsConfiguration(_lastEasyPoints, _lastMediumPoints, _lastHardPoints);
 
+            // Seed the "saved" badge snapshot from the mock defaults so
+            // HasUnsavedChanges() doesn't false-positive before LoadSettings'
+            // real fetch resolves (SetBadges() re-syncs it once that lands).
+            if (_savedBadges.Count == 0) _savedBadges = new List<BadgeData>(_currentBadges);
+
             CloseAddBadgeModal();
+            _leaveDialogOverlay?.AddToClassList("hidden");
 
             // First time this screen opens this session -> fetch. Badges are
             // already patched locally on add/remove (see OnAddBadgeSubmitClicked
@@ -278,6 +315,7 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            _loading?.Dispose();
 
             if (_headerGradientTexture != null) { Destroy(_headerGradientTexture); _headerGradientTexture = null; }
             if (_addBadgeButtonGradientTexture != null) { Destroy(_addBadgeButtonGradientTexture); _addBadgeButtonGradientTexture = null; }
@@ -291,7 +329,13 @@ namespace Anatomia3D.UI
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _saveChangesButton?.UnregisterCallback<ClickEvent>(OnSaveChangesClicked);
+            _leaveDialogCancelButton?.UnregisterCallback<ClickEvent>(OnLeaveDialogCancelClicked);
+            _leaveDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnLeaveDialogConfirmClicked);
 
+            _easyPointsField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _mediumPointsField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _hardPointsField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _badgePointsField?.UnregisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _easyPointsField?.UnregisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
             _mediumPointsField?.UnregisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
             _hardPointsField?.UnregisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
@@ -318,9 +362,16 @@ namespace Anatomia3D.UI
             _backButton = _screenRoot.Q<Button>("back-button");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
 
+            _leaveDialogOverlay = _screenRoot.Q<VisualElement>("leave-dialog-overlay");
+            _leaveDialogCancelButton = _screenRoot.Q<Button>("leave-dialog-cancel-button");
+            _leaveDialogConfirmButton = _screenRoot.Q<Button>("leave-dialog-confirm-button");
+
             _easyPointsField = _screenRoot.Q<TextField>("easy-points-field");
             _mediumPointsField = _screenRoot.Q<TextField>("medium-points-field");
             _hardPointsField = _screenRoot.Q<TextField>("hard-points-field");
+            _easyPointsError = _screenRoot.Q<Label>("easy-points-error");
+            _mediumPointsError = _screenRoot.Q<Label>("medium-points-error");
+            _hardPointsError = _screenRoot.Q<Label>("hard-points-error");
 
             _addBadgeButton = _screenRoot.Q<Button>("add-badge-button");
             _badgesEmptyLabel = _screenRoot.Q<VisualElement>("badges-empty-label");
@@ -343,6 +394,7 @@ namespace Anatomia3D.UI
             _badgeNameField = _screenRoot.Q<TextField>("badge-name-field");
             _badgeNameError = _screenRoot.Q<Label>("badge-name-error");
             _badgePointsField = _screenRoot.Q<TextField>("badge-points-field");
+            _badgePointsError = _screenRoot.Q<Label>("badge-points-error");
             _badgeIconGrid = _screenRoot.Q<VisualElement>("badge-icon-grid");
             _addBadgeStatusLabel = _screenRoot.Q<Label>("add-badge-status-label");
 
@@ -355,7 +407,15 @@ namespace Anatomia3D.UI
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _saveChangesButton?.RegisterCallback<ClickEvent>(OnSaveChangesClicked);
+            _leaveDialogCancelButton?.RegisterCallback<ClickEvent>(OnLeaveDialogCancelClicked);
+            _leaveDialogConfirmButton?.RegisterCallback<ClickEvent>(OnLeaveDialogConfirmClicked);
 
+            // Digit filters registered before the preview-refresh callbacks so
+            // field.value is already corrected by the time the preview reads it.
+            _easyPointsField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _mediumPointsField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _hardPointsField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
+            _badgePointsField?.RegisterCallback<ChangeEvent<string>>(OnNumericFieldChanged);
             _easyPointsField?.RegisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
             _mediumPointsField?.RegisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
             _hardPointsField?.RegisterCallback<ChangeEvent<string>>(OnPointsFieldChanged);
@@ -391,6 +451,7 @@ namespace Anatomia3D.UI
         {
             _currentBadges.Clear();
             if (badges != null) _currentBadges.AddRange(badges);
+            _savedBadges = new List<BadgeData>(_currentBadges);
             RefreshBadgesUI();
             RefreshPreview();
         }
@@ -436,6 +497,47 @@ namespace Anatomia3D.UI
                 return value;
             }
             return fallback;
+        }
+
+        /// <summary>Live keystroke filter so a points TextField only ever holds a whole
+        /// number - without this a teacher can type letters/symbols and, since this
+        /// screen otherwise silently falls back to a default on save, never find out
+        /// what they typed wasn't used. Same shared pattern as
+        /// AdminQuizManagementController.OnNumericFieldChanged.</summary>
+        private void OnNumericFieldChanged(ChangeEvent<string> evt)
+        {
+            var field = evt.target as TextField;
+            if (field == null) return;
+
+            string digitsOnly = new string((evt.newValue ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (digitsOnly != evt.newValue)
+            {
+                field.SetValueWithoutNotify(digitsOnly);
+            }
+        }
+
+        /// <summary>Validates a points TextField against [min, max] and shows/clears its
+        /// error label. Returns the parsed value via <paramref name="value"/> when valid.
+        /// Used on Save/Add Badge so a bad value blocks the action instead of silently
+        /// falling back to a default.</summary>
+        private bool ValidatePointsField(TextField field, Label errorLabel, string fieldName, int min, int max, out int value)
+        {
+            string raw = field?.value?.Trim();
+
+            if (!int.TryParse(raw, out value))
+            {
+                SetError(errorLabel, $"Enter {fieldName} as a whole number.");
+                return false;
+            }
+
+            if (value < min || value > max)
+            {
+                SetError(errorLabel, $"{fieldName} must be between {min} and {max}.");
+                return false;
+            }
+
+            ClearError(errorLabel);
+            return true;
         }
 
         // ---------------- Badges list ----------------
@@ -584,6 +686,7 @@ namespace Anatomia3D.UI
             if (_badgeNameField != null) _badgeNameField.value = string.Empty;
             if (_badgePointsField != null) _badgePointsField.value = "0";
             ClearError(_badgeNameError);
+            ClearError(_badgePointsError);
             SetStatus(_addBadgeStatusLabel, string.Empty);
             OnBadgeIconPicked(IconChoices[0]);
 
@@ -609,7 +712,11 @@ namespace Anatomia3D.UI
 
             ClearError(_badgeNameError);
 
-            int points = ParsePointsOrDefault(_badgePointsField, 0);
+            if (!ValidatePointsField(_badgePointsField, _badgePointsError, "Points required", 0, 100000, out int points))
+            {
+                return;
+            }
+
             string icon = string.IsNullOrEmpty(_selectedBadgeIcon) ? IconChoices[0] : _selectedBadgeIcon;
 
             _currentBadges.Add(new BadgeData(name, points, icon));
@@ -626,8 +733,59 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
+            if (HasUnsavedChanges())
+            {
+                _leaveDialogOverlay?.RemoveFromClassList("hidden");
+                return;
+            }
+
+            NavigateBackToDashboard();
+        }
+
+        private void NavigateBackToDashboard()
+        {
             Debug.Log("[AdminGamificationSettingsController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
+        }
+
+        private void OnLeaveDialogCancelClicked(ClickEvent evt)
+        {
+            _leaveDialogOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnLeaveDialogConfirmClicked(ClickEvent evt)
+        {
+            _leaveDialogOverlay?.AddToClassList("hidden");
+            NavigateBackToDashboard();
+        }
+
+        /// <summary>True when the points fields or badge list differ from what's
+        /// actually been saved (_lastEasy/Medium/HardPoints and _savedBadges,
+        /// both kept in sync with the backend in SetBadges()/the Save success
+        /// callback). Drives the leave-without-saving confirm dialog on Back.</summary>
+        private bool HasUnsavedChanges()
+        {
+            if (PointsFieldDiffersFromSaved(_easyPointsField, _lastEasyPoints)) return true;
+            if (PointsFieldDiffersFromSaved(_mediumPointsField, _lastMediumPoints)) return true;
+            if (PointsFieldDiffersFromSaved(_hardPointsField, _lastHardPoints)) return true;
+
+            if (_currentBadges.Count != _savedBadges.Count) return true;
+            for (int i = 0; i < _currentBadges.Count; i++)
+            {
+                if (!_currentBadges[i].Equals(_savedBadges[i])) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>A field that currently can't even be parsed (mid-edit, empty,
+        /// letters before the digit filter catches up) counts as changed too -
+        /// there's nothing valid there yet to consider "saved".</summary>
+        private static bool PointsFieldDiffersFromSaved(TextField field, int savedValue)
+        {
+            if (field == null) return false;
+            if (!int.TryParse(field.value?.Trim(), out int current)) return true;
+            return current != savedValue;
         }
 
         private void OnSaveChangesClicked(ClickEvent evt)
@@ -640,9 +798,15 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            int easyPoints = ParsePointsOrDefault(_easyPointsField, 10);
-            int mediumPoints = ParsePointsOrDefault(_mediumPointsField, 20);
-            int hardPoints = ParsePointsOrDefault(_hardPointsField, 30);
+            bool easyValid = ValidatePointsField(_easyPointsField, _easyPointsError, "Easy question points", 1, 1000, out int easyPoints);
+            bool mediumValid = ValidatePointsField(_mediumPointsField, _mediumPointsError, "Medium question points", 1, 1000, out int mediumPoints);
+            bool hardValid = ValidatePointsField(_hardPointsField, _hardPointsError, "Hard question points", 1, 1000, out int hardPoints);
+
+            if (!easyValid || !mediumValid || !hardValid)
+            {
+                Debug.LogWarning("[AdminGamificationSettingsController] Save blocked - one or more points fields are invalid.");
+                return;
+            }
 
             var badgeEntries = _currentBadges.ConvertAll(b => new AdminGamificationService.BadgeEntry
             {
@@ -651,6 +815,9 @@ namespace Anatomia3D.UI
                 IconEmoji = b.IconEmoji,
                 PointsRequired = b.PointsRequired
             });
+
+            _saveChangesButton?.SetEnabled(false);
+            ShowLoadingOverlay();
 
             // Note: no levels argument - levels are global & fixed and are never
             // written from this screen (see AdminGamificationService.SaveSettings).
@@ -661,7 +828,11 @@ namespace Anatomia3D.UI
                     _lastEasyPoints = easyPoints;
                     _lastMediumPoints = mediumPoints;
                     _lastHardPoints = hardPoints;
+                    _savedBadges = new List<BadgeData>(_currentBadges);
                 }
+
+                HideLoadingOverlay();
+                _saveChangesButton?.SetEnabled(true);
 
                 OnSaveSettingsResult(success, error);
             });
@@ -677,6 +848,16 @@ namespace Anatomia3D.UI
             {
                 Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
             }
+        }
+
+        private void ShowLoadingOverlay()
+        {
+            _loading?.Show("Saving changes...");
+        }
+
+        private void HideLoadingOverlay()
+        {
+            _loading?.Hide();
         }
 
         // ---------------- Helpers ----------------
