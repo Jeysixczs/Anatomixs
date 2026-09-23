@@ -206,11 +206,11 @@
                         <ui:Label name="quiz-file-extensions-error" text="" class="field-error hidden"/>
 
                         <ui:Label text="Maximum File Size (MB)" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-file-max-size-field" value="25" class="text-field"/>
+                        <ui:TextField name="quiz-file-max-size-field" value="25" max-length="5" class="text-field"/>
                         <ui:Label name="quiz-file-max-size-error" text="" class="field-error hidden"/>
 
                         <ui:Label text="Points" class="field-label field-label-spaced"/>
-                        <ui:TextField name="quiz-file-points-field" value="100" class="text-field"/>
+                        <ui:TextField name="quiz-file-points-field" value="100" max-length="6" class="text-field"/>
                         <ui:Label name="quiz-file-points-error" text="" class="field-error hidden"/>
                     </ui:VisualElement>
 
@@ -218,13 +218,15 @@
                     <ui:VisualElement name="time-limit-group">
                         <ui:Label text="Time Limit" class="field-label field-label-spaced"/>
                         <ui:DropdownField name="quiz-time-limit-dropdown" class="dropdown-field"/>
-                        <ui:TextField name="quiz-time-limit-custom-field" value="10" tooltip="Custom time limit, in minutes" class="text-field field-label-spaced hidden"/>
+                        <ui:TextField name="quiz-time-limit-custom-field" value="10" max-length="3" tooltip="Custom time limit, in minutes" class="text-field field-label-spaced hidden"/>
+                        <ui:Label name="quiz-time-limit-error" text="" class="field-error hidden"/>
                     </ui:VisualElement>
                     <ui:Label text="Passing Score" class="field-label field-label-spaced"/>
                     <ui:VisualElement class="percent-field-wrapper">
-                        <ui:TextField name="quiz-passing-score-field" value="70" class="text-field percent-field"/>
+                        <ui:TextField name="quiz-passing-score-field" value="70" max-length="3" class="text-field percent-field"/>
                         <ui:Label text="%" class="percent-suffix"/>
                     </ui:VisualElement>
+                    <ui:Label name="quiz-passing-score-error" text="" class="field-error hidden"/>
                     <ui:Label text="Maximum Attempts" class="field-label field-label-spaced"/>
                     <ui:DropdownField name="quiz-max-attempts-dropdown" class="dropdown-field"/>
                     <ui:VisualElement class="field-label-row field-label-spaced">
