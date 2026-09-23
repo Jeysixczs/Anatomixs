@@ -380,6 +380,7 @@ namespace Anatomia3D.UI
         // File Submission only - hidden for a Question-Based quiz.
         private VisualElement _fileSettingsGroup;
         private TextField _quizFileInstructionsField;
+        private Label _quizFileInstructionsError;
         private Dictionary<string, Toggle> _fileExtensionToggles;
         private Label _quizFileExtensionsError;
         private TextField _quizFileMaxSizeField;
@@ -873,6 +874,7 @@ namespace Anatomia3D.UI
 
             _fileSettingsGroup = _screenRoot.Q<VisualElement>("file-settings-group");
             _quizFileInstructionsField = _screenRoot.Q<TextField>("quiz-file-instructions-field");
+            _quizFileInstructionsError = _screenRoot.Q<Label>("quiz-file-instructions-error");
             _fileExtensionToggles = new Dictionary<string, Toggle>
             {
                 { "pdf", _screenRoot.Q<Toggle>("file-ext-toggle-pdf") },
@@ -1803,6 +1805,7 @@ namespace Anatomia3D.UI
             ClearError(_quizFileExtensionsError);
             ClearError(_quizFileMaxSizeError);
             ClearError(_quizFilePointsError);
+            ClearError(_quizFileInstructionsError);
 
             // ---- Basic info ----
             if (_quizTitleField != null) _quizTitleField.value = editing ? _editingQuiz.Title : string.Empty;
@@ -2381,6 +2384,17 @@ namespace Anatomia3D.UI
 
             if (isFile)
             {
+                string instructionsInput = _quizFileInstructionsField?.value?.Trim();
+                if (string.IsNullOrEmpty(instructionsInput))
+                {
+                    SetError(_quizFileInstructionsError, "Please enter instructions for this file submission.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizFileInstructionsError);
+                }
+
                 var checkedExtensions = (_fileExtensionToggles ?? new Dictionary<string, Toggle>())
                     .Where(kvp => kvp.Value != null && kvp.Value.value)
                     .Select(kvp => kvp.Key)

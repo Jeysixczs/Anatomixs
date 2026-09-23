@@ -183,13 +183,14 @@
                         <ui:Label text="Category" class="field-label"/>
                         <ui:Label text="Type to create your own" class="field-hint"/>
                     </ui:VisualElement>
-                    <ui:TextField name="quiz-category-field" placeholder-text="e.g. Science, History, General Knowledge" class="text-field"/>
+                    <ui:TextField name="quiz-category-field" placeholder-text="e.g. Quiz 1, Science, History" class="text-field"/>
                     <ui:Label name="quiz-category-error" text="" class="field-error hidden"/>
 
                     <!-- File Submission only. Hidden entirely for a Question-Based quiz. -->
                     <ui:VisualElement name="file-settings-group" class="hidden">
                         <ui:Label text="Instructions" class="field-label field-label-spaced"/>
                         <ui:TextField name="quiz-file-instructions-field" multiline="true" placeholder-text="e.g. Submit your research paper about the skeletal system." class="text-field text-area"/>
+                        <ui:Label name="quiz-file-instructions-error" text="" class="field-error hidden"/>
 
                         <ui:VisualElement class="field-label-row field-label-spaced">
                             <ui:Label text="Allowed File Types" class="field-label"/>
