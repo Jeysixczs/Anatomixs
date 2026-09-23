@@ -495,6 +495,47 @@ namespace Anatomia3D.Backend
         }
 
         /// <summary>
+        /// Roster for one classroom (every doc in `classrooms/{id}/members`), for
+        /// screens that need to know who is in the class - e.g. AdminSubmissionReview
+        /// uses it to show which students haven't uploaded yet. Unlike
+        /// FetchClassroomAnalytics, which folds a failed read into an empty result,
+        /// this reports success so the caller can tell "no students" apart from
+        /// "couldn't load the list".
+        /// </summary>
+        public void FetchClassroomMembers(string classroomId, Action<bool, string, List<StudentStat>> onComplete)
+        {
+            var results = new List<StudentStat>();
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(false, "Missing classroom id.", results); return; }
+
+            Db.Collection("classrooms").Document(classroomId).Collection("members")
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogError($"[AdminClassroomService] FetchClassroomMembers failed for classroom {classroomId}: {task.Exception?.Flatten().InnerException}");
+                        onComplete?.Invoke(false, "Could not load this classroom's student list.", results);
+                        return;
+                    }
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        results.Add(new StudentStat
+                        {
+                            StudentId = doc.Id,
+                            Name = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "Student",
+                            Level = doc.ContainsField("level") ? doc.GetValue<int>("level") : 1,
+                            Points = doc.ContainsField("points") ? doc.GetValue<int>("points") : 0,
+                            QuizzesCompleted = doc.ContainsField("quizzesCompleted") ? doc.GetValue<int>("quizzesCompleted") : 0,
+                            AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f
+                        });
+                    }
+
+                    onComplete?.Invoke(true, null, results);
+                });
+        }
+
+        /// <summary>
         /// Call when opening AdminClassroomDetailController's Students or Analytics tab
         /// (or right after SetClassroomData(), to have both ready before either tab is
         /// opened). Feeds SetStudents() (analytics.Students), SetLeaderboard()

@@ -278,11 +278,14 @@ namespace Anatomia3D.UI
             // changes made from elsewhere (e.g. a student joining one of these
             // classrooms from their own device, which a one-shot fetch could
             // never catch). See AdminClassroomService.ListenToMyClassrooms.
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
+            NetworkStatusMonitor.OnAppResumed += HandleAppResumed;
             StartListeningToClassrooms();
         }
 
         private void OnDisable()
         {
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             UnregisterCallbacks();
             StopListeningToClassrooms();
             StopListeningToRecentActivity();
@@ -602,6 +605,21 @@ namespace Anatomia3D.UI
                 RefreshRecentActivitySources(summaries);
             });
         }
+        /// <summary>The app just came back from the background (NetworkStatusMonitor.OnAppResumed).
+        /// Firestore normally re-syncs listeners by itself, but re-attaching them here guarantees
+        /// the classroom list, the stats and the Student Activity feed are never left showing
+        /// pre-background data. Re-attaching serves the cached snapshot instantly and then only
+        /// pulls what changed. The classrooms snapshot also re-subscribes the quiz-activity
+        /// listener and re-fetches classroom joins (see RefreshRecentActivitySources).</summary>
+        private void HandleAppResumed(float secondsAway)
+        {
+            if (_screenRoot == null) return;
+
+            RefreshActivityTimeLabels(); // "5m ago" labels shouldn't wait for the 30s tick
+            StopListeningToClassrooms();
+            StartListeningToClassrooms();
+        }
+
 
         private void StopListeningToClassrooms()
         {
@@ -993,69 +1011,135 @@ namespace Anatomia3D.UI
             return data.Kind == ActivityKind.QuizCompleted ? BuildQuizActivityCard(data) : BuildJoinActivityRow(data);
         }
 
-        /// <summary>Rich card for a quiz-completion event: student name + status pill on top,
-        /// quiz title, classroom name, then a bottom row with the score and relative time.</summary>
+        /// <summary>Rich card for a quiz-completion event: an initials avatar (tinted by score
+        /// band) on the left, then student name + relative time, quiz title, classroom name,
+        /// and a bottom row with the score badge, a slim progress bar and the status pill.</summary>
         private VisualElement BuildQuizActivityCard(ActivityCardData data)
         {
+            string band = GetScoreBand(data.ScorePercent);
+
             var card = new VisualElement();
             card.AddToClassList("recent-activity-row");
             card.AddToClassList("activity-quiz-card");
             card.userData = data.OccurredAtUtc;
 
+            card.Add(BuildActivityAvatar(data.StudentName, band));
+
+            var body = new VisualElement();
+            body.AddToClassList("activity-body");
+
             var topRow = new VisualElement();
             topRow.AddToClassList("activity-card-top-row");
 
-            var studentLabel = new Label($"\U0001F464 {data.StudentName}");
+            var studentLabel = new Label(data.StudentName);
             studentLabel.AddToClassList("activity-student-name");
 
-            var statusPill = new Label($"\u2705 {data.Status}");
-            statusPill.AddToClassList("activity-status-pill");
+            var timeLabel = new Label(FormatRelativeTime(data.OccurredAtUtc));
+            timeLabel.AddToClassList("recent-activity-time");
 
             topRow.Add(studentLabel);
-            topRow.Add(statusPill);
-            card.Add(topRow);
+            topRow.Add(timeLabel);
+            body.Add(topRow);
 
-            var quizLabel = new Label($"\U0001F4DD {data.QuizTitle}");
+            var quizLabel = new Label(data.QuizTitle);
             quizLabel.AddToClassList("activity-quiz-title");
-            card.Add(quizLabel);
+            body.Add(quizLabel);
 
-            var classroomLabel = new Label($"\U0001F4DA {data.ClassroomName}");
+            var classroomLabel = new Label(data.ClassroomName);
             classroomLabel.AddToClassList("activity-classroom-name");
-            card.Add(classroomLabel);
+            body.Add(classroomLabel);
 
             var metaRow = new VisualElement();
             metaRow.AddToClassList("activity-meta-row");
 
-            var scoreLabel = new Label($"\U0001F4CA {data.ScoreCorrect}/{data.ScoreTotal} ({Mathf.RoundToInt(data.ScorePercent)}%)");
+            var scoreLabel = new Label($"{data.ScoreCorrect}/{data.ScoreTotal} \u2022 {Mathf.RoundToInt(data.ScorePercent)}%");
             scoreLabel.AddToClassList("activity-score-badge");
+            scoreLabel.AddToClassList("activity-score-badge-" + band);
 
-            var timeLabel = new Label($"\u23F0 {FormatRelativeTime(data.OccurredAtUtc)}");
-            timeLabel.AddToClassList("recent-activity-time");
+            var track = new VisualElement();
+            track.AddToClassList("activity-score-track");
+            var fill = new VisualElement();
+            fill.AddToClassList("activity-score-fill");
+            fill.AddToClassList("activity-score-fill-" + band);
+            fill.style.width = Length.Percent(Mathf.Clamp(data.ScorePercent, 0f, 100f));
+            track.Add(fill);
+
+            var statusPill = new Label(data.Status);
+            statusPill.AddToClassList("activity-status-pill");
 
             metaRow.Add(scoreLabel);
-            metaRow.Add(timeLabel);
-            card.Add(metaRow);
+            metaRow.Add(track);
+            metaRow.Add(statusPill);
+            body.Add(metaRow);
 
+            card.Add(body);
             return card;
         }
 
-        /// <summary>Plain single-line row for a classroom-join event - unchanged from the
-        /// original Recent Activity styling, since joins weren't part of this feature.</summary>
+        /// <summary>Row for a classroom-join event: same avatar + name + time layout as the
+        /// quiz card (in the neutral blue tint), with a single "Joined ..." line under it.</summary>
         private VisualElement BuildJoinActivityRow(ActivityCardData data)
         {
             var row = new VisualElement();
             row.AddToClassList("recent-activity-row");
             row.userData = data.OccurredAtUtc;
 
-            var textLabel = new Label(data.JoinText);
-            textLabel.AddToClassList("recent-activity-text");
+            row.Add(BuildActivityAvatar(data.StudentName, null));
+
+            var body = new VisualElement();
+            body.AddToClassList("activity-body");
+
+            var topRow = new VisualElement();
+            topRow.AddToClassList("activity-card-top-row");
+
+            var nameLabel = new Label(data.StudentName);
+            nameLabel.AddToClassList("activity-student-name");
 
             var timeLabel = new Label(FormatRelativeTime(data.OccurredAtUtc));
             timeLabel.AddToClassList("recent-activity-time");
 
-            row.Add(textLabel);
-            row.Add(timeLabel);
+            topRow.Add(nameLabel);
+            topRow.Add(timeLabel);
+            body.Add(topRow);
+
+            var joinLabel = new Label($"Joined {data.ClassroomName}");
+            joinLabel.AddToClassList("activity-join-text");
+            body.Add(joinLabel);
+
+            row.Add(body);
             return row;
+        }
+
+        /// <summary>Round avatar with the student's initials. <paramref name="band"/> is
+        /// "high"/"mid"/"low" to tint it by score, or null for the neutral blue.</summary>
+        private static VisualElement BuildActivityAvatar(string studentName, string band)
+        {
+            var avatar = new VisualElement();
+            avatar.AddToClassList("activity-avatar");
+            if (!string.IsNullOrEmpty(band)) avatar.AddToClassList("activity-avatar-" + band);
+
+            var initials = new Label(GetActivityInitials(studentName));
+            initials.AddToClassList("activity-avatar-label");
+            avatar.Add(initials);
+            return avatar;
+        }
+
+        /// <summary>First letter of the first and last word ("Juan Dela Cruz" -> "JC"),
+        /// or just one letter for a single name.</summary>
+        private static string GetActivityInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+            var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+            return (parts[0].Substring(0, 1) + parts[parts.Length - 1].Substring(0, 1)).ToUpperInvariant();
+        }
+
+        /// <summary>75%+ = "high" (green), 50-74% = "mid" (amber), below 50% = "low" (red).</summary>
+        private static string GetScoreBand(float percent)
+        {
+            if (percent >= 75f) return "high";
+            if (percent >= 50f) return "mid";
+            return "low";
         }
 
         // ---------------- Button handlers ----------------

@@ -82,6 +82,22 @@ namespace Anatomia3D.Backend
             public bool IsDeadlineEnabled;
 
             public List<QuestionRecord> Questions = new List<QuestionRecord>();
+
+            /// <summary>One of SubmissionTypes.Question (default) or SubmissionTypes.File.
+            /// A quiz created before this field existed has none in Firestore -
+            /// ToQuizRecord() normalizes that missing value to Question, so every
+            /// existing quiz keeps behaving exactly as it did before.</summary>
+            public string SubmissionType = SubmissionTypes.Question;
+
+            /// <summary>File Submission only - the instructions shown on
+            /// StudentFileSubmissionController. Empty/unused for a question quiz.</summary>
+            public string Instructions;
+
+            /// <summary>File Submission only - allowed extensions/MIME types and the
+            /// max file size the teacher configured. Null for a question quiz.</summary>
+            public FileSubmissionConfig FileConfig;
+
+            public bool IsFileSubmission => SubmissionTypes.IsFileSubmission(SubmissionType);
         }
 
         /// <summary>Result of a pre-flight check run before letting a student start a quiz.</summary>
@@ -234,7 +250,10 @@ namespace Anatomia3D.Backend
             DateTime? deadlineUtc,
             int passingScorePercent,
             string classroomId,
-            Action<bool, string, QuizRecord> onComplete)
+            Action<bool, string, QuizRecord> onComplete,
+            string submissionType = SubmissionTypes.Question,
+            string instructions = null,
+            FileSubmissionConfig fileConfig = null)
         {
             var admin = AdminAuthService.Instance.CurrentAdmin;
             if (admin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
@@ -245,15 +264,23 @@ namespace Anatomia3D.Backend
                 return;
             }
 
+            string normalizedSubmissionType = SubmissionTypes.Normalize(submissionType);
+            bool isFile = SubmissionTypes.IsFileSubmission(normalizedSubmissionType);
+            var effectiveFileConfig = isFile ? (fileConfig ?? FileSubmissionConfig.Default()) : null;
+
             var quizRef = Db.Collection("quizzes").Document(); // auto id
 
-            var batch = Db.StartBatch();
-            batch.Set(quizRef, new Dictionary<string, object>
+            var quizDoc = new Dictionary<string, object>
             {
                 { "title", title },
                 { "category", category },
                 { "classroomId", classroomId },
                 { "createdBy", admin.Uid },
+                // Always 0 at creation, same as the question-quiz path. A File
+                // Submission assignment has no questions[] for AddQuestion to sum
+                // points from, so its pointsPossible is set right after this call
+                // via SetFileSubmissionPoints (see AdminQuizManagementController's
+                // file-type branch of OnCreateQuizSubmitClicked).
                 { "pointsPossible", 0 },
                 { "maxAttempts", maxAttempts },
                 { "timeLimitMinutes", timeLimitMinutes },
@@ -262,8 +289,14 @@ namespace Anatomia3D.Backend
                 { "deadline", isDeadlineEnabled && deadlineUtc.HasValue ? (object)Timestamp.FromDateTime(DateTime.SpecifyKind(deadlineUtc.Value, DateTimeKind.Utc)) : null },
                 { "passingScorePercent", passingScorePercent },
                 { "questions", new List<object>() },
+                { "submissionType", normalizedSubmissionType },
+                { "instructions", isFile ? (instructions ?? string.Empty) : string.Empty },
                 { "createdAt", Timestamp.GetCurrentTimestamp() }
-            });
+            };
+            if (isFile) quizDoc["fileSubmissionSettings"] = effectiveFileConfig.ToMap();
+
+            var batch = Db.StartBatch();
+            batch.Set(quizRef, quizDoc);
             batch.Update(Db.Collection("admins").Document(admin.Uid), "quizzesCreated", FieldValue.Increment(1));
 
             batch.CommitAsync().ContinueWithOnMainThread(task =>
@@ -292,9 +325,34 @@ namespace Anatomia3D.Backend
                     IsDeadlineEnabled = isDeadlineEnabled,
                     DeadlineUtc = isDeadlineEnabled ? deadlineUtc : null,
                     PassingScorePercent = passingScorePercent,
-                    Questions = new List<QuestionRecord>()
+                    Questions = new List<QuestionRecord>(),
+                    SubmissionType = normalizedSubmissionType,
+                    Instructions = isFile ? (instructions ?? string.Empty) : string.Empty,
+                    FileConfig = effectiveFileConfig
                 });
             });
+        }
+
+        /// <summary>Sets a File Submission quiz's point value directly - unlike a
+        /// question quiz, there is no questions[] for AddQuestion/DeleteQuestion to
+        /// recompute pointsPossible from, so the teacher's "Points" field on the
+        /// assignment form writes it here instead. Call right after CreateQuiz for
+        /// a file-type quiz (AdminQuizManagementController.OnCreateQuizSubmitClicked
+        /// does this in one extra call, since CreateQuiz's own signature is shared
+        /// with the question-quiz path and always writes pointsPossible: 0).</summary>
+        public void SetFileSubmissionPoints(string quizId, int pointsPossible, Action<bool, string> onComplete)
+        {
+            Db.Collection("quizzes").Document(quizId)
+                .UpdateAsync("pointsPossible", Mathf.Max(0, pointsPossible))
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save the assignment's points.");
+                        return;
+                    }
+                    onComplete?.Invoke(true, null);
+                });
         }
 
         /// <summary>Call from AdminQuizManagementController's "Edit Settings" modal (same fields as
@@ -310,7 +368,9 @@ namespace Anatomia3D.Backend
             bool isDeadlineEnabled,
             DateTime? deadlineUtc,
             int passingScorePercent,
-            Action<bool, string, QuizRecord> onComplete)
+            Action<bool, string, QuizRecord> onComplete,
+            string instructions = null,
+            FileSubmissionConfig fileConfig = null)
         {
             if (IsDeadlineInPast(isDeadlineEnabled, deadlineUtc))
             {
@@ -331,6 +391,14 @@ namespace Anatomia3D.Backend
                 { "deadline", isDeadlineEnabled && deadlineUtc.HasValue ? (object)Timestamp.FromDateTime(DateTime.SpecifyKind(deadlineUtc.Value, DateTimeKind.Utc)) : null },
                 { "passingScorePercent", passingScorePercent }
             };
+
+            // submissionType itself never changes after creation (editing settings
+            // doesn't let a teacher flip a quiz between question/file mid-flight -
+            // AdminQuizManagementController's Edit Settings modal only reaches this
+            // path for a quiz opened in its existing type). instructions/fileConfig
+            // are only ever passed for a File Submission quiz.
+            if (instructions != null) update["instructions"] = instructions;
+            if (fileConfig != null) update["fileSubmissionSettings"] = fileConfig.ToMap();
 
             quizRef.UpdateAsync(update).ContinueWithOnMainThread(updateTask =>
             {
@@ -2048,8 +2116,20 @@ namespace Anatomia3D.Backend
                 IsDeadlineEnabled = doc.ContainsField("isDeadlineEnabled") ? doc.GetValue<bool>("isDeadlineEnabled") : false,
                 DeadlineUtc = doc.ContainsField("deadline") && doc.GetValue<object>("deadline") != null
                     ? doc.GetValue<Timestamp>("deadline").ToDateTime()
-                    : (DateTime?)null
+                    : (DateTime?)null,
+                // Missing field (every quiz created before this feature existed)
+                // normalizes to Question, so nothing about an existing quiz's
+                // behaviour changes.
+                SubmissionType = SubmissionTypes.Normalize(
+                    doc.ContainsField("submissionType") ? doc.GetValue<string>("submissionType") : null),
+                Instructions = doc.ContainsField("instructions") ? doc.GetValue<string>("instructions") : string.Empty
             };
+
+            if (record.IsFileSubmission)
+            {
+                record.FileConfig = FileSubmissionConfig.FromMap(
+                    doc.ContainsField("fileSubmissionSettings") ? doc.GetValue<object>("fileSubmissionSettings") : null);
+            }
 
             if (doc.ContainsField("questions"))
             {

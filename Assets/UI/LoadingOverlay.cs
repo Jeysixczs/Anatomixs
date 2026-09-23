@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -45,6 +46,7 @@ namespace Anatomia3D.UI
 
         private IVisualElementScheduledItem _spinSchedule;
         private IVisualElementScheduledItem _slowHintSchedule;
+        private IVisualElementScheduledItem _timeoutSchedule;
         private float _spinAngle;
 
         /// <summary>True while the overlay is showing (DisplayStyle.Flex).</summary>
@@ -142,6 +144,11 @@ namespace Anatomia3D.UI
         {
             if (_root == null) return;
 
+            // A plain Show() never carries a timeout - cancel any left over from an earlier
+            // ShowWithTimeout (e.g. when swapping to a "Success! Redirecting..." message).
+            _timeoutSchedule?.Pause();
+            _timeoutSchedule = null;
+
             _messageLabel.text = string.IsNullOrEmpty(message) ? DefaultMessage : message;
             _submessageLabel.text = string.Empty;
             _submessageLabel.style.display = DisplayStyle.None;
@@ -167,6 +174,27 @@ namespace Anatomia3D.UI
             _slowHintSchedule.ExecuteLater(SlowHintDelayMs);
         }
 
+        /// <summary>Like Show(), but if Hide() hasn't been called within
+        /// <paramref name="timeoutMs"/> the overlay closes itself and calls
+        /// <paramref name="onTimeout"/>. Use it around network calls that can hang
+        /// forever (sign-in / account creation), so a stalled request can't leave the
+        /// full-screen overlay up and block every tap. Opt-in: plain Show() behaves as before.</summary>
+        public void ShowWithTimeout(string message, long timeoutMs, Action onTimeout, string slowHint = null)
+        {
+            if (_root == null) return;
+
+            Show(message, slowHint);
+
+            _timeoutSchedule = _root.schedule.Execute(() =>
+            {
+                _timeoutSchedule = null;
+                if (!IsVisible) return;
+                Hide();
+                onTimeout?.Invoke();
+            });
+            _timeoutSchedule.ExecuteLater(timeoutMs);
+        }
+
         /// <summary>Updates the headline while the overlay is already showing
         /// (e.g. switching from "Saving changes..." to "Uploading photo...")
         /// without resetting the spinner or the "still working" hint timer.</summary>
@@ -184,6 +212,8 @@ namespace Anatomia3D.UI
             _spinSchedule = null;
             _slowHintSchedule?.Pause();
             _slowHintSchedule = null;
+            _timeoutSchedule?.Pause();
+            _timeoutSchedule = null;
         }
 
         /// <summary>Detaches the overlay from its parent and stops its schedules.
@@ -194,6 +224,7 @@ namespace Anatomia3D.UI
         {
             _spinSchedule?.Pause();
             _slowHintSchedule?.Pause();
+            _timeoutSchedule?.Pause();
             _root?.RemoveFromHierarchy();
         }
     }

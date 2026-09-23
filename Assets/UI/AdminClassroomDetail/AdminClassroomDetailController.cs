@@ -237,6 +237,8 @@ namespace Anatomia3D.UI
             }
 
             UnregisterCallbacks();
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
+            NetworkStatusMonitor.OnAppResumed += HandleAppResumed;
 
             QueryElements();
             ApplyHeaderGradient();
@@ -266,6 +268,7 @@ namespace Anatomia3D.UI
 
         private void OnDisable()
         {
+            NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;
             UnregisterCallbacks();
 
             if (_headerGradientTexture != null)
@@ -436,6 +439,19 @@ namespace Anatomia3D.UI
 
             LoadClassroomContent();
         }
+        // ---------------- App resume ----------------
+
+        /// <summary>App came back from the background (NetworkStatusMonitor.OnAppResumed, which
+        /// only fires while online). This screen loads its data with one-shot fetches, so nothing
+        /// would update by itself: re-run the load so the student list, leaderboard, analytics,
+        /// announcements and quizzes are current. It is silent - no spinner, nothing cleared.</summary>
+        private void HandleAppResumed(float secondsAway)
+        {
+            if (_screenRoot == null || string.IsNullOrEmpty(_classroomId)) return;
+
+            LoadClassroomContent();
+        }
+
 
         // ---------------- Loading from AdminClassroomService / QuizService ----------------
 

@@ -591,6 +591,9 @@ public class AnatomyScreenController : MonoBehaviour
     private VisualElement _dragHandle;   // the header — dragging moves the panel
     private VisualElement _resizeHandle; // bottom-right grip — dragging resizes the panel
 
+    // Header gradient texture (see ApplyGradients/BuildGradientTexture)
+    private Texture2D _headerGradientTexture;
+
     private bool _isDraggingPanel;
     private Vector2 _dragPointerStart;
     private Vector2 _panelPosAtDragStart;
@@ -788,11 +791,12 @@ public class AnatomyScreenController : MonoBehaviour
         // --- Info panel drag (header) ---
         _dragHandle = _root.Q<VisualElement>("Header");
         // USS has no native gradient syntax, so the header's green->blue
-        // wash (see the reference mock) is painted by hand here instead of
-        // via .header's background-color. generateVisualContent re-runs
-        // automatically on layout/repaint, so this stays correct across
+        // wash (see the reference mock) comes from a small generated
+        // Texture2D assigned as the header's background-image instead of
+        // a flat background-color. Background-image stretches to fill the
+        // element automatically, so this stays correct across
         // resizes/orientation changes without any extra bookkeeping.
-        _dragHandle.generateVisualContent += DrawHeaderGradient;
+        ApplyGradients();
         _dragHandle.RegisterCallback<PointerDownEvent>(OnPanelDragPointerDown);
         _dragHandle.RegisterCallback<PointerMoveEvent>(OnPanelDragPointerMove);
         _dragHandle.RegisterCallback<PointerUpEvent>(OnPanelDragPointerUp);
@@ -2163,49 +2167,38 @@ public class AnatomyScreenController : MonoBehaviour
     // Right edge - blue, per the reference mock.
     private static readonly Color HeaderGradientEnd = new Color(59f / 255f, 130f / 255f, 246f / 255f);
 
-    // Paints a left-to-right green->blue gradient across the header's own
-    // rect. USS's background-color only accepts a single flat color, so a
-    // gradient has to be drawn directly into the header's mesh instead -
-    // this runs on layout/repaint automatically because it's registered
-    // via generateVisualContent, so it never goes stale on resize/rotate.
-    private void DrawHeaderGradient(MeshGenerationContext mgc)
+    // Paints a left-to-right green->blue gradient across the header by
+    // generating a small Texture2D and assigning it as the header's
+    // background-image (USS has no native gradient syntax). Matches the
+    // ApplyGradients()/BuildGradientTexture() pattern used by the other
+    // screen controllers in this project.
+    private void ApplyGradients()
     {
-        Rect r = _dragHandle.contentRect;
-        if (r.width <= 0f || r.height <= 0f) return;
+        if (_dragHandle == null) return;
 
-        var mesh = mgc.Allocate(4, 6);
+        if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
+        _headerGradientTexture = BuildGradientTexture(HeaderGradientStart, HeaderGradientEnd);
+        _dragHandle.style.backgroundImage = new StyleBackground(_headerGradientTexture);
+    }
 
-        // Two triangles covering the full header rect, left verts colored
-        // with the start color and right verts with the end color -
-        // UIToolkit interpolates vertex colors across the triangle for us,
-        // which is what produces the smooth horizontal blend.
-        mesh.SetNextVertex(new Vertex
+    private Texture2D BuildGradientTexture(Color start, Color end)
+    {
+        const int size = 64;
+        var tex = new Texture2D(size, 1, TextureFormat.RGBA32, false)
         {
-            position = new Vector3(0, 0, Vertex.nearZ),
-            tint = HeaderGradientStart
-        });
-        mesh.SetNextVertex(new Vertex
-        {
-            position = new Vector3(r.width, 0, Vertex.nearZ),
-            tint = HeaderGradientEnd
-        });
-        mesh.SetNextVertex(new Vertex
-        {
-            position = new Vector3(r.width, r.height, Vertex.nearZ),
-            tint = HeaderGradientEnd
-        });
-        mesh.SetNextVertex(new Vertex
-        {
-            position = new Vector3(0, r.height, Vertex.nearZ),
-            tint = HeaderGradientStart
-        });
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Bilinear,
+            name = "InfoPanelHeaderGradientTexture"
+        };
 
-        mesh.SetNextIndex(0);
-        mesh.SetNextIndex(1);
-        mesh.SetNextIndex(2);
-        mesh.SetNextIndex(0);
-        mesh.SetNextIndex(2);
-        mesh.SetNextIndex(3);
+        for (int i = 0; i < size; i++)
+        {
+            float t = i / (float)(size - 1);
+            tex.SetPixel(i, 0, Color.Lerp(start, end, t));
+        }
+
+        tex.Apply();
+        return tex;
     }
 
     // ===== Info panel: drag to move =====

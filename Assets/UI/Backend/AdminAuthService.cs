@@ -85,7 +85,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    onComplete?.Invoke(false, DescribeAuthError(task.Exception));
+                    onComplete?.Invoke(false, DescribeAuthError(task.Exception, isSignIn: true));
                     return;
                 }
 
@@ -716,22 +716,63 @@ namespace Anatomia3D.Backend
             });
         }
 
-        private static string DescribeAuthError(AggregateException ex)
+        private static string DescribeAuthError(AggregateException ex, bool isSignIn = false)
         {
-            if (ex?.InnerException is Firebase.FirebaseException fbEx)
+            // Walk every inner exception (AggregateException can nest) and find the
+            // FirebaseException that actually carries the AuthError code.
+            Firebase.FirebaseException fbEx = null;
+            if (ex != null)
             {
-                var code = (AuthError)fbEx.ErrorCode;
-                switch (code)
+                foreach (var inner in ex.Flatten().InnerExceptions)
                 {
-                    case AuthError.InvalidEmail: return "That email address looks invalid.";
-                    case AuthError.WrongPassword: return "Incorrect password.";
-                    case AuthError.UserNotFound: return "No account found with that email.";
-                    case AuthError.EmailAlreadyInUse: return "An account with that email already exists.";
-                    case AuthError.WeakPassword: return "Password is too weak.";
-                    default: return "Something went wrong. Please try again.";
+                    fbEx = inner as Firebase.FirebaseException;
+                    if (fbEx != null) break;
                 }
             }
-            return "Something went wrong. Please try again.";
+
+            if (fbEx == null)
+            {
+                Debug.LogWarning("[Auth] Sign-in failed with a non-Firebase exception: " + ex);
+                return "Something went wrong. Please try again.";
+            }
+
+            // Log the real code/message so an unmapped error is easy to spot in the Console.
+            Debug.LogWarning($"[Auth] Firebase error code={fbEx.ErrorCode} ({(AuthError)fbEx.ErrorCode}) message={fbEx.Message}");
+
+            var code = (AuthError)fbEx.ErrorCode;
+            switch (code)
+            {
+                case AuthError.InvalidEmail: return "That email address looks invalid.";
+                case AuthError.WrongPassword: return "Incorrect password.";
+                case AuthError.UserNotFound: return "No account found with that email.";
+                case AuthError.InvalidCredential: return "Incorrect email or password.";
+                case AuthError.UserDisabled: return "This account has been disabled.";
+                case AuthError.TooManyRequests: return "Too many attempts. Please wait a moment and try again.";
+                case AuthError.NetworkRequestFailed: return "No internet connection. Please check your network and try again.";
+                case AuthError.EmailAlreadyInUse: return "An account with that email already exists.";
+                case AuthError.WeakPassword: return "Password is too weak.";
+                default:
+                    // With "Email enumeration protection" on (the default for newer Firebase
+                    // projects) a wrong email OR password comes back from the Unity SDK as a
+                    // bare Failure / "An internal error has occurred." - Firebase deliberately
+                    // doesn't say which one was wrong. For an email/password sign-in, while the
+                    // device is online, that is the most likely cause, so say so. Deliberately
+                    // NOT applied to create-account / password-change / etc., where a bare
+                    // Failure means something else.
+                    if (isSignIn && code == AuthError.Failure)
+                    {
+                        if (Application.internetReachability == NetworkReachability.NotReachable)
+                            return "No internet connection. Please check your network and try again.";
+                        return "Incorrect email or password.";
+                    }
+
+                    // Newer Firebase backends sometimes report a bad email/password as a
+                    // generic Failure whose message contains one of these phrases.
+                    string msg = (fbEx.Message ?? string.Empty).ToLowerInvariant();
+                    if (msg.Contains("credential") || msg.Contains("password") || msg.Contains("invalid_login"))
+                        return "Incorrect email or password.";
+                    return "Something went wrong. Please try again.";
+            }
         }
     }
 }

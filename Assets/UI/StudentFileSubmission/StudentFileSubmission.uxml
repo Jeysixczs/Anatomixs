@@ -1,0 +1,88 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StudentFileSubmission/StudentFileSubmission.uss"/>
+    <ui:VisualElement name="file-submission-root" class="fs-root">
+
+        <ui:VisualElement name="fs-header" class="fs-header">
+            <ui:VisualElement class="fs-header-top-row">
+                <ui:Button name="fs-back-button" text="&#8592;" class="fs-icon-button"/>
+                <ui:VisualElement name="fs-status-pill" class="fs-pill hidden">
+                    <ui:Label name="fs-status-pill-label" text="Submitted" class="fs-pill-label"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="fs-title-label" text="Assignment" class="fs-title"/>
+            <ui:Label name="fs-subtitle-label" text="File Submission" class="fs-subtitle"/>
+        </ui:VisualElement>
+
+        <ui:ScrollView name="fs-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="fs-scroll">
+            <ui:VisualElement class="fs-content">
+
+                <ui:VisualElement name="fs-instructions-card" class="fs-card">
+                    <ui:Label text="Instructions" class="fs-card-title"/>
+                    <ui:Label name="fs-instructions-label" text="" class="fs-instructions-text"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="fs-meta-card" class="fs-card">
+                    <ui:VisualElement class="fs-meta-row">
+                        <ui:Label text="Due" class="fs-meta-label"/>
+                        <ui:Label name="fs-due-value" text="No deadline" class="fs-meta-value"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="fs-meta-row">
+                        <ui:Label text="Points" class="fs-meta-label"/>
+                        <ui:Label name="fs-points-value" text="0" class="fs-meta-value"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="fs-meta-row">
+                        <ui:Label text="Attempts" class="fs-meta-label"/>
+                        <ui:Label name="fs-attempts-value" text="0 of 1" class="fs-meta-value"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="fs-meta-row fs-meta-row-last">
+                        <ui:Label text="Max file size" class="fs-meta-label"/>
+                        <ui:Label name="fs-max-size-value" text="25 MB" class="fs-meta-value"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="fs-accepted-card" class="fs-card">
+                    <ui:Label text="Accepted files" class="fs-card-title"/>
+                    <ui:Label name="fs-accepted-value" text="PDF, DOC, DOCX" class="fs-accepted-text"/>
+                </ui:VisualElement>
+
+                <!-- Pick + submit. Hidden entirely once the student can no longer submit. -->
+                <ui:VisualElement name="fs-upload-card" class="fs-card">
+                    <ui:Button name="fs-choose-file-button" text="Choose File" class="fs-choose-button"/>
+
+                    <ui:VisualElement name="fs-selected-file-panel" class="fs-selected-panel hidden">
+                        <ui:Label text="Selected File" class="fs-card-title"/>
+                        <ui:VisualElement class="fs-selected-row">
+                            <ui:VisualElement name="fs-selected-file-icon" class="fs-file-icon"/>
+                            <ui:VisualElement class="fs-selected-text-col">
+                                <ui:Label name="fs-selected-file-name" text="" class="fs-selected-file-name"/>
+                                <ui:Label name="fs-selected-file-size" text="" class="fs-selected-file-size"/>
+                            </ui:VisualElement>
+                            <ui:Button name="fs-clear-file-button" text="&#10005;" class="fs-clear-button"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <ui:Label name="fs-error-label" text="" class="fs-error hidden"/>
+                    <ui:Button name="fs-submit-button" text="Submit File" class="fs-submit-button"/>
+                </ui:VisualElement>
+
+                <!-- Shown instead of the upload card when blocked (deadline / attempts). -->
+                <ui:VisualElement name="fs-blocked-card" class="fs-card fs-blocked-card hidden">
+                    <ui:Label name="fs-blocked-label" text="" class="fs-blocked-text"/>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="fs-submitted-card" class="fs-card hidden">
+                    <ui:Label text="Your submission" class="fs-card-title"/>
+                    <ui:VisualElement name="fs-submitted-list" class="fs-submitted-list"/>
+                </ui:VisualElement>
+
+            </ui:VisualElement>
+        </ui:ScrollView>
+
+        <ui:VisualElement name="fs-working-overlay" class="fs-working-overlay hidden">
+            <ui:VisualElement class="fs-working-card">
+                <ui:Label name="fs-working-label" text="Uploading your file..." class="fs-working-label"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

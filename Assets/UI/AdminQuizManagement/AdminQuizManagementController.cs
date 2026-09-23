@@ -211,6 +211,28 @@ namespace Anatomia3D.UI
 
             public List<QuestionData> Questions = new List<QuestionData>();
             public bool IsExpanded;
+
+            /// <summary>SubmissionTypes.Question (default) or SubmissionTypes.File.
+            /// Set once at creation and never changed by the edit-settings flow -
+            /// see OpenCreateQuizModal, which hides the selector entirely when
+            /// _editingQuiz is set.</summary>
+            public string SubmissionType = SubmissionTypes.Question;
+
+            /// <summary>File Submission only - shown on the student's assignment
+            /// screen. Unused for a question quiz.</summary>
+            public string Instructions = string.Empty;
+
+            /// <summary>File Submission only - allowed extensions/MIME types and
+            /// the max file size the teacher configured. Null for a question quiz.</summary>
+            public FileSubmissionConfig FileConfig;
+
+            /// <summary>File Submission only - a question quiz's points come from
+            /// summing Questions instead (see RefreshQuizDetailView /
+            /// RefreshQuizzesUI, both of which already do that sum for the card/
+            /// overview display).</summary>
+            public int PointsPossible;
+
+            public bool IsFileSubmission => SubmissionTypes.IsFileSubmission(SubmissionType);
         }
 
         /// <summary>Shared wording with QuizService's own server-side check, so the UI's
@@ -311,9 +333,13 @@ namespace Anatomia3D.UI
         private Label _quizDetailTotalQuestionsValue;
         private Label _quizDetailTotalPointsValue;
         private VisualElement _quizDetailQuestionTypesRow;
+        private VisualElement _quizDetailQuestionTypesCard;
         private VisualElement _quizDetailQuestionsList;
         private Label _quizDetailQuestionsEmptyLabel;
         private Button _quizDetailAddQuestionButton;
+        // File Submission only - shown instead of the Questions tab/Add Question
+        // footer for a quiz whose SubmissionType is SubmissionTypes.File.
+        private Button _quizDetailViewSubmissionsButton;
 
         /// <summary>The quiz currently shown in the full-screen detail view, or null
         /// while the list is showing.</summary>
@@ -333,6 +359,27 @@ namespace Anatomia3D.UI
         private List<VisualElement> _createQuizProgressSegments;
 
         private VisualElement _createQuizStep1;
+        // Submission Type selector - which kind of assignment this quiz is.
+        // Hidden entirely when editing an existing quiz (see OpenCreateQuizModal);
+        // the type is fixed once a quiz has been created.
+        private VisualElement _submissionTypeRow;
+        private Button _submissionTypeCardQuestion;
+        private Button _submissionTypeCardFile;
+        private string _selectedSubmissionType = SubmissionTypes.Question;
+
+        // File Submission only - hidden for a Question-Based quiz.
+        private VisualElement _fileSettingsGroup;
+        private TextField _quizFileInstructionsField;
+        private Dictionary<string, Toggle> _fileExtensionToggles;
+        private Label _quizFileExtensionsError;
+        private TextField _quizFileMaxSizeField;
+        private Label _quizFileMaxSizeError;
+        private TextField _quizFilePointsField;
+        private Label _quizFilePointsError;
+
+        // Question-Based only - a timer only makes sense for a live gameplay session.
+        private VisualElement _timeLimitGroup;
+
         private TextField _quizTitleField;
         private Label _quizTitleError;
         private TextField _quizCategoryField;
@@ -650,10 +697,15 @@ namespace Anatomia3D.UI
             _quizSearchField?.UnregisterCallback<ChangeEvent<string>>(OnQuizSearchChanged);
             _searchFilterButton?.UnregisterCallback<ClickEvent>(OnSearchFilterClicked);
 
+            _quizDetailAddQuestionButton?.UnregisterCallback<ClickEvent>(OnQuizDetailAddQuestionClicked);
+            _quizDetailViewSubmissionsButton?.UnregisterCallback<ClickEvent>(OnQuizDetailViewSubmissionsClicked);
+
             _createQuizWizardBackButton?.UnregisterCallback<ClickEvent>(OnCreateQuizWizardBackClicked);
             _createQuizCancelButton?.UnregisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.UnregisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.UnregisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _submissionTypeCardQuestion?.UnregisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
+            _submissionTypeCardFile?.UnregisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
 
             _quizDeadlineSelectorButton?.UnregisterCallback<ClickEvent>(OnDeadlineSelectorClicked);
             _calendarPrevMonthButton?.UnregisterCallback<ClickEvent>(OnCalendarPrevMonthClicked);
@@ -778,9 +830,11 @@ namespace Anatomia3D.UI
             _quizDetailTotalQuestionsValue = _screenRoot.Q<Label>("quiz-detail-total-questions-value");
             _quizDetailTotalPointsValue = _screenRoot.Q<Label>("quiz-detail-total-points-value");
             _quizDetailQuestionTypesRow = _screenRoot.Q<VisualElement>("quiz-detail-question-types-row");
+            _quizDetailQuestionTypesCard = _screenRoot.Q<VisualElement>("quiz-detail-question-types-card");
             _quizDetailQuestionsList = _screenRoot.Q<VisualElement>("quiz-detail-questions-list");
             _quizDetailQuestionsEmptyLabel = _screenRoot.Q<Label>("quiz-detail-questions-empty-label");
             _quizDetailAddQuestionButton = _screenRoot.Q<Button>("quiz-detail-add-question-button");
+            _quizDetailViewSubmissionsButton = _screenRoot.Q<Button>("quiz-detail-view-submissions-button");
         }
 
         private void QueryCreateQuizElements()
@@ -797,6 +851,29 @@ namespace Anatomia3D.UI
             };
 
             _createQuizStep1 = _screenRoot.Q<VisualElement>("create-quiz-step-1");
+            _submissionTypeRow = _screenRoot.Q<VisualElement>("submission-type-row");
+            _submissionTypeCardQuestion = _screenRoot.Q<Button>("submission-type-card-question");
+            _submissionTypeCardFile = _screenRoot.Q<Button>("submission-type-card-file");
+
+            _fileSettingsGroup = _screenRoot.Q<VisualElement>("file-settings-group");
+            _quizFileInstructionsField = _screenRoot.Q<TextField>("quiz-file-instructions-field");
+            _fileExtensionToggles = new Dictionary<string, Toggle>
+            {
+                { "pdf", _screenRoot.Q<Toggle>("file-ext-toggle-pdf") },
+                { "doc", _screenRoot.Q<Toggle>("file-ext-toggle-doc") },
+                { "docx", _screenRoot.Q<Toggle>("file-ext-toggle-docx") },
+                { "xls", _screenRoot.Q<Toggle>("file-ext-toggle-xls") },
+                { "xlsx", _screenRoot.Q<Toggle>("file-ext-toggle-xlsx") },
+                { "txt", _screenRoot.Q<Toggle>("file-ext-toggle-txt") },
+            };
+            _quizFileExtensionsError = _screenRoot.Q<Label>("quiz-file-extensions-error");
+            _quizFileMaxSizeField = _screenRoot.Q<TextField>("quiz-file-max-size-field");
+            _quizFileMaxSizeError = _screenRoot.Q<Label>("quiz-file-max-size-error");
+            _quizFilePointsField = _screenRoot.Q<TextField>("quiz-file-points-field");
+            _quizFilePointsError = _screenRoot.Q<Label>("quiz-file-points-error");
+
+            _timeLimitGroup = _screenRoot.Q<VisualElement>("time-limit-group");
+
             _quizTitleField = _screenRoot.Q<TextField>("quiz-title-field");
             _quizTitleError = _screenRoot.Q<Label>("quiz-title-error");
             _quizCategoryField = _screenRoot.Q<TextField>("quiz-category-field");
@@ -1069,11 +1146,14 @@ namespace Anatomia3D.UI
             _quizDetailTabOverviewButton?.RegisterCallback<ClickEvent>(OnQuizDetailTabOverviewClicked);
             _quizDetailTabQuestionsButton?.RegisterCallback<ClickEvent>(OnQuizDetailTabQuestionsClicked);
             _quizDetailAddQuestionButton?.RegisterCallback<ClickEvent>(OnQuizDetailAddQuestionClicked);
+            _quizDetailViewSubmissionsButton?.RegisterCallback<ClickEvent>(OnQuizDetailViewSubmissionsClicked);
 
             _createQuizWizardBackButton?.RegisterCallback<ClickEvent>(OnCreateQuizWizardBackClicked);
             _createQuizCancelButton?.RegisterCallback<ClickEvent>(OnCreateQuizCancelClicked);
             _createQuizSubmitButton?.RegisterCallback<ClickEvent>(OnCreateQuizSubmitClicked);
             _quizTimeLimitDropdown?.RegisterCallback<ChangeEvent<string>>(OnTimeLimitChoiceChanged);
+            _submissionTypeCardQuestion?.RegisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
+            _submissionTypeCardFile?.RegisterCallback<ClickEvent>(OnSubmissionTypeCardClicked);
 
             _quizDeadlineSelectorButton?.RegisterCallback<ClickEvent>(OnDeadlineSelectorClicked);
             _calendarPrevMonthButton?.RegisterCallback<ClickEvent>(OnCalendarPrevMonthClicked);
@@ -1289,8 +1369,10 @@ namespace Anatomia3D.UI
             titleLabel.AddToClassList("quiz-title-label");
             main.Add(titleLabel);
 
-            string timeText = quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} minutes" : "No time limit";
-            var metaLabel = new Label($"{quiz.Questions.Count} Qs \u00B7 {timeText} \u00B7 {quiz.PassingScorePercent}%");
+            string timeText = quiz.IsFileSubmission ? $"{quiz.PointsPossible} pts" : (quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} minutes" : "No time limit");
+            var metaLabel = new Label(quiz.IsFileSubmission
+                ? $"File Submission \u00B7 {timeText} \u00B7 {quiz.PassingScorePercent}%"
+                : $"{quiz.Questions.Count} Qs \u00B7 {timeText} \u00B7 {quiz.PassingScorePercent}%");
             metaLabel.AddToClassList("quiz-meta-summary");
             main.Add(metaLabel);
 
@@ -1418,17 +1500,20 @@ namespace Anatomia3D.UI
         {
             if (_currentDetailQuiz == null) return;
             var quiz = _currentDetailQuiz;
+            bool isFile = quiz.IsFileSubmission;
 
             if (_quizDetailTitleLabel != null) _quizDetailTitleLabel.text = quiz.Title;
 
             if (_quizDetailSubtitleLabel != null)
             {
                 string category = string.IsNullOrEmpty(quiz.Category) ? "Uncategorized" : quiz.Category;
-                _quizDetailSubtitleLabel.text = $"{category} \u00B7 {quiz.Questions.Count} question{(quiz.Questions.Count == 1 ? "" : "s")}";
+                _quizDetailSubtitleLabel.text = isFile
+                    ? $"{category} \u00B7 File Submission"
+                    : $"{category} \u00B7 {quiz.Questions.Count} question{(quiz.Questions.Count == 1 ? "" : "s")}";
             }
 
             if (_quizDetailTimeLimitValue != null)
-                _quizDetailTimeLimitValue.text = quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} minutes" : "None";
+                _quizDetailTimeLimitValue.text = isFile ? "N/A" : (quiz.HasTimeLimit ? $"{quiz.TimeLimitMinutes} minutes" : "None");
 
             if (_quizDetailPassingScoreValue != null)
                 _quizDetailPassingScoreValue.text = $"{quiz.PassingScorePercent}%";
@@ -1443,15 +1528,36 @@ namespace Anatomia3D.UI
                     : "None";
             }
 
+            // A File Submission assignment has no questions[] - its single "question"
+            // count is meaningless, and its points come straight from PointsPossible
+            // (set via QuizService.SetFileSubmissionPoints) rather than a sum.
             if (_quizDetailTotalQuestionsValue != null)
-                _quizDetailTotalQuestionsValue.text = quiz.Questions.Count.ToString();
+                _quizDetailTotalQuestionsValue.text = isFile ? "N/A" : quiz.Questions.Count.ToString();
 
             if (_quizDetailTotalPointsValue != null)
-                _quizDetailTotalPointsValue.text = quiz.Questions.Sum(q => q.Points).ToString();
+                _quizDetailTotalPointsValue.text = (isFile ? quiz.PointsPossible : quiz.Questions.Sum(q => q.Points)).ToString();
+
+            // Questions tab / Add Question only apply to a Question-Based quiz -
+            // a File Submission assignment shows "View Submissions" instead, right
+            // on the Overview tab it's always pinned to (see SetQuizDetailTab).
+            _quizDetailTabQuestionsButton?.EnableInClassList("hidden", isFile);
+            _quizDetailViewSubmissionsButton?.EnableInClassList("hidden", !isFile);
+            _quizDetailQuestionTypesCard?.EnableInClassList("hidden", isFile);
+            if (isFile && _quizDetailActiveTab != "overview") SetQuizDetailTab("overview");
 
             RefreshQuizDetailQuestionTypesSummary();
             RefreshQuizDetailTabGradient();
             RefreshQuizDetailQuestionsList();
+        }
+
+        private void OnQuizDetailViewSubmissionsClicked(ClickEvent evt)
+        {
+            if (_currentDetailQuiz == null) return;
+            var quiz = _currentDetailQuiz;
+
+            // classroomId is null for a shared-bank assignment - AdminSubmissionReviewController
+            // then lists every submission for this quiz the teacher is allowed to read.
+            UIManager.Instance.ShowAdminSubmissionReview(quiz.QuizId, null, quiz.Title, quiz.PointsPossible, quiz.PassingScorePercent);
         }
 
         /// <summary>Builds the "Question types" pill row on the Overview tab -
@@ -1645,8 +1751,36 @@ namespace Anatomia3D.UI
         {
             bool editing = _editingQuiz != null;
 
-            if (_createQuizModalTitleLabel != null) _createQuizModalTitleLabel.text = editing ? "Edit Quiz Settings" : "Create New Quiz";
+            if (_createQuizModalTitleLabel != null)
+                _createQuizModalTitleLabel.text = editing
+                    ? (_editingQuiz.IsFileSubmission ? "Edit Assignment Settings" : "Edit Quiz Settings")
+                    : "Create New Quiz";
             if (_createQuizSubmitLabel != null) _createQuizSubmitLabel.text = editing ? "Save Changes" : "Create Quiz";
+
+            // ---- Submission type (fixed once a quiz exists) ----
+            _selectedSubmissionType = editing ? SubmissionTypes.Normalize(_editingQuiz.SubmissionType) : SubmissionTypes.Question;
+            _submissionTypeRow?.EnableInClassList("hidden", editing);
+            RefreshSubmissionTypeCards();
+            UpdateSubmissionTypeFieldsVisibility(_selectedSubmissionType);
+
+            // ---- File Submission fields ----
+            var fileConfig = editing && _editingQuiz.FileConfig != null ? _editingQuiz.FileConfig : FileSubmissionConfig.Default();
+            if (_quizFileInstructionsField != null) _quizFileInstructionsField.value = editing ? (_editingQuiz.Instructions ?? string.Empty) : string.Empty;
+            if (_fileExtensionToggles != null)
+            {
+                foreach (var kvp in _fileExtensionToggles)
+                {
+                    bool isChecked = editing && SubmissionTypes.IsFileSubmission(_editingQuiz.SubmissionType)
+                        ? fileConfig.IsExtensionAllowed(kvp.Key)
+                        : (kvp.Key == "pdf" || kvp.Key == "doc" || kvp.Key == "docx"); // sensible default for a new assignment
+                    kvp.Value?.SetValueWithoutNotify(isChecked);
+                }
+            }
+            if (_quizFileMaxSizeField != null) _quizFileMaxSizeField.value = fileConfig.MaxFileSizeMB.ToString();
+            if (_quizFilePointsField != null) _quizFilePointsField.value = editing ? _editingQuiz.PointsPossible.ToString() : "100";
+            ClearError(_quizFileExtensionsError);
+            ClearError(_quizFileMaxSizeError);
+            ClearError(_quizFilePointsError);
 
             // ---- Basic info ----
             if (_quizTitleField != null) _quizTitleField.value = editing ? _editingQuiz.Title : string.Empty;
@@ -2163,6 +2297,49 @@ namespace Anatomia3D.UI
                 }
             }
 
+            bool isFile = SubmissionTypes.IsFileSubmission(_selectedSubmissionType);
+            FileSubmissionConfig fileConfig = null;
+            int filePoints = 0;
+
+            if (isFile)
+            {
+                var checkedExtensions = (_fileExtensionToggles ?? new Dictionary<string, Toggle>())
+                    .Where(kvp => kvp.Value != null && kvp.Value.value)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+
+                if (checkedExtensions.Count == 0)
+                {
+                    SetError(_quizFileExtensionsError, "Select at least one allowed file type.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizFileExtensionsError);
+                }
+
+                if (!int.TryParse(_quizFileMaxSizeField?.value, out int maxSizeMB) || maxSizeMB <= 0)
+                {
+                    SetError(_quizFileMaxSizeError, "Enter the maximum file size in MB as a whole number.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizFileMaxSizeError);
+                    fileConfig = FileSubmissionConfig.FromExtensions(checkedExtensions, maxSizeMB);
+                }
+
+                if (!int.TryParse(_quizFilePointsField?.value, out filePoints) || filePoints < 0)
+                {
+                    SetError(_quizFilePointsError, "Enter the assignment's points as a whole number.");
+                    valid = false;
+                }
+                else
+                {
+                    ClearError(_quizFilePointsError);
+                }
+            }
+
             if (!valid)
             {
                 SetStatus(_createQuizStatusLabel, "Please fix the highlighted fields.");
@@ -2172,6 +2349,7 @@ namespace Anatomia3D.UI
             int maxAttempts = ReadMaxAttempts();
             var (hasTimeLimit, timeLimitMinutes) = ReadTimeLimit();
             int passingScore = ParseIntOrDefault(_quizPassingScoreField, 70);
+            string instructions = isFile ? (_quizFileInstructionsField?.value ?? string.Empty) : string.Empty;
 
             _createQuizSubmitButton?.SetEnabled(false);
 
@@ -2184,22 +2362,46 @@ namespace Anatomia3D.UI
                     quizBeingEdited.QuizId, title, category, maxAttempts, timeLimitMinutes, hasTimeLimit,
                     deadlineEnabled, deadlineUtc, passingScore, (ok, error, record) =>
                     {
-                        _createQuizSubmitButton?.SetEnabled(true);
                         if (!ok)
                         {
+                            _createQuizSubmitButton?.SetEnabled(true);
                             SetStatus(_createQuizStatusLabel, error ?? "Could not save changes. Please try again.");
                             return;
                         }
 
                         ApplyQuizSettingsFromRecord(quizBeingEdited, record);
+
+                        // File Submission's points aren't part of UpdateQuizSettings
+                        // (they don't exist for a question quiz) - save them with the
+                        // same call CreateQuiz's file-type branch uses below.
+                        if (quizBeingEdited.IsFileSubmission)
+                        {
+                            QuizService.Instance.SetFileSubmissionPoints(quizBeingEdited.QuizId, filePoints, (pointsOk, pointsError) =>
+                            {
+                                _createQuizSubmitButton?.SetEnabled(true);
+                                if (pointsOk) quizBeingEdited.PointsPossible = filePoints;
+                                else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
+
+                                RefreshQuizzesUI();
+                                RefreshStats();
+                                if (_currentDetailQuiz == quizBeingEdited) RefreshQuizDetailView();
+                                CloseCreateQuizModal();
+                            });
+                            return;
+                        }
+
+                        _createQuizSubmitButton?.SetEnabled(true);
                         RefreshQuizzesUI();
                         RefreshStats();
+                        if (_currentDetailQuiz == quizBeingEdited) RefreshQuizDetailView();
                         CloseCreateQuizModal();
-                    });
+                    },
+                    instructions: quizBeingEdited.IsFileSubmission ? instructions : null,
+                    fileConfig: quizBeingEdited.IsFileSubmission ? fileConfig : null);
                 return;
             }
 
-            SetStatus(_createQuizStatusLabel, "Creating quiz...");
+            SetStatus(_createQuizStatusLabel, isFile ? "Creating assignment..." : "Creating quiz...");
 
             // classroomId is null - quizzes created here go into the shared
             // quiz bank (available to every classroom). Assign a specific
@@ -2209,24 +2411,63 @@ namespace Anatomia3D.UI
                 title, category, maxAttempts, timeLimitMinutes, hasTimeLimit,
                 deadlineEnabled, deadlineUtc, passingScore, null, (ok, error, record) =>
                 {
-                    _createQuizSubmitButton?.SetEnabled(true);
                     if (!ok)
                     {
+                        _createQuizSubmitButton?.SetEnabled(true);
                         SetStatus(_createQuizStatusLabel, error ?? "Could not create quiz. Please try again.");
                         return;
                     }
+
                     var newQuiz = ToQuizData(record);
+
+                    if (isFile)
+                    {
+                        // CreateQuiz's shared signature always writes pointsPossible: 0 -
+                        // set the teacher's actual points value right after (see
+                        // QuizService.SetFileSubmissionPoints's own doc comment).
+                        QuizService.Instance.SetFileSubmissionPoints(newQuiz.QuizId, filePoints, (pointsOk, pointsError) =>
+                        {
+                            _createQuizSubmitButton?.SetEnabled(true);
+                            if (pointsOk) newQuiz.PointsPossible = filePoints;
+                            else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
+
+                            _currentQuizzes.Add(newQuiz);
+                            _lastSavedQuiz = newQuiz;
+                            RefreshQuizzesUI();
+                            RefreshStats();
+                            FinishCreateQuizWizard(newQuiz);
+                        });
+                        return;
+                    }
+
+                    _createQuizSubmitButton?.SetEnabled(true);
                     _currentQuizzes.Add(newQuiz);
                     _lastSavedQuiz = newQuiz;
                     RefreshQuizzesUI();
                     RefreshStats();
+                    FinishCreateQuizWizard(newQuiz);
+                },
+                submissionType: _selectedSubmissionType,
+                instructions: isFile ? instructions : null,
+                fileConfig: isFile ? fileConfig : null);
+        }
 
-                    if (_createQuizSuccessSubtitle != null)
-                    {
-                        _createQuizSuccessSubtitle.text = "Quiz is ready. Add your first question or come back later.";
-                    }
-                    SetCreateQuizWizardStep(2);
-                });
+        /// <summary>Shows the Create Quiz wizard's success step - "+ Add First
+        /// Question" only makes sense for a Question-Based quiz (a File Submission
+        /// assignment has no questions[] at all), so that button is hidden for one.</summary>
+        private void FinishCreateQuizWizard(QuizData newQuiz)
+        {
+            bool isFile = newQuiz.IsFileSubmission;
+
+            if (_createQuizSuccessSubtitle != null)
+            {
+                _createQuizSuccessSubtitle.text = isFile
+                    ? "Assignment is ready. Students can now submit their files."
+                    : "Quiz is ready. Add your first question or come back later.";
+            }
+
+            _createQuizSuccessAddQuestionButton?.EnableInClassList("hidden", isFile);
+            SetCreateQuizWizardStep(2);
         }
 
         private void OnCreateQuizSuccessAddQuestionClicked(ClickEvent evt)
@@ -2373,6 +2614,35 @@ namespace Anatomia3D.UI
             {
                 SetAddQuestionWizardStep(_addQuestionWizardStep - 1);
             }
+        }
+
+        private void OnSubmissionTypeCardClicked(ClickEvent evt)
+        {
+            // The type is immutable once a quiz exists - this handler is only ever
+            // reachable while creating a new quiz (see OpenCreateQuizModal, which
+            // hides _submissionTypeRow entirely when editing).
+            if (_editingQuiz != null) return;
+
+            string type = evt.target == _submissionTypeCardFile ? SubmissionTypes.File : SubmissionTypes.Question;
+            _selectedSubmissionType = type;
+            RefreshSubmissionTypeCards();
+            UpdateSubmissionTypeFieldsVisibility(type);
+        }
+
+        private void RefreshSubmissionTypeCards()
+        {
+            _submissionTypeCardQuestion?.EnableInClassList("selected", _selectedSubmissionType == SubmissionTypes.Question);
+            _submissionTypeCardFile?.EnableInClassList("selected", SubmissionTypes.IsFileSubmission(_selectedSubmissionType));
+        }
+
+        /// <summary>Time Limit only applies to a live gameplay session; the file
+        /// settings group (instructions/allowed types/size/points) only applies to
+        /// a File Submission assignment - never both.</summary>
+        private void UpdateSubmissionTypeFieldsVisibility(string type)
+        {
+            bool isFile = SubmissionTypes.IsFileSubmission(type);
+            _fileSettingsGroup?.EnableInClassList("hidden", !isFile);
+            _timeLimitGroup?.EnableInClassList("hidden", isFile);
         }
 
         private void OnQuestionTypeCardClicked(ClickEvent evt)
@@ -2955,6 +3225,10 @@ namespace Anatomia3D.UI
                 HasTimeLimit = record.HasTimeLimit,
                 IsDeadlineEnabled = record.IsDeadlineEnabled,
                 DeadlineUtc = record.DeadlineUtc,
+                SubmissionType = record.SubmissionType,
+                Instructions = record.Instructions,
+                FileConfig = record.FileConfig,
+                PointsPossible = record.PointsPossible,
             };
 
             foreach (var q in record.Questions) quiz.Questions.Add(ToQuestionData(q));
@@ -2975,6 +3249,13 @@ namespace Anatomia3D.UI
             quiz.HasTimeLimit = record.HasTimeLimit;
             quiz.IsDeadlineEnabled = record.IsDeadlineEnabled;
             quiz.DeadlineUtc = record.DeadlineUtc;
+            // SubmissionType itself never changes (see QuizData.SubmissionType) -
+            // only instructions/fileConfig may have been updated.
+            if (record.IsFileSubmission)
+            {
+                quiz.Instructions = record.Instructions;
+                quiz.FileConfig = record.FileConfig;
+            }
         }
 
         private static QuestionData ToQuestionData(QuizService.QuestionRecord record)

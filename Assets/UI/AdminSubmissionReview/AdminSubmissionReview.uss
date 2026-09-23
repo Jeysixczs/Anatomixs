@@ -1,0 +1,970 @@
+/* =========================================================
+   Anatomia 3D - Teacher: View Submissions
+   Reference canvas: 1080 x 1920 (portrait).
+   Header gradient is painted at runtime by
+   AdminSubmissionReviewController, matching the green -> purple
+   pair AdminQuizManagement already uses.
+
+   Palette:
+     slate-900 rgb(15,23,42)     primary text on light
+     slate-500 rgb(100,116,139)  secondary text
+     blue-600  rgb(37,99,235)    primary action / "to review"
+     emerald-500 rgb(16,185,129) passed / success
+     rose-500  rgb(239,68,68)    failed / danger
+     amber-500 rgb(245,158,11)   not submitted / warning
+   ========================================================= */
+
+.sr-root {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: rgb(243, 245, 249);
+}
+
+.hidden {
+    display: none;
+}
+
+.unity-scroll-view__vertical-scroller{
+    width: 0;
+    visibility: hidden;
+}
+/* ---------------- HEADER ---------------- */
+
+.sr-header {
+    padding: 60px 36px 36px 36px;
+    border-bottom-left-radius: 44px;
+    border-bottom-right-radius: 44px;
+    flex-shrink: 0;
+}
+
+.sr-header-top-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.sr-icon-button {
+    width: 66px;
+    height: 66px;
+    border-radius: 33px;
+    background-color: rgba(255, 255, 255, 0.16);
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-right: 22px;
+}
+
+.sr-icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.26);
+}
+
+.sr-back-icon {
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.sr-header-text-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.sr-title {
+    color: rgb(255, 255, 255);
+    font-size: 40px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.sr-subtitle {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 24px;
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.sr-classroom-pill {
+    align-self: flex-start;
+    margin-top: 14px;
+    padding: 8px 22px;
+    border-radius: 30px;
+    background-color: rgba(255, 255, 255, 0.20);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.30);
+    color: rgb(255, 255, 255);
+    font-size: 22px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.sr-stat-row {
+    flex-direction: row;
+}
+
+.sr-stat-card {
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.22);
+    padding: 20px 14px;
+    margin-right: 16px;
+    align-items: center;
+}
+
+.sr-stat-card-last {
+    margin-right: 0;
+}
+
+.sr-stat-icon {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 6px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.9);
+}
+
+.sr-stat-icon--check {
+    background-image: url("project://database/Assets/UI/Icons/check-icon.png");
+}
+
+.sr-stat-icon--review {
+    background-image: url("project://database/Assets/UI/Icons/deadline-icon.png");
+}
+
+.sr-stat-icon--missing {
+    background-image: url("project://database/Assets/UI/Icons/ex-icon.png");
+}
+
+.sr-stat-value {
+    color: rgb(255, 255, 255);
+    font-size: 38px;
+    -unity-font-style: bold;
+}
+
+.sr-stat-label {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 21px;
+    margin-top: 2px;
+}
+
+/* ---------------- CLASSROOM + FILTER CHIPS ---------------- */
+
+.sr-section {
+    margin-bottom: 10px;
+}
+
+.sr-section-label {
+    color: rgb(71, 85, 105);
+    font-size: 23px;
+    -unity-font-style: bold;
+    margin-bottom: 14px;
+}
+
+.sr-chip-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.sr-filter-row {
+    margin-bottom: 10px;
+}
+
+.sr-chip {
+    margin: 0 12px 12px 0;
+    padding: 13px 26px;
+    border-radius: 30px;
+    border-width: 2px;
+    border-color: rgb(226, 230, 236);
+    background-color: rgb(255, 255, 255);
+    color: rgb(71, 85, 105);
+    font-size: 23px;
+}
+
+.sr-chip:hover {
+    border-color: rgb(203, 213, 225);
+}
+
+.sr-chip--active {
+    border-color: rgb(37, 99, 235);
+    background-color: rgb(37, 99, 235);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+}
+
+/* ---------------- LIST ---------------- */
+
+.sr-top-controls {
+    flex-shrink: 0;
+    padding: 26px 32px 12px 32px;
+    background-color: rgb(243, 245, 249);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(231, 234, 239);
+}
+
+.sr-scroll {
+    /* The ScrollView takes ONLY the space left under the header + controls,
+       regardless of how tall the list is. It is the one and only thing that
+       scrolls. */
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-height: 0;
+}
+
+/* Viewport: fills the ScrollView and lays its single child out from the TOP. */
+.sr-scroll > .unity-scroll-view__content-viewport {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* Content container: exactly as tall as its content (never stretched to the
+   viewport), pinned to the top, full width. */
+.sr-scroll > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    flex-direction: column;
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    margin: 0;
+    padding: 0;
+}
+
+.sr-content {
+    flex-direction: column;
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    width: 100%;
+    align-self: stretch;
+    justify-content: flex-start;
+    padding: 6px 32px 60px 32px;
+}
+
+.sr-list {
+    flex-direction: column;
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    align-self: stretch;
+}
+
+.sr-row {
+    flex-grow: 0;
+    flex-shrink: 0;
+    background-color: rgb(255, 255, 255);
+    border-radius: 26px;
+    padding: 28px 28px 28px 24px;
+    margin-bottom: 20px;
+    border-left-width: 7px;
+    border-left-color: rgb(203, 213, 225);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-top-color: rgb(237, 240, 245);
+    border-right-color: rgb(237, 240, 245);
+    border-bottom-color: rgb(237, 240, 245);
+}
+
+.sr-row--review {
+    border-left-color: rgb(59, 130, 246);
+}
+
+.sr-row--passed {
+    border-left-color: rgb(16, 185, 129);
+}
+
+.sr-row--failed {
+    border-left-color: rgb(239, 68, 68);
+}
+
+.sr-row--missing {
+    border-left-color: rgb(245, 158, 11);
+    background-color: rgb(252, 252, 251);
+    padding: 22px 26px 22px 24px;
+}
+
+/* Applied in code (AdminSubmissionReviewController.BuildRow) to the final
+   row in the list - sr-content's own bottom padding already provides
+   breathing room below the list, so the last card doesn't need to carry
+   its own trailing gap too. Unity USS doesn't support :last-child, so this
+   has to be a class the controller adds rather than a selector here. */
+.sr-row--last {
+    margin-bottom: 0;
+}
+
+.sr-row-header {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.sr-row-name-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sr-row-student {
+    color: rgb(15, 23, 42);
+    font-size: 29px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-right: 14px;
+    margin-top: 4px;
+}
+
+.sr-row-file-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.sr-row-file-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/pdf-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(100, 116, 139);
+}
+
+.sr-row-file {
+    color: rgb(71, 85, 105);
+    font-size: 25px;
+    white-space: normal;
+    flex-shrink: 1;
+}
+
+.sr-row-file--muted {
+    color: rgb(148, 163, 184);
+    font-size: 25px;
+    margin-top: 10px;
+    white-space: normal;
+    -unity-font-style: italic;
+}
+
+.sr-row-meta {
+    color: rgb(120, 129, 143);
+    font-size: 22px;
+    margin-top: 8px;
+    white-space: normal;
+}
+
+.sr-row-meta--previous {
+    color: rgb(100, 116, 139);
+    -unity-font-style: italic;
+}
+
+.sr-row-meta--warning {
+    color: rgb(217, 119, 6);
+}
+
+/* ---------------- AVATAR ---------------- */
+
+.sr-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
+    background-color: rgb(226, 232, 240);
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sr-row-avatar {
+    margin-right: 20px;
+}
+
+.sr-avatar-label {
+    color: rgb(71, 85, 105);
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+.sr-row--passed .sr-row-avatar {
+    background-color: rgba(16, 185, 129, 0.16);
+}
+
+.sr-row--passed .sr-avatar-label {
+    color: rgb(4, 120, 87);
+}
+
+.sr-row--review .sr-row-avatar {
+    background-color: rgba(59, 130, 246, 0.16);
+}
+
+.sr-row--review .sr-avatar-label {
+    color: rgb(29, 78, 216);
+}
+
+.sr-row--failed .sr-row-avatar {
+    background-color: rgba(239, 68, 68, 0.14);
+}
+
+.sr-row--failed .sr-avatar-label {
+    color: rgb(185, 28, 28);
+}
+
+.sr-row--missing .sr-row-avatar {
+    background-color: rgba(245, 158, 11, 0.16);
+}
+
+.sr-row--missing .sr-avatar-label {
+    color: rgb(180, 83, 9);
+}
+
+/* ---------------- STATUS TAG ---------------- */
+
+.sr-status-tag {
+    border-radius: 30px;
+    padding: 8px 20px 8px 16px;
+    font-size: 20px;
+    -unity-font-style: bold;
+    margin-top: 4px;
+}
+
+.sr-status-tag--submitted {
+    background-color: rgba(59, 130, 246, 0.14);
+    color: rgb(29, 78, 216);
+}
+
+.sr-status-tag--passed {
+    background-color: rgba(16, 185, 129, 0.16);
+    color: rgb(4, 120, 87);
+}
+
+.sr-status-tag--failed {
+    background-color: rgba(239, 68, 68, 0.14);
+    color: rgb(185, 28, 28);
+}
+
+.sr-status-tag--missing {
+    background-color: rgba(245, 158, 11, 0.18);
+    color: rgb(180, 83, 9);
+}
+
+/* ---------------- ROW ACTION ---------------- */
+
+.sr-row-action {
+    height: 82px;
+    border-radius: 20px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-top: 24px;
+}
+
+.sr-row-action--primary {
+    border-width: 0;
+    background-color: rgb(37, 99, 235);
+    color: rgb(255, 255, 255);
+}
+
+.sr-row-action--primary:hover {
+    background-color: rgb(29, 78, 216);
+}
+
+.sr-row-action--secondary {
+    border-width: 2px;
+    border-color: rgb(203, 213, 225);
+    background-color: rgb(248, 250, 252);
+    color: rgb(51, 65, 85);
+}
+
+.sr-row-action--secondary:hover {
+    background-color: rgb(241, 245, 249);
+    border-color: rgb(148, 163, 184);
+}
+
+/* ---------------- ATTEMPTS ---------------- */
+
+.sr-attempts-heading {
+    margin-top: 20px;
+    -unity-font-style: bold;
+    color: rgb(100, 116, 139);
+}
+
+.sr-attempts-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.sr-attempt-chip {
+    margin: 0 10px 10px 0;
+    padding: 9px 20px;
+    border-radius: 22px;
+    border-width: 2px;
+    border-color: rgb(226, 230, 236);
+    background-color: rgb(249, 250, 251);
+    color: rgb(71, 85, 105);
+    font-size: 20px;
+}
+
+.sr-attempt-chip--new {
+    border-color: rgb(59, 130, 246);
+    background-color: rgba(59, 130, 246, 0.10);
+    color: rgb(29, 78, 216);
+    -unity-font-style: bold;
+}
+
+/* ---------------- EMPTY / STATUS ---------------- */
+
+.sr-empty-state {
+    align-items: center;
+    margin-top: 64px;
+    padding: 0 30px;
+}
+
+.sr-empty-icon {
+    width: 84px;
+    height: 84px;
+    margin-bottom: 18px;
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(203, 213, 225);
+}
+
+.sr-empty {
+    color: rgb(100, 116, 139);
+    font-size: 27px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.sr-status {
+    color: rgb(220, 38, 38);
+    font-size: 25px;
+    margin-top: 24px;
+    white-space: normal;
+    background-color: rgba(239, 68, 68, 0.08);
+    border-radius: 18px;
+    padding: 18px 22px;
+}
+
+/* ---------------- REVIEW MODAL ---------------- */
+
+.sr-modal-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.60);
+    align-items: center;
+    justify-content: center;
+    padding: 36px;
+}
+
+.sr-modal-card {
+    width: 100%;
+    max-height: 90%;
+    flex-direction: column;
+    background-color: rgb(255, 255, 255);
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.sr-modal-header {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 32px 30px 22px 30px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(240, 242, 246);
+}
+
+.sr-modal-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: rgba(37, 99, 235, 0.12);
+    margin-right: 20px;
+}
+
+.sr-modal-avatar .sr-avatar-label {
+    color: rgb(37, 99, 235);
+    font-size: 28px;
+}
+
+.sr-modal-title-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.sr-modal-title {
+    color: rgb(15, 23, 42);
+    font-size: 32px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.sr-modal-attempt-pill {
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 19px;
+    -unity-font-style: bold;
+}
+
+.sr-modal-attempt-pill--pending {
+    background-color: rgba(59, 130, 246, 0.14);
+    color: rgb(29, 78, 216);
+}
+
+.sr-modal-attempt-pill--reviewed {
+    background-color: rgba(16, 185, 129, 0.16);
+    color: rgb(4, 120, 87);
+}
+
+.sr-modal-close {
+    width: 58px;
+    height: 58px;
+    border-radius: 29px;
+    border-width: 0;
+    background-color: rgb(241, 245, 249);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.sr-modal-close:hover {
+    background-color: rgb(226, 232, 240);
+}
+
+.sr-modal-close-icon {
+    width: 22px;
+    height: 22px;
+    background-image: url("project://database/Assets/UI/Icons/ex-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(71, 85, 105);
+}
+
+.sr-modal-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.sr-modal-body {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 26px 30px 20px 30px;
+}
+
+.sr-info-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.sr-info-card {
+    width: 48%;
+    background-color: rgb(248, 250, 252);
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    margin-right: 4%;
+}
+
+.sr-info-label {
+    color: rgb(100, 116, 139);
+    font-size: 21px;
+    margin-bottom: 6px;
+}
+
+.sr-info-value {
+    color: rgb(15, 23, 42);
+    font-size: 25px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.sr-open-button {
+    height: 100px;
+    border-radius: 22px;
+    border-width: 3px;
+    border-color: rgb(59, 130, 246);
+    background-color: rgba(59, 130, 246, 0.08);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    padding: 0;
+}
+
+.sr-open-button:hover {
+    background-color: rgba(59, 130, 246, 0.14);
+}
+
+.sr-open-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/open-book.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(37, 99, 235);
+}
+
+.sr-open-button-label {
+    color: rgb(37, 99, 235);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+
+.sr-divider {
+    height: 1px;
+    background-color: rgb(238, 241, 245);
+    margin-top: 28px;
+    margin-bottom: 4px;
+}
+
+.sr-field-label {
+    color: rgb(51, 65, 85);
+    font-size: 25px;
+    -unity-font-style: bold;
+    margin-top: 26px;
+    margin-bottom: 12px;
+}
+
+.sr-score-row {
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.sr-score-field-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 16px;
+}
+
+.sr-text-field {
+    font-size: 26px;
+}
+
+.sr-text-field > .unity-base-text-field__input {
+    min-height: 90px;
+    border-radius: 20px;
+    border-width: 2px;
+    border-color: rgb(209, 213, 219);
+    background-color: rgb(249, 250, 251);
+    padding: 16px 20px;
+}
+
+.sr-score-field > .unity-base-text-field__input {
+    font-size: 30px;
+    -unity-font-style: bold;
+}
+
+.sr-text-area > .unity-base-text-field__input {
+    min-height: 170px;
+    white-space: normal;
+}
+
+.sr-score-preview {
+    height: 90px;
+    min-width: 220px;
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    background-color: rgb(241, 245, 249);
+}
+
+.sr-score-preview-label {
+    color: rgb(100, 116, 139);
+    font-size: 21px;
+    -unity-font-style: bold;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.sr-score-preview--pass {
+    background-color: rgba(16, 185, 129, 0.14);
+}
+
+.sr-score-preview--pass .sr-score-preview-label {
+    color: rgb(4, 120, 87);
+}
+
+.sr-score-preview--fail {
+    background-color: rgba(239, 68, 68, 0.12);
+}
+
+.sr-score-preview--fail .sr-score-preview-label {
+    color: rgb(185, 28, 28);
+}
+
+.sr-score-preview--empty .sr-score-preview-label {
+    color: rgb(148, 163, 184);
+}
+
+.sr-error {
+    color: rgb(220, 38, 38);
+    font-size: 24px;
+    margin-top: 20px;
+    white-space: normal;
+    background-color: rgba(239, 68, 68, 0.08);
+    border-radius: 16px;
+    padding: 16px 20px;
+}
+
+.sr-modal-footer {
+    flex-direction: row;
+    flex-shrink: 0;
+    padding: 20px 30px 32px 30px;
+    border-top-width: 1px;
+    border-top-color: rgb(240, 242, 246);
+}
+
+.sr-cancel-button {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 100px;
+    border-radius: 22px;
+    border-width: 2px;
+    border-color: rgb(209, 213, 219);
+    background-color: rgb(255, 255, 255);
+    color: rgb(71, 85, 105);
+    font-size: 26px;
+    margin-right: 16px;
+}
+
+.sr-cancel-button:hover {
+    background-color: rgb(248, 250, 252);
+}
+
+.sr-save-button {
+    flex-grow: 1.5;
+    flex-basis: 0;
+    height: 100px;
+    border-radius: 22px;
+    border-width: 0;
+    background-color: rgb(16, 185, 129);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.sr-save-button:hover {
+    background-color: rgb(5, 150, 105);
+}
+
+.sr-save-button:disabled {
+    background-color: rgb(203, 213, 225);
+    opacity: 1;
+}
+
+.sr-save-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.sr-save-button-label {
+    color: rgb(255, 255, 255);
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+/* ---------------- WORKING OVERLAY ---------------- */
+
+.sr-working-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+.sr-working-card {
+    background-color: rgb(255, 255, 255);
+    border-radius: 28px;
+    padding: 44px 52px;
+    align-items: center;
+}
+
+.sr-working-spinner {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    border-width: 6px;
+    border-color: rgb(226, 232, 240);
+    border-top-color: rgb(37, 99, 235);
+    margin-bottom: 20px;
+}
+
+.sr-working-label {
+    color: rgb(15, 23, 42);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+/* ---------------- COMPACT ---------------- */
+
+.compact .sr-top-controls {
+    padding: 20px 22px 4px 22px;
+}
+
+.compact .sr-content {
+    padding: 6px 22px 48px 22px;
+}
+
+.compact .sr-title {
+    font-size: 34px;
+}
+
+.compact .sr-info-card {
+    width: 100%;
+    margin-right: 0;
+}
+
+.compact .sr-score-row {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.compact .sr-score-preview {
+    margin-top: 14px;
+    height: 76px;
+}

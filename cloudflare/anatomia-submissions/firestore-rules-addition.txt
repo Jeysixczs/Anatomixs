@@ -1,0 +1,68 @@
+// ============================================================
+// File Submission assignment type - Firestore rules addition
+// ============================================================
+//
+// Add the `match /fileSubmissions/{submissionId}` block below into your
+// existing rules_version = '2' service cloud.firestore { match /databases/... }
+// block, alongside your current `match /quizzes/{quizId}` and
+// `match /classrooms/{classroomId}` rules. Nothing about your existing
+// `quizzes`, `quizAttempts`, `classrooms` or `students` rules needs to change -
+// a File Submission quiz doc is still just a `quizzes/{quizId}` doc, gated by
+// whatever rules you already have for that collection.
+//
+// These rules are the SAME checks the Cloudflare Worker performs (see
+// cloudflare/anatomia-submissions/src/index.js) - defense in depth. The Worker
+// re-reads through the Firestore REST API using the calling user's own ID
+// token, so these rules apply to it exactly as they apply to the Unity client.
+//
+// Adjust `isTeacher()` / `isStudent()` / admin-doc lookups below to match
+// whatever helper functions your existing rules already define - these are
+// written standalone so they can be dropped in, but duplicate less if you
+// already have equivalent helpers.
+
+match /fileSubmissions/{submissionId} {
+
+  // A student may create their OWN submission doc, for a quiz that:
+  //   - is actually a file-submission assignment
+  //   - is published to the classroom they say it's for
+  //   - they are enrolled in that classroom
+  // The Worker has already validated the deadline/attempts/file type/size
+  // before this doc is ever written, but the create rule still re-checks
+  // ownership and quiz/classroom consistency independently.
+  allow create: if request.auth != null
+    && request.resource.data.studentId == request.auth.uid
+    && get(/databases/$(database)/documents/quizzes/$(request.resource.data.quizId)).data.submissionType == "file"
+    && request.auth.uid in get(/databases/$(database)/documents/classrooms/$(request.resource.data.classroomId)).data.memberIds;
+
+  // Read: the student who owns it, or the teacher who owns the classroom
+  // it belongs to.
+  allow read: if request.auth != null
+    && (resource.data.studentId == request.auth.uid
+        || resource.data.teacherId == request.auth.uid
+        || get(/databases/$(database)/documents/classrooms/$(resource.data.classroomId)).data.teacherId == request.auth.uid);
+
+  // Update: ONLY the owning teacher, and ONLY the grading fields - a student
+  // can never edit their own submission after creating it (no changing the
+  // file, score, or status client-side), and a teacher can never touch the
+  // file/identity fields of a submission.
+  allow update: if request.auth != null
+    && (resource.data.teacherId == request.auth.uid
+        || get(/databases/$(database)/documents/classrooms/$(resource.data.classroomId)).data.teacherId == request.auth.uid)
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+         ['status', 'score', 'feedback', 'reviewedAt', 'reviewedBy', 'attemptDocId']);
+
+  allow delete: if false; // submissions are never deleted client-side
+}
+
+// ------------------------------------------------------------
+// quizzes/{quizId} - no rule CHANGE required, just a reminder of the two new
+// fields your existing create/update rules should allow through unchanged:
+//
+//   submissionType          : "question" | "file"
+//   fileSubmissionSettings  : { allowedExtensions, allowedMimeTypes, maxFileSizeMB }
+//
+// If your existing rule for creating/updating a quiz uses an explicit
+// allow-list of field names (e.g. `request.resource.data.keys().hasOnly([...])`),
+// add "submissionType", "instructions" and "fileSubmissionSettings" to that
+// list - otherwise a File Submission quiz will fail to save.
+// ------------------------------------------------------------

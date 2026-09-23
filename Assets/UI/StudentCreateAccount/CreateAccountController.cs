@@ -15,6 +15,12 @@ namespace Anatomia3D.UI
         [Header("Compact breakpoint (px, logical screen width)")]
         [SerializeField] private int compactWidthThreshold = 900;
 
+        [Header("Password eye icons (optional - drag textures here to force the swap in code)")]
+        [Tooltip("Shown while the password is hidden. Leave empty to use the USS .icon-eye image.")]
+        [SerializeField] private Texture2D eyeOnIcon;
+        [Tooltip("Shown while the password is visible. Leave empty to use the USS .icon-eye-off image.")]
+        [SerializeField] private Texture2D eyeOffIcon;
+
         [Header("Password Requirements")]
         [SerializeField] private int minimumPasswordLength = 8;
 
@@ -49,18 +55,20 @@ namespace Anatomia3D.UI
         private Label _confirmPasswordError;
         private Button _toggleConfirmPasswordButton;
 
-        // Change to Button for click support
-        private Button _termsCheckbox;
-        private bool _termsAccepted = false;
-
         private Label _statusLabel;
 
         private bool _passwordVisible;
         private bool _confirmPasswordVisible;
 
         private VisualElement _passwordEyeIcon;
+        private VisualElement _confirmPasswordEyeIcon;
 
         private LoadingOverlay _loadingOverlay;
+        private const long RequestTimeoutMs = 25000; // stop waiting on the server after 25s
+        // Google's account picker is a native screen the user takes their time on, so the
+        // Google overlay's safety timeout is far longer than RequestTimeoutMs above.
+        private const long GoogleRequestTimeoutMs = 90000;
+        private const string GoogleSlowHint = "Still connecting to Google - this can take longer on a weak connection.";
         private void OnEnable()
         {
             if (_document == null)
@@ -79,6 +87,12 @@ namespace Anatomia3D.UI
             _passwordField.isPasswordField = true;
             _confirmPasswordField.isPasswordField = true;
 
+            // Fresh tree every time -> both fields start hidden; keep our flags/icons in sync.
+            _passwordVisible = false;
+            _confirmPasswordVisible = false;
+            ApplyEyeIcon(_passwordEyeIcon, false);
+            ApplyEyeIcon(_confirmPasswordEyeIcon, false);
+
             _loadingOverlay = new LoadingOverlay(_root);
         }
 
@@ -91,7 +105,6 @@ namespace Anatomia3D.UI
             _googleSignupButton?.UnregisterCallback<ClickEvent>(OnGoogleSignupClicked);
             _togglePasswordButton?.UnregisterCallback<ClickEvent>(OnTogglePasswordClicked);
             _toggleConfirmPasswordButton?.UnregisterCallback<ClickEvent>(OnToggleConfirmPasswordClicked);
-            _termsCheckbox?.UnregisterCallback<ClickEvent>(OnTermsClicked);
 
             _firstNameField?.UnregisterCallback<ChangeEvent<string>>(OnFirstNameChanged);
             _lastNameField?.UnregisterCallback<ChangeEvent<string>>(OnLastNameChanged);
@@ -126,10 +139,9 @@ namespace Anatomia3D.UI
             _confirmPasswordError = _root.Q<Label>("confirm-password-error");
             _toggleConfirmPasswordButton = _root.Q<Button>("toggle-confirm-password-button");
 
-            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye");
-            // Changed to Button for ClickEvent support
-            _termsCheckbox = _root.Q<Button>("terms-checkbox");
-
+            // The icon is a child of each toggle button; fall back to the button itself if not.
+            _passwordEyeIcon = _togglePasswordButton?.Q<VisualElement>(className: "icon-eye") ?? _togglePasswordButton;
+            _confirmPasswordEyeIcon = _toggleConfirmPasswordButton?.Q<VisualElement>(className: "icon-eye") ?? _toggleConfirmPasswordButton;
             _statusLabel = _root.Q<Label>("status-label");
         }
 
@@ -140,7 +152,6 @@ namespace Anatomia3D.UI
             _googleSignupButton?.RegisterCallback<ClickEvent>(OnGoogleSignupClicked);
             _togglePasswordButton?.RegisterCallback<ClickEvent>(OnTogglePasswordClicked);
             _toggleConfirmPasswordButton?.RegisterCallback<ClickEvent>(OnToggleConfirmPasswordClicked);
-            _termsCheckbox?.RegisterCallback<ClickEvent>(OnTermsClicked);
 
             _firstNameField?.RegisterCallback<ChangeEvent<string>>(OnFirstNameChanged);
             _lastNameField?.RegisterCallback<ChangeEvent<string>>(OnLastNameChanged);
@@ -308,29 +319,30 @@ namespace Anatomia3D.UI
             _passwordField.isPasswordField = !_passwordVisible;
 
 
-            if (_passwordEyeIcon != null)
-            {
-                _passwordEyeIcon.EnableInClassList("icon-eye-off", _passwordVisible);
-            }
+            ApplyEyeIcon(_passwordEyeIcon, _passwordVisible);
         }
 
         private void OnToggleConfirmPasswordClicked(ClickEvent evt)
         {
             _confirmPasswordVisible = !_confirmPasswordVisible;
             _confirmPasswordField.isPasswordField = !_confirmPasswordVisible;
+
+            ApplyEyeIcon(_confirmPasswordEyeIcon, _confirmPasswordVisible);
         }
 
-        private void OnTermsClicked(ClickEvent evt)
+        /// <summary>Swaps an eye icon. Toggles the "icon-eye-off" USS class AND, when the
+        /// eyeOn/eyeOff textures are assigned in the Inspector, sets the background image
+        /// inline (inline styles beat USS). With nothing assigned it relies on the USS only.</summary>
+        private void ApplyEyeIcon(VisualElement icon, bool passwordVisible)
         {
-            _termsAccepted = !_termsAccepted;
-            if (_termsAccepted)
-            {
-                _termsCheckbox.AddToClassList("checked");
-            }
-            else
-            {
-                _termsCheckbox.RemoveFromClassList("checked");
-            }
+            if (icon == null) return;
+
+            icon.EnableInClassList("icon-eye-off", passwordVisible);
+
+            var tex = passwordVisible ? eyeOffIcon : eyeOnIcon;
+            icon.style.backgroundImage = tex != null
+                ? new StyleBackground(tex)
+                : new StyleBackground(StyleKeyword.Null);
         }
 
         private void OnBackToLoginClicked(ClickEvent evt)
@@ -342,9 +354,16 @@ namespace Anatomia3D.UI
         private void OnGoogleSignupClicked(ClickEvent evt)
         {
             SetStatus("Connecting to Google...");
-          
             Debug.Log("[CreateAccountController] Google signup clicked");
-            
+
+            // Full-screen loading overlay until LoginWithGoogle calls back (it always does,
+            // including on cancel/error); the timeout is only a safety net for a hung request.
+            _loadingOverlay?.ShowWithTimeout("Connecting to Google...", GoogleRequestTimeoutMs, () =>
+            {
+                Debug.LogWarning("[CreateAccountController] Timed out waiting for Google sign-in - closing the overlay.");
+                SetStatus("This is taking too long. Check your connection and try again.");
+                _googleSignupButton.SetEnabled(true);
+            }, GoogleSlowHint);
             _googleSignupButton.SetEnabled(false);
 
             PlayerSessionManager.Instance?.LoginWithGoogle((success, errorMessage) =>
@@ -355,11 +374,14 @@ namespace Anatomia3D.UI
                 {
                     Debug.Log("[CreateAccountController] Google account signed up/in successfully");
                     SetStatus("Signed in with Google! Redirecting...");
+                    // Keep the overlay up through the 1s redirect delay (same as the email flow).
+                    _loadingOverlay?.Show("Signed in with Google! Redirecting...");
                     Invoke(nameof(RedirectAfterGoogle), 1f);
                 }
                 else
                 {
-                    Debug.LogError($"[CreateAccountController] Google signup failed: {errorMessage}");
+                    _loadingOverlay?.Hide();
+                    Debug.LogWarning($"[CreateAccountController] Google signup failed: {errorMessage}");
                     SetStatus(errorMessage ?? "Google sign-in failed. Please try again.");
                 }
             });
@@ -380,16 +402,15 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            if (!_termsAccepted)
-            {
-                SetStatus("Please accept the Terms of Service");
-                return;
-            }
-          
             SetStatus("Creating account...");
            
             _createAccountButton.SetEnabled(false);
-            _loadingOverlay.Show("Creating account...");
+            _loadingOverlay.ShowWithTimeout("Creating account...", RequestTimeoutMs, () =>
+            {
+                Debug.LogWarning("[CreateAccountController] Timed out waiting for the server - closing the overlay.");
+                SetStatus("This is taking too long. Check your connection and try again. If your account was created, try signing in.");
+                _createAccountButton.SetEnabled(true);
+            });
             PlayerSessionManager.Instance?.CreateStudentAccount(
                 fullName: $"{_firstNameField.value.Trim()} {_lastNameField.value.Trim()}",
                 email: _emailField.value.Trim(),
@@ -408,7 +429,7 @@ namespace Anatomia3D.UI
                     else
                     {
                         _loadingOverlay.Hide();
-                        Debug.LogError($"[CreateAccountController] Account creation failed: {errorMessage}");
+                        Debug.LogWarning($"[CreateAccountController] Account creation failed: {errorMessage}");
                         SetStatus($"Account creation failed: {errorMessage}");
                         _createAccountButton.SetEnabled(true);
                     }

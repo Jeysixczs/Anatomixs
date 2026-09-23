@@ -1022,59 +1022,62 @@
 
 .no-hints-card {
     background-color: rgb(255, 255, 255);
-    border-radius: 28px;
-    padding: 36px 32px 28px 32px;
-    max-width: 420px;
+    border-radius: 56px;
+    /* Sized for the 1080x1920 reference resolution: ~84% of the screen
+       width so it reads as a real popup on a phone, not a small tooltip. */
+    width: 84%;
+    max-width: 920px;
+    padding: 80px 60px 64px 60px;
     align-items: center;
-    border-width: 1px;
+    border-width: 2px;
     border-color: rgba(0, 0, 0, 0.06);
 }
 
 .no-hints-icon-circle {
-    width: 72px;
-    height: 72px;
-    border-radius: 36px;
+    width: 176px;
+    height: 176px;
+    border-radius: 88px;
     background-color: rgba(255, 176, 32, 0.16);
     justify-content: center;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 40px;
 }
 
 .no-hints-icon {
-    font-size: 32px;
+    font-size: 88px;
     -unity-text-align: middle-center;
 }
 
 .no-hints-title {
-    font-size: 20px;
+    font-size: 56px;
     -unity-font-style: bold;
     color: rgb(40, 50, 48);
     -unity-text-align: middle-center;
     white-space: normal;
-    margin-bottom: 8px;
+    margin-bottom: 24px;
 }
 
 .no-hints-message {
-    font-size: 15px;
+    font-size: 36px;
     color: rgb(110, 120, 118);
     -unity-text-align: middle-center;
     white-space: normal;
-    max-width: 340px;
-    margin-bottom: 24px;
+    align-self: stretch;
+    margin-bottom: 56px;
 }
 
 .no-hints-close-btn {
     width: auto;
-    min-width: 140px;
-    height: 48px;
-    border-radius: 24px;
+    min-width: 380px;
+    height: 116px;
+    border-radius: 58px;
     background-color: rgb(34, 197, 130);
     color: rgb(255, 255, 255);
     border-width: 0;
-    font-size: 15px;
+    font-size: 42px;
     -unity-font-style: bold;
-    padding-left: 28px;
-    padding-right: 28px;
+    padding-left: 72px;
+    padding-right: 72px;
     margin: 0;
     transition-property: background-color, scale;
     transition-duration: 0.12s;

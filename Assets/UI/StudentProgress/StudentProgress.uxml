@@ -51,7 +51,9 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label name="baseline-improvement-label" text="" class="level-caption hidden"/>
-                    <ui:Button name="baseline-take-posttest-button" text="Take Posttest" class="tab-button hidden"/>
+                    <ui:Button name="baseline-take-posttest-button" class="baseline-cta-button hidden">
+                        <ui:Label text="Take Posttest" class="baseline-cta-label" picking-mode="Ignore"/>
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement name="stats-row-1" class="stats-row">
                     <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">

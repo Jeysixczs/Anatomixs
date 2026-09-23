@@ -648,6 +648,10 @@ GameObject:
   - component: {fileID: 1051780058}
   - component: {fileID: 1051780060}
   - component: {fileID: 1051780059}
+  - component: {fileID: 1051780061}
+  - component: {fileID: 1051780064}
+  - component: {fileID: 1051780063}
+  - component: {fileID: 1051780062}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -707,6 +711,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Student.StudentLoginController
   gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  eyeOnIcon: {fileID: 2800000, guid: 0189665e15811c44e901e9116cc261a6, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: 737d9792ad11ddb4bb90c30ac38fe564, type: 3}
   compactWidthThreshold: 340
   compactHeightThreshold: 700
   landscapeHeightThreshold: 550
@@ -733,6 +739,8 @@ MonoBehaviour:
   studentClassroomScreen: {fileID: 9197481963319205126, guid: aec2a91a4c1fef74d87866d95e62910b, type: 3}
   studentQuizSelectionScreen: {fileID: 9197481963319205126, guid: 83e939716f66ed143b86d87ac01673ac, type: 3}
   studentQuizGameplayScreen: {fileID: 9197481963319205126, guid: d82b69fcc8b33314ea2cd01f9425e407, type: 3}
+  studentFileSubmissionScreen: {fileID: 9197481963319205126, guid: 9e692c701402606468a5794060021cca, type: 3}
+  adminSubmissionReviewScreen: {fileID: 9197481963319205126, guid: a660c44cc1faa2644a606871fe675eed, type: 3}
   studentProgressScreen: {fileID: 9197481963319205126, guid: 4f75a612e149db9428da5748333c5200, type: 3}
   studentQuizResultScreen: {fileID: 9197481963319205126, guid: 6ce67b8faabb61c4e927dbb33245d76f, type: 3}
   studentClassroomHubScreen: {fileID: 9197481963319205126, guid: f4987262301f4da4b8e24e5618bda6f5, type: 3}
@@ -820,6 +828,8 @@ MonoBehaviour:
   gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 0189665e15811c44e901e9116cc261a6, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: 737d9792ad11ddb4bb90c30ac38fe564, type: 3}
   minimumPasswordLength: 8
 --- !u!114 &1051780013
 MonoBehaviour:
@@ -922,6 +932,8 @@ MonoBehaviour:
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
   backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 75a1bb60b8ff3cd4e814dc6ab6dfb72d, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: e0e412575a7d3c746b4baae60a2fad7d, type: 3}
 --- !u!114 &1051780021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -959,6 +971,8 @@ MonoBehaviour:
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
   backgroundBottom: {r: 0.055, g: 0.02, b: 0.098, a: 1}
   compactWidthThreshold: 900
+  eyeOnIcon: {fileID: 2800000, guid: 75a1bb60b8ff3cd4e814dc6ab6dfb72d, type: 3}
+  eyeOffIcon: {fileID: 2800000, guid: e0e412575a7d3c746b4baae60a2fad7d, type: 3}
   minimumPasswordLength: 8
 --- !u!114 &1051780023
 MonoBehaviour:
@@ -1305,6 +1319,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b48a64a721645744e91d0ddb46b7db9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.Quiz.StudentQuizGameplayController
+  shuffleQuestionOrder: 1
+  shuffleAnswerOptions: 1
+  timerIcon: {fileID: 0}
+  pointsIcon: {fileID: 0}
   gradientStart: {r: 0.05490196, g: 0.64705884, b: 0.5411765, a: 1}
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
 --- !u!114 &1051780047
@@ -1554,6 +1572,62 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf0185cc04a9dd04ebebb5c4a5186641, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.BaselineAssessmentController
+--- !u!114 &1051780061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a62a142500eea439ed622daf298149, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.FileSubmissionService
+--- !u!114 &1051780062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b783be5986cb964fa9638daa4527145, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.Backend.R2FileUploadService
+  workerBaseUrl: https://anatomia-submissions.anatomia3d.workers.dev/
+  requestTimeoutSeconds: 120
+--- !u!114 &1051780063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 191069e10b65c144baf06605f5583721, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminSubmissionReviewController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
+  compactWidthThreshold: 900
+--- !u!114 &1051780064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051780004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f1f6c1ae7b95e541a70d3eacfbba618, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentFileSubmissionController
+  gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
+  gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
+  compactWidthThreshold: 900
 --- !u!1 &1092176651
 GameObject:
   m_ObjectHideFlags: 0

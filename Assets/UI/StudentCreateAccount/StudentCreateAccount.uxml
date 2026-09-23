@@ -44,15 +44,6 @@
                             </ui:Button>
                         </ui:VisualElement>
                         <ui:Label name="confirm-password-error" class="field-error hidden"/>
-                        <ui:VisualElement class="terms-row">
-                            <ui:Button name="terms-checkbox" class="terms-checkbox"/>   
-                            <ui:VisualElement class="terms-label-container">
-                                <ui:Label text="I agree to the " class="terms-text"/>
-                                <ui:Button text="Terms of Service" class="terms-link-button"/>
-                                <ui:Label text=" and " class="terms-text"/>
-                                <ui:Button text="Privacy Policy" class="terms-link-button"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
                         <ui:Button name="create-account-button" text="Create Account" class="create-account-button"/>
                         <ui:VisualElement class="divider-row">
                             <ui:VisualElement class="divider-line"/>
