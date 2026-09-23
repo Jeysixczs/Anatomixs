@@ -230,6 +230,66 @@
     word-wrap: break-word;
 }
 
+/* ---------- License / Attribution card content (paragraphs, quotes, captions, links) ---------- */
+
+.card-text
+{
+    font-size: 29px;
+    line-height: 40px;
+    color: rgb(90, 95, 112);
+    white-space: normal;
+    word-wrap: break-word;
+    margin-top: 26px;
+}
+
+.card-text-first
+{
+    margin-top: 0;
+}
+
+.card-text-last
+{
+    margin-bottom: 0;
+}
+
+.card-quote
+{
+    background-color: rgb(248, 245, 253);
+    border-left-width: 5px;
+    border-left-color: rgb(142, 45, 226);
+    border-radius: 12px;
+    padding: 20px 26px;
+    margin-top: 20px;
+}
+
+.card-quote-text
+{
+    font-size: 28px;
+    line-height: 38px;
+    color: rgb(63, 42, 92);
+    -unity-font-style: italic;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.card-caption
+{
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(150, 155, 168);
+    letter-spacing: 1px;
+    margin-top: 34px;
+    margin-bottom: 8px;
+}
+
+.card-link
+{
+    font-size: 27px;
+    color: rgb(142, 45, 226);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
 /* ---------- Developers list ---------- */
 
 .menu-card
@@ -292,6 +352,51 @@
 }
 
 .menu-divider
+{
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.06);
+    margin-left: 29px;
+    margin-right: 29px;
+}
+
+/* ---------- Z-Anatomy Authors (credits list: name + role, no avatar) ---------- */
+
+.credits-list
+{
+    width: 100%;
+    flex-direction: column;
+}
+
+.credit-row
+{
+    flex-direction: column;
+    padding: 26px 29px;
+}
+
+.credit-row-last
+{
+    padding-bottom: 26px;
+}
+
+.credit-name
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.credit-role
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+    margin-top: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.credit-divider
 {
     height: 1px;
     background-color: rgba(0, 0, 0, 0.06);
@@ -391,6 +496,38 @@
 .compact .info-card-text
 {
     font-size: 25px;
+}
+
+.compact .card-text
+{
+    font-size: 24px;
+    line-height: 33px;
+}
+
+.compact .card-quote-text
+{
+    font-size: 23px;
+    line-height: 31px;
+}
+
+.compact .card-caption
+{
+    font-size: 19px;
+}
+
+.compact .card-link
+{
+    font-size: 22px;
+}
+
+.compact .credit-name
+{
+    font-size: 27px;
+}
+
+.compact .credit-role
+{
+    font-size: 22px;
 }
 
 .compact .developer-name-label
