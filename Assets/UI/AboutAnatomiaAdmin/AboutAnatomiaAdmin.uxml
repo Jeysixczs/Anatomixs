@@ -26,7 +26,89 @@
                 <ui:VisualElement name="developers-card" class="menu-card">
                     <ui:VisualElement name="developers-list" class="developers-list"/>
                 </ui:VisualElement>
-                <ui:Label name="version-label" text="ANATOMIA  v0.1.0" class="version-label"/>
+                <ui:Label text="Attributions" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="attribution-card" class="info-card">
+                    <ui:Label name="attribution-text-label" text="3D anatomical models are based on &quot;BodyParts3D&quot; by The Database Center for Life Science (CC BY-SA 2.1 Japan) and &quot;Z-Anatomy - The Libre 3D Atlas of Anatomy&quot; (CC BY-SA 4.0), used and adapted under the Creative Commons Attribution-ShareAlike 4.0 International License. Anatomical definitions are adapted from Wikipedia (CC BY-SA 3.0). Derivative works remain licensed under the same terms." class="info-card-text"/>
+                    <ui:Label name="attribution-link-label" text="creativecommons.org/licenses/by-sa/4.0" class="attribution-link"/>
+                </ui:VisualElement>
+                <ui:Label text="3D Models &amp; Licenses" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="models-license-card" class="info-card">
+                    <ui:Label name="models-intro-label" text="The Skeletal System, Muscular System, and Cardiovascular System 3D models used in Anatomia are adapted from:" class="card-text card-text-first"/>
+                    <ui:VisualElement name="models-citation-quote" class="card-quote">
+                        <ui:Label text="&#8220;Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0&#8221;" class="card-quote-text"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Z-Anatomy content is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)." class="card-text"/>
+
+                    <ui:Label text="ORIGINAL MODEL SOURCE" class="card-caption"/>
+                    <ui:VisualElement name="original-source-quote" class="card-quote">
+                        <ui:Label text="&#8220;BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan&#8221;" class="card-quote-text"/>
+                    </ui:VisualElement>
+
+                    <ui:Label text="Z-ANATOMY SOURCE" class="card-caption"/>
+                    <ui:Label text="github.com/Z-Anatomy/Models-of-human-anatomy" class="card-link"/>
+
+                    <ui:Label text="BODYPARTS3D SOURCE" class="card-caption"/>
+                    <ui:Label text="dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" class="card-link"/>
+
+                    <ui:Label text="The models have been adapted and integrated into the Anatomia Unity application for interactive human anatomy learning." class="card-text card-text-last"/>
+                </ui:VisualElement>
+
+                <ui:Label text="License" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="license-card" class="info-card">
+                    <ui:Label text="CC BY-SA 4.0 permits the use, redistribution, and creation of derivative works from the licensed content, provided that appropriate attribution is given and derivative works are distributed under the same license." class="card-text card-text-first card-text-last"/>
+                </ui:VisualElement>
+
+                <ui:Label text="Z-Anatomy Authors" class="section-title section-title-spaced"/>
+                <ui:VisualElement name="authors-card" class="menu-card">
+                    <ui:VisualElement name="authors-list" class="credits-list">
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Kousaku Okubo" class="credit-name"/>
+                            <ui:Label text="Original BodyParts3D model" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Gauthier Kervyn" class="credit-name"/>
+                            <ui:Label text="Design, 3D, anatomy" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Marcin Zielinski" class="credit-name"/>
+                            <ui:Label text="Blender add-on" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Lluis Vinent" class="credit-name"/>
+                            <ui:Label text="Unity development" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Ana Teresa Bigio" class="credit-name"/>
+                            <ui:Label text="Portuguese translation" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Carlos Torres Villar" class="credit-name"/>
+                            <ui:Label text="Spanish translation" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Paola Perin, Daniele Cossellu, Elisa Vivado" class="credit-name"/>
+                            <ui:Label text="Italian translation" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row">
+                            <ui:Label text="Jadwiga Palosz" class="credit-name"/>
+                            <ui:Label text="Polish translation" class="credit-role"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="credit-divider"/>
+                        <ui:VisualElement class="credit-row credit-row-last">
+                            <ui:Label text="Shariar Ahmadpour" class="credit-name"/>
+                            <ui:Label text="Parsi translation" class="credit-role"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:Label name="version-label" text="ANATOMIA  v1.0.0" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>
