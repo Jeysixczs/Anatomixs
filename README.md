@@ -601,6 +601,8 @@ Target: Radiologic Technology Students
 
 GitHub: [Jeysixczs](https://github.com/Jeysixczs)
 
+GitHub: [JMAcopio](https://github.com/JMacopio)
+
 ## License
 
 Copyright © 2026 JeysiDev / Anatomia.
