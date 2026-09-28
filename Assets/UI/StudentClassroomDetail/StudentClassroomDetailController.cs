@@ -889,8 +889,14 @@ namespace Anatomia3D.UI
                 var q = quizzes[i];
                 int index = i;
 
-                Action<bool, bool> resolve = (checkOk, canStart) =>
+                Action<bool, bool, QuizService.AttemptEligibility> resolve = (checkOk, canStart, elig) =>
                 {
+                    // A teacher-granted retake changes this student's attempt limit and deadline.
+                    bool hasGrant = elig != null && elig.HasRetakeGrant;
+                    int cardMaxAttempts = hasGrant ? elig.MaxAttempts : q.MaxAttempts;
+                    bool cardDeadlineEnabled = hasGrant ? elig.EffectiveDeadlineUtc.HasValue : q.IsDeadlineEnabled;
+                    DateTime? cardDeadline = hasGrant ? elig.EffectiveDeadlineUtc : q.DeadlineUtc;
+
                     var block = QuizStartBlock.None;
                     if (checkOk && !canStart)
                     {
@@ -898,12 +904,12 @@ namespace Anatomia3D.UI
                         // before attempts), so the reason shown here always matches what
                         // the real submit-time re-check would report if the button were
                         // clickable.
-                        bool deadlinePassed = q.IsDeadlineEnabled && q.DeadlineUtc.HasValue
-                            && DateTime.UtcNow > q.DeadlineUtc.Value;
+                        bool deadlinePassed = cardDeadlineEnabled && cardDeadline.HasValue
+                            && DateTime.UtcNow > cardDeadline.Value;
                         block = deadlinePassed ? QuizStartBlock.DeadlineExpired : QuizStartBlock.NoAttemptsLeft;
                     }
 
-                    cards[index] = ToQuizCardInfo(q, block);
+                    cards[index] = ToQuizCardInfo(q, block, cardMaxAttempts, cardDeadlineEnabled, cardDeadline);
 
                     remaining--;
                     if (remaining == 0 && !isStale())
@@ -919,21 +925,23 @@ namespace Anatomia3D.UI
                 if (SubmissionTypes.IsFileSubmission(q.SubmissionType))
                 {
                     FileSubmissionService.Instance.CheckSubmitEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
-                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanSubmit));
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanSubmit, null));
                 }
                 else
                 {
                     QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
-                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanStart));
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanStart, eligibility));
                 }
             }
         }
 
-        private static QuizCardInfo ToQuizCardInfo(ClassroomService.QuizSummary q, QuizStartBlock startBlock)
+        private static QuizCardInfo ToQuizCardInfo(ClassroomService.QuizSummary q, QuizStartBlock startBlock,
+            int? maxAttempts = null, bool? deadlineEnabled = null, DateTime? deadlineUtc = null)
         {
             return new QuizCardInfo(
                 q.QuizId, q.Title, q.Category, q.QuestionCount, q.TimeLimitMinutes, q.HasTimeLimit,
-                q.MaxAttempts, q.IsDeadlineEnabled, q.DeadlineUtc,
+                maxAttempts ?? q.MaxAttempts, deadlineEnabled ?? q.IsDeadlineEnabled,
+                deadlineEnabled.HasValue ? deadlineUtc : q.DeadlineUtc,
                 q.TotalPoints, Capitalize(q.Difficulty), true, startBlock, q.SubmissionType);
         }
 

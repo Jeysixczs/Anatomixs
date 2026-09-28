@@ -1455,6 +1455,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnatomyPlayModeController
   pointsPerCorrectAnswer: 1
+  answeredStructureColor: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
   firebase: {fileID: 1051780051}
   localStorage: {fileID: 1051780053}
   syncService: {fileID: 1051780052}

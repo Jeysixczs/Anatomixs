@@ -754,6 +754,27 @@ namespace Anatomia3D.Backend
             /// should open (StudentQuizGameplayController vs
             /// StudentFileSubmissionController).</summary>
             public string SubmissionType = SubmissionTypes.Question;
+
+            /// <summary>Retake exams only: when non-empty, only these students may see the
+            /// quiz. Empty = visible to the whole classroom.</summary>
+            public List<string> AllowedStudentIds = new List<string>();
+
+            /// <summary>Retake exams only: the quiz this one is a retake of.</summary>
+            public string RetakeOfQuizId;
+
+            public bool IsRetake => !string.IsNullOrEmpty(RetakeOfQuizId);
+        }
+
+        /// <summary>False for a retake exam that was assigned to OTHER students. Applied on the
+        /// student side only - with no signed-in student (the teacher's view) nothing is hidden.</summary>
+        private static bool IsVisibleToCurrentStudent(QuizSummary q)
+        {
+            if (q == null) return false;
+            if (q.AllowedStudentIds == null || q.AllowedStudentIds.Count == 0) return true;
+
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+            if (student == null) return true;
+            return q.AllowedStudentIds.Contains(student.Uid);
         }
 
         /// <summary>Call when showing the Available Quizzes tab. Reads the classroom's
@@ -821,7 +842,7 @@ namespace Anatomia3D.Backend
             void PushMerged()
             {
                 var merged = new List<QuizSummary>();
-                foreach (var kv in latestByChunk.OrderBy(k => k.Key)) merged.AddRange(kv.Value);
+                foreach (var kv in latestByChunk.OrderBy(k => k.Key)) merged.AddRange(kv.Value.Where(IsVisibleToCurrentStudent));
                 onUpdate?.Invoke(merged);
             }
 
@@ -909,7 +930,7 @@ namespace Anatomia3D.Backend
                         }
 
                         remaining--;
-                        if (remaining == 0) onComplete?.Invoke(results);
+                        if (remaining == 0) onComplete?.Invoke(results.Where(IsVisibleToCurrentStudent).ToList());
                     });
             }
         }
@@ -963,7 +984,11 @@ namespace Anatomia3D.Backend
                     : (DateTime?)null,
                 TotalPoints = totalPoints,
                 Difficulty = difficulty,
-                SubmissionType = submissionType
+                SubmissionType = submissionType,
+                AllowedStudentIds = doc.ContainsField("allowedStudentIds")
+                    ? doc.GetValue<List<string>>("allowedStudentIds")
+                    : new List<string>(),
+                RetakeOfQuizId = doc.ContainsField("retakeOfQuizId") ? doc.GetValue<string>("retakeOfQuizId") : null
             };
         }
 

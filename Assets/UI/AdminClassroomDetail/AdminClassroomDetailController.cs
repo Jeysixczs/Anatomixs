@@ -609,7 +609,8 @@ namespace Anatomia3D.UI
                 {
                     var record = records[i];
                     bool published = !string.IsNullOrEmpty(record.QuizId) && _publishedQuizIds.Contains(record.QuizId);
-                    _quizzesList.Add(BuildQuizRow(record.QuizId, record.Title, record.Category, published, i == records.Count - 1));
+                    bool canRetake = !record.IsFileSubmission && !record.IsRetake && record.MaxAttempts > 0;
+                    _quizzesList.Add(BuildQuizRow(record.QuizId, record.Title, record.Category, published, i == records.Count - 1, canRetake));
                 }
             });
         }
@@ -1441,7 +1442,7 @@ namespace Anatomia3D.UI
             return row;
         }
 
-        private VisualElement BuildQuizRow(string quizId, string title, string category, bool published, bool isLast)
+        private VisualElement BuildQuizRow(string quizId, string title, string category, bool published, bool isLast, bool canRetake)
         {
             var row = new VisualElement();
             row.AddToClassList("quiz-row");
@@ -1473,8 +1474,35 @@ namespace Anatomia3D.UI
             _quizRows.Add(quizRow);
 
             row.Add(textContainer);
+
+            // Retake button: opens the "Create Retake Exam" dialog for this quiz. Not shown for
+            // file-submission quizzes or for retake copies (they can't be retaken again).
+            if (canRetake)
+            {
+                var retakeButton = new Button(() => OnRetakeClicked(quizId, title)) { text = "Retake" };
+                retakeButton.AddToClassList("quiz-retake-button");
+                var rs = retakeButton.style;
+                rs.flexShrink = 0;
+                rs.marginRight = 24;
+                rs.paddingLeft = rs.paddingRight = 28;
+                rs.paddingTop = rs.paddingBottom = 14;
+                rs.fontSize = 28;
+                rs.unityFontStyleAndWeight = FontStyle.Bold;
+                rs.color = Color.white;
+                rs.backgroundColor = new Color(0.13f, 0.55f, 0.42f);
+                rs.borderTopWidth = rs.borderBottomWidth = rs.borderLeftWidth = rs.borderRightWidth = 0;
+                rs.borderTopLeftRadius = rs.borderTopRightRadius = rs.borderBottomLeftRadius = rs.borderBottomRightRadius = 20;
+                row.Add(retakeButton);
+            }
+
             row.Add(toggle);
             return row;
+        }
+
+        private void OnRetakeClicked(string quizId, string quizTitle)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || string.IsNullOrEmpty(quizId)) return;
+            AdminRetakeExamModal.Show(_screenRoot ?? _root, _classroomId, quizId, quizTitle, LoadQuizzesTab);
         }
 
         private static string GetInitials(string fullName)
