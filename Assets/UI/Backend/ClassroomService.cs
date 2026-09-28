@@ -1160,6 +1160,9 @@ namespace Anatomia3D.Backend
             /// left blank by FetchRecentJoins (student side), which doesn't need it
             /// since the joins it returns are always the current student's own.</summary>
             public string StudentName;
+            /// <summary>Only populated by FetchRecentJoinsForClassrooms (the members doc id ==
+            /// the student's uid) - lets the admin feed load their profile picture.</summary>
+            public string StudentId;
         }
 
         /// <summary>Call when showing StudentDashboardController's Recent Activity card.
@@ -1259,7 +1262,8 @@ namespace Anatomia3D.Backend
                                     ClassroomId = classroomId,
                                     ClassroomName = classroomName,
                                     JoinedAt = doc.GetValue<Timestamp>("joinedAt"),
-                                    StudentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student"
+                                    StudentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student",
+                                    StudentId = doc.Id
                                 });
                             }
                         }

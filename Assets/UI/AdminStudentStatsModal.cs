@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
 
@@ -40,8 +39,11 @@ namespace Anatomia3D.UI
         /// <param name="classroomId">Selected classroom (used for the per-quiz scores).</param>
         /// <param name="students">Roster from AdminClassroomService.FetchClassroomAnalytics.</param>
         /// <param name="quizzes">Quizzes published to the classroom (may be empty).</param>
+        /// <param name="openStudentId">Optional. When set (and found in students), the modal opens
+        /// straight on that student's stats instead of the list; the back arrow still goes to the list.</param>
         public static void Show(VisualElement host, string classroomId,
-            List<AdminClassroomService.StudentStat> students, List<QuizService.QuizRecord> quizzes)
+            List<AdminClassroomService.StudentStat> students, List<QuizService.QuizRecord> quizzes,
+            string openStudentId = null)
         {
             if (host == null) return;
 
@@ -210,6 +212,12 @@ namespace Anatomia3D.UI
 
             backButton.clicked += ShowList;
             ShowList();
+
+            if (!string.IsNullOrEmpty(openStudentId))
+            {
+                var preselected = students.FirstOrDefault(x => x.StudentId == openStudentId);
+                if (preselected != null) ShowDetail(preselected);
+            }
         }
 
         // ---------------- Play Mode progress ----------------
@@ -443,6 +451,11 @@ namespace Anatomia3D.UI
             return tile;
         }
 
+        /// <summary>Round student avatar (profile picture if the student has one, initials
+        /// otherwise). Shared with the Student Activity card on the Analytics screen.</summary>
+        public static VisualElement CreateAvatar(string name, float size, string studentId = null)
+            => MakeAvatar(name, size, studentId);
+
         private static VisualElement MakeAvatar(string name, float size, string studentId = null)
         {
             var avatar = new VisualElement();
@@ -458,94 +471,10 @@ namespace Anatomia3D.UI
             var initialLabel = MakeLabel(initial, Mathf.RoundToInt(size * 0.45f), FontStyle.Bold, Color.white);
             avatar.Add(initialLabel);
 
-            // Profile picture (students/{uid}.avatarUrl). Initials stay as the fallback for
-            // students with no photo or if the download fails.
-            if (!string.IsNullOrEmpty(studentId))
-            {
-                LoadAvatarTexture(studentId, tex =>
-                {
-                    // NOTE: no avatar.panel check here - on a cache hit this callback runs
-                    // synchronously, before the avatar has been added to the modal, so its panel
-                    // is still null at that point. Adding the image to a detached element is harmless.
-                    if (tex == null) return; // no photo for this student
-
-                    var image = new Image { image = tex, scaleMode = ScaleMode.ScaleAndCrop };
-                    image.style.position = Position.Absolute;
-                    image.style.left = image.style.top = image.style.right = image.style.bottom = 0;
-                    avatar.Add(image);
-                    initialLabel.style.display = DisplayStyle.None;
-                });
-            }
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initialLabel, studentId);
 
             return avatar;
-        }
-
-        // ---------------- profile picture loading ----------------
-
-        // Kept for the rest of the session so reopening the modal / going back to the list
-        // doesn't re-download every photo. A missing entry means "not fetched yet"; a null
-        // value means "fetched, this student has no usable photo".
-        private static readonly Dictionary<string, Texture2D> AvatarCache = new Dictionary<string, Texture2D>();
-        private static readonly Dictionary<string, List<Action<Texture2D>>> AvatarPending =
-            new Dictionary<string, List<Action<Texture2D>>>();
-
-        private static void LoadAvatarTexture(string studentId, Action<Texture2D> onLoaded)
-        {
-            if (AvatarCache.TryGetValue(studentId, out var cached))
-            {
-                // A null entry means "this student has no photo"; a non-null-but-destroyed
-                // texture (Unity can unload it on a scene change) is stale, so refetch.
-                if (ReferenceEquals(cached, null) || cached)
-                {
-                    onLoaded(cached);
-                    return;
-                }
-                AvatarCache.Remove(studentId);
-            }
-
-            // Same student requested twice while the first request is still in flight
-            // (list row -> detail banner): share it.
-            if (AvatarPending.TryGetValue(studentId, out var waiting))
-            {
-                waiting.Add(onLoaded);
-                return;
-            }
-
-            AvatarPending[studentId] = new List<Action<Texture2D>> { onLoaded };
-
-            void Finish(Texture2D tex)
-            {
-                AvatarCache[studentId] = tex;
-                if (AvatarPending.TryGetValue(studentId, out var callbacks))
-                {
-                    AvatarPending.Remove(studentId);
-                    foreach (var cb in callbacks) cb(tex);
-                }
-            }
-
-            if (AdminClassroomService.Instance == null) { Finish(null); return; }
-
-            AdminClassroomService.Instance.FetchStudentAvatarUrl(studentId, url =>
-            {
-                if (string.IsNullOrEmpty(url)) { Finish(null); return; }
-
-                var request = UnityWebRequestTexture.GetTexture(url);
-                var op = request.SendWebRequest();
-                op.completed += _ =>
-                {
-                    Texture2D tex = null;
-                    if (request.result == UnityWebRequest.Result.Success)
-                    {
-                        tex = DownloadHandlerTexture.GetContent(request);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[AdminStudentStatsModal] Could not load avatar for '{studentId}': {request.error}");
-                    }
-                    request.Dispose();
-                    Finish(tex);
-                };
-            });
         }
 
         private static (Color bg, Color fg) ScoreColors(float percent, bool hasScore)

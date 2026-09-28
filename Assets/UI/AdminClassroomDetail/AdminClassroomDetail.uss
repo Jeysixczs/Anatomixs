@@ -853,6 +853,25 @@
     color: white;
 }
 
+.performer-avatar
+{
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    background-color: rgb(219, 234, 254);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+}
+
+.performer-avatar-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+}
+
 .performer-name-label
 {
     font-size: 32px;

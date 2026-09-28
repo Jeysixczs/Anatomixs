@@ -128,11 +128,13 @@ namespace Anatomia3D.UI
         /// <summary>A single row in the Students tab.</summary>
         public struct PeerInfo
         {
+            public string StudentId;
             public string Name;
             public int Level;
 
-            public PeerInfo(string name, int level)
+            public PeerInfo(string name, int level, string studentId = null)
             {
+                StudentId = studentId;
                 Name = name;
                 Level = level;
             }
@@ -771,7 +773,7 @@ namespace Anatomia3D.UI
         {
             _lastRoster = roster;
 
-            SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
+            SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level, m.StudentId)));
             RenderLeaderboardFromRoster(_lastDetail?.LeaderboardVisible ?? false, roster);
             ApplyClassroomInfoFromCache();
         }
@@ -1347,6 +1349,9 @@ namespace Anatomia3D.UI
             initialsLabel.AddToClassList("peer-avatar-label");
             avatar.Add(initialsLabel);
 
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initialsLabel, peer.StudentId);
+
             var nameLabel = new Label(peer.Name);
             nameLabel.AddToClassList("peer-name-label");
 
@@ -1580,6 +1585,9 @@ namespace Anatomia3D.UI
             var initialsLabel = new Label(GetInitials(performer.Name));
             initialsLabel.AddToClassList("performer-avatar-label");
             avatar.Add(initialsLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initialsLabel, performer.StudentId);
 
             var info = new VisualElement();
             info.AddToClassList("performer-info");

@@ -229,7 +229,7 @@ namespace Anatomia3D.UI
         private string _classroomId = "";
         private string _classroomCode = "";
         private string _classroomName = "";
-        private readonly List<(string name, int points, int quizzesCompleted)> _lastTopPerformers = new();
+        private readonly List<(string studentId, string name, int points, int quizzesCompleted)> _lastTopPerformers = new();
 
         private void OnEnable()
         {
@@ -564,7 +564,7 @@ namespace Anatomia3D.UI
             AdminClassroomService.Instance.FetchClassroomAnalytics(_classroomId, analytics =>
             {
                 SetAnalyticsOverview(analytics.TotalPointsEarned, analytics.TotalQuizzesCompleted, analytics.AvgScorePercent, analytics.ActiveStudents);
-                SetLeaderboard(analytics.Leaderboard.ConvertAll(s => (s.Name, s.Points, s.QuizzesCompleted)));
+                SetLeaderboard(analytics.Leaderboard.ConvertAll(s => (s.StudentId, s.Name, s.Points, s.QuizzesCompleted)));
                 SetStudents(analytics.Students.ConvertAll(s => (s.StudentId, s.Name, s.Points, s.QuizzesCompleted)));
 
                 // Header stats: SetClassroomData() seeded these with whatever the caller
@@ -629,7 +629,7 @@ namespace Anatomia3D.UI
         /// inline "Leaderboard" card in the Analytics tab. This is the complete
         /// leaderboard, not a preview - every entry passed in is rendered.
         /// </summary>
-        public void SetLeaderboard(List<(string name, int points, int quizzesCompleted)> rankedStudents)
+        public void SetLeaderboard(List<(string studentId, string name, int points, int quizzesCompleted)> rankedStudents)
         {
             _lastTopPerformers.Clear();
             if (rankedStudents != null) _lastTopPerformers.AddRange(rankedStudents);
@@ -644,8 +644,8 @@ namespace Anatomia3D.UI
 
             for (int i = 0; i < _lastTopPerformers.Count; i++)
             {
-                var (name, points, _) = _lastTopPerformers[i];
-                _topPerformersList.Add(BuildPerformerRow(i + 1, name, points));
+                var (studentId, name, points, _) = _lastTopPerformers[i];
+                _topPerformersList.Add(BuildPerformerRow(i + 1, studentId, name, points));
             }
         }
 
@@ -1374,7 +1374,7 @@ namespace Anatomia3D.UI
 
         // ---------------- Row builders (built at runtime - lists are dynamic) ----------------
 
-        private VisualElement BuildPerformerRow(int rank, string name, int points)
+        private VisualElement BuildPerformerRow(int rank, string studentId, string name, int points)
         {
             var row = new VisualElement();
             row.AddToClassList("performer-row");
@@ -1392,6 +1392,15 @@ namespace Anatomia3D.UI
             rankLabel.AddToClassList("performer-rank-label");
             badge.Add(rankLabel);
 
+            var avatar = new VisualElement();
+            avatar.AddToClassList("performer-avatar");
+            var initialsLabel = new Label(GetInitials(name));
+            initialsLabel.AddToClassList("performer-avatar-label");
+            avatar.Add(initialsLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); the initials stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initialsLabel, studentId);
+
             var nameLabel = new Label(name);
             nameLabel.AddToClassList("performer-name-label");
 
@@ -1399,6 +1408,7 @@ namespace Anatomia3D.UI
             pointsLabel.AddToClassList("performer-points-label");
 
             row.Add(badge);
+            row.Add(avatar);
             row.Add(nameLabel);
             row.Add(pointsLabel);
             return row;
@@ -1415,6 +1425,10 @@ namespace Anatomia3D.UI
             var initialsLabel = new Label(GetInitials(name));
             initialsLabel.AddToClassList("student-avatar-label");
             avatar.Add(initialsLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); the initials stay as the fallback
+            // for students without a photo or if the download fails.
+            StudentAvatarLoader.Apply(avatar, initialsLabel, studentId);
 
             var info = new VisualElement();
             info.AddToClassList("student-info");

@@ -45,9 +45,12 @@ namespace Anatomia3D.UI
             public int ScoreCorrect;
             public int ScoreTotal;
             public float PercentScore;
+            /// <summary>Used to load the student's profile picture; null falls back to initials.</summary>
+            public string StudentId;
 
-            public TopPerformer(string name, int scoreCorrect, int scoreTotal, float percentScore)
+            public TopPerformer(string name, int scoreCorrect, int scoreTotal, float percentScore, string studentId = null)
             {
+                StudentId = studentId;
                 Name = name;
                 ScoreCorrect = scoreCorrect;
                 ScoreTotal = scoreTotal;
@@ -730,7 +733,7 @@ namespace Anatomia3D.UI
                     .OrderByDescending(s => s.PercentScore)
                     .ThenBy(s => s.StudentName)
                     .Take(10)
-                    .Select(s => new TopPerformer(s.StudentName, s.ScoreCorrect, s.ScoreTotal, s.PercentScore))
+                    .Select(s => new TopPerformer(s.StudentName, s.ScoreCorrect, s.ScoreTotal, s.PercentScore, s.StudentId))
                     .ToList());
             });
 
@@ -967,6 +970,15 @@ namespace Anatomia3D.UI
                 badge.Add(rankLabel);
                 row.Add(badge);
 
+                var avatar = new VisualElement();
+                avatar.AddToClassList("performer-avatar");
+                var initialsLabel = new Label(GetPerformerInitials(performer.Name));
+                initialsLabel.AddToClassList("performer-avatar-label");
+                avatar.Add(initialsLabel);
+                // Profile picture (students/{uid}.avatarUrl); the initials stay as the fallback.
+                StudentAvatarLoader.Apply(avatar, initialsLabel, performer.StudentId);
+                row.Add(avatar);
+
                 var info = new VisualElement();
                 info.AddToClassList("performer-info");
                 var nameLabel = new Label(performer.Name);
@@ -989,6 +1001,16 @@ namespace Anatomia3D.UI
 
                 _topPerformersList.Add(row);
             }
+        }
+
+        /// <summary>First letter of the first and last word ("Juan Dela Cruz" -> "JC"),
+        /// or one letter for a single name.</summary>
+        private static string GetPerformerInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+            var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+            return (parts[0].Substring(0, 1) + parts[parts.Length - 1].Substring(0, 1)).ToUpperInvariant();
         }
 
         private static string RankBadgeClass(int rank)

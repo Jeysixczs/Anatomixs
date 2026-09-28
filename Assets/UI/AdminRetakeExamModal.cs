@@ -254,7 +254,7 @@ namespace Anatomia3D.UI
                     var box = MakeCheckBox(out var mark);
                     rowEl.Add(box);
 
-                    var avatar = MakeAvatar(r.StudentName, DangerSoft, Danger);
+                    var avatar = MakeAvatar(r.StudentName, DangerSoft, Danger, r.StudentId);
                     avatar.style.marginLeft = 20;
                     rowEl.Add(avatar);
 
@@ -329,7 +329,7 @@ namespace Anatomia3D.UI
                     rowEl.style.borderTopColor = rowEl.style.borderBottomColor =
                         rowEl.style.borderLeftColor = rowEl.style.borderRightColor = Line;
 
-                    rowEl.Add(MakeAvatar(row.StudentName, soft == Surface ? Line : soft, strong));
+                    rowEl.Add(MakeAvatar(row.StudentName, soft == Surface ? Line : soft, strong, row.StudentId));
 
                     var info = new VisualElement();
                     info.style.flexGrow = 1;
@@ -525,7 +525,7 @@ namespace Anatomia3D.UI
             SetBorderColor(row, on ? Accent : Line);
         }
 
-        private static VisualElement MakeAvatar(string name, Color background, Color textColor)
+        private static VisualElement MakeAvatar(string name, Color background, Color textColor, string studentId = null)
         {
             string initial = string.IsNullOrWhiteSpace(name) ? "?" : name.Trim().Substring(0, 1).ToUpperInvariant();
 
@@ -536,7 +536,11 @@ namespace Anatomia3D.UI
             avatar.style.alignItems = Align.Center;
             avatar.style.justifyContent = Justify.Center;
             Radius(avatar, 38);
-            avatar.Add(MakeLabel(initial, 32, FontStyle.Bold, textColor));
+            var initialLabel = MakeLabel(initial, 32, FontStyle.Bold, textColor);
+            avatar.Add(initialLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initialLabel, studentId);
             return avatar;
         }
 

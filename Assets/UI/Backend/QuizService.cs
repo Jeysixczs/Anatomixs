@@ -1173,6 +1173,9 @@ namespace Anatomia3D.Backend
             /// <summary>Firestore quizAttempts doc id - stable dedup/diff key for the
             /// live-updating admin activity feed.</summary>
             public string DocId;
+            /// <summary>The student's uid (quizAttempts.studentId) - lets the admin feed load
+            /// their profile picture.</summary>
+            public string StudentId;
             public string StudentName;
             public string QuizTitle;
             public string ClassroomName;
@@ -1479,6 +1482,7 @@ namespace Anatomia3D.Backend
             {
                 Type = ActivityType.QuizCompleted,
                 DocId = doc.Id,
+                StudentId = doc.ContainsField("studentId") ? doc.GetValue<string>("studentId") : null,
                 StudentName = studentName,
                 QuizTitle = quizTitle,
                 ClassroomName = string.IsNullOrEmpty(classroomName) ? "Classroom" : classroomName,

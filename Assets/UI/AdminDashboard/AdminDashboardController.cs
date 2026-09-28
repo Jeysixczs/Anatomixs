@@ -85,6 +85,7 @@ namespace Anatomia3D.UI
             public readonly DateTime OccurredAtUtc;
 
             // Quiz-completion fields (ignored for ClassroomJoin rows)
+            public readonly string StudentId;
             public readonly string StudentName;
             public readonly string QuizTitle;
             public readonly string ClassroomName;
@@ -101,6 +102,7 @@ namespace Anatomia3D.UI
                 Id = "quiz:" + quiz.DocId;
                 Kind = ActivityKind.QuizCompleted;
                 OccurredAtUtc = quiz.OccurredAt.ToDateTime();
+                StudentId = quiz.StudentId;
                 StudentName = quiz.StudentName;
                 QuizTitle = quiz.QuizTitle;
                 ClassroomName = quiz.ClassroomName;
@@ -121,6 +123,7 @@ namespace Anatomia3D.UI
                 Kind = ActivityKind.ClassroomJoin;
                 OccurredAtUtc = occurredAt;
                 JoinText = $"{join.StudentName} joined '{join.ClassroomName}'";
+                StudentId = join.StudentId;
                 StudentName = join.StudentName;
                 QuizTitle = null;
                 ClassroomName = join.ClassroomName;
@@ -1023,7 +1026,7 @@ namespace Anatomia3D.UI
             card.AddToClassList("activity-quiz-card");
             card.userData = data.OccurredAtUtc;
 
-            card.Add(BuildActivityAvatar(data.StudentName, band));
+            card.Add(BuildActivityAvatar(data.StudentName, band, data.StudentId));
 
             var body = new VisualElement();
             body.AddToClassList("activity-body");
@@ -1084,7 +1087,7 @@ namespace Anatomia3D.UI
             row.AddToClassList("recent-activity-row");
             row.userData = data.OccurredAtUtc;
 
-            row.Add(BuildActivityAvatar(data.StudentName, null));
+            row.Add(BuildActivityAvatar(data.StudentName, null, data.StudentId));
 
             var body = new VisualElement();
             body.AddToClassList("activity-body");
@@ -1112,7 +1115,7 @@ namespace Anatomia3D.UI
 
         /// <summary>Round avatar with the student's initials. <paramref name="band"/> is
         /// "high"/"mid"/"low" to tint it by score, or null for the neutral blue.</summary>
-        private static VisualElement BuildActivityAvatar(string studentName, string band)
+        private static VisualElement BuildActivityAvatar(string studentName, string band, string studentId = null)
         {
             var avatar = new VisualElement();
             avatar.AddToClassList("activity-avatar");
@@ -1121,6 +1124,9 @@ namespace Anatomia3D.UI
             var initials = new Label(GetActivityInitials(studentName));
             initials.AddToClassList("activity-avatar-label");
             avatar.Add(initials);
+
+            // Profile picture (students/{uid}.avatarUrl); the initials above stay as the fallback.
+            StudentAvatarLoader.Apply(avatar, initials, studentId);
             return avatar;
         }
 
