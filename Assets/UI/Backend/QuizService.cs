@@ -2031,6 +2031,64 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        /// <summary>One real (non-"Missed") attempt by one student - see
+        /// FetchStudentAttemptsInClassroom.</summary>
+        [Serializable]
+        public class StudentAttemptRow
+        {
+            public string QuizId;
+            public string Category;
+            public int ScoreCorrect;
+            public int ScoreTotal;
+            public float Percent;
+            public bool Passed;
+            public DateTime CompletedAtUtc;
+        }
+
+        /// <summary>Every real attempt one student made inside one classroom (auto-recorded
+        /// "Missed" placeholders are excluded, same as FetchQuizScoresForClassroom). Feeds the
+        /// per-student stats view of AdminStudentStatsModal (progress by category, quiz
+        /// completion rate, per-quiz best score) in a single query instead of one query per
+        /// quiz.</summary>
+        public void FetchStudentAttemptsInClassroom(string classroomId, string studentId, Action<List<StudentAttemptRow>> onComplete)
+        {
+            var result = new List<StudentAttemptRow>();
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(studentId))
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .WhereEqualTo("studentId", studentId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed") continue;
+
+                        result.Add(new StudentAttemptRow
+                        {
+                            QuizId = doc.ContainsField("quizId") ? doc.GetValue<string>("quizId") : "",
+                            Category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "",
+                            ScoreCorrect = doc.ContainsField("scoreCorrect") ? doc.GetValue<int>("scoreCorrect") : 0,
+                            ScoreTotal = doc.ContainsField("scoreTotal") ? doc.GetValue<int>("scoreTotal") : 0,
+                            Percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f,
+                            Passed = doc.ContainsField("passed") && doc.GetValue<bool>("passed"),
+                            CompletedAtUtc = doc.ContainsField("completedAt")
+                                ? doc.GetValue<Timestamp>("completedAt").ToDateTime()
+                                : DateTime.MinValue
+                        });
+                    }
+
+                    onComplete?.Invoke(result);
+                });
+        }
+
         private static int CountDistinctStudents(List<DocumentSnapshot> docs)
         {
             return docs

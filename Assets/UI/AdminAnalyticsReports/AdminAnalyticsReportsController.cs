@@ -150,6 +150,7 @@ namespace Anatomia3D.UI
       
         private Button _exportPdfButton;
 
+        private VisualElement _activeUsersCard;
         private Label _activeUsersValueLabel;
         private Label _avgScoreValueLabel;
         private Label _quizzesDoneValueLabel;
@@ -295,6 +296,7 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             
             _exportPdfButton?.UnregisterCallback<ClickEvent>(OnExportPdfClicked);
+            _activeUsersCard?.UnregisterCallback<ClickEvent>(OnActiveUsersCardClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.UnregisterCallback<ClickEvent>(OnMistakesTabClicked);
@@ -317,6 +319,7 @@ namespace Anatomia3D.UI
          
             _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
 
+            _activeUsersCard = _screenRoot.Q<VisualElement>("active-users-card");
             _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
             _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
@@ -352,6 +355,7 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
           
             _exportPdfButton?.RegisterCallback<ClickEvent>(OnExportPdfClicked);
+            _activeUsersCard?.RegisterCallback<ClickEvent>(OnActiveUsersCardClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.RegisterCallback<ClickEvent>(OnMistakesTabClicked);
@@ -861,6 +865,20 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(slug)) return "";
             return QuestionTypeDisplayLabels.TryGetValue(slug, out var label) ? label : CapitalizeCategory(slug);
+        }
+
+        // ---------------- Total Students card -> student list / stats modal ----------------
+
+        private void OnActiveUsersCardClicked(ClickEvent evt)
+        {
+            if (_screenRoot == null) return;
+
+            if (_currentClassroomStudents == null || _currentClassroomStudents.Count == 0)
+            {
+                Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
+            }
+
+            AdminStudentStatsModal.Show(_screenRoot, _selectedClassroomId, _currentClassroomStudents, _classroomQuizzes);
         }
 
         // ---------------- Tabs ----------------

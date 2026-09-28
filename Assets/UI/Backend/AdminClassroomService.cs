@@ -93,6 +93,70 @@ namespace Anatomia3D.Backend
 
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
 
+        /// <summary>The student's profile picture URL (students/{uid}.avatarUrl - a Cloudinary
+        /// secure_url set on the Edit Profile screen). Admins can already read students docs
+        /// (see the Firestore rules), so this needs no new permission. Calls back with null if
+        /// the student has no photo or the read failed - callers fall back to initials.</summary>
+        public void FetchStudentAvatarUrl(string studentId, Action<string> onComplete)
+        {
+            if (string.IsNullOrEmpty(studentId) || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(null);
+                return;
+            }
+
+            Db.Collection("students").Document(studentId).GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted || !task.Result.Exists || !task.Result.ContainsField("avatarUrl"))
+                    {
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    string url = task.Result.GetValue<string>("avatarUrl");
+                    onComplete?.Invoke(string.IsNullOrEmpty(url) ? null : url);
+                });
+        }
+
+        /// <summary>The set of Anatomy Play Mode structure keys one student has answered
+        /// correctly (anatomyPlayModeAttempts where studentId == X and correct == true) -
+        /// the same "completed keys" AnatomyPlayModeFirebase.FetchProgress feeds the student's
+        /// own Progress screen, but callable by a teacher for any student. Used by
+        /// AdminStudentStatsModal to draw the Skeletal / Muscular / Cardiovascular bars.
+        /// Returns null (not an empty set) if the read failed, so callers can tell "no
+        /// progress yet" from "couldn't load".</summary>
+        public void FetchStudentPlayModeKeys(string studentId, Action<HashSet<string>> onComplete)
+        {
+            if (string.IsNullOrEmpty(studentId) || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(null);
+                return;
+            }
+
+            Db.Collection("anatomyPlayModeAttempts")
+                .WhereEqualTo("studentId", studentId)
+                .WhereEqualTo("correct", true)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogWarning($"[AdminClassroomService] Could not fetch Play Mode progress for '{studentId}': {task.Exception}");
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    var keys = new HashSet<string>();
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (doc.ContainsField("key")) keys.Add(doc.GetValue<string>("key"));
+                    }
+                    onComplete?.Invoke(keys);
+                });
+        }
+
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
