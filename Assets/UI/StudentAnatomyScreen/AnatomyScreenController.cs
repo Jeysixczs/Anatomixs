@@ -2744,6 +2744,53 @@ public class AnatomyScreenController : MonoBehaviour
     // "Femur", "skull" matches any skull-related bone, etc. Hidden
     // entirely while the query is empty; shows "No bones found" as a
     // non-interactive row when there are zero matches.
+    // Set by AnatomyPlayModeController while Play Mode is active. Returns true
+    // when the structure has already been answered, so its search row is greyed
+    // out. Null in Explore Mode, where nothing is ever "answered".
+    public System.Func<BoneInfo, bool> IsStructureAnswered;
+
+    // Pink tint applied to the 3D model of every structure already answered in
+    // Play Mode. Done with a per-renderer MaterialPropertyBlock, so the FBX's
+    // shared materials are never modified (nothing to restore, no material
+    // instances created). _BaseColor covers URP Lit/Unlit, _Color covers
+    // Standard/legacy shaders.
+    // Set from AnatomyPlayModeController's Inspector ("Answered Structure Color").
+    [System.NonSerialized] public Color AnsweredTint = new Color(1f, 0.41f, 0.71f, 1f);
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+    private MaterialPropertyBlock _answeredTintBlock;
+
+    /// <summary>Re-applies (or clears) the answered tint on every structure's
+    /// renderers using IsStructureAnswered. Call after the answered set changes;
+    /// with IsStructureAnswered == null it removes all tints.</summary>
+    public void RefreshAnsweredTints()
+    {
+        if (boneData == null) return;
+        if (_answeredTintBlock == null) _answeredTintBlock = new MaterialPropertyBlock();
+
+        foreach (var info in boneData)
+        {
+            bool answered = IsStructureAnswered != null && IsStructureAnswered(info);
+
+            foreach (var rend in GetBoneRenderers(info))
+            {
+                if (rend == null) continue;
+
+                if (answered)
+                {
+                    rend.GetPropertyBlock(_answeredTintBlock);
+                    _answeredTintBlock.SetColor(BaseColorId, AnsweredTint);
+                    _answeredTintBlock.SetColor(ColorId, AnsweredTint);
+                    rend.SetPropertyBlock(_answeredTintBlock);
+                }
+                else
+                {
+                    rend.SetPropertyBlock(null);
+                }
+            }
+        }
+    }
+
     private void UpdateSearchResults(string query)
     {
         if (_searchResults == null) return;
@@ -2772,6 +2819,12 @@ public class AnatomyScreenController : MonoBehaviour
             {
                 var item = new Button(() => OnSearchResultSelected(info)) { text = info.title };
                 item.AddToClassList("search-result-item");
+                if (IsStructureAnswered != null && IsStructureAnswered(info))
+                {
+                    item.AddToClassList("search-result-item--answered");
+                    item.style.backgroundColor = Color.Lerp(Color.white, AnsweredTint, 0.25f);
+                    item.style.color = Color.Lerp(AnsweredTint, Color.black, 0.35f);
+                }
                 _searchResults.Add(item);
             }
         }
