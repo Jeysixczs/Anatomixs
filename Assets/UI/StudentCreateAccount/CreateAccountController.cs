@@ -24,6 +24,10 @@ namespace Anatomia3D.UI
         [Header("Password Requirements")]
         [SerializeField] private int minimumPasswordLength = 8;
 
+        [Header("Email Domain Check")]
+        [Tooltip("Only emails from these domains can create an account (e.g. school.edu, *.edu). OPTIONAL - leave empty to allow any proper domain.")]
+        [SerializeField] private System.Collections.Generic.List<string> allowedEmailDomains = new System.Collections.Generic.List<string>();
+
         private static readonly Regex EmailRegex =
             new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
@@ -247,6 +251,21 @@ namespace Anatomia3D.UI
                 SetError(_emailError, "Please enter a valid email address");
                 return false;
             }
+            else if (!EmailDomainValidator.IsProperDomain(trimmed))
+            {
+                SetError(_emailError, "Please enter an email with a valid domain (e.g. name@gmail.com)");
+                return false;
+            }
+            else if (EmailDomainValidator.TryGetTypoSuggestion(trimmed, out string suggestion))
+            {
+                SetError(_emailError, $"Did you mean {suggestion}?");
+                return false;
+            }
+            else if (!EmailDomainValidator.IsAllowed(trimmed, allowedEmailDomains))
+            {
+                SetError(_emailError, $"Only {EmailDomainValidator.Describe(allowedEmailDomains)} emails can be used to sign up");
+                return false;
+            }
             else
             {
                 ClearError(_emailError);
@@ -402,6 +421,50 @@ namespace Anatomia3D.UI
                 return;
             }
 
+            // No connection: account creation can't work offline, so say so right away
+            // instead of waiting on the DNS lookup timeout and then a Firebase failure.
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                SetStatus("No internet connection. Please connect to the internet and try again.");
+                return;
+            }
+
+            // Verify the email's domain really exists (DNS lookup) before creating the account.
+            _createAccountButton.SetEnabled(false);
+            SetStatus("Checking email domain...");
+            StartCoroutine(CheckDomainThenCreate(_emailField.value.Trim()));
+        }
+
+        private System.Collections.IEnumerator CheckDomainThenCreate(string email)
+        {
+            EmailDomainDnsChecker.Result result = EmailDomainDnsChecker.Result.Unknown;
+            yield return EmailDomainDnsChecker.Check(EmailDomainValidator.GetDomain(email), r => result = r);
+
+            switch (result)
+            {
+                case EmailDomainDnsChecker.Result.NotFound:
+                    SetError(_emailError, "This email domain doesn't exist. Please check your email address.");
+                    SetStatus("Please fix the highlighted fields.");
+                    _createAccountButton.SetEnabled(true);
+                    yield break;
+
+                case EmailDomainDnsChecker.Result.NoMail:
+                    SetError(_emailError, "This email domain doesn't accept email. Please use a different address.");
+                    SetStatus("Please fix the highlighted fields.");
+                    _createAccountButton.SetEnabled(true);
+                    yield break;
+
+                case EmailDomainDnsChecker.Result.Unknown:
+                    // Couldn't verify (offline/timeout) - don't block a real user; Firebase decides.
+                    Debug.LogWarning("[CreateAccount] Domain lookup inconclusive - continuing with sign-up.");
+                    break;
+            }
+
+            BeginCreateAccount();
+        }
+
+        private void BeginCreateAccount()
+        {
             SetStatus("Creating account...");
            
             _createAccountButton.SetEnabled(false);
