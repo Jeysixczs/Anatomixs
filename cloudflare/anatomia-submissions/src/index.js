@@ -40,15 +40,52 @@ const JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@
 const FIRESTORE_ROOT = 'https://firestore.googleapis.com/v1';
 
 // Absolute ceiling regardless of what a quiz doc says, so a malformed
-// `maxFileSizeMB` can never be used to fill the bucket.
-const HARD_MAX_BYTES = 50 * 1024 * 1024;
+// `maxFileSizeMB` can never be used to fill the bucket. Students default to
+// 25 MB per assignment; a teacher can raise an assignment up to this ceiling
+// (keep in sync with FileSubmissionConfig.MaxAllowedFileSizeMB in Unity).
+const HARD_MAX_BYTES = 100 * 1024 * 1024;
 
 // Teaching materials: what a teacher may upload for their students to read.
 // Documents and images only - nothing a phone would try to execute.
 const MATERIAL_ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'png', 'jpg', 'jpeg'];
-const MATERIAL_MAX_BYTES = 25 * 1024 * 1024;
+// Teachers may upload up to 100 MB (keep in sync with MaterialConfig.MaxFileSizeMB in Unity).
+const MATERIAL_MAX_BYTES = 100 * 1024 * 1024;
 
 let jwkCache = { keys: null, fetchedAt: 0 };
+
+// Streams the request body straight into R2 instead of buffering it in the Worker:
+// a Worker isolate only has 128 MB of memory, so holding a 100 MB upload in
+// memory (arrayBuffer) is not safe. R2 needs the length up front, which Unity's
+// UploadHandlerRaw always sends as Content-Length. Returns { error } or { size }.
+async function putStreamed(env, request, storageKey, maxBytes, limitMessage, options) {
+  const header = request.headers.get('Content-Length');
+  if (header === null) {
+    return { error: fail(411, 'length_required', 'The upload is missing its size. Please try again.') };
+  }
+  const declared = Number(header);
+  if (!Number.isFinite(declared) || declared <= 0) {
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+  if (declared > maxBytes) {
+    return { error: fail(413, 'file_too_large', limitMessage) };
+  }
+  if (!request.body) {
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+
+  const stored = await env.SUBMISSIONS_BUCKET.put(storageKey, request.body, options);
+
+  // Content-Length is client-supplied - re-check the size R2 actually stored.
+  if (stored.size > maxBytes) {
+    await env.SUBMISSIONS_BUCKET.delete(storageKey);
+    return { error: fail(413, 'file_too_large', limitMessage) };
+  }
+  if (stored.size === 0) {
+    await env.SUBMISSIONS_BUCKET.delete(storageKey);
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+  return { size: stored.size };
+}
 
 export default {
   async fetch(request, env) {
@@ -151,40 +188,32 @@ async function handleUpload(request, env) {
 
   // ---- size ----
   const maxBytes = Math.min(quiz.maxFileSizeMB * 1024 * 1024, HARD_MAX_BYTES);
-  const declared = Number(request.headers.get('Content-Length') || 0);
-  if (declared > maxBytes) {
-    return fail(413, 'file_too_large', `That file is larger than the ${quiz.maxFileSizeMB} MB limit for this assignment.`);
-  }
-
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.byteLength === 0) {
-    return fail(400, 'empty_file', 'That file is empty. Please choose a different file.');
-  }
-  // Re-check against the real byte count - Content-Length is client-supplied.
-  if (bytes.byteLength > maxBytes) {
-    return fail(413, 'file_too_large', `That file is larger than the ${quiz.maxFileSizeMB} MB limit for this assignment.`);
-  }
 
   // uid comes from the verified token, so the key can only ever land under the
   // caller's own submission prefix.
   const storageKey = `assignments/${classroomId}/${quizId}/submissions/${uid}/${submissionId}/${fileName}`;
   const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
 
-  await env.SUBMISSIONS_BUCKET.put(storageKey, bytes, {
-    httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
-    customMetadata: {
-      studentId: uid,
-      quizId,
-      classroomId,
-      submissionId,
-      originalFileName: fileName,
-      uploadedAt: new Date().toISOString()
+  const upload = await putStreamed(
+    env, request, storageKey, maxBytes,
+    `That file is larger than the ${Math.min(quiz.maxFileSizeMB, HARD_MAX_BYTES / (1024 * 1024))} MB limit for this assignment.`,
+    {
+      httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
+      customMetadata: {
+        studentId: uid,
+        quizId,
+        classroomId,
+        submissionId,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString()
+      }
     }
-  });
+  );
+  if (upload.error) return upload.error;
 
   return json({
     storageKey,
-    fileSize: bytes.byteLength,
+    fileSize: upload.size,
     mimeType: contentType
   });
 }
@@ -266,34 +295,27 @@ async function handleMaterialUpload(request, env) {
   }
 
   const maxMb = MATERIAL_MAX_BYTES / (1024 * 1024);
-  const declared = Number(request.headers.get('Content-Length') || 0);
-  if (declared > MATERIAL_MAX_BYTES) {
-    return fail(413, 'file_too_large', `That file is larger than the ${maxMb} MB limit for materials.`);
-  }
-
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.byteLength === 0) {
-    return fail(400, 'empty_file', 'That file is empty. Please choose a different file.');
-  }
-  if (bytes.byteLength > MATERIAL_MAX_BYTES) {
-    return fail(413, 'file_too_large', `That file is larger than the ${maxMb} MB limit for materials.`);
-  }
 
   const storageKey = `materials/${classroomId}/${materialId}/${fileName}`;
   const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
 
-  await env.SUBMISSIONS_BUCKET.put(storageKey, bytes, {
-    httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
-    customMetadata: {
-      teacherId: uid,
-      classroomId,
-      materialId,
-      originalFileName: fileName,
-      uploadedAt: new Date().toISOString()
+  const upload = await putStreamed(
+    env, request, storageKey, MATERIAL_MAX_BYTES,
+    `That file is larger than the ${maxMb} MB limit for materials.`,
+    {
+      httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
+      customMetadata: {
+        teacherId: uid,
+        classroomId,
+        materialId,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString()
+      }
     }
-  });
+  );
+  if (upload.error) return upload.error;
 
-  return json({ storageKey, fileSize: bytes.byteLength, mimeType: contentType });
+  return json({ storageKey, fileSize: upload.size, mimeType: contentType });
 }
 
 async function handleMaterialDownload(request, env, url) {

@@ -62,7 +62,14 @@ namespace Anatomia3D.Backend
 
         public List<string> AllowedMimeTypes = new List<string>();
 
-        public int MaxFileSizeMB = 25;
+        /// <summary>Default per-assignment size cap for STUDENT submissions.</summary>
+        public const int DefaultMaxFileSizeMB = 25;
+
+        /// <summary>Highest cap a teacher may set on an assignment (same as the 100 MB
+        /// teacher upload limit in MaterialConfig).</summary>
+        public const int MaxAllowedFileSizeMB = 100;
+
+        public int MaxFileSizeMB = DefaultMaxFileSizeMB;
 
         /// <summary>The six types the assignment form offers out of the box.
         /// The teacher ticks whichever of these they want - nothing is hard-coded
@@ -105,7 +112,7 @@ namespace Anatomia3D.Backend
                     .Where(m => !string.IsNullOrEmpty(m))
                     .Distinct()
                     .ToList(),
-                MaxFileSizeMB = maxFileSizeMB > 0 ? maxFileSizeMB : 25
+                MaxFileSizeMB = maxFileSizeMB > 0 ? Math.Min(maxFileSizeMB, MaxAllowedFileSizeMB) : DefaultMaxFileSizeMB
             };
         }
 
@@ -185,7 +192,7 @@ namespace Anatomia3D.Backend
             {
                 { "allowedExtensions", (AllowedExtensions ?? new List<string>()).Select(NormalizeExtension).ToList() },
                 { "allowedMimeTypes", AllowedMimeTypes ?? new List<string>() },
-                { "maxFileSizeMB", MaxFileSizeMB > 0 ? MaxFileSizeMB : 25 }
+                { "maxFileSizeMB", MaxFileSizeMB > 0 ? Math.Min(MaxFileSizeMB, MaxAllowedFileSizeMB) : DefaultMaxFileSizeMB }
             };
         }
 
@@ -215,8 +222,8 @@ namespace Anatomia3D.Backend
             }
 
             config.MaxFileSizeMB = map.TryGetValue("maxFileSizeMB", out var size)
-                ? Math.Max(1, Convert.ToInt32(size))
-                : 25;
+                ? Math.Min(Math.Max(1, Convert.ToInt32(size)), MaxAllowedFileSizeMB)
+                : DefaultMaxFileSizeMB;
 
             if (config.AllowedExtensions.Count == 0) return Default();
 

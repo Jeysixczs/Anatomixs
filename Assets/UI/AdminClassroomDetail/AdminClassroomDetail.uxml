@@ -152,7 +152,7 @@
                             </ui:VisualElement>
                             <ui:Button name="material-clear-file-button" text="Remove" class="announcement-delete-button"/>
                         </ui:VisualElement>
-                        <ui:Label text="PDF, Word, PowerPoint, Excel, TXT, CSV or image files up to 25 MB." class="material-hint"/>
+                        <ui:Label text="PDF, Word, PowerPoint, Excel, TXT, CSV or image files up to 100 MB." class="material-hint"/>
                         <ui:Label name="material-status-label" class="material-status-label hidden"/>
                         <ui:Button name="upload-material-button" text="Upload Material" class="post-announcement-button"/>
                     </ui:VisualElement>

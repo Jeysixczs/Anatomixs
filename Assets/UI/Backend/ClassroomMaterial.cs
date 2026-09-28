@@ -65,7 +65,9 @@ namespace Anatomia3D.Backend
     /// cloudflare/anatomia-submissions/src/index.js.</summary>
     public static class MaterialConfig
     {
-        public const int MaxFileSizeMB = 25;
+        /// <summary>Teacher upload limit for classroom materials (students default to 25 MB
+        /// for submissions - see FileSubmissionConfig.DefaultMaxFileSizeMB).</summary>
+        public const int MaxFileSizeMB = 100;
 
         public static readonly string[] AllowedExtensions =
         {
