@@ -579,7 +579,9 @@
 .student-info
 {
     flex-grow: 1;
+    flex-shrink: 1;
     flex-direction: column;
+    min-width: 0;
 }
 
 .student-name-label
@@ -587,6 +589,11 @@
     font-size: 33px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .student-meta-label

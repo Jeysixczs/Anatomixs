@@ -89,6 +89,27 @@ namespace Anatomia3D.UI
         private VisualElement _classroomsEmptyState;
         private VisualElement _classroomsList;
 
+        // ---- Search + Filter (button opens a modal) ----
+        // "Locked" = ClassroomSummary.IsArchived (the card is rendered non-interactive).
+        // The chosen filter and search text live on the controller (not the screen tree)
+        // so they survive the screen rebuild that happens on every OnEnable. All of this UI
+        // is built in code (BuildSearchAndFilterUI) so no UXML change is required.
+        private enum ClassroomFilter { All, Active, Locked }
+        private ClassroomFilter _activeFilter = ClassroomFilter.All;
+        private ClassroomFilter _pendingFilter = ClassroomFilter.All; // selection inside the open modal
+        private string _searchQuery = string.Empty;
+        private int _activeCount;
+        private int _lockedCount;
+
+        private VisualElement _searchRow;
+        private TextField _searchField;
+        private Button _filterButton;
+        private VisualElement _filterOverlay;
+        private VisualElement _filterEmptyState;
+        private Label _filterEmptyLabel;
+        private readonly Dictionary<ClassroomFilter, (VisualElement Row, Label Count)> _filterOptionRows =
+            new Dictionary<ClassroomFilter, (VisualElement, Label)>();
+
         [Header("Preview / Mock Data")]
         [Tooltip("Falls back to a sample classroom only if ClassroomService/PlayerSessionManager aren't ready yet (e.g. testing this screen in isolation).")]
         [SerializeField] private bool useMockDataUntilWired = true;
@@ -370,6 +391,8 @@ namespace Anatomia3D.UI
             _classroomsEmptyState = _screenRoot.Q<VisualElement>("classrooms-empty-state");
             _classroomsList = _screenRoot.Q<VisualElement>("classrooms-list");
 
+            BuildSearchAndFilterUI();
+
             Debug.Log($"[StudentClassroomHubController] Found classrooms list: {_classroomsList != null}, empty state: {_classroomsEmptyState != null}");
         }
 
@@ -437,7 +460,36 @@ namespace Anatomia3D.UI
             bool hasClassrooms = _currentClassrooms != null && _currentClassrooms.Count > 0;
 
             _classroomsEmptyState?.EnableInClassList("hidden", hasClassrooms);
-            _classroomsList?.EnableInClassList("hidden", !hasClassrooms);
+            _searchRow?.EnableInClassList("hidden", !hasClassrooms);
+
+            // Counts for the modal + how many cards survive the current search/filter.
+            _activeCount = 0;
+            _lockedCount = 0;
+            int visibleCount = 0;
+            if (hasClassrooms)
+            {
+                foreach (var item in _currentClassrooms)
+                {
+                    if (item.IsArchived) _lockedCount++;
+                    else _activeCount++;
+                    if (MatchesFilter(item) && MatchesSearch(item)) visibleCount++;
+                }
+            }
+
+            _classroomsList?.EnableInClassList("hidden", !hasClassrooms || visibleCount == 0);
+            _filterEmptyState?.EnableInClassList("hidden", !hasClassrooms || visibleCount > 0);
+            if (_filterEmptyLabel != null)
+            {
+                _filterEmptyLabel.text = !string.IsNullOrWhiteSpace(_searchQuery) ? "No classrooms match your search"
+                    : _activeFilter == ClassroomFilter.Locked ? "No locked classrooms"
+                    : _activeFilter == ClassroomFilter.Active ? "No active classrooms"
+                    : "No classrooms found";
+            }
+
+            // Filter button turns blue while a non-default filter is applied.
+            _filterButton?.EnableInClassList("hub-filter-button-active", _activeFilter != ClassroomFilter.All);
+            if (_filterButton != null)
+                _filterButton.text = _activeFilter == ClassroomFilter.All ? "Filter" : "Filter \u2022 " + _activeFilter;
 
             if (_classroomsList == null) return;
 
@@ -467,6 +519,10 @@ namespace Anatomia3D.UI
                     {
                         _classroomsList.Insert(i, refs.Card);
                     }
+
+                    // Search/filter only hides or shows the already-built card - instant,
+                    // and nothing gets rebuilt while typing.
+                    refs.Card.EnableInClassList("hidden", !(MatchesFilter(summary) && MatchesSearch(summary)));
                 }
             }
 
@@ -489,6 +545,196 @@ namespace Anatomia3D.UI
                     _classroomCardsById.Remove(id);
                 }
             }
+        }
+
+        // ---------------- Search + Filter ----------------
+
+        private bool MatchesFilter(ClassroomSummary classroom)
+        {
+            switch (_activeFilter)
+            {
+                case ClassroomFilter.Active: return !classroom.IsArchived;
+                case ClassroomFilter.Locked: return classroom.IsArchived;
+                default: return true;
+            }
+        }
+
+        private bool MatchesSearch(ClassroomSummary classroom)
+        {
+            if (string.IsNullOrWhiteSpace(_searchQuery)) return true;
+            string q = _searchQuery.Trim();
+            return Contains(classroom.Name, q) || Contains(classroom.Code, q) || Contains(classroom.TeacherName, q);
+        }
+
+        private static bool Contains(string source, string q)
+        {
+            return !string.IsNullOrEmpty(source) && source.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>Builds the search field + Filter button row (inserted above the classroom
+        /// list), the "nothing matches" card, and the filter modal. Runs on every OnEnable
+        /// because the screen tree is rebuilt then. Any chips row from an earlier UXML is removed.</summary>
+        private void BuildSearchAndFilterUI()
+        {
+            // Clean up leftovers (older UXML chip row / a double OnEnable).
+            foreach (var n in new[] { "classrooms-filter-row", "classrooms-filter-empty", "hub-search-row", "hub-filter-empty", "hub-filter-overlay" })
+                _screenRoot.Q<VisualElement>(n)?.RemoveFromHierarchy();
+            _filterOptionRows.Clear();
+
+            var section = _classroomsList?.parent;
+            var wrapper = section?.parent;
+            if (section == null || wrapper == null) return;
+
+            // ---- Search row ----
+            _searchRow = new VisualElement { name = "hub-search-row" };
+            _searchRow.AddToClassList("hub-search-row");
+            _searchRow.AddToClassList("hidden");
+
+            var searchWrapper = new VisualElement();
+            searchWrapper.AddToClassList("hub-search-wrapper");
+            var icon = new Label();
+            icon.AddToClassList("hub-search-icon");
+            searchWrapper.Add(icon);
+
+            _searchField = new TextField { name = "hub-search-field" };
+            _searchField.AddToClassList("hub-search-field");
+            _searchField.textEdition.placeholder = "Search classrooms";
+            _searchField.SetValueWithoutNotify(_searchQuery);
+            _searchField.EnableLongPressPaste();
+            _searchField.RegisterValueChangedCallback(OnSearchChanged);
+            searchWrapper.Add(_searchField);
+            _searchRow.Add(searchWrapper);
+
+            _filterButton = new Button { name = "hub-filter-button", text = "Filter" };
+            _filterButton.AddToClassList("hub-filter-button");
+            _filterButton.RegisterCallback<ClickEvent>(OnFilterButtonClicked);
+            _searchRow.Add(_filterButton);
+
+            wrapper.Insert(wrapper.IndexOf(section), _searchRow);
+
+            // ---- "Nothing matches" card ----
+            _filterEmptyState = new VisualElement { name = "hub-filter-empty" };
+            _filterEmptyState.AddToClassList("hub-filter-empty");
+            _filterEmptyState.AddToClassList("hidden");
+            _filterEmptyLabel = new Label("No classrooms found");
+            _filterEmptyLabel.AddToClassList("empty-state-text");
+            _filterEmptyState.Add(_filterEmptyLabel);
+            section.Insert(section.IndexOf(_classroomsList), _filterEmptyState);
+
+            // ---- Filter modal (bottom sheet over the whole screen) ----
+            _filterOverlay = new VisualElement { name = "hub-filter-overlay" };
+            _filterOverlay.AddToClassList("hub-filter-overlay");
+            _filterOverlay.AddToClassList("hidden");
+            _filterOverlay.RegisterCallback<ClickEvent>(evt =>
+            {
+                // Only the dimmed backdrop closes it, not taps inside the sheet.
+                if (evt.target == _filterOverlay) CloseFilterModal();
+            });
+
+            var sheet = new VisualElement();
+            sheet.AddToClassList("hub-filter-sheet");
+
+            var header = new VisualElement();
+            header.AddToClassList("hub-filter-sheet-header");
+            var title = new Label("Filter Classrooms");
+            title.AddToClassList("hub-filter-sheet-title");
+            var closeButton = new Button { text = "\u2715" };
+            closeButton.AddToClassList("hub-filter-close-button");
+            closeButton.RegisterCallback<ClickEvent>(evt => CloseFilterModal());
+            header.Add(title);
+            header.Add(closeButton);
+            sheet.Add(header);
+
+            var sectionLabel = new Label("STATUS");
+            sectionLabel.AddToClassList("hub-filter-section-label");
+            sheet.Add(sectionLabel);
+
+            AddFilterOption(sheet, ClassroomFilter.All, "All classrooms");
+            AddFilterOption(sheet, ClassroomFilter.Active, "Active");
+            AddFilterOption(sheet, ClassroomFilter.Locked, "Locked");
+
+            var footer = new VisualElement();
+            footer.AddToClassList("hub-filter-footer");
+            var resetButton = new Button { text = "Reset" };
+            resetButton.AddToClassList("hub-filter-reset-button");
+            resetButton.RegisterCallback<ClickEvent>(evt =>
+            {
+                _pendingFilter = ClassroomFilter.All;
+                UpdateFilterModalVisuals();
+            });
+            var applyButton = new Button { text = "Apply" };
+            applyButton.AddToClassList("hub-filter-apply-button");
+            applyButton.RegisterCallback<ClickEvent>(evt =>
+            {
+                _activeFilter = _pendingFilter;
+                CloseFilterModal();
+                RefreshClassroomsUI();
+            });
+            footer.Add(resetButton);
+            footer.Add(applyButton);
+            sheet.Add(footer);
+
+            _filterOverlay.Add(sheet);
+            _screenRoot.Add(_filterOverlay);
+        }
+
+        private void AddFilterOption(VisualElement parent, ClassroomFilter filter, string text)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("hub-filter-option");
+
+            var radio = new VisualElement();
+            radio.AddToClassList("hub-filter-radio");
+            var dot = new VisualElement();
+            dot.AddToClassList("hub-filter-radio-dot");
+            radio.Add(dot);
+            row.Add(radio);
+
+            var label = new Label(text);
+            label.AddToClassList("hub-filter-option-label");
+            row.Add(label);
+
+            var count = new Label("0");
+            count.AddToClassList("hub-filter-option-count");
+            row.Add(count);
+
+            row.RegisterCallback<ClickEvent>(evt =>
+            {
+                _pendingFilter = filter;
+                UpdateFilterModalVisuals();
+            });
+
+            parent.Add(row);
+            _filterOptionRows[filter] = (row, count);
+        }
+
+        private void UpdateFilterModalVisuals()
+        {
+            foreach (var kv in _filterOptionRows)
+            {
+                kv.Value.Row.EnableInClassList("hub-filter-option-selected", kv.Key == _pendingFilter);
+                int n = kv.Key == ClassroomFilter.All ? _currentClassrooms.Count
+                    : kv.Key == ClassroomFilter.Active ? _activeCount : _lockedCount;
+                kv.Value.Count.text = n.ToString();
+            }
+        }
+
+        private void OnFilterButtonClicked(ClickEvent evt)
+        {
+            _pendingFilter = _activeFilter;
+            UpdateFilterModalVisuals();
+            _filterOverlay?.RemoveFromClassList("hidden");
+        }
+
+        private void CloseFilterModal()
+        {
+            _filterOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnSearchChanged(ChangeEvent<string> evt)
+        {
+            _searchQuery = evt.newValue ?? string.Empty;
+            RefreshClassroomsUI();
         }
 
         private ClassroomCardRefs BuildClassroomCard(ClassroomSummary classroom)

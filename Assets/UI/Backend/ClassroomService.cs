@@ -77,6 +77,11 @@ namespace Anatomia3D.Backend
                     transaction.Set(memberRef, new Dictionary<string, object>
                     {
                         { "studentName", student.FullName },
+                        // Denormalized copy of students/{uid}.avatarUrl ("" = no photo) so the
+                        // roster/leaderboard can show classmates' pictures from the members
+                        // docs they already read, instead of one extra read per classmate.
+                        // Kept in sync by PlayerSessionManager.UpdateAvatarUrl.
+                        { "avatarUrl", student.AvatarUrl ?? "" },
                         { "joinedAt", Timestamp.GetCurrentTimestamp() }
                     });
 
@@ -672,6 +677,9 @@ namespace Anatomia3D.Backend
             public int Points;
             public int QuizzesCompleted;
             public float AvgScorePercent;
+            /// <summary>members/{id}.avatarUrl: null = field not written yet (member predates it
+            /// and hasn't opened the app since), "" = no photo, otherwise the Cloudinary URL.</summary>
+            public string AvatarUrl;
         }
 
         /// <summary>Call when showing the Students tab (roster, unsorted / join order)
@@ -724,7 +732,8 @@ namespace Anatomia3D.Backend
                 Level = doc.ContainsField("level") ? doc.GetValue<int>("level") : 1,
                 Points = doc.ContainsField("points") ? doc.GetValue<int>("points") : 0,
                 QuizzesCompleted = doc.ContainsField("quizzesCompleted") ? doc.GetValue<int>("quizzesCompleted") : 0,
-                AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f
+                AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f,
+                AvatarUrl = doc.ContainsField("avatarUrl") ? doc.GetValue<string>("avatarUrl") : null
             };
         }
 

@@ -82,6 +82,68 @@ namespace Anatomia3D.UI
                 });
         }
 
+        // ---- Direct-URL path (no Firestore read) ----
+        // Student-side screens already have each classmate's avatarUrl from the classroom's
+        // members docs (ClassroomService.MemberStat.AvatarUrl), so they skip the per-student
+        // students/{uid} read entirely. Keyed by URL: a new photo means a new Cloudinary URL,
+        // so a stale image can never be served.
+        private static readonly Dictionary<string, Texture2D> UrlCache = new Dictionary<string, Texture2D>();
+        private static readonly Dictionary<string, List<Action<Texture2D>>> UrlPending =
+            new Dictionary<string, List<Action<Texture2D>>>();
+
+        /// <summary>Like <see cref="Apply"/>, but with a known avatarUrl: only downloads the
+        /// image, never touches Firestore. A null/empty url (no photo, or the member's doc
+        /// hasn't been backfilled yet) leaves the initials showing.</summary>
+        public static void ApplyFromUrl(VisualElement avatar, VisualElement initialsLabel, string avatarUrl)
+        {
+            if (avatar == null || string.IsNullOrEmpty(avatarUrl)) return;
+
+            avatar.style.overflow = Overflow.Hidden;
+
+            LoadUrl(avatarUrl, tex =>
+            {
+                if (tex == null) return;
+
+                var image = new Image { image = tex, scaleMode = ScaleMode.ScaleAndCrop };
+                image.pickingMode = PickingMode.Ignore;
+                image.style.position = Position.Absolute;
+                image.style.left = image.style.top = image.style.right = image.style.bottom = 0;
+                avatar.Add(image);
+                if (initialsLabel != null) initialsLabel.style.display = DisplayStyle.None;
+            });
+        }
+
+        private static void LoadUrl(string url, Action<Texture2D> onLoaded)
+        {
+            if (UrlCache.TryGetValue(url, out var cached))
+            {
+                if (ReferenceEquals(cached, null) || cached) { onLoaded(cached); return; }
+                UrlCache.Remove(url); // texture was unloaded (e.g. scene change) - refetch
+            }
+
+            if (UrlPending.TryGetValue(url, out var waiting)) { waiting.Add(onLoaded); return; }
+            UrlPending[url] = new List<Action<Texture2D>> { onLoaded };
+
+            var request = UnityWebRequestTexture.GetTexture(url);
+            var op = request.SendWebRequest();
+            op.completed += _ =>
+            {
+                Texture2D tex = null;
+                if (request.result == UnityWebRequest.Result.Success)
+                    tex = DownloadHandlerTexture.GetContent(request);
+                else
+                    Debug.LogWarning($"[StudentAvatarLoader] Could not load avatar '{url}': {request.error}");
+                request.Dispose();
+
+                UrlCache[url] = tex;
+                if (UrlPending.TryGetValue(url, out var callbacks))
+                {
+                    UrlPending.Remove(url);
+                    foreach (var cb in callbacks) cb(tex);
+                }
+            };
+        }
+
         public static void Load(string studentId, Action<Texture2D> onLoaded)
         {
             if (Cache.TryGetValue(studentId, out var cached))

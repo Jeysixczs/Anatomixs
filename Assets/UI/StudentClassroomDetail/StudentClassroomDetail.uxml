@@ -114,7 +114,9 @@
                                 <ui:VisualElement class="trophy-icon"/>
                             </ui:VisualElement>
                             <ui:Label text="Top Performers" class="panel-card-title"/>
+                            <ui:Label name="leaderboard-count-label" text="" class="lb-count-label"/>
                         </ui:VisualElement>
+                        <ui:VisualElement name="leaderboard-summary" class="lb-summary hidden"/>
                         <ui:VisualElement name="leaderboard-empty-state" class="top-performers-empty-state">
                             <ui:Label text="No student data yet" class="top-performers-empty-text"/>
                         </ui:VisualElement>

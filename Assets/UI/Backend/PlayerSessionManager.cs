@@ -770,19 +770,57 @@ namespace Anatomia3D.Backend
         /// profile save via WriteFullName's onComplete.</summary>
         private void SyncStudentNameToClassrooms(string uid, string fullName)
         {
+            SyncToClassroomMembers(uid,
+                new System.Collections.Generic.Dictionary<string, object> { { "studentName", fullName } },
+                "name");
+        }
+
+        /// <summary>Same fix-up as SyncStudentNameToClassrooms, for the denormalized
+        /// `avatarUrl` on each classroom membership doc - lets classmates' screens show
+        /// this student's photo without reading students/{uid}. Pass "" to clear it.</summary>
+        private void SyncStudentAvatarToClassrooms(string uid, string avatarUrl, Action onSuccess = null)
+        {
+            SyncToClassroomMembers(uid,
+                new System.Collections.Generic.Dictionary<string, object> { { "avatarUrl", avatarUrl ?? "" } },
+                "photo", onSuccess);
+        }
+
+        /// <summary>One-time (per device + account) fill of `avatarUrl` onto this student's
+        /// existing classroom membership docs, which were created before that field
+        /// existed. Runs at session start; the flag is only set once the batch commits,
+        /// so an offline start simply retries next time.</summary>
+        private void BackfillMemberAvatarOnce(string uid)
+        {
+            string key = "memberAvatarBackfill_v1_" + uid;
+            if (PlayerPrefs.GetInt(key, 0) == 1) return;
+
+            // Without the profile loaded we can't tell "no photo" from "not known yet" - don't
+            // write "" (which means "no photo") on a guess; the next session start retries.
+            if (CurrentStudent == null || CurrentStudent.Uid != uid) return;
+
+            SyncStudentAvatarToClassrooms(uid, CurrentStudent.AvatarUrl, () =>
+            {
+                PlayerPrefs.SetInt(key, 1);
+                PlayerPrefs.Save();
+            });
+        }
+
+        private void SyncToClassroomMembers(string uid,
+            System.Collections.Generic.Dictionary<string, object> fields, string what, Action onSuccess = null)
+        {
             Db.Collection("students").Document(uid).GetSnapshotAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
                 {
-                    Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale name until next sync.");
+                    Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale {what} until next sync.");
                     return;
                 }
 
                 var snap = task.Result;
-                if (!snap.ContainsField("enrolledClassroomIds")) return;
+                if (!snap.ContainsField("enrolledClassroomIds")) { onSuccess?.Invoke(); return; }
 
                 var classroomIds = snap.GetValue<List<string>>("enrolledClassroomIds");
-                if (classroomIds == null || classroomIds.Count == 0) return;
+                if (classroomIds == null || classroomIds.Count == 0) { onSuccess?.Invoke(); return; }
 
                 var batch = Db.StartBatch();
                 foreach (var classroomId in classroomIds)
@@ -790,17 +828,17 @@ namespace Anatomia3D.Backend
                     if (string.IsNullOrEmpty(classroomId)) continue;
                     var memberRef = Db.Collection("classrooms").Document(classroomId)
                         .Collection("members").Document(uid);
-                    batch.Set(memberRef,
-                        new System.Collections.Generic.Dictionary<string, object> { { "studentName", fullName } },
-                        SetOptions.MergeAll);
+                    batch.Set(memberRef, fields, SetOptions.MergeAll);
                 }
 
                 batch.CommitAsync().ContinueWithOnMainThread(commitTask =>
                 {
                     if (commitTask.IsCanceled || commitTask.IsFaulted)
                     {
-                        Debug.LogWarning($"[PlayerSessionManager] Failed to sync new name to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
+                        Debug.LogWarning($"[PlayerSessionManager] Failed to sync new {what} to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
+                        return;
                     }
+                    onSuccess?.Invoke();
                 });
             });
         }
@@ -1103,6 +1141,9 @@ namespace Anatomia3D.Backend
                 }
 
                 onComplete?.Invoke(true, null);
+
+                // Best-effort, like the name sync: classmates' rosters pick up the new photo.
+                SyncStudentAvatarToClassrooms(uid, avatarUrl);
             });
         }
 
@@ -1265,6 +1306,10 @@ namespace Anatomia3D.Backend
             // after an offline restore) this silently no-ops rather than failing loudly,
             // same as the listener above just sitting and waiting for a connection.
             ClassroomService.Instance?.SyncClassroomSubscriptions();
+
+            // One-time fill of members/{uid}.avatarUrl for classrooms joined before that
+            // field existed (no-op after the first successful run on this device).
+            BackfillMemberAvatarOnce(uid);
         }
 
         private void StopStudentListener()

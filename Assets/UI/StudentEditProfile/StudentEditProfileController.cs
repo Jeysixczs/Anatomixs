@@ -59,8 +59,10 @@ namespace Anatomia3D.UI
         private VisualElement _header;
         private Button _backButton;
 
-        private TextField _fullNameField;
-        private Label _fullNameError;
+        private TextField _firstNameField;
+        private Label _firstNameError;
+        private TextField _lastNameField;
+        private Label _lastNameError;
         private TextField _emailField;
         private Label _emailError;
         private Label _emailPendingHint;
@@ -229,8 +231,10 @@ namespace Anatomia3D.UI
             _header = _screenRoot.Q<VisualElement>("header");
             _backButton = _screenRoot.Q<Button>("back-button");
 
-            _fullNameField = _screenRoot.Q<TextField>("full-name-field");
-            _fullNameError = _screenRoot.Q<Label>("full-name-error");
+            _firstNameField = _screenRoot.Q<TextField>("first-name-field");
+            _firstNameError = _screenRoot.Q<Label>("first-name-error");
+            _lastNameField = _screenRoot.Q<TextField>("last-name-field");
+            _lastNameError = _screenRoot.Q<Label>("last-name-error");
             _emailField = _screenRoot.Q<TextField>("email-field");
             _emailError = _screenRoot.Q<Label>("email-error");
             _emailPendingHint = _screenRoot.Q<Label>("email-pending-hint");
@@ -263,7 +267,7 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
 
-            Debug.Log($"[StudentEditProfileController] Found name field: {_fullNameField != null}, save button: {_saveChangesButton != null}");
+            Debug.Log($"[StudentEditProfileController] Found first/last name fields: {_firstNameField != null}/{_lastNameField != null}, save button: {_saveChangesButton != null}");
         }
 
         private void WireCallbacks()
@@ -288,7 +292,14 @@ namespace Anatomia3D.UI
         /// <summary>Prefill the Full Name / Email fields with the person's current profile data.</summary>
         public void LoadProfileData(string fullName, string email)
         {
-            if (_fullNameField != null) _fullNameField.SetValueWithoutNotify(fullName);
+            // The stored profile keeps a single full name; the last word becomes
+            // the last name and everything before it the first name.
+            string trimmed = fullName?.Trim() ?? string.Empty;
+            int split = trimmed.LastIndexOf(' ');
+            string first = split > 0 ? trimmed.Substring(0, split).Trim() : trimmed;
+            string last = split > 0 ? trimmed.Substring(split + 1).Trim() : string.Empty;
+            if (_firstNameField != null) _firstNameField.SetValueWithoutNotify(first);
+            if (_lastNameField != null) _lastNameField.SetValueWithoutNotify(last);
             if (_emailField != null) _emailField.SetValueWithoutNotify(email);
             _loadedEmail = email;
         }
@@ -643,12 +654,21 @@ namespace Anatomia3D.UI
             ClearAllErrors();
             bool valid = true;
 
-            string fullName = _fullNameField.value?.Trim();
-            if (string.IsNullOrEmpty(fullName))
+            string firstName = _firstNameField?.value?.Trim();
+            if (string.IsNullOrEmpty(firstName))
             {
-                SetError(_fullNameError, "Please enter your name");
+                SetError(_firstNameError, "Please enter your first name");
                 valid = false;
             }
+
+            string lastName = _lastNameField?.value?.Trim();
+            if (string.IsNullOrEmpty(lastName))
+            {
+                SetError(_lastNameError, "Please enter your last name");
+                valid = false;
+            }
+
+            string fullName = $"{firstName} {lastName}".Trim();
 
             string email = _emailField.value?.Trim();
             if (string.IsNullOrEmpty(email) || !EmailRegex.IsMatch(email))
@@ -852,7 +872,8 @@ namespace Anatomia3D.UI
 
         private void ClearAllErrors()
         {
-            ClearError(_fullNameError);
+            ClearError(_firstNameError);
+            ClearError(_lastNameError);
             ClearError(_emailError);
             ClearError(_currentPasswordError);
             ClearError(_newPasswordError);
@@ -940,6 +961,8 @@ namespace Anatomia3D.UI
 
             tex.Apply();
             return tex;
+
+
         }
     }
 }

@@ -704,6 +704,8 @@ namespace Anatomia3D.UI
             {
                 if (classroomId != _selectedClassroomId || quizId != _selectedQuizExportId) return;
 
+                ApplyCurrentStudentNames(scores);
+
                 var attempted = (scores ?? new List<QuizService.StudentQuizScoreEntry>())
                     .Where(s => s.Attempted)
                     .ToList();
@@ -783,12 +785,38 @@ namespace Anatomia3D.UI
             });
         }
 
+        /// <summary>Each quizAttempts doc carries a `studentName` copied at submit time, so a
+        /// student who later renames themselves still appears under their old name in the
+        /// fetched scores (Top Performers, exports). The classroom roster
+        /// (`members/{id}.studentName`, kept in sync by PlayerSessionManager on rename) has
+        /// the current name - overwrite the stale one by StudentId. Students missing from the
+        /// roster (e.g. since removed) keep the name stored on their attempt.</summary>
+        private void ApplyCurrentStudentNames(List<QuizService.StudentQuizScoreEntry> scores)
+        {
+            if (scores == null || _currentClassroomStudents == null || _currentClassroomStudents.Count == 0) return;
+
+            var currentNames = new Dictionary<string, string>();
+            foreach (var student in _currentClassroomStudents)
+            {
+                if (!string.IsNullOrEmpty(student.StudentId) && !string.IsNullOrWhiteSpace(student.Name))
+                    currentNames[student.StudentId] = student.Name;
+            }
+
+            foreach (var score in scores)
+            {
+                if (score != null && currentNames.TryGetValue(score.StudentId, out var name))
+                    score.StudentName = name;
+            }
+        }
+
         /// <summary>Joins the classroom roster (_currentClassroomStudents) against a quiz's
         /// fetched scores so every student in the classroom gets an export row - students who
         /// never attempted the selected quiz get an Attempted = false row instead of being
         /// silently left out.</summary>
         private List<QuizService.StudentQuizScoreEntry> BuildQuizScoreExportRows(List<QuizService.StudentQuizScoreEntry> scores)
         {
+            ApplyCurrentStudentNames(scores);
+
             var byStudentId = (scores ?? new List<QuizService.StudentQuizScoreEntry>())
                 .ToDictionary(s => s.StudentId, s => s);
 

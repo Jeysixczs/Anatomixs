@@ -54,8 +54,10 @@ namespace Anatomia3D.UI
         private VisualElement _header;
         private Button _backButton;
 
-        private TextField _fullNameField;
-        private Label _fullNameError;
+        private TextField _firstNameField;
+        private TextField _lastNameField;
+        private Label _firstNameError;
+        private Label _lastNameError;
         private TextField _emailField;
         private Label _emailError;
 
@@ -223,8 +225,10 @@ namespace Anatomia3D.UI
             _header = _screenRoot.Q<VisualElement>("header");
             _backButton = _screenRoot.Q<Button>("back-button");
 
-            _fullNameField = _screenRoot.Q<TextField>("full-name-field");
-            _fullNameError = _screenRoot.Q<Label>("full-name-error");
+            _firstNameField = _screenRoot.Q<TextField>("first-name-field");
+            _lastNameField = _screenRoot.Q<TextField>("last-name-field");
+            _firstNameError = _screenRoot.Q<Label>("first-name-error");
+            _lastNameError = _screenRoot.Q<Label>("last-name-error");
             _emailField = _screenRoot.Q<TextField>("email-field");
             _emailError = _screenRoot.Q<Label>("email-error");
 
@@ -256,7 +260,7 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
 
-            Debug.Log($"[AdminEditProfileController] Found name field: {_fullNameField != null}, save button: {_saveChangesButton != null}");
+            Debug.Log($"[AdminEditProfileController] Found name fields: {_firstNameField != null}/{_lastNameField != null}, save button: {_saveChangesButton != null}");
         }
 
         private void WireCallbacks()
@@ -278,12 +282,44 @@ namespace Anatomia3D.UI
 
         // ---------------- Public API ----------------
 
-        /// <summary>Prefill the Full Name / Email fields with the person's current profile data.</summary>
+        /// <summary>Prefill the First Name / Last Name / Email fields with the person's current
+        /// profile data. The profile still stores a single full name; it's split here for
+        /// editing and joined back together in OnSaveChangesClicked.</summary>
         public void LoadProfileData(string fullName, string email)
         {
-            if (_fullNameField != null) _fullNameField.SetValueWithoutNotify(fullName);
+            SplitFullName(fullName, out string firstName, out string lastName);
+            if (_firstNameField != null) _firstNameField.SetValueWithoutNotify(firstName);
+            if (_lastNameField != null) _lastNameField.SetValueWithoutNotify(lastName);
             if (_emailField != null) _emailField.SetValueWithoutNotify(email);
             _loadedEmail = email;
+        }
+
+        /// <summary>"Maria Cristina Santos" -> first "Maria Cristina", last "Santos": the last
+        /// word is the last name, everything before it is the first name. A single word
+        /// becomes the first name with an empty last name (which the person is then asked to
+        /// fill in on save).</summary>
+        private static void SplitFullName(string fullName, out string firstName, out string lastName)
+        {
+            firstName = string.Empty;
+            lastName = string.Empty;
+            if (string.IsNullOrWhiteSpace(fullName)) return;
+
+            var parts = fullName.Split(new[] { ' ', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1)
+            {
+                firstName = parts[0];
+                return;
+            }
+
+            lastName = parts[parts.Length - 1];
+            firstName = string.Join(" ", parts, 0, parts.Length - 1);
+        }
+
+        /// <summary>Trims and collapses repeated spaces ("Ana   Marie" -> "Ana Marie").</summary>
+        private static string CleanNamePart(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return string.Join(" ", value.Split(new[] { ' ', '\t' }, System.StringSplitOptions.RemoveEmptyEntries));
         }
 
         // ---------------- Button handlers ----------------
@@ -555,12 +591,22 @@ namespace Anatomia3D.UI
             ClearAllErrors();
             bool valid = true;
 
-            string fullName = _fullNameField.value?.Trim();
-            if (string.IsNullOrEmpty(fullName))
+            string firstName = CleanNamePart(_firstNameField.value);
+            string lastName = CleanNamePart(_lastNameField.value);
+            if (string.IsNullOrEmpty(firstName))
             {
-                SetError(_fullNameError, "Please enter your name");
+                SetError(_firstNameError, "Please enter your first name");
                 valid = false;
             }
+            if (string.IsNullOrEmpty(lastName))
+            {
+                SetError(_lastNameError, "Please enter your last name");
+                valid = false;
+            }
+
+            // The profile stores a single full name (students/admins docs, rosters, etc.),
+            // so the two fields are joined back into one on save.
+            string fullName = $"{firstName} {lastName}".Trim();
 
             string email = _emailField.value?.Trim();
             if (string.IsNullOrEmpty(email) || !EmailRegex.IsMatch(email))
@@ -783,7 +829,8 @@ namespace Anatomia3D.UI
 
         private void ClearAllErrors()
         {
-            ClearError(_fullNameError);
+            ClearError(_firstNameError);
+            ClearError(_lastNameError);
             ClearError(_emailError);
             ClearError(_currentPasswordError);
             ClearError(_newPasswordError);

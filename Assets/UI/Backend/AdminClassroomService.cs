@@ -119,6 +119,44 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        /// <summary>Current display names (students/{uid}.fullName - the source of truth) for a
+        /// set of students, read in parallel. quizAttempts docs keep a copy of the name taken at
+        /// submit time, so a renamed student's old attempts still carry the old name; screens
+        /// built from attempts use this to show the current one. Students whose doc is missing
+        /// or unreadable are simply left out of the result. Never fails - calls back with
+        /// whatever it could read.</summary>
+        public void FetchStudentNames(IEnumerable<string> studentIds, Action<Dictionary<string, string>> onComplete)
+        {
+            var result = new Dictionary<string, string>();
+            var ids = studentIds == null
+                ? new List<string>()
+                : studentIds.Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+
+            if (ids.Count == 0 || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            int pending = ids.Count;
+            foreach (var id in ids)
+            {
+                string studentId = id;
+                Db.Collection("students").Document(studentId).GetSnapshotAsync()
+                    .ContinueWithOnMainThread(task =>
+                    {
+                        if (!task.IsCanceled && !task.IsFaulted && task.Result.Exists && task.Result.ContainsField("fullName"))
+                        {
+                            string name = task.Result.GetValue<string>("fullName");
+                            if (!string.IsNullOrWhiteSpace(name)) result[studentId] = name;
+                        }
+
+                        pending--;
+                        if (pending == 0) onComplete?.Invoke(result);
+                    });
+            }
+        }
+
         /// <summary>The set of Anatomy Play Mode structure keys one student has answered
         /// correctly (anatomyPlayModeAttempts where studentId == X and correct == true) -
         /// the same "completed keys" AnatomyPlayModeFirebase.FetchProgress feeds the student's

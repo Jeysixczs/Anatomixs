@@ -97,13 +97,13 @@ namespace Anatomia3D.UI
             // Classroom-join fields (ignored for QuizCompleted rows)
             public readonly string JoinText;
 
-            public ActivityCardData(QuizService.ActivityRecord quiz)
+            public ActivityCardData(QuizService.ActivityRecord quiz, string currentName = null)
             {
                 Id = "quiz:" + quiz.DocId;
                 Kind = ActivityKind.QuizCompleted;
                 OccurredAtUtc = quiz.OccurredAt.ToDateTime();
                 StudentId = quiz.StudentId;
-                StudentName = quiz.StudentName;
+                StudentName = string.IsNullOrWhiteSpace(currentName) ? quiz.StudentName : currentName;
                 QuizTitle = quiz.QuizTitle;
                 ClassroomName = quiz.ClassroomName;
                 ScoreCorrect = quiz.ScoreCorrect;
@@ -113,8 +113,9 @@ namespace Anatomia3D.UI
                 JoinText = null;
             }
 
-            public ActivityCardData(ClassroomService.ClassroomJoinRecord join)
+            public ActivityCardData(ClassroomService.ClassroomJoinRecord join, string currentName = null)
             {
+                string displayName = string.IsNullOrWhiteSpace(currentName) ? join.StudentName : currentName;
                 var occurredAt = join.JoinedAt.ToDateTime();
                 // Timestamp has no public Seconds/Nanoseconds accessor in this SDK version -
                 // ToDateTime().Ticks is already used elsewhere in this codebase for the same
@@ -122,9 +123,9 @@ namespace Anatomia3D.UI
                 Id = $"join:{join.ClassroomId}:{join.StudentName}:{occurredAt.Ticks}";
                 Kind = ActivityKind.ClassroomJoin;
                 OccurredAtUtc = occurredAt;
-                JoinText = $"{join.StudentName} joined '{join.ClassroomName}'";
+                JoinText = $"{displayName} joined '{join.ClassroomName}'";
                 StudentId = join.StudentId;
-                StudentName = join.StudentName;
+                StudentName = displayName;
                 QuizTitle = null;
                 ClassroomName = join.ClassroomName;
                 ScoreCorrect = 0;
@@ -419,8 +420,31 @@ namespace Anatomia3D.UI
         {
             _lastTeacherName = teacherName ?? "";
             _lastAvatarUrl = avatarUrl;
-            if (_headerSubtitleLabel != null) _headerSubtitleLabel.text = $"Welcome back, {teacherName}";
+            if (_headerSubtitleLabel != null) _headerSubtitleLabel.text = $"{GetTimeGreeting()}, {GetFirstName(teacherName)}";
             ApplyAvatar(teacherName, avatarUrl);
+        }
+
+        /// <summary>Everything except the last word of the full name ("Maria Santos" -> "Maria",
+        /// "Juan Carlo Reyes" -> "Juan Carlo"), same rule as the student dashboard. A single
+        /// word is returned as-is; empty falls back to "Teacher".</summary>
+        private static string GetFirstName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return "Teacher";
+
+            var parts = fullName.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length <= 1) return fullName.Trim();
+
+            return string.Join(" ", parts, 0, parts.Length - 1);
+        }
+
+        /// <summary>Greeting from the device's local time: 5:00-11:59 "Good morning",
+        /// 12:00-17:59 "Good afternoon", otherwise "Good evening".</summary>
+        private static string GetTimeGreeting()
+        {
+            int hour = System.DateTime.Now.Hour;
+            if (hour >= 5 && hour < 12) return "Good morning";
+            if (hour >= 12 && hour < 18) return "Good afternoon";
+            return "Good evening";
         }
 
         // ---------------- Avatar (Cloudinary) ----------------
@@ -711,8 +735,8 @@ namespace Anatomia3D.UI
         private List<ActivityCardData> BuildMergedActivity()
         {
             var merged = new List<ActivityCardData>(_liveQuizActivity.Count + _joinActivity.Count);
-            foreach (var quiz in _liveQuizActivity) merged.Add(new ActivityCardData(quiz));
-            foreach (var join in _joinActivity) merged.Add(new ActivityCardData(join));
+            foreach (var quiz in _liveQuizActivity) merged.Add(new ActivityCardData(quiz, LookupCurrentStudentName(quiz.StudentId)));
+            foreach (var join in _joinActivity) merged.Add(new ActivityCardData(join, LookupCurrentStudentName(join.StudentId)));
 
             merged.Sort((a, b) => b.OccurredAtUtc.CompareTo(a.OccurredAtUtc));
             if (merged.Count > MaxRecentActivityItems)
@@ -946,6 +970,81 @@ namespace Anatomia3D.UI
             // Keeps the modal in sync too, whether or not it's currently open - cheap to
             // rebuild (no diffing needed since it isn't live-highlighted like the inline list).
             RefreshActivityViewAllList();
+
+            // Names on quizAttempts docs are copies taken at submit time - look up the
+            // students' current names and patch them in (no-op once they're cached).
+            EnsureCurrentStudentNames(merged);
+        }
+
+        // ---- Current student names for the activity feed ----
+        // quizAttempts docs store `studentName` as it was when the quiz was submitted, so
+        // after a student renames themselves the feed would keep showing the old name.
+        // students/{uid}.fullName is the source of truth: it's fetched for the students
+        // in the feed, cached for 10 minutes, and applied both to new cards (BuildMergedActivity)
+        // and, in place, to cards already on screen (ApplyNamesToRenderedRows).
+
+        private static readonly TimeSpan StudentNameCacheTtl = TimeSpan.FromMinutes(10);
+        private readonly Dictionary<string, (string Name, DateTime FetchedUtc)> _studentNameCache =
+            new Dictionary<string, (string Name, DateTime FetchedUtc)>();
+        private readonly HashSet<string> _studentNamesPending = new HashSet<string>();
+
+        /// <summary>The cached current name for a student, or null if unknown (falls back
+        /// to the name stored on the activity record).</summary>
+        private string LookupCurrentStudentName(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId)) return null;
+            return _studentNameCache.TryGetValue(studentId, out var entry) ? entry.Name : null;
+        }
+
+        private void EnsureCurrentStudentNames(List<ActivityCardData> merged)
+        {
+            if (AdminClassroomService.Instance == null || merged == null) return;
+
+            var toFetch = new List<string>();
+            foreach (var data in merged)
+            {
+                if (string.IsNullOrEmpty(data.StudentId) || _studentNamesPending.Contains(data.StudentId)) continue;
+                if (toFetch.Contains(data.StudentId)) continue;
+
+                bool fresh = _studentNameCache.TryGetValue(data.StudentId, out var entry)
+                    && DateTime.UtcNow - entry.FetchedUtc < StudentNameCacheTtl;
+                if (!fresh) toFetch.Add(data.StudentId);
+            }
+            if (toFetch.Count == 0) return;
+
+            foreach (var id in toFetch) _studentNamesPending.Add(id);
+
+            AdminClassroomService.Instance.FetchStudentNames(toFetch, names =>
+            {
+                var now = DateTime.UtcNow;
+                foreach (var id in toFetch)
+                {
+                    _studentNamesPending.Remove(id);
+                    // Cache misses too (null name) so an unreadable doc isn't retried on every refresh.
+                    _studentNameCache[id] = (names != null && names.TryGetValue(id, out var n) ? n : null, now);
+                }
+
+                if (_recentActivityList == null) return; // screen torn down while the reads were in flight
+                RefreshRecentActivityUI();
+                ApplyNamesToRenderedRows();
+            });
+        }
+
+        /// <summary>Rows already on screen are reused rather than rebuilt (see
+        /// RefreshRecentActivityUI), so a name that just resolved is written straight into
+        /// their labels.</summary>
+        private void ApplyNamesToRenderedRows()
+        {
+            foreach (var data in _lastMergedActivity)
+            {
+                if (!_activityRowsById.TryGetValue(data.Id, out var row) || string.IsNullOrEmpty(data.StudentName)) continue;
+
+                var nameLabel = row.Q<Label>(className: "activity-student-name");
+                if (nameLabel != null && nameLabel.text != data.StudentName) nameLabel.text = data.StudentName;
+
+                var initialsLabel = row.Q<Label>(className: "activity-avatar-label");
+                if (initialsLabel != null) initialsLabel.text = GetActivityInitials(data.StudentName);
+            }
         }
 
         /// <summary>Rebuilds recent-activity-view-all-list from _lastMergedActivity, filtered by
@@ -1031,6 +1130,11 @@ namespace Anatomia3D.UI
             var body = new VisualElement();
             body.AddToClassList("activity-body");
 
+            var kindLabel = new Label("QUIZ COMPLETED");
+            kindLabel.AddToClassList("activity-kind-label");
+            kindLabel.AddToClassList("activity-kind-label-quiz");
+            body.Add(kindLabel);
+
             var topRow = new VisualElement();
             topRow.AddToClassList("activity-card-top-row");
 
@@ -1091,6 +1195,11 @@ namespace Anatomia3D.UI
 
             var body = new VisualElement();
             body.AddToClassList("activity-body");
+
+            var kindLabel = new Label("JOINED CLASSROOM");
+            kindLabel.AddToClassList("activity-kind-label");
+            kindLabel.AddToClassList("activity-kind-label-join");
+            body.Add(kindLabel);
 
             var topRow = new VisualElement();
             topRow.AddToClassList("activity-card-top-row");

@@ -417,7 +417,58 @@ namespace Anatomia3D.Backend
                     {
                         CurrentAdmin.FullName = fullName;
                     }
+
+                    // classrooms/{id}.teacherName is a denormalized copy written when the
+                    // classroom was created, so it has to be refreshed here or students keep
+                    // seeing the old name in the hub / classroom detail.
+                    SyncTeacherNameToClassrooms(uid, fullName);
+
                     onComplete?.Invoke(true, null);
+                });
+        }
+
+        /// <summary>Rewrites `teacherName` on every classroom this teacher owns
+        /// (teacherId == uid) whose stored name differs from the new one. Runs in the
+        /// background after the profile save has already succeeded - a failure here is
+        /// logged and self-heals the next time the name is saved. Students' hub/detail
+        /// screens listen live, so they pick the change up as soon as it commits.</summary>
+        private void SyncTeacherNameToClassrooms(string uid, string fullName)
+        {
+            Db.Collection("classrooms").WhereEqualTo("teacherId", uid).GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogWarning($"[AdminAuthService] Could not load classrooms to sync teacherName: {task.Exception}");
+                        return;
+                    }
+
+                    var batch = Db.StartBatch();
+                    int pending = 0;
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        string current = doc.ContainsField("teacherName") ? doc.GetValue<string>("teacherName") : null;
+                        if (current == fullName) continue;
+
+                        batch.Update(doc.Reference, new Dictionary<string, object> { { "teacherName", fullName } });
+
+                        // Firestore batches hold at most 500 writes.
+                        if (++pending == 450)
+                        {
+                            batch.CommitAsync();
+                            batch = Db.StartBatch();
+                            pending = 0;
+                        }
+                    }
+
+                    if (pending > 0)
+                    {
+                        batch.CommitAsync().ContinueWithOnMainThread(commit =>
+                        {
+                            if (commit.IsCanceled || commit.IsFaulted)
+                                Debug.LogWarning($"[AdminAuthService] teacherName sync failed: {commit.Exception}");
+                        });
+                    }
                 });
         }
 
