@@ -441,6 +441,99 @@ namespace Anatomia3D.Backend
             };
         }
 
+        // ---------------- Materials (modules / lessons) ----------------
+        //
+        // Upload flow, driven by AdminClassroomDetailController's Materials tab:
+        //   1. ReserveMaterialId()                      -> id, no write yet
+        //   2. R2FileUploadService.UploadMaterial()     -> file bytes into R2 via the Worker
+        //   3. SaveMaterial()                           -> `classrooms/{id}/materials/{materialId}`
+        // Students see it the moment step 3 lands (ClassroomService.ListenToMaterials).
+
+        /// <summary>Reserves the Firestore doc id a new material will use, without writing
+        /// anything, so the R2 object and the doc can share it.</summary>
+        public string ReserveMaterialId(string classroomId)
+        {
+            if (string.IsNullOrEmpty(classroomId)) return null;
+            return Db.Collection("classrooms").Document(classroomId).Collection("materials").Document().Id;
+        }
+
+        /// <summary>Writes the metadata doc for a file that is already in R2.</summary>
+        public void SaveMaterial(string classroomId, ClassroomMaterial material, Action<bool, string, ClassroomMaterial> onComplete)
+        {
+            var admin = AdminAuthService.Instance.CurrentAdmin;
+            if (admin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+            if (string.IsNullOrEmpty(classroomId) || material == null || string.IsNullOrEmpty(material.MaterialId))
+            {
+                onComplete?.Invoke(false, "Missing classroom or material id.", null);
+                return;
+            }
+
+            material.AuthorId = admin.Uid;
+            material.CreatedAt = Timestamp.GetCurrentTimestamp();
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials").Document(material.MaterialId)
+                .SetAsync(material.ToMap()).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save the material.", null);
+                        return;
+                    }
+                    onComplete?.Invoke(true, null, material);
+                });
+        }
+
+        /// <summary>Deletes the material's Firestore doc (students stop seeing it), then asks
+        /// the Worker to remove the file from R2. The R2 cleanup is best-effort: the doc is
+        /// what gates access, so a failed cleanup never blocks or fails the delete.</summary>
+        public void DeleteMaterial(string classroomId, ClassroomMaterial material, Action<bool, string> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId) || material == null || string.IsNullOrEmpty(material.MaterialId))
+            {
+                onComplete?.Invoke(false, "Missing classroom or material id.");
+                return;
+            }
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials").Document(material.MaterialId)
+                .DeleteAsync().ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not delete the material.");
+                        return;
+                    }
+
+                    if (R2FileUploadService.Instance != null && !string.IsNullOrEmpty(material.StorageKey))
+                    {
+                        R2FileUploadService.Instance.DeleteMaterialFile(material.StorageKey, (ok, error) =>
+                        {
+                            if (!ok) Debug.LogWarning($"[AdminClassroomService] Material {material.MaterialId} removed, but its file was not cleaned out of R2: {error}");
+                        });
+                    }
+
+                    onComplete?.Invoke(true, null);
+                });
+        }
+
+        /// <summary>Most recent first.</summary>
+        public void FetchMaterials(string classroomId, Action<List<ClassroomMaterial>> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(new List<ClassroomMaterial>()); return; }
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials")
+                .OrderByDescending("createdAt")
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    var results = new List<ClassroomMaterial>();
+                    if (!task.IsCanceled && !task.IsFaulted)
+                    {
+                        foreach (var doc in task.Result.Documents) results.Add(ClassroomMaterial.FromSnapshot(doc));
+                    }
+                    onComplete?.Invoke(results);
+                });
+        }
+
         // ---------------- Students / Analytics / Leaderboard ----------------
 
         /// <summary>Call from AdminClassroomDetailController's Students tab remove-student

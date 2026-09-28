@@ -69,12 +69,14 @@ namespace Anatomia3D.UI
         private Button _leaderboardTabButton;
         private Button _scoresTabButton;
         private Button _badgesTabButton;
+        private Button _materialsTabButton;
         private VisualElement _overviewPanel;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
         private VisualElement _leaderboardPanel;
         private VisualElement _scoresPanel;
         private VisualElement _badgesPanel;
+        private VisualElement _materialsPanel;
 
         // Overview tab
         private Label _teacherValueLabel;
@@ -289,6 +291,14 @@ namespace Anatomia3D.UI
         // elsewhere), so they're not part of this set.
         private ListenerRegistration _classroomDetailListener;
         private ListenerRegistration _announcementsListener;
+        private ListenerRegistration _materialsListener;
+
+        // Materials tab
+        private VisualElement _materialsEmptyState;
+        private VisualElement _materialsList;
+        private Label _materialsErrorLabel;
+        private readonly List<ClassroomMaterial> _lastMaterials = new();
+        private string _materialsShownForClassroomId;
         private ListenerRegistration _rosterListener;
         private ClassroomService.AvailableQuizzesListenerHandle _availableQuizzesHandle;
 
@@ -469,6 +479,9 @@ namespace Anatomia3D.UI
             _announcementsListener?.Stop();
             _announcementsListener = null;
 
+            _materialsListener?.Stop();
+            _materialsListener = null;
+
             _rosterListener?.Stop();
             _rosterListener = null;
 
@@ -489,6 +502,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.UnregisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.UnregisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.UnregisterCallback<ClickEvent>(OnBadgesTabClicked);
+            _materialsTabButton?.UnregisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -520,12 +534,17 @@ namespace Anatomia3D.UI
             _leaderboardTabButton = _screenRoot.Q<Button>("leaderboard-tab-button");
             _scoresTabButton = _screenRoot.Q<Button>("scores-tab-button");
             _badgesTabButton = _screenRoot.Q<Button>("badges-tab-button");
+            _materialsTabButton = _screenRoot.Q<Button>("materials-tab-button");
             _overviewPanel = _screenRoot.Q<VisualElement>("overview-panel");
             _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
             _quizzesPanel = _screenRoot.Q<VisualElement>("quizzes-panel");
             _leaderboardPanel = _screenRoot.Q<VisualElement>("leaderboard-panel");
             _scoresPanel = _screenRoot.Q<VisualElement>("scores-panel");
             _badgesPanel = _screenRoot.Q<VisualElement>("badges-panel");
+            _materialsPanel = _screenRoot.Q<VisualElement>("materials-panel");
+            _materialsEmptyState = _screenRoot.Q<VisualElement>("materials-empty-state");
+            _materialsList = _screenRoot.Q<VisualElement>("materials-list");
+            _materialsErrorLabel = _screenRoot.Q<Label>("materials-error-label");
 
             _teacherValueLabel = _screenRoot.Q<Label>("teacher-value-label");
             _descriptionValueLabel = _screenRoot.Q<Label>("description-value-label");
@@ -565,6 +584,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.RegisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.RegisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.RegisterCallback<ClickEvent>(OnBadgesTabClicked);
+            _materialsTabButton?.RegisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             if (_screenRoot != null)
             {
@@ -680,6 +700,20 @@ namespace Anatomia3D.UI
 
                 SetAnnouncements(announcements.ConvertAll(a => new AnnouncementInfo(
                     a.AnnouncementId, a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
+            });
+
+            // A different classroom than the one on screen: drop the old list right away so
+            // one classroom's materials never show under another's name.
+            if (_materialsShownForClassroomId != classroomId)
+            {
+                _materialsShownForClassroomId = classroomId;
+                SetMaterials(new List<ClassroomMaterial>());
+            }
+
+            _materialsListener = ClassroomService.Instance.ListenToMaterials(classroomId, materials =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+                SetMaterials(materials);
             });
 
             _rosterListener = ClassroomService.Instance.ListenToClassroomRoster(classroomId, roster =>
@@ -975,6 +1009,83 @@ namespace Anatomia3D.UI
                     _announcementCardsById.Remove(id);
                 }
             }
+        }
+
+        // ---------------- Materials ----------------
+
+        /// <summary>Push the teacher's uploaded materials into the Materials tab (empty state
+        /// when there are none). Rebuilt whole - unlike announcements this only changes when
+        /// the teacher uploads or removes a file, never per keystroke.</summary>
+        public void SetMaterials(List<ClassroomMaterial> materials)
+        {
+            _lastMaterials.Clear();
+            if (materials != null) _lastMaterials.AddRange(materials);
+
+            bool hasData = _lastMaterials.Count > 0;
+            _materialsEmptyState?.EnableInClassList("hidden", hasData);
+            _materialsList?.EnableInClassList("hidden", !hasData);
+
+            if (_materialsList == null) return;
+
+            _materialsList.Clear();
+            foreach (var material in _lastMaterials) _materialsList.Add(BuildMaterialCard(material));
+        }
+
+        private void SetMaterialsError(string message)
+        {
+            if (_materialsErrorLabel == null) return;
+
+            bool has = !string.IsNullOrEmpty(message);
+            _materialsErrorLabel.text = has ? message : string.Empty;
+            _materialsErrorLabel.EnableInClassList("hidden", !has);
+        }
+
+        private VisualElement BuildMaterialCard(ClassroomMaterial material)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("material-card");
+
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("material-card-header-row");
+
+            string ext = FileSubmissionConfig.ExtensionOf(material.FileName);
+            var badge = new Label(string.IsNullOrEmpty(ext) ? "FILE" : ext.ToUpperInvariant());
+            badge.AddToClassList("material-type-badge");
+            headerRow.Add(badge);
+
+            var textColumn = new VisualElement();
+            textColumn.AddToClassList("material-card-text");
+
+            var titleLabel = new Label(string.IsNullOrEmpty(material.Title) ? material.FileName : material.Title);
+            titleLabel.AddToClassList("material-title-label");
+            textColumn.Add(titleLabel);
+
+            var metaLabel = new Label($"{FileSubmissionConfig.FormatSize(material.FileSize)}  \u2022  {material.CreatedAt.ToDateTime().ToLocalTime():MMM d, yyyy}");
+            metaLabel.AddToClassList("material-meta-label");
+            textColumn.Add(metaLabel);
+
+            headerRow.Add(textColumn);
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(material.Description))
+            {
+                var descriptionLabel = new Label(material.Description);
+                descriptionLabel.AddToClassList("material-description-label");
+                card.Add(descriptionLabel);
+            }
+
+            var openButton = new Button { text = "Open" };
+            openButton.AddToClassList("material-open-button");
+            openButton.clicked += () =>
+            {
+                SetMaterialsError(null);
+                MaterialFileOpener.Open(material,
+                    busy => { openButton.SetEnabled(!busy); openButton.text = busy ? "Opening..." : "Open"; },
+                    SetMaterialsError);
+            };
+            card.Add(openButton);
+
+            return card;
         }
 
         /// <summary>Push the classroom roster into the Students tab (empty state if the list is empty/null).</summary>
@@ -1695,12 +1806,17 @@ namespace Anatomia3D.UI
         /// student is clearly after the quiz list rather than announcements.</summary>
         public void OpenQuizzesTab() => ShowQuizzesTab();
 
+        /// <summary>Opens this screen on the Materials tab - used by the "new material"
+        /// notification tap (FCMNotificationService). Same call-order rule as OpenQuizzesTab.</summary>
+        public void OpenMaterialsTab() => ShowMaterialsTab();
+
         private void OnOverviewTabClicked(ClickEvent evt) => ShowOverviewTab();
         private void OnStudentsTabClicked(ClickEvent evt) => ShowStudentsTab();
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();
         private void OnLeaderboardTabClicked(ClickEvent evt) => ShowLeaderboardTab();
         private void OnScoresTabClicked(ClickEvent evt) => ShowScoresTab();
         private void OnBadgesTabClicked(ClickEvent evt) => ShowBadgesTab();
+        private void OnMaterialsTabClicked(ClickEvent evt) => ShowMaterialsTab();
 
         private void ShowOverviewTab() => SetActiveTab(_overviewTabButton, _overviewPanel, "Overview");
         private void ShowStudentsTab() => SetActiveTab(_studentsTabButton, _studentsPanel, "Students");
@@ -1708,6 +1824,7 @@ namespace Anatomia3D.UI
         private void ShowLeaderboardTab() => SetActiveTab(_leaderboardTabButton, _leaderboardPanel, "Leaderboard");
         private void ShowScoresTab() => SetActiveTab(_scoresTabButton, _scoresPanel, "Scores");
         private void ShowBadgesTab() => SetActiveTab(_badgesTabButton, _badgesPanel, "Badges");
+        private void ShowMaterialsTab() => SetActiveTab(_materialsTabButton, _materialsPanel, "Materials");
 
         private void SetActiveTab(Button activeButton, VisualElement activePanel, string tabName)
         {
@@ -1719,6 +1836,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.RemoveFromClassList("tab-button-active");
             _scoresTabButton?.RemoveFromClassList("tab-button-active");
             _badgesTabButton?.RemoveFromClassList("tab-button-active");
+            _materialsTabButton?.RemoveFromClassList("tab-button-active");
             activeButton?.AddToClassList("tab-button-active");
 
             _overviewPanel?.AddToClassList("hidden");
@@ -1727,6 +1845,7 @@ namespace Anatomia3D.UI
             _leaderboardPanel?.AddToClassList("hidden");
             _scoresPanel?.AddToClassList("hidden");
             _badgesPanel?.AddToClassList("hidden");
+            _materialsPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
         }
 

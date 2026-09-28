@@ -87,9 +87,18 @@ namespace Anatomia3D.Backend
         /// valid choice.</summary>
         public event Action<string, string, string, string> OnForegroundQuizDeadline;
 
+        /// <summary>Same idea again, for a "new material" push that arrives while the app is
+        /// open. Args are (classroomId, materialId, title, body). Nothing subscribes by
+        /// default - the student's Materials tab is already live (ListenToMaterials), so the
+        /// new file simply appears there.</summary>
+        public event Action<string, string, string, string> OnForegroundMaterial;
+
+        /// <summary>Which tab of the student's classroom screen a tapped notification lands on.</summary>
+        private enum ClassroomTab { Overview, Quizzes, Materials }
+
         private bool _initialized;
         private string _pendingNavigationClassroomId;
-        private bool _pendingNavigationOpensQuizzesTab;
+        private ClassroomTab _pendingNavigationTab = ClassroomTab.Overview;
         private float _pendingNavigationDeadline = -1f;
 
         // Small FIFO of recently-handled message ids, guarding against FCM's
@@ -357,6 +366,9 @@ namespace Anatomia3D.Backend
                 case "quiz_deadline":
                     HandleQuizDeadlineMessage(message);
                     break;
+                case "material":
+                    HandleMaterialMessage(message);
+                    break;
                 default:
                     // Unknown push type - ignore rather than guess. Keeps older app
                     // builds from misreading a payload shape added after they shipped.
@@ -383,7 +395,7 @@ namespace Anatomia3D.Backend
             {
                 // Student tapped the system-tray notification (background or fully-closed
                 // app) - navigate them straight to the announcement.
-                NavigateToClassroom(classroomId, openQuizzesTab: false);
+                NavigateToClassroom(classroomId, ClassroomTab.Overview);
             }
             else
             {
@@ -428,11 +440,39 @@ namespace Anatomia3D.Backend
             {
                 // Land on Available Quizzes rather than Overview - the student tapped a
                 // "closes soon" reminder, so the quiz list is what they came for.
-                NavigateToClassroom(classroomId, openQuizzesTab: true);
+                NavigateToClassroom(classroomId, ClassroomTab.Quizzes);
             }
             else
             {
                 OnForegroundQuizDeadline?.Invoke(classroomId, quizId, title, body);
+            }
+        }
+
+        /// <summary>A "your teacher uploaded a new material" push, sent by the
+        /// AnnouncementPushSender Apps Script to `classroom_{classroomId}` (same topic as
+        /// announcements, different `type`). Tapping it lands on the Materials tab.</summary>
+        private void HandleMaterialMessage(FirebaseMessage message)
+        {
+            message.Data.TryGetValue("materialId", out string materialId);
+            message.Data.TryGetValue("classroomId", out string classroomId);
+            string title = message.Notification != null ? message.Notification.Title : "";
+            string body = message.Notification != null ? message.Notification.Body : "";
+
+            if (string.IsNullOrEmpty(classroomId))
+            {
+                Debug.LogWarning("[FCMNotificationService] Material push missing classroomId - ignoring.");
+                return;
+            }
+
+            if (IsDuplicateMessage("material:" + materialId)) return;
+
+            if (message.NotificationOpened)
+            {
+                NavigateToClassroom(classroomId, ClassroomTab.Materials);
+            }
+            else
+            {
+                OnForegroundMaterial?.Invoke(classroomId, materialId, title, body);
             }
         }
 
@@ -461,13 +501,13 @@ namespace Anatomia3D.Backend
         /// gracefully (section 7) instead of crashing, and handles a cold-start tap arriving
         /// before login/session-restore has finished by deferring briefly - see
         /// TryProcessPendingNavigation().</summary>
-        private void NavigateToClassroom(string classroomId, bool openQuizzesTab)
+        private void NavigateToClassroom(string classroomId, ClassroomTab tab)
         {
             var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
             if (student == null)
             {
                 _pendingNavigationClassroomId = classroomId;
-                _pendingNavigationOpensQuizzesTab = openQuizzesTab;
+                _pendingNavigationTab = tab;
                 _pendingNavigationDeadline = Time.unscaledTime + PendingNavigationTimeoutSeconds;
                 return;
             }
@@ -486,13 +526,17 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                if (openQuizzesTab)
+                switch (tab)
                 {
-                    UIManager.Instance.ShowStudentClassroomDetailOnQuizzesTab(detail.ClassroomId, detail.Name, detail.Code);
-                }
-                else
-                {
-                    UIManager.Instance.ShowStudentClassroomDetail(detail.ClassroomId, detail.Name, detail.Code);
+                    case ClassroomTab.Quizzes:
+                        UIManager.Instance.ShowStudentClassroomDetailOnQuizzesTab(detail.ClassroomId, detail.Name, detail.Code);
+                        break;
+                    case ClassroomTab.Materials:
+                        UIManager.Instance.ShowStudentClassroomDetailOnMaterialsTab(detail.ClassroomId, detail.Name, detail.Code);
+                        break;
+                    default:
+                        UIManager.Instance.ShowStudentClassroomDetail(detail.ClassroomId, detail.Name, detail.Code);
+                        break;
                 }
             });
         }
@@ -505,9 +549,9 @@ namespace Anatomia3D.Backend
             if (student == null && !timedOut) return;
 
             string classroomId = _pendingNavigationClassroomId;
-            bool openQuizzesTab = _pendingNavigationOpensQuizzesTab;
+            ClassroomTab tab = _pendingNavigationTab;
             _pendingNavigationClassroomId = null;
-            _pendingNavigationOpensQuizzesTab = false;
+            _pendingNavigationTab = ClassroomTab.Overview;
             _pendingNavigationDeadline = -1f;
 
             if (student == null)
@@ -516,7 +560,7 @@ namespace Anatomia3D.Backend
                 return;
             }
 
-            NavigateToClassroom(classroomId, openQuizzesTab);
+            NavigateToClassroom(classroomId, tab);
         }
 
         // ---------------- Android setup helpers ----------------

@@ -42,10 +42,15 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="tab-switcher" class="tab-switcher">
-                    <ui:Button name="students-tab-button" text="Students" class="tab-button tab-button-active"/>
-                    <ui:Button name="quizzes-tab-button" text="Quizzes" class="tab-button"/>
-                    <ui:Button name="analytics-tab-button" text="Analytics" class="tab-button"/>
-                    <ui:Button name="announcements-tab-button" text="Announcements" class="tab-button"/>
+                    <ui:VisualElement name="tab-switcher-row-1" class="tab-switcher-row">
+                        <ui:Button name="students-tab-button" text="Students" class="tab-button tab-button-active"/>
+                        <ui:Button name="quizzes-tab-button" text="Quizzes" class="tab-button"/>
+                        <ui:Button name="analytics-tab-button" text="Analytics" class="tab-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="tab-switcher-row-2" class="tab-switcher-row tab-switcher-row-2">
+                        <ui:Button name="announcements-tab-button" text="Announcements" class="tab-button"/>
+                        <ui:Button name="materials-tab-button" text="Materials" class="tab-button"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="students-panel" class="tab-panel">
                     <ui:VisualElement name="students-empty-state" class="panel-card empty-state">
@@ -130,6 +135,34 @@
                         <ui:Label text="Announcements you post will show up here, and on students&apos; Overview tab." class="empty-subtitle"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="announcements-list" class="announcements-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="materials-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="material-compose-card" class="panel-card">
+                        <ui:Label text="Upload a Material" class="panel-card-title"/>
+                        <ui:Label text="Share a module or lesson file. Students in this classroom can open it from their Materials tab." class="panel-card-subtitle"/>
+                        <ui:Label text="Title" class="announcement-field-label"/>
+                        <ui:TextField name="material-title-field" max-length="120" class="announcement-input"/>
+                        <ui:Label text="Description (optional)" class="announcement-field-label announcement-field-label-spaced"/>
+                        <ui:TextField name="material-description-field" multiline="true" max-length="500" class="announcement-input material-description-input"/>
+                        <ui:Button name="material-choose-file-button" text="Choose File" class="material-choose-button"/>
+                        <ui:VisualElement name="material-selected-file-panel" class="material-selected-file hidden">
+                            <ui:VisualElement class="material-selected-file-text">
+                                <ui:Label name="material-selected-file-name" class="material-file-name"/>
+                                <ui:Label name="material-selected-file-size" class="material-file-meta"/>
+                            </ui:VisualElement>
+                            <ui:Button name="material-clear-file-button" text="Remove" class="announcement-delete-button"/>
+                        </ui:VisualElement>
+                        <ui:Label text="PDF, Word, PowerPoint, Excel, TXT, CSV or image files up to 25 MB." class="material-hint"/>
+                        <ui:Label name="material-status-label" class="material-status-label hidden"/>
+                        <ui:Button name="upload-material-button" text="Upload Material" class="post-announcement-button"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Uploaded Materials" class="announcements-section-title"/>
+                    <ui:VisualElement name="materials-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-announce-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
+                        <ui:Label text="No materials yet" class="empty-title"/>
+                        <ui:Label text="Files you upload will show up here, and on students&apos; Materials tab." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="materials-list" class="announcements-list hidden"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>

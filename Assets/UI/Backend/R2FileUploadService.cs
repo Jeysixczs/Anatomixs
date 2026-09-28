@@ -233,13 +233,13 @@ namespace Anatomia3D.Backend
                     return;
                 }
 
-                StartCoroutine(DownloadRoutine(token, storageKey, onComplete));
+                StartCoroutine(DownloadRoutine(token, "/v1/submissions/download", storageKey, onComplete));
             });
         }
 
-        private IEnumerator DownloadRoutine(string token, string storageKey, Action<bool, string, byte[]> onComplete)
+        private IEnumerator DownloadRoutine(string token, string route, string storageKey, Action<bool, string, byte[]> onComplete)
         {
-            string url = $"{workerBaseUrl.TrimEnd('/')}/v1/submissions/download?key={UnityWebRequest.EscapeURL(storageKey)}";
+            string url = $"{workerBaseUrl.TrimEnd('/')}{route}?key={UnityWebRequest.EscapeURL(storageKey)}";
 
             using (var request = UnityWebRequest.Get(url))
             {
@@ -257,6 +257,175 @@ namespace Anatomia3D.Backend
                 }
 
                 onComplete?.Invoke(true, null, request.downloadHandler.data);
+            }
+        }
+
+        // ==================================================================
+        // Teaching materials (teacher uploads / deletes, student + teacher read)
+        // ==================================================================
+
+        public const string MaterialOfflineMessage = "You need an internet connection to do that. Please connect and try again.";
+
+        /// <summary>
+        /// Uploads one teaching-material file for the signed-in teacher. The Worker
+        /// only accepts it when the token's uid owns <paramref name="classroomId"/>.
+        /// <paramref name="materialId"/> is the Firestore doc id the caller reserved
+        /// (AdminClassroomService.ReserveMaterialId), so file and doc line up 1:1.
+        /// </summary>
+        public void UploadMaterial(
+            string classroomId,
+            string materialId,
+            string fileName,
+            string mimeType,
+            byte[] fileBytes,
+            Action<bool, string, UploadResult> onComplete)
+        {
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                onComplete?.Invoke(false, MaterialOfflineMessage, null);
+                return;
+            }
+
+            if (fileBytes == null || fileBytes.Length == 0)
+            {
+                onComplete?.Invoke(false, "That file is empty. Please choose a different file.", null);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(workerBaseUrl))
+            {
+                Debug.LogError("[R2FileUploadService] workerBaseUrl is not configured in the Inspector.");
+                onComplete?.Invoke(false, "File uploads are not configured yet.", null);
+                return;
+            }
+
+            GetIdToken(token =>
+            {
+                if (string.IsNullOrEmpty(token))
+                {
+                    onComplete?.Invoke(false, "Your session expired. Please sign in again.", null);
+                    return;
+                }
+
+                StartCoroutine(MaterialUploadRoutine(token, classroomId, materialId, fileName, mimeType, fileBytes, onComplete));
+            });
+        }
+
+        private IEnumerator MaterialUploadRoutine(
+            string token, string classroomId, string materialId,
+            string fileName, string mimeType, byte[] fileBytes,
+            Action<bool, string, UploadResult> onComplete)
+        {
+            string url = $"{workerBaseUrl.TrimEnd('/')}/v1/materials/upload";
+
+            using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
+            {
+                request.uploadHandler = new UploadHandlerRaw(fileBytes);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.timeout = requestTimeoutSeconds;
+
+                request.SetRequestHeader("Authorization", $"Bearer {token}");
+                request.SetRequestHeader("Content-Type", string.IsNullOrEmpty(mimeType) ? "application/octet-stream" : mimeType);
+                // teacherId is deliberately NOT sent - the Worker uses the token's `sub`.
+                request.SetRequestHeader("X-Anatomia-Classroom-Id", classroomId ?? string.Empty);
+                request.SetRequestHeader("X-Anatomia-Material-Id", materialId ?? string.Empty);
+                request.SetRequestHeader("X-Anatomia-File-Name", EncodeHeaderValue(fileName));
+
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[R2FileUploadService] Material upload failed ({request.responseCode}): {request.error} / {request.downloadHandler?.text}");
+                    onComplete?.Invoke(false, ExtractWorkerError(request), null);
+                    yield break;
+                }
+
+                var parsed = ParseUploadResponse(request.downloadHandler.text);
+                if (parsed == null || string.IsNullOrEmpty(parsed.StorageKey))
+                {
+                    onComplete?.Invoke(false, "Upload finished but the server did not confirm it. Please try again.", null);
+                    yield break;
+                }
+
+                onComplete?.Invoke(true, null, parsed);
+            }
+        }
+
+        /// <summary>Downloads a material's bytes. The Worker allows the classroom's
+        /// teacher and its enrolled students, and only while the material's
+        /// Firestore doc still exists.</summary>
+        public void DownloadMaterial(string storageKey, Action<bool, string, byte[]> onComplete)
+        {
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                onComplete?.Invoke(false, "You need an internet connection to open this file.", null);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(storageKey))
+            {
+                onComplete?.Invoke(false, "This material has no stored file.", null);
+                return;
+            }
+
+            GetIdToken(token =>
+            {
+                if (string.IsNullOrEmpty(token))
+                {
+                    onComplete?.Invoke(false, "Your session expired. Please sign in again.", null);
+                    return;
+                }
+
+                StartCoroutine(DownloadRoutine(token, "/v1/materials/download", storageKey, onComplete));
+            });
+        }
+
+        /// <summary>Removes a material's file from R2 (teacher of the classroom only).
+        /// Call AFTER the Firestore doc is gone so students stop seeing it first; a
+        /// failure here only leaves an unreachable file behind, so callers can treat it
+        /// as best-effort.</summary>
+        public void DeleteMaterialFile(string storageKey, Action<bool, string> onComplete)
+        {
+            if (string.IsNullOrEmpty(storageKey)) { onComplete?.Invoke(true, null); return; }
+
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                onComplete?.Invoke(false, MaterialOfflineMessage);
+                return;
+            }
+
+            GetIdToken(token =>
+            {
+                if (string.IsNullOrEmpty(token))
+                {
+                    onComplete?.Invoke(false, "Your session expired. Please sign in again.");
+                    return;
+                }
+
+                StartCoroutine(DeleteMaterialRoutine(token, storageKey, onComplete));
+            });
+        }
+
+        private IEnumerator DeleteMaterialRoutine(string token, string storageKey, Action<bool, string> onComplete)
+        {
+            string url = $"{workerBaseUrl.TrimEnd('/')}/v1/materials/delete?key={UnityWebRequest.EscapeURL(storageKey)}";
+
+            using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
+            {
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.timeout = requestTimeoutSeconds;
+                request.SetRequestHeader("Authorization", $"Bearer {token}");
+
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[R2FileUploadService] Material delete failed ({request.responseCode}): {request.error}");
+                    onComplete?.Invoke(false, ExtractWorkerError(request));
+                    yield break;
+                }
+
+                onComplete?.Invoke(true, null);
             }
         }
 

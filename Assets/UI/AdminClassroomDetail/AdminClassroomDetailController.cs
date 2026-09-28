@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Anatomia3D.Backend;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -101,10 +102,12 @@ namespace Anatomia3D.UI
         private Button _quizzesTabButton;
         private Button _analyticsTabButton;
         private Button _announcementsTabButton;
+        private Button _materialsTabButton;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
         private VisualElement _analyticsPanel;
         private VisualElement _announcementsPanel;
+        private VisualElement _materialsPanel;
 
         // Students tab
         private VisualElement _studentsEmptyState;
@@ -166,6 +169,27 @@ namespace Anatomia3D.UI
         private Button _postAnnouncementButton;
         private VisualElement _announcementsEmptyState;
         private VisualElement _announcementsList;
+
+        // Materials tab
+        private TextField _materialTitleField;
+        private TextField _materialDescriptionField;
+        private Button _materialChooseFileButton;
+        private VisualElement _materialSelectedFilePanel;
+        private Label _materialSelectedFileName;
+        private Label _materialSelectedFileSize;
+        private Button _materialClearFileButton;
+        private Label _materialStatusLabel;
+        private Button _uploadMaterialButton;
+        private VisualElement _materialsEmptyState;
+        private VisualElement _materialsList;
+
+        private readonly List<ClassroomMaterial> _materials = new();
+        private string _pendingMaterialPath;
+        private string _pendingMaterialName;
+        private long _pendingMaterialSize;
+        private bool _isUploadingMaterial;
+        /// <summary>Delete is two taps (arm, then confirm) so a stray tap can't remove a file.</summary>
+        private string _armedDeleteMaterialId;
 
         /// <summary>A single posted announcement. Field shape matches
         /// StudentClassroomDetailController.AnnouncementInfo - forward the result
@@ -260,6 +284,7 @@ namespace Anatomia3D.UI
             _pendingUnenrollStudentId = null;
             _pendingUnenrollStudentName = null;
             RefreshAnnouncementsUI();
+            RefreshMaterialsUI();
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
             // with a classroom already loaded - refresh from Firestore.
@@ -297,10 +322,15 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.UnregisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.UnregisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
+            _materialsTabButton?.UnregisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             _showToStudentsToggle?.UnregisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
             _postAnnouncementButton?.UnregisterCallback<ClickEvent>(OnPostAnnouncementClicked);
+
+            _materialChooseFileButton?.UnregisterCallback<ClickEvent>(OnMaterialChooseFileClicked);
+            _materialClearFileButton?.UnregisterCallback<ClickEvent>(OnMaterialClearFileClicked);
+            _uploadMaterialButton?.UnregisterCallback<ClickEvent>(OnUploadMaterialClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -337,10 +367,12 @@ namespace Anatomia3D.UI
             _quizzesTabButton = _screenRoot.Q<Button>("quizzes-tab-button");
             _analyticsTabButton = _screenRoot.Q<Button>("analytics-tab-button");
             _announcementsTabButton = _screenRoot.Q<Button>("announcements-tab-button");
+            _materialsTabButton = _screenRoot.Q<Button>("materials-tab-button");
             _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
             _quizzesPanel = _screenRoot.Q<VisualElement>("quizzes-panel");
             _analyticsPanel = _screenRoot.Q<VisualElement>("analytics-panel");
             _announcementsPanel = _screenRoot.Q<VisualElement>("announcements-panel");
+            _materialsPanel = _screenRoot.Q<VisualElement>("materials-panel");
 
             _studentsEmptyState = _screenRoot.Q<VisualElement>("students-empty-state");
             _studentsListCard = _screenRoot.Q<VisualElement>("students-list-card");
@@ -372,6 +404,18 @@ namespace Anatomia3D.UI
             _announcementsEmptyState = _screenRoot.Q<VisualElement>("announcements-empty-state");
             _announcementsList = _screenRoot.Q<VisualElement>("announcements-list");
 
+            _materialTitleField = _screenRoot.Q<TextField>("material-title-field");
+            _materialDescriptionField = _screenRoot.Q<TextField>("material-description-field");
+            _materialChooseFileButton = _screenRoot.Q<Button>("material-choose-file-button");
+            _materialSelectedFilePanel = _screenRoot.Q<VisualElement>("material-selected-file-panel");
+            _materialSelectedFileName = _screenRoot.Q<Label>("material-selected-file-name");
+            _materialSelectedFileSize = _screenRoot.Q<Label>("material-selected-file-size");
+            _materialClearFileButton = _screenRoot.Q<Button>("material-clear-file-button");
+            _materialStatusLabel = _screenRoot.Q<Label>("material-status-label");
+            _uploadMaterialButton = _screenRoot.Q<Button>("upload-material-button");
+            _materialsEmptyState = _screenRoot.Q<VisualElement>("materials-empty-state");
+            _materialsList = _screenRoot.Q<VisualElement>("materials-list");
+
             Debug.Log($"[AdminClassroomDetailController] Found tabs: {_studentsTabButton != null}/{_quizzesTabButton != null}/{_analyticsTabButton != null}/{_announcementsTabButton != null}");
         }
 
@@ -392,10 +436,15 @@ namespace Anatomia3D.UI
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
             _announcementsTabButton?.RegisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
+            _materialsTabButton?.RegisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             _showToStudentsToggle?.RegisterCallback<ClickEvent>(OnShowToStudentsToggleClicked);
 
             _postAnnouncementButton?.RegisterCallback<ClickEvent>(OnPostAnnouncementClicked);
+
+            _materialChooseFileButton?.RegisterCallback<ClickEvent>(OnMaterialChooseFileClicked);
+            _materialClearFileButton?.RegisterCallback<ClickEvent>(OnMaterialClearFileClicked);
+            _uploadMaterialButton?.RegisterCallback<ClickEvent>(OnUploadMaterialClicked);
 
             if (_screenRoot != null)
             {
@@ -436,6 +485,12 @@ namespace Anatomia3D.UI
             // LoadClassroomContent()'s FetchClassroomDetail callback will set the real value
             // once it resolves.
             SetArchived(false);
+
+            // Same reused-screen rule for the Materials tab: don't carry the previous
+            // classroom's list or half-filled upload form into this one.
+            _materials.Clear();
+            ResetMaterialForm();
+            RefreshMaterialsUI();
 
             LoadClassroomContent();
         }
@@ -495,6 +550,15 @@ namespace Anatomia3D.UI
                     });
                 }
                 RefreshAnnouncementsUI();
+            });
+
+            string materialsClassroomId = _classroomId;
+            AdminClassroomService.Instance.FetchMaterials(materialsClassroomId, materials =>
+            {
+                if (materialsClassroomId != _classroomId) return;
+                _materials.Clear();
+                _materials.AddRange(materials);
+                RefreshMaterialsUI();
             });
 
             AdminClassroomService.Instance.FetchClassroomAnalytics(_classroomId, analytics =>
@@ -633,6 +697,7 @@ namespace Anatomia3D.UI
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();
         private void OnAnalyticsTabClicked(ClickEvent evt) => ShowAnalyticsTab();
         private void OnAnnouncementsTabClicked(ClickEvent evt) => ShowAnnouncementsTab();
+        private void OnMaterialsTabClicked(ClickEvent evt) => ShowMaterialsTab();
 
         private void ShowStudentsTab()
         {
@@ -654,18 +719,25 @@ namespace Anatomia3D.UI
             SetActiveTab(_announcementsTabButton, _announcementsPanel);
         }
 
+        private void ShowMaterialsTab()
+        {
+            SetActiveTab(_materialsTabButton, _materialsPanel);
+        }
+
         private void SetActiveTab(Button activeButton, VisualElement activePanel)
         {
             _studentsTabButton?.RemoveFromClassList("tab-button-active");
             _quizzesTabButton?.RemoveFromClassList("tab-button-active");
             _analyticsTabButton?.RemoveFromClassList("tab-button-active");
             _announcementsTabButton?.RemoveFromClassList("tab-button-active");
+            _materialsTabButton?.RemoveFromClassList("tab-button-active");
             activeButton?.AddToClassList("tab-button-active");
 
             _studentsPanel?.AddToClassList("hidden");
             _quizzesPanel?.AddToClassList("hidden");
             _analyticsPanel?.AddToClassList("hidden");
             _announcementsPanel?.AddToClassList("hidden");
+            _materialsPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
         }
 
@@ -996,6 +1068,307 @@ namespace Anatomia3D.UI
             card.Add(deleteButton);
 
             return card;
+        }
+
+        // ---------------- Materials (modules / lessons) ----------------
+
+        private void OnMaterialChooseFileClicked(ClickEvent evt)
+        {
+            if (_isUploadingMaterial || NativeFilePicker.IsFilePickerBusy()) return;
+
+            SetMaterialStatus(null, false);
+
+            var allowedTypes = MaterialConfig.AllowedExtensions
+                .Select(e => NativeFilePicker.ConvertExtensionToFileType(e))
+                .Where(t => !string.IsNullOrEmpty(t))
+                .Distinct()
+                .ToArray();
+
+            NativeFilePicker.PickFile(path =>
+            {
+                if (string.IsNullOrEmpty(path)) return; // teacher cancelled
+
+                string fileName = System.IO.Path.GetFileName(path);
+                long size;
+
+                try
+                {
+                    size = new System.IO.FileInfo(path).Length;
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[AdminClassroomDetailController] Could not read '{path}': {e.Message}");
+                    SetMaterialStatus("Could not read that file. Please choose a different one.", true);
+                    return;
+                }
+
+                string problem = MaterialConfig.Validate(fileName, size);
+                if (problem != null)
+                {
+                    ClearPendingMaterialFile();
+                    SetMaterialStatus(problem, true);
+                    return;
+                }
+
+                _pendingMaterialPath = path;
+                _pendingMaterialName = fileName;
+                _pendingMaterialSize = size;
+
+                if (_materialSelectedFileName != null) _materialSelectedFileName.text = fileName;
+                if (_materialSelectedFileSize != null) _materialSelectedFileSize.text = FileSubmissionConfig.FormatSize(size);
+                _materialSelectedFilePanel?.RemoveFromClassList("hidden");
+
+                SetMaterialStatus(null, false);
+            }, allowedTypes.Length > 0 ? allowedTypes : null);
+        }
+
+        private void OnMaterialClearFileClicked(ClickEvent evt)
+        {
+            if (_isUploadingMaterial) return;
+            ClearPendingMaterialFile();
+            SetMaterialStatus(null, false);
+        }
+
+        private void ClearPendingMaterialFile()
+        {
+            _pendingMaterialPath = null;
+            _pendingMaterialName = null;
+            _pendingMaterialSize = 0;
+            _materialSelectedFilePanel?.AddToClassList("hidden");
+            if (_materialSelectedFileName != null) _materialSelectedFileName.text = string.Empty;
+            if (_materialSelectedFileSize != null) _materialSelectedFileSize.text = string.Empty;
+        }
+
+        private void ResetMaterialForm()
+        {
+            ClearPendingMaterialFile();
+            if (_materialTitleField != null) _materialTitleField.value = string.Empty;
+            if (_materialDescriptionField != null) _materialDescriptionField.value = string.Empty;
+            _armedDeleteMaterialId = null;
+            SetUploadingMaterial(false);
+            SetMaterialStatus(null, false);
+        }
+
+        private void SetUploadingMaterial(bool uploading)
+        {
+            _isUploadingMaterial = uploading;
+            _uploadMaterialButton?.SetEnabled(!uploading);
+            _materialChooseFileButton?.SetEnabled(!uploading);
+            _materialClearFileButton?.SetEnabled(!uploading);
+            if (_uploadMaterialButton != null) _uploadMaterialButton.text = uploading ? "Uploading..." : "Upload Material";
+        }
+
+        private void SetMaterialStatus(string message, bool isError)
+        {
+            if (_materialStatusLabel == null) return;
+
+            bool has = !string.IsNullOrEmpty(message);
+            _materialStatusLabel.text = has ? message : string.Empty;
+            _materialStatusLabel.EnableInClassList("hidden", !has);
+            _materialStatusLabel.EnableInClassList("material-status-error", has && isError);
+            _materialStatusLabel.EnableInClassList("material-status-success", has && !isError);
+        }
+
+        private void OnUploadMaterialClicked(ClickEvent evt)
+        {
+            if (_isUploadingMaterial) return;
+
+            if (string.IsNullOrEmpty(_classroomId) || AdminClassroomService.Instance == null || R2FileUploadService.Instance == null)
+            {
+                SetMaterialStatus("Materials are not available right now.", true);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_pendingMaterialPath))
+            {
+                SetMaterialStatus("Choose a file to upload first.", true);
+                return;
+            }
+
+            if (!NetworkStatusMonitor.IsOnline)
+            {
+                SetMaterialStatus(R2FileUploadService.MaterialOfflineMessage, true);
+                return;
+            }
+
+            byte[] bytes;
+            try
+            {
+                bytes = System.IO.File.ReadAllBytes(_pendingMaterialPath);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[AdminClassroomDetailController] Could not read the picked file: {e.Message}");
+                SetMaterialStatus("Could not read that file. Please choose it again.", true);
+                return;
+            }
+
+            string problem = MaterialConfig.Validate(_pendingMaterialName, bytes.LongLength);
+            if (problem != null)
+            {
+                SetMaterialStatus(problem, true);
+                return;
+            }
+
+            string classroomId = _classroomId;
+            string fileName = _pendingMaterialName;
+            string title = (_materialTitleField?.value ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(title)) title = System.IO.Path.GetFileNameWithoutExtension(fileName);
+            string description = (_materialDescriptionField?.value ?? string.Empty).Trim();
+            string mimeType = FileOpener.GetMimeType(fileName);
+            string materialId = AdminClassroomService.Instance.ReserveMaterialId(classroomId);
+
+            SetUploadingMaterial(true);
+            SetMaterialStatus("Uploading file...", false);
+
+            R2FileUploadService.Instance.UploadMaterial(classroomId, materialId, fileName, mimeType, bytes, (ok, error, result) =>
+            {
+                if (!ok)
+                {
+                    SetUploadingMaterial(false);
+                    SetMaterialStatus(error ?? "Could not upload that file.", true);
+                    return;
+                }
+
+                var material = new ClassroomMaterial
+                {
+                    MaterialId = materialId,
+                    Title = title,
+                    Description = description,
+                    FileName = fileName,
+                    FileSize = result.FileSize,
+                    MimeType = string.IsNullOrEmpty(result.MimeType) ? mimeType : result.MimeType,
+                    StorageKey = result.StorageKey
+                };
+
+                AdminClassroomService.Instance.SaveMaterial(classroomId, material, (saved, saveError, record) =>
+                {
+                    SetUploadingMaterial(false);
+
+                    if (!saved)
+                    {
+                        // The file made it into R2 but has no doc, so nobody could ever open
+                        // it. Remove it instead of leaving an orphan behind.
+                        R2FileUploadService.Instance.DeleteMaterialFile(result.StorageKey, null);
+                        SetMaterialStatus(saveError ?? "Could not save the material. Please try again.", true);
+                        return;
+                    }
+
+                    // The teacher may have moved to another classroom while this uploaded.
+                    if (classroomId != _classroomId) return;
+
+                    _materials.Insert(0, record);
+                    ResetMaterialForm();
+                    RefreshMaterialsUI();
+                    SetMaterialStatus("Uploaded. Students can open it from their Materials tab.", false);
+
+                    Debug.Log($"[AdminClassroomDetailController] Uploaded material \"{record.Title}\" to classroom {classroomId}");
+                });
+            });
+        }
+
+        private void RefreshMaterialsUI()
+        {
+            if (_materialsList == null) return;
+
+            _materialsList.Clear();
+
+            bool hasData = _materials.Count > 0;
+            _materialsEmptyState?.EnableInClassList("hidden", hasData);
+            _materialsList.EnableInClassList("hidden", !hasData);
+
+            if (!hasData) return;
+
+            foreach (var material in _materials) _materialsList.Add(BuildMaterialCard(material));
+        }
+
+        private VisualElement BuildMaterialCard(ClassroomMaterial material)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("announcement-card");
+
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("announcement-header-row");
+
+            var titleLabel = new Label(string.IsNullOrEmpty(material.Title) ? material.FileName : material.Title);
+            titleLabel.AddToClassList("announcement-title-label");
+
+            var dateLabel = new Label(material.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"));
+            dateLabel.AddToClassList("announcement-date-label");
+
+            headerRow.Add(titleLabel);
+            headerRow.Add(dateLabel);
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(material.Description))
+            {
+                var descriptionLabel = new Label(material.Description);
+                descriptionLabel.AddToClassList("announcement-body-label");
+                card.Add(descriptionLabel);
+            }
+
+            var fileLabel = new Label($"{material.FileName}  \u2022  {FileSubmissionConfig.FormatSize(material.FileSize)}");
+            fileLabel.AddToClassList("material-file-meta");
+            card.Add(fileLabel);
+
+            var actions = new VisualElement();
+            actions.AddToClassList("material-card-actions");
+
+            var openButton = new Button { text = "Open" };
+            openButton.AddToClassList("material-open-button");
+            openButton.clicked += () => MaterialFileOpener.Open(material,
+                busy => { openButton.SetEnabled(!busy); openButton.text = busy ? "Opening..." : "Open"; },
+                error => SetMaterialStatus(error, true));
+            actions.Add(openButton);
+
+            var deleteButton = new Button { text = "Delete" };
+            deleteButton.AddToClassList("announcement-delete-button");
+            deleteButton.AddToClassList("material-card-delete");
+            deleteButton.clicked += () => OnDeleteMaterialClicked(material, deleteButton);
+            actions.Add(deleteButton);
+
+            card.Add(actions);
+            return card;
+        }
+
+        private void OnDeleteMaterialClicked(ClassroomMaterial material, Button deleteButton)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || AdminClassroomService.Instance == null) return;
+
+            // First tap arms it for a few seconds; the second tap inside that window deletes.
+            if (_armedDeleteMaterialId != material.MaterialId)
+            {
+                _armedDeleteMaterialId = material.MaterialId;
+                deleteButton.text = "Tap again to delete";
+                deleteButton.schedule.Execute(() =>
+                {
+                    if (_armedDeleteMaterialId != material.MaterialId) return;
+                    _armedDeleteMaterialId = null;
+                    deleteButton.text = "Delete";
+                }).StartingIn(3500);
+                return;
+            }
+
+            _armedDeleteMaterialId = null;
+            deleteButton.SetEnabled(false);
+
+            string classroomId = _classroomId;
+            AdminClassroomService.Instance.DeleteMaterial(classroomId, material, (success, error) =>
+            {
+                if (!success)
+                {
+                    deleteButton.SetEnabled(true);
+                    deleteButton.text = "Delete";
+                    SetMaterialStatus(error ?? "Could not delete the material.", true);
+                    return;
+                }
+
+                if (classroomId != _classroomId) return;
+
+                _materials.Remove(material);
+                RefreshMaterialsUI();
+                Debug.Log($"[AdminClassroomDetailController] Deleted material \"{material.Title}\" from classroom {classroomId}");
+            });
         }
 
         // ---------------- Row builders (built at runtime - lists are dynamic) ----------------

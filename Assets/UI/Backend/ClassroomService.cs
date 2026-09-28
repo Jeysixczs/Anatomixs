@@ -353,6 +353,26 @@ namespace Anatomia3D.Backend
             };
         }
 
+        // ---------------- Materials (read-only here - uploaded by AdminClassroomService) ----------------
+
+        /// <summary>Live list of the teacher's uploaded materials for this classroom, most
+        /// recent first. Keep the returned ListenerRegistration and Stop() it on classroom
+        /// change / OnDisable, same as ListenToAnnouncements(). Fires once immediately,
+        /// then whenever the teacher uploads or removes a material.</summary>
+        public ListenerRegistration ListenToMaterials(string classroomId, Action<List<ClassroomMaterial>> onUpdate)
+        {
+            if (string.IsNullOrEmpty(classroomId)) { onUpdate?.Invoke(new List<ClassroomMaterial>()); return null; }
+
+            return Db.Collection("classrooms").Document(classroomId).Collection("materials")
+                .OrderByDescending("createdAt")
+                .Listen(snapshot =>
+                {
+                    var results = new List<ClassroomMaterial>();
+                    foreach (var doc in snapshot.Documents) results.Add(ClassroomMaterial.FromSnapshot(doc));
+                    onUpdate?.Invoke(results);
+                });
+        }
+
         // ---------------- Notifications (derived live from per-classroom announcements) ----------------
 
         /// <summary>

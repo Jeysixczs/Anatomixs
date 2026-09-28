@@ -1402,3 +1402,119 @@
 {
     font-size: 17px;
 }
+
+/* =========================================================
+   Materials tab (files uploaded by the teacher)
+   ========================================================= */
+
+.materials-list
+{
+    flex-direction: column;
+}
+
+.materials-error-label
+{
+    font-size: 28px;
+    color: rgb(220, 38, 38);
+    white-space: normal;
+    margin-bottom: 20px;
+}
+
+.material-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 34px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.material-card-header-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.material-type-badge
+{
+    min-width: 96px;
+    height: 96px;
+    margin-right: 26px;
+    background-color: rgb(240, 253, 244);
+    border-radius: 24px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(22, 163, 74);
+    -unity-text-align: middle-center;
+}
+
+.material-card-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.material-title-label
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.material-meta-label
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.material-description-label
+{
+    font-size: 32px;
+    color: rgb(80, 85, 100);
+    margin-top: 22px;
+    white-space: normal;
+}
+
+.material-open-button
+{
+    height: 96px;
+    margin-top: 26px;
+    background-color: rgb(34, 197, 94);
+    border-width: 0;
+    border-radius: 22px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.material-open-button:hover
+{
+    background-color: rgb(22, 163, 74);
+}
+
+.compact .material-title-label
+{
+    font-size: 28px;
+}
+
+.compact .material-description-label
+{
+    font-size: 24px;
+}
+
+.compact .material-open-button
+{
+    height: 72px;
+    font-size: 24px;
+}
+
+.compact .material-type-badge
+{
+    min-width: 72px;
+    height: 72px;
+    font-size: 19px;
+}
