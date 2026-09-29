@@ -583,6 +583,11 @@
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
     flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .peer-level-badge
@@ -853,81 +858,224 @@
     flex-direction: column;
 }
 
+/* Header count, right-aligned next to the title */
+.lb-count-label
+{
+    font-size: 31px;
+    color: rgb(150, 155, 168);
+    margin-left: auto;
+}
+
+/* "Your rank" summary strip */
+.lb-summary
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(236, 253, 250);
+    border-width: 2px;
+    border-color: rgb(153, 246, 228);
+    border-radius: 28px;
+    padding: 30px 35px;
+    margin-bottom: 28px;
+}
+
+.lb-summary-mid
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lb-summary-left
+{
+    flex-direction: column;
+}
+
+.lb-summary-caption
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(15, 118, 110);
+    letter-spacing: 2px;
+}
+
+.lb-summary-rank-row
+{
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.lb-summary-rank
+{
+    font-size: 72px;
+    -unity-font-style: bold;
+    color: rgb(13, 148, 136);
+}
+
+.lb-summary-of
+{
+    font-size: 31px;
+    color: rgb(90, 95, 110);
+    margin-left: 12px;
+    margin-bottom: 12px;
+}
+
+.lb-summary-hint
+{
+    font-size: 30px;
+    color: rgb(15, 118, 110);
+    white-space: normal;
+    margin-top: 4px;
+}
+
+.lb-summary-right
+{
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    margin-left: 24px;
+}
+
+.lb-summary-points
+{
+    font-size: 56px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+}
+
+.lb-summary-points-caption
+{
+    font-size: 26px;
+    color: rgb(90, 95, 110);
+}
+
+/* Rows */
 .performer-row
 {
     flex-direction: row;
     align-items: center;
-    padding: 26px 21px;
-    border-radius: 21px;
+    padding: 24px 24px 24px 21px;
+    border-radius: 24px;
     margin-bottom: 14px;
+    background-color: rgb(248, 249, 251);
+    border-left-width: 8px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.performer-row-default
+{
     background-color: rgb(248, 249, 251);
 }
 
 .performer-row-gold
 {
     background-color: rgb(254, 249, 224);
+    border-left-color: rgb(234, 179, 8);
 }
 
 .performer-row-silver
 {
     background-color: rgb(243, 244, 248);
+    border-left-color: rgb(148, 163, 184);
 }
 
 .performer-row-bronze
 {
     background-color: rgb(253, 237, 220);
+    border-left-color: rgb(205, 127, 50);
 }
 
 .performer-row-you
 {
-    border-width: 2px;
-    border-color: rgb(13, 148, 136);
+    background-color: rgb(236, 253, 250);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-top-color: rgb(13, 148, 136);
+    border-right-color: rgb(13, 148, 136);
+    border-bottom-color: rgb(13, 148, 136);
+    border-left-color: rgb(13, 148, 136);
 }
 
+/* Rank: solid medal for the podium, plain number below */
 .performer-rank-badge
 {
-    width: 71px;
-    height: 71px;
-    border-radius: 35px;
-    background-color: rgb(238, 239, 244);
+    width: 66px;
+    height: 66px;
+    border-radius: 33px;
     justify-content: center;
     align-items: center;
-    margin-right: 19px;
+    margin-right: 17px;
     flex-shrink: 0;
+}
+
+.performer-rank-badge-default
+{
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .performer-rank-badge-gold
 {
-    background-color: rgb(254, 240, 138);
+    background-color: rgb(234, 179, 8);
 }
 
 .performer-rank-badge-silver
 {
-    background-color: rgb(226, 228, 234);
+    background-color: rgb(148, 163, 184);
 }
 
 .performer-rank-badge-bronze
 {
-    background-color: rgb(253, 220, 178);
+    background-color: rgb(205, 127, 50);
 }
 
 .performer-rank-label
 {
-    font-size: 31px;
+    font-size: 33px;
     -unity-font-style: bold;
-    color: rgb(90, 95, 110);
 }
 
+.performer-rank-label-default
+{
+    color: rgb(150, 155, 168);
+}
+
+.performer-rank-label-gold,
+.performer-rank-label-silver,
+.performer-rank-label-bronze
+{
+    color: white;
+}
+
+/* Avatar with a rank-coloured ring */
 .performer-avatar
 {
-    width: 78px;
-    height: 78px;
-    border-radius: 39px;
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
     background-color: rgb(219, 234, 254);
     justify-content: center;
     align-items: center;
     margin-right: 21px;
     flex-shrink: 0;
+    border-width: 4px;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.performer-avatar-gold
+{
+    border-color: rgb(234, 179, 8);
+}
+
+.performer-avatar-silver
+{
+    border-color: rgb(148, 163, 184);
+}
+
+.performer-avatar-bronze
+{
+    border-color: rgb(205, 127, 50);
 }
 
 .performer-avatar-label
@@ -940,6 +1088,7 @@
 .performer-info
 {
     flex-grow: 1;
+    flex-shrink: 1;
     flex-direction: column;
     min-width: 0;
 }
@@ -948,13 +1097,20 @@
 {
     flex-direction: row;
     align-items: center;
+    min-width: 0;
 }
 
+/* One line, "..." when it doesn't fit, so a long name can't wrap or spill into the points. */
 .performer-name-label
 {
     font-size: 38px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .performer-you-badge
@@ -966,13 +1122,47 @@
     border-radius: 9px;
     padding: 4px 12px;
     margin-left: 12px;
+    flex-shrink: 0;
 }
 
 .performer-meta-label
 {
-    font-size: 31px;
+    font-size: 28px;
     color: rgb(150, 155, 168);
     margin-top: 4px;
+    white-space: normal;
+}
+
+/* Points relative to the leader */
+.performer-bar-track
+{
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.07);
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+.performer-bar-fill
+{
+    height: 100%;
+    border-radius: 5px;
+    background-color: rgb(96, 165, 250);
+}
+
+.performer-bar-fill-gold
+{
+    background-color: rgb(234, 179, 8);
+}
+
+.performer-bar-fill-silver
+{
+    background-color: rgb(148, 163, 184);
+}
+
+.performer-bar-fill-bronze
+{
+    background-color: rgb(205, 127, 50);
 }
 
 .performer-score-block
@@ -980,20 +1170,36 @@
     flex-direction: column;
     align-items: flex-end;
     flex-shrink: 0;
+    margin-left: 20px;
 }
 
-.performer-score-percent
+.performer-score-points
 {
-    font-size: 38px;
+    font-size: 44px;
     -unity-font-style: bold;
-    color: rgb(22, 163, 74);
+    color: rgb(37, 99, 235);
+}
+
+.performer-score-points-gold
+{
+    color: rgb(161, 98, 7);
+}
+
+.performer-score-points-silver
+{
+    color: rgb(75, 85, 99);
+}
+
+.performer-score-points-bronze
+{
+    color: rgb(194, 65, 12);
 }
 
 .performer-points-sub
 {
-    font-size: 28px;
+    font-size: 26px;
     color: rgb(150, 155, 168);
-    margin-top: 2px;
+    margin-top: 0;
 }
 
 /* ---------- Scores (Quiz History) ---------- */
@@ -1401,4 +1607,120 @@
 .compact .progress-footer-label
 {
     font-size: 17px;
+}
+
+/* =========================================================
+   Materials tab (files uploaded by the teacher)
+   ========================================================= */
+
+.materials-list
+{
+    flex-direction: column;
+}
+
+.materials-error-label
+{
+    font-size: 28px;
+    color: rgb(220, 38, 38);
+    white-space: normal;
+    margin-bottom: 20px;
+}
+
+.material-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 34px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.material-card-header-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.material-type-badge
+{
+    min-width: 96px;
+    height: 96px;
+    margin-right: 26px;
+    background-color: rgb(240, 253, 244);
+    border-radius: 24px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(22, 163, 74);
+    -unity-text-align: middle-center;
+}
+
+.material-card-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.material-title-label
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    white-space: normal;
+}
+
+.material-meta-label
+{
+    font-size: 26px;
+    color: rgb(150, 155, 168);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.material-description-label
+{
+    font-size: 32px;
+    color: rgb(80, 85, 100);
+    margin-top: 22px;
+    white-space: normal;
+}
+
+.material-open-button
+{
+    height: 96px;
+    margin-top: 26px;
+    background-color: rgb(34, 197, 94);
+    border-width: 0;
+    border-radius: 22px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.material-open-button:hover
+{
+    background-color: rgb(22, 163, 74);
+}
+
+.compact .material-title-label
+{
+    font-size: 28px;
+}
+
+.compact .material-description-label
+{
+    font-size: 24px;
+}
+
+.compact .material-open-button
+{
+    height: 72px;
+    font-size: 24px;
+}
+
+.compact .material-type-badge
+{
+    min-width: 72px;
+    height: 72px;
+    font-size: 19px;
 }

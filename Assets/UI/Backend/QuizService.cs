@@ -98,6 +98,17 @@ namespace Anatomia3D.Backend
             public FileSubmissionConfig FileConfig;
 
             public bool IsFileSubmission => SubmissionTypes.IsFileSubmission(SubmissionType);
+
+            /// <summary>Retake exams only. The quiz this one is a retake of (empty for a
+            /// normal quiz). A retake is its own quiz doc, so its attempts are tracked
+            /// separately and the original quiz's attempt history is never touched.</summary>
+            public string RetakeOfQuizId;
+
+            /// <summary>Retake exams only. When non-empty, ONLY these students may see and
+            /// attempt this quiz. Empty = open to the whole classroom (every normal quiz).</summary>
+            public List<string> AllowedStudentIds = new List<string>();
+
+            public bool IsRetake => !string.IsNullOrEmpty(RetakeOfQuizId);
         }
 
         /// <summary>Result of a pre-flight check run before letting a student start a quiz.</summary>
@@ -112,6 +123,14 @@ namespace Anatomia3D.Backend
             public int MaxAttempts;
             /// <summary>-1 = unlimited.</summary>
             public int RemainingAttempts;
+
+            /// <summary>True when the teacher gave this student a retake (extra attempts) on this
+            /// quiz. MaxAttempts then already includes the extra attempts.</summary>
+            public bool HasRetakeGrant;
+
+            /// <summary>The deadline that actually applies to this student right now: the teacher's
+            /// retake deadline when HasRetakeGrant, otherwise the quiz's own deadline (null = none).</summary>
+            public DateTime? EffectiveDeadlineUtc;
 
             /// <summary>True if the student already has at least one prior "Completed" (non-
             /// Missed) attempt at this quiz in this classroom - i.e. a submission right now
@@ -885,6 +904,28 @@ namespace Anatomia3D.Backend
 
                 var quiz = ToQuizRecord(quizTask.Result);
 
+                // A retake exam is only open to the students the teacher selected.
+                if (quiz.AllowedStudentIds != null && quiz.AllowedStudentIds.Count > 0
+                    && !quiz.AllowedStudentIds.Contains(student.Uid))
+                {
+                    onComplete?.Invoke(true, null, new AttemptEligibility
+                    {
+                        CanStart = false,
+                        BlockReason = "This exam has not been assigned to you.",
+                        MaxAttempts = quiz.MaxAttempts,
+                        RemainingAttempts = 0
+                    });
+                    return;
+                }
+
+                // The teacher's retake grant (extra attempts + own deadline) for this student, if any.
+                Db.Collection("classrooms").Document(classroomId).GetSnapshotAsync().ContinueWithOnMainThread(roomTask =>
+                {
+                RetakeGrant grant = null;
+                if (!roomTask.IsCanceled && !roomTask.IsFaulted)
+                    ReadRetakeGrants(roomTask.Result, quizId).TryGetValue(student.Uid, out grant);
+                bool hasGrant = grant != null && grant.ExtraAttempts > 0;
+
                 Db.Collection("quizAttempts")
                     .WhereEqualTo("studentId", student.Uid)
                     .WhereEqualTo("quizId", quizId)
@@ -922,10 +963,18 @@ namespace Anatomia3D.Backend
                         int bestPointsEarned = hasPriorAttempt && bestDoc.ContainsField("pointsEarned") ? bestDoc.GetValue<int>("pointsEarned") : 0;
                         float bestPercent = hasPriorAttempt && bestDoc.ContainsField("percent") ? Convert.ToSingle(bestDoc.GetValue<double>("percent")) : 0f;
 
-                        bool deadlinePassed = quiz.IsDeadlineEnabled && quiz.DeadlineUtc.HasValue
-                            && DateTime.UtcNow > quiz.DeadlineUtc.Value;
+                        // With a retake grant: allowed attempts = maxAttempts + extraAttempts, and the
+                        // teacher's retake deadline REPLACES the quiz deadline for this student.
+                        int effectiveMax = quiz.MaxAttempts > 0 && hasGrant
+                            ? quiz.MaxAttempts + grant.ExtraAttempts
+                            : quiz.MaxAttempts;
+                        DateTime? effectiveDeadline = hasGrant
+                            ? grant.DeadlineUtc
+                            : (quiz.IsDeadlineEnabled ? quiz.DeadlineUtc : (DateTime?)null);
 
-                        int remaining = quiz.MaxAttempts > 0 ? Mathf.Max(0, quiz.MaxAttempts - attemptsUsed) : -1;
+                        bool deadlinePassed = effectiveDeadline.HasValue && DateTime.UtcNow > effectiveDeadline.Value;
+
+                        int remaining = effectiveMax > 0 ? Mathf.Max(0, effectiveMax - attemptsUsed) : -1;
 
                         if (deadlinePassed)
                         {
@@ -939,7 +988,9 @@ namespace Anatomia3D.Backend
                                 CanStart = false,
                                 BlockReason = "The deadline for this quiz has passed. You can no longer take this quiz.",
                                 AttemptsUsed = attemptsUsed,
-                                MaxAttempts = quiz.MaxAttempts,
+                                MaxAttempts = effectiveMax,
+                                HasRetakeGrant = hasGrant,
+                                EffectiveDeadlineUtc = effectiveDeadline,
                                 RemainingAttempts = remaining,
                                 HasPriorAttempt = hasPriorAttempt,
                                 BestPointsEarned = bestPointsEarned,
@@ -948,14 +999,16 @@ namespace Anatomia3D.Backend
                             return;
                         }
 
-                        if (quiz.MaxAttempts > 0 && attemptsUsed >= quiz.MaxAttempts)
+                        if (effectiveMax > 0 && attemptsUsed >= effectiveMax)
                         {
                             onComplete?.Invoke(true, null, new AttemptEligibility
                             {
                                 CanStart = false,
                                 BlockReason = "You have used all available attempts for this quiz.",
                                 AttemptsUsed = attemptsUsed,
-                                MaxAttempts = quiz.MaxAttempts,
+                                MaxAttempts = effectiveMax,
+                                HasRetakeGrant = hasGrant,
+                                EffectiveDeadlineUtc = effectiveDeadline,
                                 RemainingAttempts = 0,
                                 HasPriorAttempt = hasPriorAttempt,
                                 BestPointsEarned = bestPointsEarned,
@@ -969,13 +1022,16 @@ namespace Anatomia3D.Backend
                             CanStart = true,
                             BlockReason = null,
                             AttemptsUsed = attemptsUsed,
-                            MaxAttempts = quiz.MaxAttempts,
+                            MaxAttempts = effectiveMax,
+                                HasRetakeGrant = hasGrant,
+                                EffectiveDeadlineUtc = effectiveDeadline,
                             HasPriorAttempt = hasPriorAttempt,
                             BestPointsEarned = bestPointsEarned,
                             BestPercent = bestPercent,
                             RemainingAttempts = remaining
                         });
                     });
+                });
             });
         }
 
@@ -1117,6 +1173,9 @@ namespace Anatomia3D.Backend
             /// <summary>Firestore quizAttempts doc id - stable dedup/diff key for the
             /// live-updating admin activity feed.</summary>
             public string DocId;
+            /// <summary>The student's uid (quizAttempts.studentId) - lets the admin feed load
+            /// their profile picture.</summary>
+            public string StudentId;
             public string StudentName;
             public string QuizTitle;
             public string ClassroomName;
@@ -1423,6 +1482,7 @@ namespace Anatomia3D.Backend
             {
                 Type = ActivityType.QuizCompleted,
                 DocId = doc.Id,
+                StudentId = doc.ContainsField("studentId") ? doc.GetValue<string>("studentId") : null,
                 StudentName = studentName,
                 QuizTitle = quizTitle,
                 ClassroomName = string.IsNullOrEmpty(classroomName) ? "Classroom" : classroomName,
@@ -1975,6 +2035,64 @@ namespace Anatomia3D.Backend
                 });
         }
 
+        /// <summary>One real (non-"Missed") attempt by one student - see
+        /// FetchStudentAttemptsInClassroom.</summary>
+        [Serializable]
+        public class StudentAttemptRow
+        {
+            public string QuizId;
+            public string Category;
+            public int ScoreCorrect;
+            public int ScoreTotal;
+            public float Percent;
+            public bool Passed;
+            public DateTime CompletedAtUtc;
+        }
+
+        /// <summary>Every real attempt one student made inside one classroom (auto-recorded
+        /// "Missed" placeholders are excluded, same as FetchQuizScoresForClassroom). Feeds the
+        /// per-student stats view of AdminStudentStatsModal (progress by category, quiz
+        /// completion rate, per-quiz best score) in a single query instead of one query per
+        /// quiz.</summary>
+        public void FetchStudentAttemptsInClassroom(string classroomId, string studentId, Action<List<StudentAttemptRow>> onComplete)
+        {
+            var result = new List<StudentAttemptRow>();
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(studentId))
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            Db.Collection("quizAttempts")
+                .WhereEqualTo("classroomId", classroomId)
+                .WhereEqualTo("studentId", studentId)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted) { onComplete?.Invoke(result); return; }
+
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (doc.ContainsField("status") && doc.GetValue<string>("status") == "Missed") continue;
+
+                        result.Add(new StudentAttemptRow
+                        {
+                            QuizId = doc.ContainsField("quizId") ? doc.GetValue<string>("quizId") : "",
+                            Category = doc.ContainsField("category") ? doc.GetValue<string>("category") : "",
+                            ScoreCorrect = doc.ContainsField("scoreCorrect") ? doc.GetValue<int>("scoreCorrect") : 0,
+                            ScoreTotal = doc.ContainsField("scoreTotal") ? doc.GetValue<int>("scoreTotal") : 0,
+                            Percent = doc.ContainsField("percent") ? Convert.ToSingle(doc.GetValue<double>("percent")) : 0f,
+                            Passed = doc.ContainsField("passed") && doc.GetValue<bool>("passed"),
+                            CompletedAtUtc = doc.ContainsField("completedAt")
+                                ? doc.GetValue<Timestamp>("completedAt").ToDateTime()
+                                : DateTime.MinValue
+                        });
+                    }
+
+                    onComplete?.Invoke(result);
+                });
+        }
+
         private static int CountDistinctStudents(List<DocumentSnapshot> docs)
         {
             return docs
@@ -2095,6 +2213,266 @@ namespace Anatomia3D.Backend
             };
         }
 
+        // ================================================================
+        // Retake = extra attempts on the SAME quiz
+        // ================================================================
+        //
+        // A retake does not create a second quiz. The teacher gives selected students extra
+        // attempts (and an optional deadline of their own) on the ORIGINAL quiz. The grant lives
+        // on the classroom doc:
+        //   classrooms/{classroomId}.retakeGrants.{quizId}.{studentId} =
+        //       { extraAttempts, count, deadline (Timestamp or null), grantedAt }
+        // Only the classroom's teacher can write classroom fields (firestore.rules), so students
+        // cannot grant themselves anything. CheckAttemptEligibility reads the grant:
+        // allowed attempts = maxAttempts + extraAttempts, and while a grant exists ITS deadline
+        // replaces the quiz deadline. Attempts stay in quizAttempts under the same quizId, so the
+        // existing "best attempt" scoring applies unchanged. Attempts numbered above the quiz's
+        // maxAttempts (attemptCount) are the retake attempts.
+
+        public enum RetakeState
+        {
+            /// <summary>Failed and out of attempts (or the last retake ran out / expired unused) - can be selected.</summary>
+            Eligible,
+            /// <summary>A retake is active: extra attempts left and the retake deadline has not passed.</summary>
+            Assigned,
+            /// <summary>Passed on a retake attempt.</summary>
+            Passed
+        }
+
+        [Serializable]
+        public class RetakeStudentRow
+        {
+            public string StudentId;
+            public string StudentName;
+            public RetakeState State;
+            /// <summary>All non-missed attempts this student has used on the quiz.</summary>
+            public int OriginalAttemptsUsed;
+            /// <summary>Attempts currently allowed (maxAttempts + extra attempts granted so far).</summary>
+            public int AttemptLimit;
+            public float OriginalBestPercent;
+            /// <summary>How many times this student was given a retake (shows "failed retake").</summary>
+            public int RetakesGiven;
+            /// <summary>Best percent across the retake attempts only.</summary>
+            public float RetakeBestPercent;
+            public bool RetakeStarted;
+            /// <summary>Retake deadline set by the teacher (null = none).</summary>
+            public DateTime? RetakeDeadlineUtc;
+        }
+
+        [Serializable]
+        public class RetakeConfig
+        {
+            /// <summary>Attempts each selected student gets on the retake.</summary>
+            public int ExtraAttempts = 1;
+            public bool IsDeadlineEnabled;
+            public DateTime? DeadlineUtc;
+        }
+
+        [Serializable]
+        public class RetakeGrant
+        {
+            public int ExtraAttempts;
+            public int Count;
+            public DateTime? DeadlineUtc;
+            public bool IsExpired => DeadlineUtc.HasValue && DateTime.UtcNow > DeadlineUtc.Value;
+        }
+
+        /// <summary>Reads classrooms/{id}.retakeGrants[quizId] -> studentId -> grant.</summary>
+        private static Dictionary<string, RetakeGrant> ReadRetakeGrants(DocumentSnapshot classroomDoc, string quizId)
+        {
+            var result = new Dictionary<string, RetakeGrant>();
+            if (classroomDoc == null || !classroomDoc.Exists) return result;
+            if (!classroomDoc.TryGetValue("retakeGrants", out Dictionary<string, object> all) || all == null) return result;
+            if (!all.TryGetValue(quizId, out var quizObj) || !(quizObj is Dictionary<string, object> perStudent)) return result;
+
+            foreach (var kv in perStudent)
+            {
+                if (!(kv.Value is Dictionary<string, object> g)) continue;
+                var grant = new RetakeGrant();
+                if (g.TryGetValue("extraAttempts", out var ea) && ea != null) grant.ExtraAttempts = Convert.ToInt32(ea);
+                if (g.TryGetValue("count", out var c) && c != null) grant.Count = Convert.ToInt32(c);
+                if (g.TryGetValue("deadline", out var d) && d is Timestamp ts) grant.DeadlineUtc = ts.ToDateTime();
+                result[kv.Key] = grant;
+            }
+            return result;
+        }
+
+        private class AttemptAgg
+        {
+            public string StudentName;
+            public int Used;              // non-Missed attempts
+            public bool AnyPassed;
+            public float BestPercent;
+            public int RetakeUsed;        // attempts numbered above the quiz's maxAttempts
+            public float RetakeBestPercent;
+            public bool RetakePassed;
+        }
+
+        private static Dictionary<string, AttemptAgg> AggregateAttempts(IEnumerable<DocumentSnapshot> docs, int originalMax)
+        {
+            var map = new Dictionary<string, AttemptAgg>();
+            foreach (var d in docs)
+            {
+                if (d.ContainsField("status") && d.GetValue<string>("status") == "Missed") continue;
+                string sid = d.ContainsField("studentId") ? d.GetValue<string>("studentId") : "";
+                if (string.IsNullOrEmpty(sid)) continue;
+
+                if (!map.TryGetValue(sid, out var agg)) { agg = new AttemptAgg(); map[sid] = agg; }
+                agg.Used++;
+                if (d.ContainsField("studentName")) agg.StudentName = d.GetValue<string>("studentName");
+                bool passed = d.ContainsField("passed") && d.GetValue<bool>("passed");
+                if (passed) agg.AnyPassed = true;
+                float pct = d.ContainsField("percent") ? Convert.ToSingle(d.GetValue<double>("percent")) : 0f;
+                if (pct > agg.BestPercent) agg.BestPercent = pct;
+
+                int number = d.ContainsField("attemptCount") ? d.GetValue<int>("attemptCount") : 0;
+                if (originalMax > 0 && number > originalMax)
+                {
+                    agg.RetakeUsed++;
+                    if (passed) agg.RetakePassed = true;
+                    if (pct > agg.RetakeBestPercent) agg.RetakeBestPercent = pct;
+                }
+            }
+            return map;
+        }
+
+        /// <summary>Works out, for one quiz in one classroom, which students can be given a
+        /// retake and where retakes already given stand. Eligible = failed with no attempts left
+        /// (or a retake that ran out or expired unused). Assigned = retake active. Passed = passed
+        /// on a retake attempt. Students who passed the original, or still have their original
+        /// attempts, are not returned. onComplete gets (quiz, rows); quiz is null on failure.</summary>
+        public void FetchRetakeStatuses(string classroomId, string quizId, Action<QuizRecord, List<RetakeStudentRow>> onComplete)
+        {
+            var rows = new List<RetakeStudentRow>();
+            if (string.IsNullOrEmpty(classroomId) || string.IsNullOrEmpty(quizId)) { onComplete?.Invoke(null, rows); return; }
+
+            Db.Collection("quizzes").Document(quizId).GetSnapshotAsync().ContinueWithOnMainThread(quizTask =>
+            {
+                if (quizTask.IsCanceled || quizTask.IsFaulted || !quizTask.Result.Exists) { onComplete?.Invoke(null, rows); return; }
+
+                var quiz = ToQuizRecord(quizTask.Result);
+
+                // Only a normal question quiz with a real attempt limit can run out of attempts.
+                // Legacy retake copies (retakeOfQuizId) are not retaken again.
+                if (quiz.IsFileSubmission || quiz.IsRetake || quiz.MaxAttempts <= 0) { onComplete?.Invoke(quiz, rows); return; }
+
+                Db.Collection("classrooms").Document(classroomId).GetSnapshotAsync().ContinueWithOnMainThread(roomTask =>
+                {
+                    if (roomTask.IsCanceled || roomTask.IsFaulted) { onComplete?.Invoke(null, rows); return; }
+                    var grants = ReadRetakeGrants(roomTask.Result, quizId);
+
+                    Db.Collection("quizAttempts")
+                        .WhereEqualTo("classroomId", classroomId)
+                        .WhereEqualTo("quizId", quizId)
+                        .GetSnapshotAsync().ContinueWithOnMainThread(attemptsTask =>
+                        {
+                            if (attemptsTask.IsCanceled || attemptsTask.IsFaulted) { onComplete?.Invoke(null, rows); return; }
+
+                            var perStudent = AggregateAttempts(attemptsTask.Result.Documents, quiz.MaxAttempts);
+
+                            foreach (var kv in perStudent)
+                            {
+                                var agg = kv.Value;
+                                grants.TryGetValue(kv.Key, out var grant);
+                                bool hasGrant = grant != null && grant.ExtraAttempts > 0;
+                                int limit = quiz.MaxAttempts + (hasGrant ? grant.ExtraAttempts : 0);
+
+                                RetakeState state;
+                                if (hasGrant)
+                                {
+                                    if (agg.RetakePassed) state = RetakeState.Passed;
+                                    else if (agg.Used < limit && !grant.IsExpired) state = RetakeState.Assigned;
+                                    else state = RetakeState.Eligible; // failed the retake, or it expired unused
+                                }
+                                else if (agg.Used >= quiz.MaxAttempts && !agg.AnyPassed)
+                                {
+                                    state = RetakeState.Eligible;
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+
+                                rows.Add(new RetakeStudentRow
+                                {
+                                    StudentId = kv.Key,
+                                    StudentName = string.IsNullOrEmpty(agg.StudentName) ? "A student" : agg.StudentName,
+                                    State = state,
+                                    OriginalAttemptsUsed = agg.Used,
+                                    AttemptLimit = limit,
+                                    OriginalBestPercent = agg.BestPercent,
+                                    RetakesGiven = hasGrant ? grant.Count : 0,
+                                    RetakeBestPercent = agg.RetakeBestPercent,
+                                    RetakeStarted = agg.RetakeUsed > 0,
+                                    RetakeDeadlineUtc = hasGrant ? grant.DeadlineUtc : (DateTime?)null
+                                });
+                            }
+
+                            rows.Sort((a, b) => string.Compare(a.StudentName, b.StudentName, StringComparison.OrdinalIgnoreCase));
+                            onComplete?.Invoke(quiz, rows);
+                        });
+                });
+            });
+        }
+
+        /// <summary>Gives each selected student extra attempts (config.ExtraAttempts) on the same
+        /// quiz, with an optional retake deadline. Every selected student is re-verified as
+        /// Eligible first, so a stale screen can't hand a retake to someone who passed or still has
+        /// attempts. The student ends up with exactly config.ExtraAttempts attempts left.
+        /// onComplete gets (success, error).</summary>
+        public void GrantRetake(string classroomId, string quizId, List<string> studentIds, RetakeConfig config, Action<bool, string> onComplete)
+        {
+            var admin = AdminAuthService.Instance.CurrentAdmin;
+            if (admin == null) { onComplete?.Invoke(false, "Not signed in."); return; }
+            if (studentIds == null || studentIds.Count == 0) { onComplete?.Invoke(false, "Select at least one student."); return; }
+            if (config == null) config = new RetakeConfig();
+
+            if (config.ExtraAttempts < 1) { onComplete?.Invoke(false, "The retake needs at least 1 attempt."); return; }
+            if (IsDeadlineInPast(config.IsDeadlineEnabled, config.DeadlineUtc)) { onComplete?.Invoke(false, PastDeadlineErrorMessage); return; }
+
+            FetchRetakeStatuses(classroomId, quizId, (quiz, rows) =>
+            {
+                if (quiz == null) { onComplete?.Invoke(false, "Could not check who is eligible. Please try again."); return; }
+                if (quiz.CreatedBy != admin.Uid) { onComplete?.Invoke(false, "Only the teacher who made this quiz can give a retake."); return; }
+
+                var eligible = rows.Where(r => r.State == RetakeState.Eligible).ToDictionary(r => r.StudentId);
+                var ids = studentIds.Distinct().ToList();
+                int notEligible = ids.Count(id => !eligible.ContainsKey(id));
+                if (notEligible > 0)
+                {
+                    onComplete?.Invoke(false, notEligible + " selected student(s) no longer qualify (they passed, or still have attempts). Refresh and try again.");
+                    return;
+                }
+
+                object deadlineValue = config.IsDeadlineEnabled && config.DeadlineUtc.HasValue
+                    ? (object)Timestamp.FromDateTime(DateTime.SpecifyKind(config.DeadlineUtc.Value, DateTimeKind.Utc))
+                    : null;
+
+                var updates = new Dictionary<string, object>();
+                foreach (var sid in ids)
+                {
+                    var row = eligible[sid];
+                    string path = "retakeGrants." + quizId + "." + sid;
+                    // Absolute (not incremental): attempts used so far + the new attempts, minus the
+                    // quiz's own limit, so the student has exactly ExtraAttempts left.
+                    updates[path + ".extraAttempts"] = row.OriginalAttemptsUsed + config.ExtraAttempts - quiz.MaxAttempts;
+                    updates[path + ".count"] = row.RetakesGiven + 1;
+                    updates[path + ".deadline"] = deadlineValue;
+                    updates[path + ".grantedAt"] = Timestamp.GetCurrentTimestamp();
+                }
+
+                Db.Collection("classrooms").Document(classroomId).UpdateAsync(updates).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save the retake. Please try again.");
+                        return;
+                    }
+                    onComplete?.Invoke(true, null);
+                });
+            });
+        }
+
         private static QuizRecord ToQuizRecord(DocumentSnapshot doc)
         {
             var record = new QuizRecord
@@ -2122,7 +2500,11 @@ namespace Anatomia3D.Backend
                 // behaviour changes.
                 SubmissionType = SubmissionTypes.Normalize(
                     doc.ContainsField("submissionType") ? doc.GetValue<string>("submissionType") : null),
-                Instructions = doc.ContainsField("instructions") ? doc.GetValue<string>("instructions") : string.Empty
+                Instructions = doc.ContainsField("instructions") ? doc.GetValue<string>("instructions") : string.Empty,
+                RetakeOfQuizId = doc.ContainsField("retakeOfQuizId") ? doc.GetValue<string>("retakeOfQuizId") : null,
+                AllowedStudentIds = doc.ContainsField("allowedStudentIds")
+                    ? doc.GetValue<List<string>>("allowedStudentIds")
+                    : new List<string>()
             };
 
             if (record.IsFileSubmission)

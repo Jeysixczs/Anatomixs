@@ -26,17 +26,66 @@
  * Routes
  *   POST /v1/submissions/upload      body = raw file bytes
  *   GET  /v1/submissions/download?key=...
+ *   POST /v1/materials/upload        body = raw file bytes   (teacher of the classroom only)
+ *   GET  /v1/materials/download?key=...                      (teacher or enrolled student)
+ *   POST /v1/materials/delete?key=...                        (teacher of the classroom only)
  *   GET  /v1/health
+ *
+ * Teaching materials (modules / lessons) live in the same bucket under
+ *
+ *   materials/{classroomId}/{materialId}/{fileName}
  */
 
 const JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const FIRESTORE_ROOT = 'https://firestore.googleapis.com/v1';
 
 // Absolute ceiling regardless of what a quiz doc says, so a malformed
-// `maxFileSizeMB` can never be used to fill the bucket.
-const HARD_MAX_BYTES = 50 * 1024 * 1024;
+// `maxFileSizeMB` can never be used to fill the bucket. Students default to
+// 25 MB per assignment; a teacher can raise an assignment up to this ceiling
+// (keep in sync with FileSubmissionConfig.MaxAllowedFileSizeMB in Unity).
+const HARD_MAX_BYTES = 100 * 1024 * 1024;
+
+// Teaching materials: what a teacher may upload for their students to read.
+// Documents and images only - nothing a phone would try to execute.
+const MATERIAL_ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'png', 'jpg', 'jpeg'];
+// Teachers may upload up to 100 MB (keep in sync with MaterialConfig.MaxFileSizeMB in Unity).
+const MATERIAL_MAX_BYTES = 100 * 1024 * 1024;
 
 let jwkCache = { keys: null, fetchedAt: 0 };
+
+// Streams the request body straight into R2 instead of buffering it in the Worker:
+// a Worker isolate only has 128 MB of memory, so holding a 100 MB upload in
+// memory (arrayBuffer) is not safe. R2 needs the length up front, which Unity's
+// UploadHandlerRaw always sends as Content-Length. Returns { error } or { size }.
+async function putStreamed(env, request, storageKey, maxBytes, limitMessage, options) {
+  const header = request.headers.get('Content-Length');
+  if (header === null) {
+    return { error: fail(411, 'length_required', 'The upload is missing its size. Please try again.') };
+  }
+  const declared = Number(header);
+  if (!Number.isFinite(declared) || declared <= 0) {
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+  if (declared > maxBytes) {
+    return { error: fail(413, 'file_too_large', limitMessage) };
+  }
+  if (!request.body) {
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+
+  const stored = await env.SUBMISSIONS_BUCKET.put(storageKey, request.body, options);
+
+  // Content-Length is client-supplied - re-check the size R2 actually stored.
+  if (stored.size > maxBytes) {
+    await env.SUBMISSIONS_BUCKET.delete(storageKey);
+    return { error: fail(413, 'file_too_large', limitMessage) };
+  }
+  if (stored.size === 0) {
+    await env.SUBMISSIONS_BUCKET.delete(storageKey);
+    return { error: fail(400, 'empty_file', 'That file is empty. Please choose a different file.') };
+  }
+  return { size: stored.size };
+}
 
 export default {
   async fetch(request, env) {
@@ -52,6 +101,18 @@ export default {
 
       if (url.pathname === '/v1/submissions/download' && request.method === 'GET') {
         return corsResponse(await handleDownload(request, env, url));
+      }
+
+      if (url.pathname === '/v1/materials/upload' && request.method === 'POST') {
+        return corsResponse(await handleMaterialUpload(request, env));
+      }
+
+      if (url.pathname === '/v1/materials/download' && request.method === 'GET') {
+        return corsResponse(await handleMaterialDownload(request, env, url));
+      }
+
+      if (url.pathname === '/v1/materials/delete' && request.method === 'POST') {
+        return corsResponse(await handleMaterialDelete(request, env, url));
       }
 
       return corsResponse(fail(404, 'not_found', 'Unknown endpoint.'));
@@ -127,40 +188,32 @@ async function handleUpload(request, env) {
 
   // ---- size ----
   const maxBytes = Math.min(quiz.maxFileSizeMB * 1024 * 1024, HARD_MAX_BYTES);
-  const declared = Number(request.headers.get('Content-Length') || 0);
-  if (declared > maxBytes) {
-    return fail(413, 'file_too_large', `That file is larger than the ${quiz.maxFileSizeMB} MB limit for this assignment.`);
-  }
-
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.byteLength === 0) {
-    return fail(400, 'empty_file', 'That file is empty. Please choose a different file.');
-  }
-  // Re-check against the real byte count - Content-Length is client-supplied.
-  if (bytes.byteLength > maxBytes) {
-    return fail(413, 'file_too_large', `That file is larger than the ${quiz.maxFileSizeMB} MB limit for this assignment.`);
-  }
 
   // uid comes from the verified token, so the key can only ever land under the
   // caller's own submission prefix.
   const storageKey = `assignments/${classroomId}/${quizId}/submissions/${uid}/${submissionId}/${fileName}`;
   const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
 
-  await env.SUBMISSIONS_BUCKET.put(storageKey, bytes, {
-    httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
-    customMetadata: {
-      studentId: uid,
-      quizId,
-      classroomId,
-      submissionId,
-      originalFileName: fileName,
-      uploadedAt: new Date().toISOString()
+  const upload = await putStreamed(
+    env, request, storageKey, maxBytes,
+    `That file is larger than the ${Math.min(quiz.maxFileSizeMB, HARD_MAX_BYTES / (1024 * 1024))} MB limit for this assignment.`,
+    {
+      httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
+      customMetadata: {
+        studentId: uid,
+        quizId,
+        classroomId,
+        submissionId,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString()
+      }
     }
-  });
+  );
+  if (upload.error) return upload.error;
 
   return json({
     storageKey,
-    fileSize: bytes.byteLength,
+    fileSize: upload.size,
     mimeType: contentType
   });
 }
@@ -204,6 +257,130 @@ async function handleDownload(request, env, url) {
   }
 
   return new Response(object.body, { status: 200, headers });
+}
+
+/* ============================================================
+   Teaching materials (teacher uploads, students read)
+   ============================================================ */
+
+async function handleMaterialUpload(request, env) {
+  const auth = await authenticate(request, env);
+  if (auth.error) return auth.error;
+  const uid = auth.uid;
+  const idToken = auth.idToken;
+
+  const classroomId = cleanId(request.headers.get('X-Anatomia-Classroom-Id'));
+  const materialId = cleanId(request.headers.get('X-Anatomia-Material-Id'));
+  const fileName = sanitizeFileName(safeDecode(request.headers.get('X-Anatomia-File-Name')));
+
+  if (!classroomId || !materialId || !fileName) {
+    return fail(400, 'bad_request', 'The upload request was incomplete. Please try again.');
+  }
+
+  // Only the teacher who owns this classroom may add material to it. The
+  // classroom is re-read through the caller's own token, never trusted from
+  // the request.
+  const classroomDoc = await getFirestoreDoc(env, idToken, `classrooms/${classroomId}`);
+  if (!classroomDoc) return fail(404, 'classroom_not_found', 'This classroom no longer exists.');
+
+  const classroom = readClassroom(classroomDoc);
+  if (classroom.teacherId !== uid) {
+    return fail(403, 'not_teacher', 'Only the teacher of this classroom can upload materials.');
+  }
+
+  const extension = extensionOf(fileName);
+  if (!extension || !MATERIAL_ALLOWED_EXTENSIONS.includes(extension)) {
+    const list = MATERIAL_ALLOWED_EXTENSIONS.map((e) => e.toUpperCase()).join(', ');
+    return fail(415, 'file_type_not_allowed', `Only ${list} files can be uploaded as materials.`);
+  }
+
+  const maxMb = MATERIAL_MAX_BYTES / (1024 * 1024);
+
+  const storageKey = `materials/${classroomId}/${materialId}/${fileName}`;
+  const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
+
+  const upload = await putStreamed(
+    env, request, storageKey, MATERIAL_MAX_BYTES,
+    `That file is larger than the ${maxMb} MB limit for materials.`,
+    {
+      httpMetadata: { contentType, contentDisposition: `attachment; filename="${asciiFallback(fileName)}"` },
+      customMetadata: {
+        teacherId: uid,
+        classroomId,
+        materialId,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString()
+      }
+    }
+  );
+  if (upload.error) return upload.error;
+
+  return json({ storageKey, fileSize: upload.size, mimeType: contentType });
+}
+
+async function handleMaterialDownload(request, env, url) {
+  const auth = await authenticate(request, env);
+  if (auth.error) return auth.error;
+  const uid = auth.uid;
+  const idToken = auth.idToken;
+
+  const key = url.searchParams.get('key') || '';
+  const parsed = parseMaterialKey(key);
+  if (!parsed) return fail(400, 'bad_key', 'That file reference is not valid.');
+
+  // The teacher who owns the classroom, or a student enrolled in it.
+  const classroomDoc = await getFirestoreDoc(env, idToken, `classrooms/${parsed.classroomId}`);
+  if (!classroomDoc) return fail(403, 'forbidden', 'You are not allowed to open this file.');
+
+  const classroom = readClassroom(classroomDoc);
+  const allowed = classroom.teacherId === uid || classroom.memberIds.includes(uid);
+  if (!allowed) return fail(403, 'forbidden', 'You are not allowed to open this file.');
+
+  // The material doc must still exist and point at exactly this object. Once a
+  // teacher removes a material its file stops being served, even if the
+  // object itself is still waiting to be cleaned out of the bucket.
+  const materialDoc = await getFirestoreDoc(env, idToken, `classrooms/${parsed.classroomId}/materials/${parsed.materialId}`);
+  const docKey = materialDoc && materialDoc.fields && materialDoc.fields.storageKey
+    ? materialDoc.fields.storageKey.stringValue
+    : '';
+  if (!materialDoc || docKey !== key) {
+    return fail(404, 'file_not_found', 'That material is no longer available.');
+  }
+
+  const object = await env.SUBMISSIONS_BUCKET.get(key);
+  if (!object) return fail(404, 'file_not_found', 'That file is no longer stored.');
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  headers.set('Cache-Control', 'private, no-store');
+  if (!headers.has('Content-Disposition')) {
+    headers.set('Content-Disposition', `attachment; filename="${asciiFallback(parsed.fileName)}"`);
+  }
+
+  return new Response(object.body, { status: 200, headers });
+}
+
+async function handleMaterialDelete(request, env, url) {
+  const auth = await authenticate(request, env);
+  if (auth.error) return auth.error;
+  const uid = auth.uid;
+  const idToken = auth.idToken;
+
+  const key = url.searchParams.get('key') || '';
+  const parsed = parseMaterialKey(key);
+  if (!parsed) return fail(400, 'bad_key', 'That file reference is not valid.');
+
+  const classroomDoc = await getFirestoreDoc(env, idToken, `classrooms/${parsed.classroomId}`);
+  if (!classroomDoc) return fail(403, 'forbidden', 'You are not allowed to delete this file.');
+
+  const classroom = readClassroom(classroomDoc);
+  if (classroom.teacherId !== uid) {
+    return fail(403, 'forbidden', 'You are not allowed to delete this file.');
+  }
+
+  await env.SUBMISSIONS_BUCKET.delete(key);
+  return json({ deleted: true });
 }
 
 /* ============================================================
@@ -394,6 +571,20 @@ function parseStorageKey(key) {
   };
 }
 
+function parseMaterialKey(key) {
+  // materials/{classroomId}/{materialId}/{fileName}
+  const parts = key.split('/');
+  if (parts.length !== 4) return null;
+  if (parts[0] !== 'materials') return null;
+  if (parts.some((p) => p.length === 0 || p === '.' || p === '..')) return null;
+
+  return {
+    classroomId: parts[1],
+    materialId: parts[2],
+    fileName: parts[3]
+  };
+}
+
 /** Firestore ids are safe characters only - anything else is a tampered request. */
 function cleanId(value) {
   if (!value) return '';
@@ -464,7 +655,7 @@ function corsResponse(response) {
   headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   headers.set(
     'Access-Control-Allow-Headers',
-    'Authorization, Content-Type, X-Anatomia-Classroom-Id, X-Anatomia-Quiz-Id, X-Anatomia-Submission-Id, X-Anatomia-File-Name'
+    'Authorization, Content-Type, X-Anatomia-Classroom-Id, X-Anatomia-Quiz-Id, X-Anatomia-Submission-Id, X-Anatomia-Material-Id, X-Anatomia-File-Name'
   );
   return new Response(response.body, { status: response.status, headers });
 }

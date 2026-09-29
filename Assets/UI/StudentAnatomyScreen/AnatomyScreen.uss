@@ -149,6 +149,16 @@
     background-color: rgb(240, 247, 244);
 }
 
+/* Structure already answered in Play Mode - pink. Still tappable. */
+.search-result-item--answered {
+    background-color: rgb(255, 228, 238);
+    color: rgb(190, 70, 110);
+}
+
+.search-result-item--answered:hover {
+    background-color: rgb(255, 214, 230);
+}
+
 .search-results-empty {
     padding: 32px;
     font-size: 28px;

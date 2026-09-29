@@ -912,7 +912,7 @@ namespace Anatomia3D.UI
             if (_quizMaxAttemptsDropdown != null)
             {
                 _quizMaxAttemptsDropdown.choices = new List<string>(MaxAttemptsDisplayChoices);
-                _quizMaxAttemptsDropdown.SetValueWithoutNotify("3");
+                _quizMaxAttemptsDropdown.SetValueWithoutNotify("1");
             }
 
             _quizDeadlineSelectorButton = _screenRoot.Q<Button>("quiz-deadline-selector-button");
@@ -1800,7 +1800,14 @@ namespace Anatomia3D.UI
                     kvp.Value?.SetValueWithoutNotify(isChecked);
                 }
             }
-            if (_quizFileMaxSizeField != null) _quizFileMaxSizeField.value = fileConfig.MaxFileSizeMB.ToString();
+            if (_quizFileMaxSizeField != null)
+            {
+                // Students are fixed at the 25 MB default: the teacher can see the limit but not
+                // change it. (An older assignment keeps whatever size it was saved with.)
+                _quizFileMaxSizeField.value = fileConfig.MaxFileSizeMB.ToString();
+                _quizFileMaxSizeField.isReadOnly = true;
+                _quizFileMaxSizeField.SetEnabled(false);
+            }
             if (_quizFilePointsField != null) _quizFilePointsField.value = editing ? _editingQuiz.PointsPossible.ToString() : "100";
             ClearError(_quizFileExtensionsError);
             ClearError(_quizFileMaxSizeError);
@@ -1815,8 +1822,8 @@ namespace Anatomia3D.UI
 
             // ---- Settings ----
             SetTimeLimitFields(editing ? _editingQuiz.HasTimeLimit : true, editing ? _editingQuiz.TimeLimitMinutes : 10);
-            if (_quizPassingScoreField != null) _quizPassingScoreField.value = editing ? _editingQuiz.PassingScorePercent.ToString() : "70";
-            SetMaxAttemptsField(editing ? _editingQuiz.MaxAttempts : 3);
+            if (_quizPassingScoreField != null) _quizPassingScoreField.value = editing ? _editingQuiz.PassingScorePercent.ToString() : "75";
+            SetMaxAttemptsField(editing ? _editingQuiz.MaxAttempts : 1);
             ClearError(_quizTimeLimitError);
             ClearError(_quizPassingScoreError);
 
@@ -1917,9 +1924,9 @@ namespace Anatomia3D.UI
         /// <summary>Reads the Maximum Attempts dropdown into an int (0 = unlimited).</summary>
         private int ReadMaxAttempts()
         {
-            string choice = _quizMaxAttemptsDropdown != null ? _quizMaxAttemptsDropdown.value : "3";
+            string choice = _quizMaxAttemptsDropdown != null ? _quizMaxAttemptsDropdown.value : "1";
             if (choice == MaxAttemptsUnlimitedChoice) return 0;
-            return int.TryParse(choice, out int value) ? Mathf.Max(0, value) : 3;
+            return int.TryParse(choice, out int value) ? Mathf.Max(0, value) : 1;
         }
 
         // ---------------- Deadline picker (calendar) ----------------
@@ -2410,9 +2417,9 @@ namespace Anatomia3D.UI
                     ClearError(_quizFileExtensionsError);
                 }
 
-                if (!int.TryParse(_quizFileMaxSizeField?.value, out int maxSizeMB) || maxSizeMB <= 0)
+                if (!int.TryParse(_quizFileMaxSizeField?.value, out int maxSizeMB) || maxSizeMB <= 0 || maxSizeMB > FileSubmissionConfig.MaxAllowedFileSizeMB)
                 {
-                    SetError(_quizFileMaxSizeError, "Enter the maximum file size in MB as a whole number.");
+                    SetError(_quizFileMaxSizeError, $"Enter the maximum file size in MB as a whole number (1-{FileSubmissionConfig.MaxAllowedFileSizeMB}).");
                     valid = false;
                 }
                 else
@@ -2440,7 +2447,7 @@ namespace Anatomia3D.UI
 
             int maxAttempts = ReadMaxAttempts();
             var (hasTimeLimit, timeLimitMinutes) = ReadTimeLimit();
-            int passingScore = ParseIntOrDefault(_quizPassingScoreField, 70);
+            int passingScore = ParseIntOrDefault(_quizPassingScoreField, 75);
             string instructions = isFile ? (_quizFileInstructionsField?.value ?? string.Empty) : string.Empty;
 
             _createQuizSubmitButton?.SetEnabled(false);

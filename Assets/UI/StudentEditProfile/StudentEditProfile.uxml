@@ -28,9 +28,12 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="profile-info-card" class="form-card">
                     <ui:Label text="Profile Information" class="card-title"/>
-                    <ui:Label text="Full Name" class="field-label"/>
-                    <ui:TextField name="full-name-field" class="text-field"/>
-                    <ui:Label name="full-name-error" text="" class="field-error hidden"/>
+                    <ui:Label text="First Name" class="field-label"/>
+                    <ui:TextField name="first-name-field" class="text-field"/>
+                    <ui:Label name="first-name-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Last Name" class="field-label field-label-spaced"/>
+                    <ui:TextField name="last-name-field" class="text-field"/>
+                    <ui:Label name="last-name-error" text="" class="field-error hidden"/>
                     <ui:Label text="Email Address" class="field-label field-label-spaced"/>
                     <ui:TextField name="email-field" class="text-field"/>
                     <ui:Label name="email-error" text="" class="field-error hidden"/>

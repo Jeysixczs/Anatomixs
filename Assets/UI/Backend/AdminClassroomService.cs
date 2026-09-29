@@ -93,6 +93,108 @@ namespace Anatomia3D.Backend
 
         private FirebaseFirestore Db => FirebaseBootstrap.Instance.Db;
 
+        /// <summary>The student's profile picture URL (students/{uid}.avatarUrl - a Cloudinary
+        /// secure_url set on the Edit Profile screen). Admins can already read students docs
+        /// (see the Firestore rules), so this needs no new permission. Calls back with null if
+        /// the student has no photo or the read failed - callers fall back to initials.</summary>
+        public void FetchStudentAvatarUrl(string studentId, Action<string> onComplete)
+        {
+            if (string.IsNullOrEmpty(studentId) || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(null);
+                return;
+            }
+
+            Db.Collection("students").Document(studentId).GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted || !task.Result.Exists || !task.Result.ContainsField("avatarUrl"))
+                    {
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    string url = task.Result.GetValue<string>("avatarUrl");
+                    onComplete?.Invoke(string.IsNullOrEmpty(url) ? null : url);
+                });
+        }
+
+        /// <summary>Current display names (students/{uid}.fullName - the source of truth) for a
+        /// set of students, read in parallel. quizAttempts docs keep a copy of the name taken at
+        /// submit time, so a renamed student's old attempts still carry the old name; screens
+        /// built from attempts use this to show the current one. Students whose doc is missing
+        /// or unreadable are simply left out of the result. Never fails - calls back with
+        /// whatever it could read.</summary>
+        public void FetchStudentNames(IEnumerable<string> studentIds, Action<Dictionary<string, string>> onComplete)
+        {
+            var result = new Dictionary<string, string>();
+            var ids = studentIds == null
+                ? new List<string>()
+                : studentIds.Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+
+            if (ids.Count == 0 || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(result);
+                return;
+            }
+
+            int pending = ids.Count;
+            foreach (var id in ids)
+            {
+                string studentId = id;
+                Db.Collection("students").Document(studentId).GetSnapshotAsync()
+                    .ContinueWithOnMainThread(task =>
+                    {
+                        if (!task.IsCanceled && !task.IsFaulted && task.Result.Exists && task.Result.ContainsField("fullName"))
+                        {
+                            string name = task.Result.GetValue<string>("fullName");
+                            if (!string.IsNullOrWhiteSpace(name)) result[studentId] = name;
+                        }
+
+                        pending--;
+                        if (pending == 0) onComplete?.Invoke(result);
+                    });
+            }
+        }
+
+        /// <summary>The set of Anatomy Play Mode structure keys one student has answered
+        /// correctly (anatomyPlayModeAttempts where studentId == X and correct == true) -
+        /// the same "completed keys" AnatomyPlayModeFirebase.FetchProgress feeds the student's
+        /// own Progress screen, but callable by a teacher for any student. Used by
+        /// AdminStudentStatsModal to draw the Skeletal / Muscular / Cardiovascular bars.
+        /// Returns null (not an empty set) if the read failed, so callers can tell "no
+        /// progress yet" from "couldn't load".</summary>
+        public void FetchStudentPlayModeKeys(string studentId, Action<HashSet<string>> onComplete)
+        {
+            if (string.IsNullOrEmpty(studentId) || FirebaseBootstrap.Instance == null || Db == null)
+            {
+                onComplete?.Invoke(null);
+                return;
+            }
+
+            Db.Collection("anatomyPlayModeAttempts")
+                .WhereEqualTo("studentId", studentId)
+                .WhereEqualTo("correct", true)
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogWarning($"[AdminClassroomService] Could not fetch Play Mode progress for '{studentId}': {task.Exception}");
+                        onComplete?.Invoke(null);
+                        return;
+                    }
+
+                    var keys = new HashSet<string>();
+                    foreach (var doc in task.Result.Documents)
+                    {
+                        if (doc.ContainsField("key")) keys.Add(doc.GetValue<string>("key"));
+                    }
+                    onComplete?.Invoke(keys);
+                });
+        }
+
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -439,6 +541,99 @@ namespace Anatomia3D.Backend
                 AuthorId = doc.ContainsField("authorId") ? doc.GetValue<string>("authorId") : "",
                 CreatedAt = doc.ContainsField("createdAt") ? doc.GetValue<Timestamp>("createdAt") : Timestamp.GetCurrentTimestamp()
             };
+        }
+
+        // ---------------- Materials (modules / lessons) ----------------
+        //
+        // Upload flow, driven by AdminClassroomDetailController's Materials tab:
+        //   1. ReserveMaterialId()                      -> id, no write yet
+        //   2. R2FileUploadService.UploadMaterial()     -> file bytes into R2 via the Worker
+        //   3. SaveMaterial()                           -> `classrooms/{id}/materials/{materialId}`
+        // Students see it the moment step 3 lands (ClassroomService.ListenToMaterials).
+
+        /// <summary>Reserves the Firestore doc id a new material will use, without writing
+        /// anything, so the R2 object and the doc can share it.</summary>
+        public string ReserveMaterialId(string classroomId)
+        {
+            if (string.IsNullOrEmpty(classroomId)) return null;
+            return Db.Collection("classrooms").Document(classroomId).Collection("materials").Document().Id;
+        }
+
+        /// <summary>Writes the metadata doc for a file that is already in R2.</summary>
+        public void SaveMaterial(string classroomId, ClassroomMaterial material, Action<bool, string, ClassroomMaterial> onComplete)
+        {
+            var admin = AdminAuthService.Instance.CurrentAdmin;
+            if (admin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+            if (string.IsNullOrEmpty(classroomId) || material == null || string.IsNullOrEmpty(material.MaterialId))
+            {
+                onComplete?.Invoke(false, "Missing classroom or material id.", null);
+                return;
+            }
+
+            material.AuthorId = admin.Uid;
+            material.CreatedAt = Timestamp.GetCurrentTimestamp();
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials").Document(material.MaterialId)
+                .SetAsync(material.ToMap()).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save the material.", null);
+                        return;
+                    }
+                    onComplete?.Invoke(true, null, material);
+                });
+        }
+
+        /// <summary>Deletes the material's Firestore doc (students stop seeing it), then asks
+        /// the Worker to remove the file from R2. The R2 cleanup is best-effort: the doc is
+        /// what gates access, so a failed cleanup never blocks or fails the delete.</summary>
+        public void DeleteMaterial(string classroomId, ClassroomMaterial material, Action<bool, string> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId) || material == null || string.IsNullOrEmpty(material.MaterialId))
+            {
+                onComplete?.Invoke(false, "Missing classroom or material id.");
+                return;
+            }
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials").Document(material.MaterialId)
+                .DeleteAsync().ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not delete the material.");
+                        return;
+                    }
+
+                    if (R2FileUploadService.Instance != null && !string.IsNullOrEmpty(material.StorageKey))
+                    {
+                        R2FileUploadService.Instance.DeleteMaterialFile(material.StorageKey, (ok, error) =>
+                        {
+                            if (!ok) Debug.LogWarning($"[AdminClassroomService] Material {material.MaterialId} removed, but its file was not cleaned out of R2: {error}");
+                        });
+                    }
+
+                    onComplete?.Invoke(true, null);
+                });
+        }
+
+        /// <summary>Most recent first.</summary>
+        public void FetchMaterials(string classroomId, Action<List<ClassroomMaterial>> onComplete)
+        {
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(new List<ClassroomMaterial>()); return; }
+
+            Db.Collection("classrooms").Document(classroomId).Collection("materials")
+                .OrderByDescending("createdAt")
+                .GetSnapshotAsync()
+                .ContinueWithOnMainThread(task =>
+                {
+                    var results = new List<ClassroomMaterial>();
+                    if (!task.IsCanceled && !task.IsFaulted)
+                    {
+                        foreach (var doc in task.Result.Documents) results.Add(ClassroomMaterial.FromSnapshot(doc));
+                    }
+                    onComplete?.Invoke(results);
+                });
         }
 
         // ---------------- Students / Analytics / Leaderboard ----------------

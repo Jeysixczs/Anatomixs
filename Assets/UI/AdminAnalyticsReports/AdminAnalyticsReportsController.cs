@@ -45,9 +45,12 @@ namespace Anatomia3D.UI
             public int ScoreCorrect;
             public int ScoreTotal;
             public float PercentScore;
+            /// <summary>Used to load the student's profile picture; null falls back to initials.</summary>
+            public string StudentId;
 
-            public TopPerformer(string name, int scoreCorrect, int scoreTotal, float percentScore)
+            public TopPerformer(string name, int scoreCorrect, int scoreTotal, float percentScore, string studentId = null)
             {
+                StudentId = studentId;
                 Name = name;
                 ScoreCorrect = scoreCorrect;
                 ScoreTotal = scoreTotal;
@@ -150,6 +153,7 @@ namespace Anatomia3D.UI
       
         private Button _exportPdfButton;
 
+        private VisualElement _activeUsersCard;
         private Label _activeUsersValueLabel;
         private Label _avgScoreValueLabel;
         private Label _quizzesDoneValueLabel;
@@ -295,6 +299,7 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             
             _exportPdfButton?.UnregisterCallback<ClickEvent>(OnExportPdfClicked);
+            _activeUsersCard?.UnregisterCallback<ClickEvent>(OnActiveUsersCardClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.UnregisterCallback<ClickEvent>(OnMistakesTabClicked);
@@ -317,6 +322,7 @@ namespace Anatomia3D.UI
          
             _exportPdfButton = _screenRoot.Q<Button>("export-pdf-button");
 
+            _activeUsersCard = _screenRoot.Q<VisualElement>("active-users-card");
             _activeUsersValueLabel = _screenRoot.Q<Label>("active-users-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
             _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
@@ -352,6 +358,7 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
           
             _exportPdfButton?.RegisterCallback<ClickEvent>(OnExportPdfClicked);
+            _activeUsersCard?.RegisterCallback<ClickEvent>(OnActiveUsersCardClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _mistakesTabButton?.RegisterCallback<ClickEvent>(OnMistakesTabClicked);
@@ -697,6 +704,8 @@ namespace Anatomia3D.UI
             {
                 if (classroomId != _selectedClassroomId || quizId != _selectedQuizExportId) return;
 
+                ApplyCurrentStudentNames(scores);
+
                 var attempted = (scores ?? new List<QuizService.StudentQuizScoreEntry>())
                     .Where(s => s.Attempted)
                     .ToList();
@@ -726,7 +735,7 @@ namespace Anatomia3D.UI
                     .OrderByDescending(s => s.PercentScore)
                     .ThenBy(s => s.StudentName)
                     .Take(10)
-                    .Select(s => new TopPerformer(s.StudentName, s.ScoreCorrect, s.ScoreTotal, s.PercentScore))
+                    .Select(s => new TopPerformer(s.StudentName, s.ScoreCorrect, s.ScoreTotal, s.PercentScore, s.StudentId))
                     .ToList());
             });
 
@@ -776,12 +785,38 @@ namespace Anatomia3D.UI
             });
         }
 
+        /// <summary>Each quizAttempts doc carries a `studentName` copied at submit time, so a
+        /// student who later renames themselves still appears under their old name in the
+        /// fetched scores (Top Performers, exports). The classroom roster
+        /// (`members/{id}.studentName`, kept in sync by PlayerSessionManager on rename) has
+        /// the current name - overwrite the stale one by StudentId. Students missing from the
+        /// roster (e.g. since removed) keep the name stored on their attempt.</summary>
+        private void ApplyCurrentStudentNames(List<QuizService.StudentQuizScoreEntry> scores)
+        {
+            if (scores == null || _currentClassroomStudents == null || _currentClassroomStudents.Count == 0) return;
+
+            var currentNames = new Dictionary<string, string>();
+            foreach (var student in _currentClassroomStudents)
+            {
+                if (!string.IsNullOrEmpty(student.StudentId) && !string.IsNullOrWhiteSpace(student.Name))
+                    currentNames[student.StudentId] = student.Name;
+            }
+
+            foreach (var score in scores)
+            {
+                if (score != null && currentNames.TryGetValue(score.StudentId, out var name))
+                    score.StudentName = name;
+            }
+        }
+
         /// <summary>Joins the classroom roster (_currentClassroomStudents) against a quiz's
         /// fetched scores so every student in the classroom gets an export row - students who
         /// never attempted the selected quiz get an Attempted = false row instead of being
         /// silently left out.</summary>
         private List<QuizService.StudentQuizScoreEntry> BuildQuizScoreExportRows(List<QuizService.StudentQuizScoreEntry> scores)
         {
+            ApplyCurrentStudentNames(scores);
+
             var byStudentId = (scores ?? new List<QuizService.StudentQuizScoreEntry>())
                 .ToDictionary(s => s.StudentId, s => s);
 
@@ -861,6 +896,20 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(slug)) return "";
             return QuestionTypeDisplayLabels.TryGetValue(slug, out var label) ? label : CapitalizeCategory(slug);
+        }
+
+        // ---------------- Total Students card -> student list / stats modal ----------------
+
+        private void OnActiveUsersCardClicked(ClickEvent evt)
+        {
+            if (_screenRoot == null) return;
+
+            if (_currentClassroomStudents == null || _currentClassroomStudents.Count == 0)
+            {
+                Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
+            }
+
+            AdminStudentStatsModal.Show(_screenRoot, _selectedClassroomId, _currentClassroomStudents, _classroomQuizzes);
         }
 
         // ---------------- Tabs ----------------
@@ -949,6 +998,15 @@ namespace Anatomia3D.UI
                 badge.Add(rankLabel);
                 row.Add(badge);
 
+                var avatar = new VisualElement();
+                avatar.AddToClassList("performer-avatar");
+                var initialsLabel = new Label(GetPerformerInitials(performer.Name));
+                initialsLabel.AddToClassList("performer-avatar-label");
+                avatar.Add(initialsLabel);
+                // Profile picture (students/{uid}.avatarUrl); the initials stay as the fallback.
+                StudentAvatarLoader.Apply(avatar, initialsLabel, performer.StudentId);
+                row.Add(avatar);
+
                 var info = new VisualElement();
                 info.AddToClassList("performer-info");
                 var nameLabel = new Label(performer.Name);
@@ -971,6 +1029,16 @@ namespace Anatomia3D.UI
 
                 _topPerformersList.Add(row);
             }
+        }
+
+        /// <summary>First letter of the first and last word ("Juan Dela Cruz" -> "JC"),
+        /// or one letter for a single name.</summary>
+        private static string GetPerformerInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+            var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpperInvariant();
+            return (parts[0].Substring(0, 1) + parts[parts.Length - 1].Substring(0, 1)).ToUpperInvariant();
         }
 
         private static string RankBadgeClass(int rank)

@@ -69,12 +69,14 @@ namespace Anatomia3D.UI
         private Button _leaderboardTabButton;
         private Button _scoresTabButton;
         private Button _badgesTabButton;
+        private Button _materialsTabButton;
         private VisualElement _overviewPanel;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
         private VisualElement _leaderboardPanel;
         private VisualElement _scoresPanel;
         private VisualElement _badgesPanel;
+        private VisualElement _materialsPanel;
 
         // Overview tab
         private Label _teacherValueLabel;
@@ -97,6 +99,8 @@ namespace Anatomia3D.UI
         private VisualElement _leaderboardCard;
         private VisualElement _leaderboardEmptyState;
         private VisualElement _leaderboardList;
+        private VisualElement _leaderboardSummary;
+        private Label _leaderboardCountLabel;
 
         // Scores tab
         private VisualElement _scoresEmptyState;
@@ -126,11 +130,16 @@ namespace Anatomia3D.UI
         /// <summary>A single row in the Students tab.</summary>
         public struct PeerInfo
         {
+            public string StudentId;
             public string Name;
             public int Level;
+            /// <summary>From members/{id}.avatarUrl - null/empty means show initials.</summary>
+            public string AvatarUrl;
 
-            public PeerInfo(string name, int level)
+            public PeerInfo(string name, int level, string studentId = null, string avatarUrl = null)
             {
+                StudentId = studentId;
+                AvatarUrl = avatarUrl;
                 Name = name;
                 Level = level;
             }
@@ -203,10 +212,13 @@ namespace Anatomia3D.UI
             public float ScorePercent;
             public int Points;
             public bool IsCurrentStudent;
+            /// <summary>From members/{id}.avatarUrl - null/empty means show initials.</summary>
+            public string AvatarUrl;
 
-            public PerformerInfo(string studentId, string name, int level, int quizzesCompleted, float scorePercent, int points, bool isCurrentStudent = false)
+            public PerformerInfo(string studentId, string name, int level, int quizzesCompleted, float scorePercent, int points, bool isCurrentStudent = false, string avatarUrl = null)
             {
                 StudentId = studentId;
+                AvatarUrl = avatarUrl;
                 Name = name;
                 Level = level;
                 QuizzesCompleted = quizzesCompleted;
@@ -289,6 +301,14 @@ namespace Anatomia3D.UI
         // elsewhere), so they're not part of this set.
         private ListenerRegistration _classroomDetailListener;
         private ListenerRegistration _announcementsListener;
+        private ListenerRegistration _materialsListener;
+
+        // Materials tab
+        private VisualElement _materialsEmptyState;
+        private VisualElement _materialsList;
+        private Label _materialsErrorLabel;
+        private readonly List<ClassroomMaterial> _lastMaterials = new();
+        private string _materialsShownForClassroomId;
         private ListenerRegistration _rosterListener;
         private ClassroomService.AvailableQuizzesListenerHandle _availableQuizzesHandle;
 
@@ -469,6 +489,9 @@ namespace Anatomia3D.UI
             _announcementsListener?.Stop();
             _announcementsListener = null;
 
+            _materialsListener?.Stop();
+            _materialsListener = null;
+
             _rosterListener?.Stop();
             _rosterListener = null;
 
@@ -489,6 +512,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.UnregisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.UnregisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.UnregisterCallback<ClickEvent>(OnBadgesTabClicked);
+            _materialsTabButton?.UnregisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -520,12 +544,17 @@ namespace Anatomia3D.UI
             _leaderboardTabButton = _screenRoot.Q<Button>("leaderboard-tab-button");
             _scoresTabButton = _screenRoot.Q<Button>("scores-tab-button");
             _badgesTabButton = _screenRoot.Q<Button>("badges-tab-button");
+            _materialsTabButton = _screenRoot.Q<Button>("materials-tab-button");
             _overviewPanel = _screenRoot.Q<VisualElement>("overview-panel");
             _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
             _quizzesPanel = _screenRoot.Q<VisualElement>("quizzes-panel");
             _leaderboardPanel = _screenRoot.Q<VisualElement>("leaderboard-panel");
             _scoresPanel = _screenRoot.Q<VisualElement>("scores-panel");
             _badgesPanel = _screenRoot.Q<VisualElement>("badges-panel");
+            _materialsPanel = _screenRoot.Q<VisualElement>("materials-panel");
+            _materialsEmptyState = _screenRoot.Q<VisualElement>("materials-empty-state");
+            _materialsList = _screenRoot.Q<VisualElement>("materials-list");
+            _materialsErrorLabel = _screenRoot.Q<Label>("materials-error-label");
 
             _teacherValueLabel = _screenRoot.Q<Label>("teacher-value-label");
             _descriptionValueLabel = _screenRoot.Q<Label>("description-value-label");
@@ -544,6 +573,8 @@ namespace Anatomia3D.UI
             _leaderboardCard = _screenRoot.Q<VisualElement>("leaderboard-card");
             _leaderboardEmptyState = _screenRoot.Q<VisualElement>("leaderboard-empty-state");
             _leaderboardList = _screenRoot.Q<VisualElement>("leaderboard-list");
+            _leaderboardSummary = _screenRoot.Q<VisualElement>("leaderboard-summary");
+            _leaderboardCountLabel = _screenRoot.Q<Label>("leaderboard-count-label");
 
             _scoresEmptyState = _screenRoot.Q<VisualElement>("scores-empty-state");
             _scoresList = _screenRoot.Q<VisualElement>("scores-list");
@@ -565,6 +596,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.RegisterCallback<ClickEvent>(OnLeaderboardTabClicked);
             _scoresTabButton?.RegisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.RegisterCallback<ClickEvent>(OnBadgesTabClicked);
+            _materialsTabButton?.RegisterCallback<ClickEvent>(OnMaterialsTabClicked);
 
             if (_screenRoot != null)
             {
@@ -682,6 +714,20 @@ namespace Anatomia3D.UI
                     a.AnnouncementId, a.Title, a.Body, a.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"))));
             });
 
+            // A different classroom than the one on screen: drop the old list right away so
+            // one classroom's materials never show under another's name.
+            if (_materialsShownForClassroomId != classroomId)
+            {
+                _materialsShownForClassroomId = classroomId;
+                SetMaterials(new List<ClassroomMaterial>());
+            }
+
+            _materialsListener = ClassroomService.Instance.ListenToMaterials(classroomId, materials =>
+            {
+                if (classroomId != _lastLoadedClassroomId) return;
+                SetMaterials(materials);
+            });
+
             _rosterListener = ClassroomService.Instance.ListenToClassroomRoster(classroomId, roster =>
             {
                 if (classroomId != _lastLoadedClassroomId) return;
@@ -737,7 +783,7 @@ namespace Anatomia3D.UI
         {
             _lastRoster = roster;
 
-            SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level)));
+            SetPeers(roster.ConvertAll(m => new PeerInfo(m.Name, m.Level, m.StudentId, m.AvatarUrl)));
             RenderLeaderboardFromRoster(_lastDetail?.LeaderboardVisible ?? false, roster);
             ApplyClassroomInfoFromCache();
         }
@@ -770,7 +816,7 @@ namespace Anatomia3D.UI
 
             SetLeaderboard(visibleToStudents, ranked.ConvertAll(m => new PerformerInfo(
                 m.StudentId, m.Name, m.Level, m.QuizzesCompleted, m.AvgScorePercent, m.Points,
-                student != null && m.StudentId == student.Uid)));
+                student != null && m.StudentId == student.Uid, m.AvatarUrl)));
         }
 
         /// <summary>
@@ -855,8 +901,14 @@ namespace Anatomia3D.UI
                 var q = quizzes[i];
                 int index = i;
 
-                Action<bool, bool> resolve = (checkOk, canStart) =>
+                Action<bool, bool, QuizService.AttemptEligibility> resolve = (checkOk, canStart, elig) =>
                 {
+                    // A teacher-granted retake changes this student's attempt limit and deadline.
+                    bool hasGrant = elig != null && elig.HasRetakeGrant;
+                    int cardMaxAttempts = hasGrant ? elig.MaxAttempts : q.MaxAttempts;
+                    bool cardDeadlineEnabled = hasGrant ? elig.EffectiveDeadlineUtc.HasValue : q.IsDeadlineEnabled;
+                    DateTime? cardDeadline = hasGrant ? elig.EffectiveDeadlineUtc : q.DeadlineUtc;
+
                     var block = QuizStartBlock.None;
                     if (checkOk && !canStart)
                     {
@@ -864,12 +916,12 @@ namespace Anatomia3D.UI
                         // before attempts), so the reason shown here always matches what
                         // the real submit-time re-check would report if the button were
                         // clickable.
-                        bool deadlinePassed = q.IsDeadlineEnabled && q.DeadlineUtc.HasValue
-                            && DateTime.UtcNow > q.DeadlineUtc.Value;
+                        bool deadlinePassed = cardDeadlineEnabled && cardDeadline.HasValue
+                            && DateTime.UtcNow > cardDeadline.Value;
                         block = deadlinePassed ? QuizStartBlock.DeadlineExpired : QuizStartBlock.NoAttemptsLeft;
                     }
 
-                    cards[index] = ToQuizCardInfo(q, block);
+                    cards[index] = ToQuizCardInfo(q, block, cardMaxAttempts, cardDeadlineEnabled, cardDeadline);
 
                     remaining--;
                     if (remaining == 0 && !isStale())
@@ -885,21 +937,23 @@ namespace Anatomia3D.UI
                 if (SubmissionTypes.IsFileSubmission(q.SubmissionType))
                 {
                     FileSubmissionService.Instance.CheckSubmitEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
-                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanSubmit));
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanSubmit, null));
                 }
                 else
                 {
                     QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
-                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanStart));
+                        resolve(checkOk, checkOk && eligibility != null && eligibility.CanStart, eligibility));
                 }
             }
         }
 
-        private static QuizCardInfo ToQuizCardInfo(ClassroomService.QuizSummary q, QuizStartBlock startBlock)
+        private static QuizCardInfo ToQuizCardInfo(ClassroomService.QuizSummary q, QuizStartBlock startBlock,
+            int? maxAttempts = null, bool? deadlineEnabled = null, DateTime? deadlineUtc = null)
         {
             return new QuizCardInfo(
                 q.QuizId, q.Title, q.Category, q.QuestionCount, q.TimeLimitMinutes, q.HasTimeLimit,
-                q.MaxAttempts, q.IsDeadlineEnabled, q.DeadlineUtc,
+                maxAttempts ?? q.MaxAttempts, deadlineEnabled ?? q.IsDeadlineEnabled,
+                deadlineEnabled.HasValue ? deadlineUtc : q.DeadlineUtc,
                 q.TotalPoints, Capitalize(q.Difficulty), true, startBlock, q.SubmissionType);
         }
 
@@ -975,6 +1029,83 @@ namespace Anatomia3D.UI
                     _announcementCardsById.Remove(id);
                 }
             }
+        }
+
+        // ---------------- Materials ----------------
+
+        /// <summary>Push the teacher's uploaded materials into the Materials tab (empty state
+        /// when there are none). Rebuilt whole - unlike announcements this only changes when
+        /// the teacher uploads or removes a file, never per keystroke.</summary>
+        public void SetMaterials(List<ClassroomMaterial> materials)
+        {
+            _lastMaterials.Clear();
+            if (materials != null) _lastMaterials.AddRange(materials);
+
+            bool hasData = _lastMaterials.Count > 0;
+            _materialsEmptyState?.EnableInClassList("hidden", hasData);
+            _materialsList?.EnableInClassList("hidden", !hasData);
+
+            if (_materialsList == null) return;
+
+            _materialsList.Clear();
+            foreach (var material in _lastMaterials) _materialsList.Add(BuildMaterialCard(material));
+        }
+
+        private void SetMaterialsError(string message)
+        {
+            if (_materialsErrorLabel == null) return;
+
+            bool has = !string.IsNullOrEmpty(message);
+            _materialsErrorLabel.text = has ? message : string.Empty;
+            _materialsErrorLabel.EnableInClassList("hidden", !has);
+        }
+
+        private VisualElement BuildMaterialCard(ClassroomMaterial material)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("material-card");
+
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("material-card-header-row");
+
+            string ext = FileSubmissionConfig.ExtensionOf(material.FileName);
+            var badge = new Label(string.IsNullOrEmpty(ext) ? "FILE" : ext.ToUpperInvariant());
+            badge.AddToClassList("material-type-badge");
+            headerRow.Add(badge);
+
+            var textColumn = new VisualElement();
+            textColumn.AddToClassList("material-card-text");
+
+            var titleLabel = new Label(string.IsNullOrEmpty(material.Title) ? material.FileName : material.Title);
+            titleLabel.AddToClassList("material-title-label");
+            textColumn.Add(titleLabel);
+
+            var metaLabel = new Label($"{FileSubmissionConfig.FormatSize(material.FileSize)}  \u2022  {material.CreatedAt.ToDateTime().ToLocalTime():MMM d, yyyy}");
+            metaLabel.AddToClassList("material-meta-label");
+            textColumn.Add(metaLabel);
+
+            headerRow.Add(textColumn);
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(material.Description))
+            {
+                var descriptionLabel = new Label(material.Description);
+                descriptionLabel.AddToClassList("material-description-label");
+                card.Add(descriptionLabel);
+            }
+
+            var openButton = new Button { text = "Open" };
+            openButton.AddToClassList("material-open-button");
+            openButton.clicked += () =>
+            {
+                SetMaterialsError(null);
+                MaterialFileOpener.Open(material,
+                    busy => { openButton.SetEnabled(!busy); openButton.text = busy ? "Opening..." : "Open"; },
+                    SetMaterialsError);
+            };
+            card.Add(openButton);
+
+            return card;
         }
 
         /// <summary>Push the classroom roster into the Students tab (empty state if the list is empty/null).</summary>
@@ -1072,6 +1203,14 @@ namespace Anatomia3D.UI
             _leaderboardEmptyState?.EnableInClassList("hidden", hasData);
             _leaderboardList.EnableInClassList("hidden", !hasData);
 
+            if (_leaderboardCountLabel != null)
+                _leaderboardCountLabel.text = _lastLeaderboard.Count == 1 ? "1 student" : $"{_lastLeaderboard.Count} students";
+            UpdateLeaderboardSummary();
+
+            // Each row's progress bar is scaled against the leader's points.
+            int maxPoints = 0;
+            foreach (var p in _lastLeaderboard) if (p.Points > maxPoints) maxPoints = p.Points;
+
             // Diffed against _performerRowsById, keyed by StudentId - the roster listener
             // behind this fires every time ANY classmate completes a quiz, so most updates
             // only actually change one or two rows' rank/score, not the whole board.
@@ -1085,11 +1224,11 @@ namespace Anatomia3D.UI
 
                 if (_performerRowsById.TryGetValue(performer.StudentId, out var refs))
                 {
-                    ApplyPerformerRowContent(refs, rank, performer);
+                    ApplyPerformerRowContent(refs, rank, performer, maxPoints);
                 }
                 else
                 {
-                    refs = BuildPerformerRow(rank, performer);
+                    refs = BuildPerformerRow(rank, performer, maxPoints);
                     _performerRowsById[performer.StudentId] = refs;
                 }
 
@@ -1112,6 +1251,63 @@ namespace Anatomia3D.UI
                     _performerRowsById.Remove(id);
                 }
             }
+        }
+
+        /// <summary>The "Your rank" strip above the list: rank, class size, points, and the
+        /// gap to the student one place ahead. Hidden if this student isn't on the board.</summary>
+        private void UpdateLeaderboardSummary()
+        {
+            if (_leaderboardSummary == null) return;
+            _leaderboardSummary.Clear();
+
+            int myIndex = _lastLeaderboard.FindIndex(p => p.IsCurrentStudent);
+            _leaderboardSummary.EnableInClassList("hidden", myIndex < 0);
+            if (myIndex < 0) return;
+
+            var me = _lastLeaderboard[myIndex];
+            int rank = myIndex + 1;
+
+            var left = new VisualElement();
+            left.AddToClassList("lb-summary-left");
+            var caption = new Label("YOUR RANK");
+            caption.AddToClassList("lb-summary-caption");
+            var rankRow = new VisualElement();
+            rankRow.AddToClassList("lb-summary-rank-row");
+            var rankLabel = new Label($"#{rank}");
+            rankLabel.AddToClassList("lb-summary-rank");
+            var ofLabel = new Label($"of {_lastLeaderboard.Count}");
+            ofLabel.AddToClassList("lb-summary-of");
+            rankRow.Add(rankLabel);
+            rankRow.Add(ofLabel);
+            left.Add(caption);
+            left.Add(rankRow);
+
+            string hint;
+            if (rank == 1) hint = "You're leading the class!";
+            else
+            {
+                int gap = _lastLeaderboard[myIndex - 1].Points - me.Points;
+                hint = gap > 0 ? $"{gap:N0} pts to reach #{rank - 1}" : $"Tied on points with #{rank - 1}";
+            }
+            var hintLabel = new Label(hint);
+            hintLabel.AddToClassList("lb-summary-hint");
+
+            var right = new VisualElement();
+            right.AddToClassList("lb-summary-right");
+            var pts = new Label($"{me.Points:N0}");
+            pts.AddToClassList("lb-summary-points");
+            var ptsCaption = new Label("total pts");
+            ptsCaption.AddToClassList("lb-summary-points-caption");
+            right.Add(pts);
+            right.Add(ptsCaption);
+
+            var mid = new VisualElement();
+            mid.AddToClassList("lb-summary-mid");
+            mid.Add(left);
+            mid.Add(hintLabel);
+
+            _leaderboardSummary.Add(mid);
+            _leaderboardSummary.Add(right);
         }
 
         /// <summary>Push this student's completed-quiz history for this classroom into the Scores tab.</summary>
@@ -1227,6 +1423,9 @@ namespace Anatomia3D.UI
             var initialsLabel = new Label(GetInitials(peer.Name));
             initialsLabel.AddToClassList("peer-avatar-label");
             avatar.Add(initialsLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.ApplyFromUrl(avatar, initialsLabel, peer.AvatarUrl);
 
             var nameLabel = new Label(peer.Name);
             nameLabel.AddToClassList("peer-name-label");
@@ -1420,20 +1619,21 @@ namespace Anatomia3D.UI
             public VisualElement Row;
             public int LastRank;
             public PerformerInfo LastPerformer;
+            public int LastMaxPoints;
             public bool HasLastPaint;
         }
 
-        private PerformerRowRefs BuildPerformerRow(int rank, PerformerInfo performer)
+        private PerformerRowRefs BuildPerformerRow(int rank, PerformerInfo performer, int maxPoints)
         {
             var row = new VisualElement();
             var refs = new PerformerRowRefs { Row = row };
-            ApplyPerformerRowContent(refs, rank, performer);
+            ApplyPerformerRowContent(refs, rank, performer, maxPoints);
             return refs;
         }
 
-        private void ApplyPerformerRowContent(PerformerRowRefs refs, int rank, PerformerInfo performer)
+        private void ApplyPerformerRowContent(PerformerRowRefs refs, int rank, PerformerInfo performer, int maxPoints)
         {
-            if (refs.HasLastPaint && refs.LastRank == rank && PerformerInfoEquals(refs.LastPerformer, performer))
+            if (refs.HasLastPaint && refs.LastRank == rank && refs.LastMaxPoints == maxPoints && PerformerInfoEquals(refs.LastPerformer, performer))
             {
                 return; // neither this student's rank nor their stats changed since the last snapshot
             }
@@ -1442,25 +1642,29 @@ namespace Anatomia3D.UI
             row.Clear();
             row.ClearClassList();
             row.AddToClassList("performer-row");
-            if (rank == 1) row.AddToClassList("performer-row-gold");
-            else if (rank == 2) row.AddToClassList("performer-row-silver");
-            else if (rank == 3) row.AddToClassList("performer-row-bronze");
+            string tier = rank == 1 ? "gold" : rank == 2 ? "silver" : rank == 3 ? "bronze" : "default";
+            row.AddToClassList("performer-row-" + tier);
             if (performer.IsCurrentStudent) row.AddToClassList("performer-row-you");
 
+            // Rank: solid medal circle for the podium, plain number for everyone else.
             var badge = new VisualElement();
             badge.AddToClassList("performer-rank-badge");
-            if (rank == 1) badge.AddToClassList("performer-rank-badge-gold");
-            else if (rank == 2) badge.AddToClassList("performer-rank-badge-silver");
-            else if (rank == 3) badge.AddToClassList("performer-rank-badge-bronze");
-            var rankLabel = new Label($"#{rank}");
+            badge.AddToClassList("performer-rank-badge-" + tier);
+            var rankLabel = new Label(rank.ToString());
             rankLabel.AddToClassList("performer-rank-label");
+            rankLabel.AddToClassList("performer-rank-label-" + tier);
             badge.Add(rankLabel);
 
+            // Avatar with a rank-coloured ring.
             var avatar = new VisualElement();
             avatar.AddToClassList("performer-avatar");
+            avatar.AddToClassList("performer-avatar-" + tier);
             var initialsLabel = new Label(GetInitials(performer.Name));
             initialsLabel.AddToClassList("performer-avatar-label");
             avatar.Add(initialsLabel);
+
+            // Profile picture (students/{uid}.avatarUrl); initials stay as the fallback.
+            StudentAvatarLoader.ApplyFromUrl(avatar, initialsLabel, performer.AvatarUrl);
 
             var info = new VisualElement();
             info.AddToClassList("performer-info");
@@ -1477,21 +1681,33 @@ namespace Anatomia3D.UI
                 nameRow.Add(youBadge);
             }
 
-            var metaLabel = new Label($"Lvl {performer.Level} \u2022 {performer.QuizzesCompleted} quizzes");
+            var metaLabel = new Label($"Lvl {performer.Level} \u2022 {performer.QuizzesCompleted} quizzes \u2022 {performer.ScorePercent.ToString("0.#")}% avg");
             metaLabel.AddToClassList("performer-meta-label");
+
+            // Points relative to the leader - a quick visual sense of the gap.
+            var track = new VisualElement();
+            track.AddToClassList("performer-bar-track");
+            var fill = new VisualElement();
+            fill.AddToClassList("performer-bar-fill");
+            fill.AddToClassList("performer-bar-fill-" + tier);
+            float pct = maxPoints > 0 ? Mathf.Clamp01((float)performer.Points / maxPoints) : 0f;
+            fill.style.width = Length.Percent(pct * 100f);
+            track.Add(fill);
 
             info.Add(nameRow);
             info.Add(metaLabel);
+            info.Add(track);
 
             var scoreBlock = new VisualElement();
             scoreBlock.AddToClassList("performer-score-block");
-            var percentLabel = new Label($"{performer.ScorePercent.ToString("0.#")}%");
-            percentLabel.AddToClassList("performer-score-percent");
-            var pointsLabel = new Label($"{performer.Points:N0} pts");
-            pointsLabel.AddToClassList("performer-points-sub");
-            scoreBlock.Add(percentLabel);
+            var pointsLabel = new Label($"{performer.Points:N0}");
+            pointsLabel.AddToClassList("performer-score-points");
+            pointsLabel.AddToClassList("performer-score-points-" + tier);
+            var ptsCaption = new Label("pts");
+            ptsCaption.AddToClassList("performer-points-sub");
             scoreBlock.Add(pointsLabel);
-                
+            scoreBlock.Add(ptsCaption);
+
             row.Add(badge);
             row.Add(avatar);
             row.Add(info);
@@ -1499,6 +1715,7 @@ namespace Anatomia3D.UI
 
             refs.LastRank = rank;
             refs.LastPerformer = performer;
+            refs.LastMaxPoints = maxPoints;
             refs.HasLastPaint = true;
         }
 
@@ -1506,7 +1723,7 @@ namespace Anatomia3D.UI
         {
             return a.StudentId == b.StudentId && a.Name == b.Name && a.Level == b.Level
                 && a.QuizzesCompleted == b.QuizzesCompleted && Mathf.Approximately(a.ScorePercent, b.ScorePercent)
-                && a.Points == b.Points && a.IsCurrentStudent == b.IsCurrentStudent;
+                && a.Points == b.Points && a.IsCurrentStudent == b.IsCurrentStudent && a.AvatarUrl == b.AvatarUrl;
         }
 
         private VisualElement BuildScoreCard(ScoreHistoryInfo score)
@@ -1695,12 +1912,17 @@ namespace Anatomia3D.UI
         /// student is clearly after the quiz list rather than announcements.</summary>
         public void OpenQuizzesTab() => ShowQuizzesTab();
 
+        /// <summary>Opens this screen on the Materials tab - used by the "new material"
+        /// notification tap (FCMNotificationService). Same call-order rule as OpenQuizzesTab.</summary>
+        public void OpenMaterialsTab() => ShowMaterialsTab();
+
         private void OnOverviewTabClicked(ClickEvent evt) => ShowOverviewTab();
         private void OnStudentsTabClicked(ClickEvent evt) => ShowStudentsTab();
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();
         private void OnLeaderboardTabClicked(ClickEvent evt) => ShowLeaderboardTab();
         private void OnScoresTabClicked(ClickEvent evt) => ShowScoresTab();
         private void OnBadgesTabClicked(ClickEvent evt) => ShowBadgesTab();
+        private void OnMaterialsTabClicked(ClickEvent evt) => ShowMaterialsTab();
 
         private void ShowOverviewTab() => SetActiveTab(_overviewTabButton, _overviewPanel, "Overview");
         private void ShowStudentsTab() => SetActiveTab(_studentsTabButton, _studentsPanel, "Students");
@@ -1708,6 +1930,7 @@ namespace Anatomia3D.UI
         private void ShowLeaderboardTab() => SetActiveTab(_leaderboardTabButton, _leaderboardPanel, "Leaderboard");
         private void ShowScoresTab() => SetActiveTab(_scoresTabButton, _scoresPanel, "Scores");
         private void ShowBadgesTab() => SetActiveTab(_badgesTabButton, _badgesPanel, "Badges");
+        private void ShowMaterialsTab() => SetActiveTab(_materialsTabButton, _materialsPanel, "Materials");
 
         private void SetActiveTab(Button activeButton, VisualElement activePanel, string tabName)
         {
@@ -1719,6 +1942,7 @@ namespace Anatomia3D.UI
             _leaderboardTabButton?.RemoveFromClassList("tab-button-active");
             _scoresTabButton?.RemoveFromClassList("tab-button-active");
             _badgesTabButton?.RemoveFromClassList("tab-button-active");
+            _materialsTabButton?.RemoveFromClassList("tab-button-active");
             activeButton?.AddToClassList("tab-button-active");
 
             _overviewPanel?.AddToClassList("hidden");
@@ -1727,6 +1951,7 @@ namespace Anatomia3D.UI
             _leaderboardPanel?.AddToClassList("hidden");
             _scoresPanel?.AddToClassList("hidden");
             _badgesPanel?.AddToClassList("hidden");
+            _materialsPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
         }
 

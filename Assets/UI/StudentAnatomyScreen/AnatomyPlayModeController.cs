@@ -57,6 +57,10 @@ namespace Anatomia3D.Backend
         [Tooltip("Points awarded for every correct answer, regardless of how many hints were used.")]
         [SerializeField] private int pointsPerCorrectAnswer = 1;
 
+        [Header("Answered Structures")]
+        [Tooltip("Tint applied to the 3D model (and search-list row) of every structure already answered in Play Mode. Change it here - takes effect immediately in Play Mode.")]
+        [SerializeField] private Color answeredStructureColor = new Color(1f, 0.41f, 0.71f, 1f);
+
         [Header("Firebase")]
         [Tooltip("Optional. If assigned, incorrect attempts are logged via this script directly, " +
                  "and it's used as a fallback for correct answers when no LocalStorage is assigned. " +
@@ -624,6 +628,9 @@ namespace Anatomia3D.Backend
 
         private void ActivatePlayMode()
         {
+            if (_screen != null)
+                _screen.IsStructureAnswered = info => info != null && _completedKeys.Contains(info.boneName);
+
             _isPlayModeActive = true;
 
             if (_isBaselineMode)
@@ -718,6 +725,12 @@ namespace Anatomia3D.Backend
 
         private void DeactivatePlayMode()
         {
+            if (_screen != null)
+            {
+                _screen.IsStructureAnswered = null;
+                _screen.RefreshAnsweredTints(); // clears every pink tint
+            }
+
             _isPlayModeActive = false;
 
             if (_isolateAnsweredEnabled)
@@ -1786,8 +1799,25 @@ namespace Anatomia3D.Backend
 
         // ===== Progress / completion =====
 
+        private void ApplyAnsweredTints()
+        {
+            if (_screen == null) return;
+            _screen.AnsweredTint = answeredStructureColor;
+            _screen.RefreshAnsweredTints();
+        }
+
+        // Lets you tweak the color in the Inspector during Play Mode and see it live.
+        private void OnValidate()
+        {
+            if (Application.isPlaying && _isPlayModeActive) ApplyAnsweredTints();
+        }
+
         private void UpdateProgressLabel()
         {
+            // Every change to the answered set already calls this, so it is
+            // also where the 3D model's pink "answered" tint is refreshed.
+            ApplyAnsweredTints();
+
             if (_progressLabel == null) return;
             int total = _isBaselineMode ? _baselineTargetKeys.Count : _screen.AllBoneData.Count;
             _progressLabel.text = $"Progress: {_completedKeys.Count} / {total}";

@@ -912,11 +912,11 @@
 {
     width: 100%;
     background-color: white;
-    border-radius: 37px;
-    padding: 40px 30px;
+    border-radius: 44px;
+    padding: 30px 38px 30px 38px;
     align-items: center;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(15, 23, 42, 0.06);
 }
 
 .recent-activity-empty-label
@@ -936,12 +936,12 @@
     flex-direction: row;
     align-items: center;
     width: 100%;
-    padding: 24px;
-    margin-bottom: 16px;
-    border-radius: 28px;
-    background-color: rgb(246, 248, 252);
-    border-width: 1px;
-    border-color: rgba(20, 95, 232, 0.07);
+    padding: 28px 4px;
+    margin-bottom: -2px;
+    border-radius: 0px;
+    background-color: rgba(0, 0, 0, 0);
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(238, 241, 247);
     transition-property: background-color;
     transition-duration: 1.2s;
     transition-timing-function: ease-out;
@@ -951,7 +951,8 @@
    (ID selector on purpose: the View All list also uses .recent-activity-list). */
 #recent-activity-list
 {
-    margin-bottom: -16px;
+    margin-bottom: 0;
+    overflow: hidden;
 }
 
 .recent-activity-text
@@ -974,14 +975,16 @@
 
 .activity-avatar
 {
-    width: 88px;
-    height: 88px;
-    border-radius: 44px;
-    margin-right: 24px;
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    margin-right: 26px;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
     background-color: rgba(20, 95, 232, 0.12);
+    border-width: 4px;
+    border-color: rgba(20, 95, 232, 0.35);
 }
 
 .activity-avatar-label
@@ -995,6 +998,7 @@
 .activity-avatar-high
 {
     background-color: rgba(22, 163, 74, 0.14);
+    border-color: rgba(22, 163, 74, 0.55);
 }
 
 .activity-avatar-high .activity-avatar-label
@@ -1005,6 +1009,7 @@
 .activity-avatar-mid
 {
     background-color: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.55);
 }
 
 .activity-avatar-mid .activity-avatar-label
@@ -1015,6 +1020,7 @@
 .activity-avatar-low
 {
     background-color: rgba(220, 38, 38, 0.12);
+    border-color: rgba(220, 38, 38, 0.55);
 }
 
 .activity-avatar-low .activity-avatar-label
@@ -1047,9 +1053,9 @@
 
 .activity-student-name
 {
-    font-size: 30px;
+    font-size: 31px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: rgb(24, 28, 38);
     flex-grow: 1;
     flex-shrink: 1;
     white-space: normal;
@@ -1059,15 +1065,15 @@
 {
     font-size: 27px;
     color: rgb(60, 66, 80);
-    margin-top: 6px;
+    margin-top: 8px;
     white-space: normal;
 }
 
 .activity-classroom-name
 {
-    font-size: 24px;
-    color: rgb(150, 155, 168);
-    margin-top: 2px;
+    font-size: 23px;
+    color: rgb(138, 143, 163);
+    margin-top: 4px;
     white-space: normal;
 }
 
@@ -1084,15 +1090,15 @@
     flex-direction: row;
     align-items: center;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 18px;
 }
 
 .activity-score-badge
 {
     font-size: 24px;
     -unity-font-style: bold;
-    border-radius: 16px;
-    padding: 5px 14px;
+    border-radius: 30px;
+    padding: 6px 20px;
     flex-shrink: 0;
     color: rgb(20, 95, 232);
     background-color: rgba(20, 95, 232, 0.1);
@@ -1121,10 +1127,10 @@
 {
     flex-grow: 1;
     flex-shrink: 1;
-    height: 10px;
-    border-radius: 5px;
-    margin-left: 18px;
-    margin-right: 18px;
+    height: 12px;
+    border-radius: 6px;
+    margin-left: 20px;
+    margin-right: 20px;
     background-color: rgba(0, 0, 0, 0.07);
     overflow: hidden;
 }
@@ -1132,7 +1138,7 @@
 .activity-score-fill
 {
     height: 100%;
-    border-radius: 5px;
+    border-radius: 6px;
     background-color: rgb(20, 95, 232);
 }
 
@@ -1153,11 +1159,12 @@
 
 .activity-status-pill
 {
-    font-size: 22px;
+    font-size: 21px;
+    -unity-font-style: bold;
     color: rgb(22, 163, 74);
     background-color: rgba(22, 163, 74, 0.12);
-    border-radius: 20px;
-    padding: 6px 16px;
+    border-radius: 30px;
+    padding: 6px 18px;
     flex-shrink: 0;
     -unity-text-align: middle-center;
 }
@@ -1168,7 +1175,38 @@
    no layout-affecting properties, so it never reflows neighboring rows. */
 .activity-row-new
 {
-    background-color: rgba(20, 95, 232, 0.14);
+    background-color: rgba(20, 95, 232, 0.08);
+}
+
+/* ---------- Activity kind label (above the student name) ---------- */
+
+.activity-kind-label
+{
+    font-size: 17px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    color: rgb(20, 95, 232);
+}
+
+.activity-kind-label-quiz { color: rgb(37, 99, 235); }
+.activity-kind-label-join { color: rgb(217, 119, 6); }
+
+/* ---------- View All overlay: rows sit on the light-blue modal, so they
+   go back to individual white cards there ---------- */
+
+.view-all-list
+{
+    overflow: visible;
+}
+
+.view-all-list .recent-activity-row
+{
+    background-color: white;
+    border-radius: 30px;
+    border-bottom-width: 0px;
+    padding: 26px 24px;
+    margin-bottom: 16px;
 }
 
 /* ---------- Utility ---------- */
@@ -1306,16 +1344,17 @@
 
 .compact .recent-activity-row
 {
-    padding: 20px;
-    border-radius: 24px;
+    padding: 22px 4px;
+    border-radius: 0px;
 }
 
 .compact .activity-avatar
 {
-    width: 72px;
-    height: 72px;
-    border-radius: 36px;
-    margin-right: 18px;
+    width: 78px;
+    height: 78px;
+    border-radius: 39px;
+    margin-right: 20px;
+    border-width: 3px;
 }
 
 .compact .activity-avatar-label
@@ -1358,3 +1397,6 @@
     padding-left: 37px;
     padding-right: 37px;
 }
+
+.compact .activity-kind-label { font-size: 15px; }
+.compact .view-all-list .recent-activity-row { padding: 20px; border-radius: 24px; }

@@ -633,6 +633,20 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
+        /// <summary>Same as ShowStudentClassroomDetail, but lands on the Materials tab. Used
+        /// by FCMNotificationService when a student taps a "new material" notification.</summary>
+        public void ShowStudentClassroomDetailOnMaterialsTab(string classroomId, string classroomName, string instructorName)
+        {
+            ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
+            {
+                if (_studentClassroomDetailController == null) return;
+
+                // Identity first, tab switch after - same ordering rule as the Quizzes variant.
+                _studentClassroomDetailController.SetClassroomIdentity(classroomId, classroomName, instructorName);
+                _studentClassroomDetailController.OpenMaterialsTab();
+            });
+        }
+
         public void ShowStudentEditProfile(string fullName, string email)
         {
             ShowScreen(studentEditProfileScreen, _studentEditProfileController, () =>

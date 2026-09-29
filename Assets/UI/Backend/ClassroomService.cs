@@ -77,6 +77,11 @@ namespace Anatomia3D.Backend
                     transaction.Set(memberRef, new Dictionary<string, object>
                     {
                         { "studentName", student.FullName },
+                        // Denormalized copy of students/{uid}.avatarUrl ("" = no photo) so the
+                        // roster/leaderboard can show classmates' pictures from the members
+                        // docs they already read, instead of one extra read per classmate.
+                        // Kept in sync by PlayerSessionManager.UpdateAvatarUrl.
+                        { "avatarUrl", student.AvatarUrl ?? "" },
                         { "joinedAt", Timestamp.GetCurrentTimestamp() }
                     });
 
@@ -351,6 +356,26 @@ namespace Anatomia3D.Backend
                 Body = doc.ContainsField("body") ? doc.GetValue<string>("body") : "",
                 CreatedAt = doc.ContainsField("createdAt") ? doc.GetValue<Timestamp>("createdAt") : Timestamp.GetCurrentTimestamp()
             };
+        }
+
+        // ---------------- Materials (read-only here - uploaded by AdminClassroomService) ----------------
+
+        /// <summary>Live list of the teacher's uploaded materials for this classroom, most
+        /// recent first. Keep the returned ListenerRegistration and Stop() it on classroom
+        /// change / OnDisable, same as ListenToAnnouncements(). Fires once immediately,
+        /// then whenever the teacher uploads or removes a material.</summary>
+        public ListenerRegistration ListenToMaterials(string classroomId, Action<List<ClassroomMaterial>> onUpdate)
+        {
+            if (string.IsNullOrEmpty(classroomId)) { onUpdate?.Invoke(new List<ClassroomMaterial>()); return null; }
+
+            return Db.Collection("classrooms").Document(classroomId).Collection("materials")
+                .OrderByDescending("createdAt")
+                .Listen(snapshot =>
+                {
+                    var results = new List<ClassroomMaterial>();
+                    foreach (var doc in snapshot.Documents) results.Add(ClassroomMaterial.FromSnapshot(doc));
+                    onUpdate?.Invoke(results);
+                });
         }
 
         // ---------------- Notifications (derived live from per-classroom announcements) ----------------
@@ -652,6 +677,9 @@ namespace Anatomia3D.Backend
             public int Points;
             public int QuizzesCompleted;
             public float AvgScorePercent;
+            /// <summary>members/{id}.avatarUrl: null = field not written yet (member predates it
+            /// and hasn't opened the app since), "" = no photo, otherwise the Cloudinary URL.</summary>
+            public string AvatarUrl;
         }
 
         /// <summary>Call when showing the Students tab (roster, unsorted / join order)
@@ -704,7 +732,8 @@ namespace Anatomia3D.Backend
                 Level = doc.ContainsField("level") ? doc.GetValue<int>("level") : 1,
                 Points = doc.ContainsField("points") ? doc.GetValue<int>("points") : 0,
                 QuizzesCompleted = doc.ContainsField("quizzesCompleted") ? doc.GetValue<int>("quizzesCompleted") : 0,
-                AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f
+                AvgScorePercent = doc.ContainsField("avgScorePercent") ? (float)doc.GetValue<double>("avgScorePercent") : 0f,
+                AvatarUrl = doc.ContainsField("avatarUrl") ? doc.GetValue<string>("avatarUrl") : null
             };
         }
 
@@ -734,6 +763,27 @@ namespace Anatomia3D.Backend
             /// should open (StudentQuizGameplayController vs
             /// StudentFileSubmissionController).</summary>
             public string SubmissionType = SubmissionTypes.Question;
+
+            /// <summary>Retake exams only: when non-empty, only these students may see the
+            /// quiz. Empty = visible to the whole classroom.</summary>
+            public List<string> AllowedStudentIds = new List<string>();
+
+            /// <summary>Retake exams only: the quiz this one is a retake of.</summary>
+            public string RetakeOfQuizId;
+
+            public bool IsRetake => !string.IsNullOrEmpty(RetakeOfQuizId);
+        }
+
+        /// <summary>False for a retake exam that was assigned to OTHER students. Applied on the
+        /// student side only - with no signed-in student (the teacher's view) nothing is hidden.</summary>
+        private static bool IsVisibleToCurrentStudent(QuizSummary q)
+        {
+            if (q == null) return false;
+            if (q.AllowedStudentIds == null || q.AllowedStudentIds.Count == 0) return true;
+
+            var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
+            if (student == null) return true;
+            return q.AllowedStudentIds.Contains(student.Uid);
         }
 
         /// <summary>Call when showing the Available Quizzes tab. Reads the classroom's
@@ -801,7 +851,7 @@ namespace Anatomia3D.Backend
             void PushMerged()
             {
                 var merged = new List<QuizSummary>();
-                foreach (var kv in latestByChunk.OrderBy(k => k.Key)) merged.AddRange(kv.Value);
+                foreach (var kv in latestByChunk.OrderBy(k => k.Key)) merged.AddRange(kv.Value.Where(IsVisibleToCurrentStudent));
                 onUpdate?.Invoke(merged);
             }
 
@@ -889,7 +939,7 @@ namespace Anatomia3D.Backend
                         }
 
                         remaining--;
-                        if (remaining == 0) onComplete?.Invoke(results);
+                        if (remaining == 0) onComplete?.Invoke(results.Where(IsVisibleToCurrentStudent).ToList());
                     });
             }
         }
@@ -943,7 +993,11 @@ namespace Anatomia3D.Backend
                     : (DateTime?)null,
                 TotalPoints = totalPoints,
                 Difficulty = difficulty,
-                SubmissionType = submissionType
+                SubmissionType = submissionType,
+                AllowedStudentIds = doc.ContainsField("allowedStudentIds")
+                    ? doc.GetValue<List<string>>("allowedStudentIds")
+                    : new List<string>(),
+                RetakeOfQuizId = doc.ContainsField("retakeOfQuizId") ? doc.GetValue<string>("retakeOfQuizId") : null
             };
         }
 
@@ -1115,6 +1169,9 @@ namespace Anatomia3D.Backend
             /// left blank by FetchRecentJoins (student side), which doesn't need it
             /// since the joins it returns are always the current student's own.</summary>
             public string StudentName;
+            /// <summary>Only populated by FetchRecentJoinsForClassrooms (the members doc id ==
+            /// the student's uid) - lets the admin feed load their profile picture.</summary>
+            public string StudentId;
         }
 
         /// <summary>Call when showing StudentDashboardController's Recent Activity card.
@@ -1214,7 +1271,8 @@ namespace Anatomia3D.Backend
                                     ClassroomId = classroomId,
                                     ClassroomName = classroomName,
                                     JoinedAt = doc.GetValue<Timestamp>("joinedAt"),
-                                    StudentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student"
+                                    StudentName = doc.ContainsField("studentName") ? doc.GetValue<string>("studentName") : "A student",
+                                    StudentId = doc.Id
                                 });
                             }
                         }

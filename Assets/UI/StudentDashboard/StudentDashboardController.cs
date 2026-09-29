@@ -29,6 +29,7 @@ namespace Anatomia3D.UI
         private Label _profileInitialsLabel;
         private Button _notificationButton;
         private Label _studentNameLabel;
+        private Label _welcomeTitleLabel;
 
         // Cloudinary avatar state for #profile-button - same pattern as
         // StudentProfileController's #avatar: show the photo if AvatarUrl is
@@ -288,6 +289,8 @@ namespace Anatomia3D.UI
             _profileInitialsLabel = _screenRoot.Q<Label>("profile-initials-label");
             _notificationButton = _screenRoot.Q<Button>("notification-button");
             _studentNameLabel = _screenRoot.Q<Label>("student-name-label");
+            _welcomeTitleLabel = _screenRoot.Q<Label>(className: "welcome-title");
+            UpdateGreeting();
 
             _currentLevelLabel = _screenRoot.Q<Label>("current-level-label");
             _nextLevelLabel = _screenRoot.Q<Label>("next-level-label");
@@ -416,7 +419,8 @@ namespace Anatomia3D.UI
             // one - that's the signal a max level has been reached, rather than a separate flag.
             bool maxLevelReached = nextLevel <= currentLevel;
 
-            if (_studentNameLabel != null) _studentNameLabel.text = studentName;
+            UpdateGreeting();
+            if (_studentNameLabel != null) _studentNameLabel.text = GetFirstName(studentName);
             if (_currentLevelLabel != null) _currentLevelLabel.text = $"Level {currentLevel}";
 
             if (_nextLevelLabel != null)
@@ -601,6 +605,34 @@ namespace Anatomia3D.UI
             element.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover));
         }
 
+        /// <summary>Sets the greeting above the student's name from the device's local time:
+        /// 5:00-11:59 "Good morning!", 12:00-17:59 "Good afternoon!", otherwise "Good evening!".</summary>
+        private void UpdateGreeting()
+        {
+            if (_welcomeTitleLabel == null) return;
+
+            int hour = DateTime.Now.Hour;
+            string greeting = hour >= 5 && hour < 12 ? "Good morning!"
+                : hour >= 12 && hour < 18 ? "Good afternoon!"
+                : "Good evening!";
+
+            if (_welcomeTitleLabel.text != greeting) _welcomeTitleLabel.text = greeting;
+        }
+
+        /// <summary>Everything except the last word of the full name ("John Carlo Reyes" ->
+        /// "John Carlo") for the "Welcome back!" greeting. Matches how the Edit Profile screen
+        /// splits first/last name. Falls back to the whole string if there's only one word,
+        /// and to "Student" if the name is empty.</summary>
+        private static string GetFirstName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return "Student";
+
+            var parts = fullName.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length <= 1) return fullName.Trim();
+
+            return string.Join(" ", parts, 0, parts.Length - 1);
+        }
+
         private static string GetInitials(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName)) return "?";
@@ -684,7 +716,8 @@ namespace Anatomia3D.UI
                         Title = a.Title,
                         PointsDelta = a.PointsDelta,
                         OccurredAt = a.OccurredAt.ToDateTime(),
-                        IconColor = GetQuizActivityColor(a.Type)
+                        IconColor = GetQuizActivityColor(a.Type),
+                        Kind = a.Type == QuizService.ActivityType.BadgeEarned ? "badge" : "quiz"
                     });
                 }
                 OnPartComplete();
@@ -700,7 +733,8 @@ namespace Anatomia3D.UI
                         Title = $"Joined '{j.ClassroomName}'",
                         PointsDelta = 0,
                         OccurredAt = j.JoinedAt.ToDateTime(),
-                        IconColor = classroomJoinedColor
+                        IconColor = classroomJoinedColor,
+                        Kind = "join"
                     });
                 }
                 OnPartComplete();
@@ -732,6 +766,9 @@ namespace Anatomia3D.UI
             public int PointsDelta;
             public DateTime OccurredAt;
             public Color IconColor;
+            /// <summary>"quiz", "badge" or "join" - drives the icon glyph, tile color and
+            /// type label via the .activity-kind-* USS classes.</summary>
+            public string Kind;
         }
 
         /// <summary>Element refs for one row, plus the entry last painted into it - lets
@@ -741,6 +778,7 @@ namespace Anatomia3D.UI
             public VisualElement Item;
             public VisualElement Icon;
             public Label TitleLabel;
+            public Label KindLabel;
             public Label TimeLabel;
             public Label PointsLabel;
             public ActivityEntry LastEntry;
@@ -911,6 +949,10 @@ namespace Anatomia3D.UI
             var content = new VisualElement();
             content.AddToClassList("activity-content");
 
+            var kindLabel = new Label();
+            kindLabel.AddToClassList("activity-kind-label");
+            content.Add(kindLabel);
+
             var title = new Label();
             title.AddToClassList("activity-title");
             content.Add(title);
@@ -926,6 +968,7 @@ namespace Anatomia3D.UI
                 Item = item,
                 Icon = icon,
                 TitleLabel = title,
+                KindLabel = kindLabel,
                 TimeLabel = time
             };
 
@@ -948,7 +991,15 @@ namespace Anatomia3D.UI
             // diff pass even if OccurredAt itself hasn't changed.
             refs.TimeLabel.text = FormatRelativeTime(entry.OccurredAt);
 
-            if (isFirstPaint || last.IconColor != entry.IconColor) refs.Icon.style.backgroundColor = entry.IconColor;
+            if (isFirstPaint || last.Kind != entry.Kind)
+            {
+                foreach (var k in ActivityKinds)
+                {
+                    refs.Icon.EnableInClassList("activity-kind-" + k, k == entry.Kind);
+                    refs.KindLabel.EnableInClassList("activity-kind-label-" + k, k == entry.Kind);
+                }
+                refs.KindLabel.text = GetActivityKindText(entry.Kind);
+            }
 
             if (isFirstPaint || last.PointsDelta != entry.PointsDelta)
             {
@@ -961,7 +1012,7 @@ namespace Anatomia3D.UI
                         refs.Item.Add(refs.PointsLabel);
                         refs.HasPointsLabel = true;
                     }
-                    refs.PointsLabel.text = $"+{entry.PointsDelta}";
+                    refs.PointsLabel.text = $"+{entry.PointsDelta} XP";
                 }
                 else if (refs.HasPointsLabel)
                 {
@@ -973,6 +1024,18 @@ namespace Anatomia3D.UI
 
             refs.Item.EnableInClassList("activity-item-last", isLast);
             refs.LastEntry = entry;
+        }
+
+        private static readonly string[] ActivityKinds = { "quiz", "badge", "join" };
+
+        private static string GetActivityKindText(string kind)
+        {
+            switch (kind)
+            {
+                case "badge": return "BADGE EARNED";
+                case "join": return "CLASSROOM";
+                default: return "QUIZ";
+            }
         }
 
         private static Color GetQuizActivityColor(QuizService.ActivityType type)

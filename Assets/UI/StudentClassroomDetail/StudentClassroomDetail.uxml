@@ -39,10 +39,11 @@
                 <ui:VisualElement name="tab-switcher" class="tab-switcher">
                     <ui:VisualElement name="tab-switcher-row-1" class="tab-switcher-row">
                         <ui:Button name="overview-tab-button" text="Overview" class="tab-button tab-button-active"/>
-                        <ui:Button name="students-tab-button" text="Students" class="tab-button"/>
+                        <ui:Button name="materials-tab-button" text="Materials" class="tab-button"/>
                         <ui:Button name="quizzes-tab-button" text="Available Quizzes" class="tab-button"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="tab-switcher-row-2" class="tab-switcher-row tab-switcher-row-2">
+                        <ui:Button name="students-tab-button" text="Students" class="tab-button"/>
                         <ui:Button name="leaderboard-tab-button" text="Leaderboard" class="tab-button"/>
                         <ui:Button name="scores-tab-button" text="Scores" class="tab-button"/>
                         <ui:Button name="badges-tab-button" text="Badges" class="tab-button"/>
@@ -71,6 +72,15 @@
                         <ui:Label text="Your teacher hasn&apos;t posted anything for this classroom yet." class="empty-subtitle"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="announcements-list" class="announcements-list hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="materials-panel" class="tab-panel hidden">
+                    <ui:Label name="materials-error-label" class="materials-error-label hidden"/>
+                    <ui:VisualElement name="materials-empty-state" class="panel-card empty-state">
+                        <ui:VisualElement class="empty-icon icon-quiz-gray"/>
+                        <ui:Label text="No materials yet" class="empty-title"/>
+                        <ui:Label text="Your teacher hasn&apos;t uploaded any modules or lessons to this classroom yet." class="empty-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="materials-list" class="materials-list hidden"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="students-panel" class="tab-panel hidden">
                     <ui:VisualElement name="students-card" class="panel-card">
@@ -104,7 +114,9 @@
                                 <ui:VisualElement class="trophy-icon"/>
                             </ui:VisualElement>
                             <ui:Label text="Top Performers" class="panel-card-title"/>
+                            <ui:Label name="leaderboard-count-label" text="" class="lb-count-label"/>
                         </ui:VisualElement>
+                        <ui:VisualElement name="leaderboard-summary" class="lb-summary hidden"/>
                         <ui:VisualElement name="leaderboard-empty-state" class="top-performers-empty-state">
                             <ui:Label text="No student data yet" class="top-performers-empty-text"/>
                         </ui:VisualElement>
