@@ -1,73 +1,102 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentExplore3d/StudentExplore3d.uss?fileID=7433441132597879392&amp;guid=743ca842e0d65074d907c76c9ffa0cb1&amp;type=3#StudentExplore3d"/>
     <ui:VisualElement name="screen-root" class="screen-root">
-        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+
+            <!-- ============ HEADER (gradient applied at runtime by controller) ============ -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
                         <ui:VisualElement name="back-icon" class="back-icon"/>
                     </ui:Button>
                     <ui:VisualElement name="header-text" class="header-text">
-                        <ui:Label name="header-title" text="Anatomy Systems" class="header-title"/>
-                        <ui:Label name="header-subtitle" text="Explore human body in 3D" class="header-subtitle"/>
+                        <ui:Label name="header-title" text="Explore 3D" class="header-title"/>
+                        <ui:Label name="header-subtitle" text="Pick a body system to study" class="header-subtitle"/>
                     </ui:VisualElement>
                     <ui:Button name="play-mode-entry-button" text="▶ Play" class="play-mode-entry-button"/>
                 </ui:VisualElement>
+
                 <ui:Button name="sync-progress-button" class="sync-progress-row">
                     <ui:VisualElement picking-mode="Ignore" class="sync-icon-box">
                         <ui:Image name="sync-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-icon"/>
                     </ui:VisualElement>
                     <ui:VisualElement picking-mode="Ignore" class="sync-text-col">
                         <ui:Label name="sync-title-label" text="Sync Progress" picking-mode="Ignore" class="sync-title-label"/>
-                        <ui:Label name="sync-status-label" text="Last synced: Just now" picking-mode="Ignore" class="sync-status-label"/>
+                        <ui:Label name="sync-status-label" text="Checking sync status..." picking-mode="Ignore" class="sync-status-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="sync-status-icon-box" picking-mode="Ignore" class="sync-status-icon-box sync-status-icon-synced">
+                    <ui:VisualElement name="sync-status-icon-box" picking-mode="Ignore" class="sync-status-icon-box sync-status-icon-syncing">
                         <ui:Image name="sync-status-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-status-icon"/>
                     </ui:VisualElement>
                 </ui:Button>
             </ui:VisualElement>
+
+            <!-- ============ CONTENT ============ -->
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
                 <ui:VisualElement name="play-mode-picker-banner" class="play-mode-picker-banner hidden">
-                    <ui:Label text="🎯 Play Mode: tap a system below to start" class="play-mode-picker-banner-label"/>
+                    <ui:Label text="🎯 Play Mode: tap a system to start" class="play-mode-picker-banner-label"/>
                     <ui:Button name="play-mode-picker-cancel" text="Cancel" class="play-mode-picker-cancel"/>
                 </ui:VisualElement>
+
                 <ui:VisualElement name="card-list" class="card-list">
-                    <ui:Button name="card-skeletal" class="card card-button" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
-                        <ui:VisualElement picking-mode="Ignore" class="icon-box icon-skeletal" style="height: 149px; width: 166px;">
-                            <ui:Label text="" picking-mode="Ignore" class="icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/skull-white.png?fileID=2800000&amp;guid=b9166b37fa58a5a42b3fadf16cc978e0&amp;type=3#skull-white&quot;); background-color: rgba(0, 0, 0, 0); height: 149px; width: 105px;"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement picking-mode="Ignore" class="card-info" style="align-self: center;">
+
+                    <ui:Label text="BODY SYSTEMS" class="section-label"/>
+
+                    <!-- Skeletal -->
+                    <ui:Button name="card-skeletal" class="card card-button">
+                        <ui:VisualElement picking-mode="Ignore" class="card-accent accent-skeletal"/>
+                        <ui:VisualElement picking-mode="Ignore" class="card-body">
+                            <ui:VisualElement picking-mode="Ignore" class="icon-box icon-skeletal">
+                                <ui:VisualElement picking-mode="Ignore" class="icon-emoji"/>
+                            </ui:VisualElement>
                             <ui:Label text="Skeletal System" picking-mode="Ignore" class="card-title"/>
+                            <ui:Label text="Bones &amp; structure" picking-mode="Ignore" class="card-subtitle"/>
+                            <ui:VisualElement picking-mode="Ignore" class="card-cta cta-skeletal">
+                                <ui:Label text="Explore  ›" picking-mode="Ignore" class="card-cta-label cta-label-skeletal"/>
+                            </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement name="skeletal-image" picking-mode="Ignore" class="card-image" style="background-image: url(&quot;project://database/Assets/UI/Icons/skeletal-body.png?fileID=2800000&amp;guid=f3a44ac48d979f04f838961aa9645002&amp;type=3#skeletal-body&quot;); background-size: contain;">
+                        <ui:VisualElement name="skeletal-image" picking-mode="Ignore" class="card-image image-skeletal">
                             <ui:VisualElement name="skeletal-image-fade" picking-mode="Ignore" class="card-image-fade"/>
                         </ui:VisualElement>
                     </ui:Button>
-                    <ui:VisualElement style="flex-grow: 1; height: 30px;"/>
-                    <ui:Button name="card-muscular" class="card card-button" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
-                        <ui:VisualElement picking-mode="Ignore" class="icon-box icon-muscular" style="width: 166px; height: 149px;">
-                            <ui:Label text="" picking-mode="Ignore" class="icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/muscular-white.png?fileID=2800000&amp;guid=3367c5315b3f5e8408a3b5d8b3a0ebf4&amp;type=3#muscular-white&quot;); height: 149px; width: 105px;"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement picking-mode="Ignore" class="card-info" style="align-self: center;">
+
+                    <!-- Muscular -->
+                    <ui:Button name="card-muscular" class="card card-button">
+                        <ui:VisualElement picking-mode="Ignore" class="card-accent accent-muscular"/>
+                        <ui:VisualElement picking-mode="Ignore" class="card-body">
+                            <ui:VisualElement picking-mode="Ignore" class="icon-box icon-muscular">
+                                <ui:VisualElement picking-mode="Ignore" class="icon-emoji"/>
+                            </ui:VisualElement>
                             <ui:Label text="Muscular System" picking-mode="Ignore" class="card-title"/>
+                            <ui:Label text="Muscles &amp; movement" picking-mode="Ignore" class="card-subtitle"/>
+                            <ui:VisualElement picking-mode="Ignore" class="card-cta cta-muscular">
+                                <ui:Label text="Explore  ›" picking-mode="Ignore" class="card-cta-label cta-label-muscular"/>
+                            </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement name="muscular-image" picking-mode="Ignore" class="card-image" style="background-image: url(&quot;project://database/Assets/UI/Icons/muscular-body.png?fileID=2800000&amp;guid=7cf8782b8b5acaa48921eff22eae8d0a&amp;type=3#muscular-body&quot;); background-size: contain;">
+                        <ui:VisualElement name="muscular-image" picking-mode="Ignore" class="card-image image-muscular">
                             <ui:VisualElement name="muscular-image-fade" picking-mode="Ignore" class="card-image-fade"/>
                         </ui:VisualElement>
                     </ui:Button>
-                    <ui:VisualElement style="flex-grow: 1; height: 30px;"/>
-                    <ui:Button name="card-cardio" class="card card-button" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
-                        <ui:VisualElement picking-mode="Ignore" class="icon-box icon-cardio" style="width: 166px; height: 149px;">
-                            <ui:Label text="" picking-mode="Ignore" class="icon-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/cardio-white.png?fileID=2800000&amp;guid=1602464334d6c324db29d4d1fd43a618&amp;type=3#cardio-white&quot;); width: 105px; height: 149px;"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement picking-mode="Ignore" class="card-info" style="align-self: center;">
+
+                    <!-- Cardiovascular -->
+                    <ui:Button name="card-cardio" class="card card-button">
+                        <ui:VisualElement picking-mode="Ignore" class="card-accent accent-cardio"/>
+                        <ui:VisualElement picking-mode="Ignore" class="card-body">
+                            <ui:VisualElement picking-mode="Ignore" class="icon-box icon-cardio">
+                                <ui:VisualElement picking-mode="Ignore" class="icon-emoji"/>
+                            </ui:VisualElement>
                             <ui:Label text="Cardiovascular System" picking-mode="Ignore" class="card-title"/>
+                            <ui:Label text="Heart &amp; blood vessels" picking-mode="Ignore" class="card-subtitle"/>
+                            <ui:VisualElement picking-mode="Ignore" class="card-cta cta-cardio">
+                                <ui:Label text="Explore  ›" picking-mode="Ignore" class="card-cta-label cta-label-cardio"/>
+                            </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement name="cardiovascular-image" picking-mode="Ignore" class="card-image" style="background-image: url(&quot;project://database/Assets/UI/Icons/cardio-body.png?fileID=2800000&amp;guid=d5a32abe76f577d4eb57e30b34da7b91&amp;type=3#cardio-body&quot;); background-size: contain;">
+                        <ui:VisualElement name="cardiovascular-image" picking-mode="Ignore" class="card-image image-cardio">
                             <ui:VisualElement name="cardiovascular-image-fade" picking-mode="Ignore" class="card-image-fade"/>
                         </ui:VisualElement>
                     </ui:Button>
-                    <ui:VisualElement style="flex-grow: 1; height: 30px;"/>
+
+                    <!-- Pro tip -->
                     <ui:VisualElement class="pro-tip-card">
                         <ui:VisualElement picking-mode="Ignore" class="pro-tip-icon-box">
                             <ui:Label text="💡" picking-mode="Ignore" class="pro-tip-icon"/>
@@ -76,8 +105,8 @@
                             <ui:Label text="Pro Tip" picking-mode="Ignore" class="pro-tip-title"/>
                             <ui:Label text="To use Offline Mode, please set a security password on your device." picking-mode="Ignore" class="pro-tip-text"/>
                         </ui:VisualElement>
-                        <ui:Label text="›" picking-mode="Ignore" class="pro-tip-chevron"/>
                     </ui:VisualElement>
+
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>

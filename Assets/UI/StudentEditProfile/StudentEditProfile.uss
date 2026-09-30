@@ -1,646 +1,333 @@
 /* =========================================================
-   Anatomia 3D - Student Edit Profile (Unity 6 UI Toolkit)
-   Reference canvas: 1080 x 1920 (portrait phone).
-
-   NOTE: USS has no linear-gradient, so the header and submit
-   button gradients are generated as Texture2D at runtime from
-   StudentEditProfileController. The colors below are flat
-   fallbacks.
+   Anatomia 3D - Student Edit Profile (redesign)
+   Reference canvas: 1080 x 1920. Header and Save-button gradients
+   are generated at runtime by the controller; colors here are
+   fallbacks. Accent: green -> blue (same as the Admin Edit Profile).
+   Element names/classes used by the controller are unchanged:
+   .hidden, .compact, .verify-status-verified/-unverified.
    ========================================================= */
 
-/* ---------- Screen ---------- */
-
-.screen-root
-{
-    width: 100%;
-    height: 100%;
-    flex-grow: 1;
+.screen-root {
+    width: 100%; height: 100%; flex-grow: 1;
     background-color: rgb(243, 244, 248);
-    padding: 0;
-    margin: 0;
+    padding: 0; margin: 0;
     overflow: hidden;
-    justify-content: flex-start;
-    align-items: stretch;
+    justify-content: flex-start; align-items: stretch;
 }
 
-/* ---------- Header (gradient applied at runtime via C#) ---------- */
+/* ---------- Header ---------- */
 
-.header
-{
+.header {
     width: 100%;
-    border-bottom-left-radius: 60px;
-    border-bottom-right-radius: 60px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
+    border-bottom-left-radius: 79px;
+    border-bottom-right-radius: 79px;
+    padding: 100px 50px 140px 50px;   /* extra bottom room: photo card overlaps it */
     flex-shrink: 0;
-    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+    background-color: rgb(22, 188, 118);
 }
 
-.header-top-row
-{
-    flex-direction: row;
-    align-items: center;
-}
+.header-top-row { flex-direction: row; align-items: center; }
 
-.back-button
-{
-    width: 88px;
-    height: 88px;
-    border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
-    justify-content: center;
-    align-items: center;
-    margin-right: 30px;
+.back-button {
+    width: 88px; height: 88px; border-radius: 44px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 0;
+    justify-content: center; align-items: center;
+    margin: 0 30px 0 0;
     flex-shrink: 0;
 }
+.back-button:hover { background-color: rgba(255, 255, 255, 0.3); }
+.back-button:active { background-color: rgba(255, 255, 255, 0.4); }
 
-.back-button:hover
-{
-    background-color: rgba(255, 255, 255, 0.28);
-}
-
-.back-icon
-{
-    width: 40px;
-    height: 40px;
+.back-icon {
+    width: 40px; height: 40px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-size: contain; background-position: center; background-repeat: no-repeat;
     -unity-background-image-tint-color: white;
 }
 
-.header-text
-{
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    min-width: 0;
-}
-
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-}
-
-.header-subtitle
-{
-    font-size: 26px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 6px;
-    white-space: normal;
-}
+.header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
+.header-title { font-size: 52px; -unity-font-style: bold; color: white; white-space: normal; }
+.header-subtitle { font-size: 26px; color: rgba(255, 255, 255, 0.88); margin-top: 6px; white-space: normal; }
 
 /* ---------- ScrollView ---------- */
 
-.screen-scroll
-{
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
+.screen-scroll {
+    flex-grow: 1; width: 100%; height: 100%;
+    padding: 0; margin: 0;
+    justify-content: flex-start; align-items: flex-start;
     -unity-overflow-scrolling: touch;
 }
-
-.screen-scroll .unity-scroller--vertical {
-    width: 0;
-    display: none;
+.screen-scroll .unity-scroller--vertical { width: 0; display: none; }
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
+    padding: 0; margin: 0; flex-grow: 1; height: 100%;
+}
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+    padding: 0; margin: 0;
+    translate: none; transform-origin: center;
+    position: relative; top: 0; left: 0;
+    justify-content: flex-start; align-items: stretch;
+    flex-grow: 0; height: auto; min-height: 100%;
 }
 
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    padding: 0;
-    margin: 0;
-    flex-grow: 1;
-    height: 100%;
-}
+/* ---------- Content ---------- */
 
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
-{
-    padding: 0;
-    margin: 0;
-    translate: none;
-    transform-origin: center;
-    position: relative;
-    top: 0;
-    left: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-    flex-grow: 0;
-    height: auto;
-    min-height: 100%;
-}
-
-/* ---------- Content Wrapper ---------- */
-
-.content-wrapper
-{
+.content-wrapper {
     width: 100%;
     flex-direction: column;
-    padding: 34px 50px 60px 50px;
+    padding: 0 50px 70px 50px;
     max-width: 100%;
     margin: 0;
     flex-shrink: 0;
 }
 
-/* ---------- Form Cards ---------- */
+/* ---------- Cards ---------- */
 
-.form-card
-{
+.form-card {
     width: 100%;
     background-color: white;
     border-radius: 44px;
-    padding: 48px;
-    margin-bottom: 40px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    padding: 44px;
+    margin-bottom: 34px;
+    border-width: 2px;
+    border-color: rgb(233, 236, 245);
 }
 
-.card-title
-{
-    font-size: 38px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-.card-header-row
-{
-    flex-direction: row;
-    justify-content: space-between;
+/* Photo card: pulled up over the gradient header */
+.photo-card {
+    margin-top: -84px;
+    padding: 44px 44px 40px 44px;
     align-items: center;
 }
 
-.card-subtitle
-{
-    font-size: 28px;
-    color: rgb(138, 143, 163);
-    margin-top: 8px;
-    white-space: normal;
-}
+.card-header-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.card-title-group { flex-direction: row; align-items: center; flex-grow: 1; flex-shrink: 1; min-width: 0; }
 
-.toggle-visibility-button
-{
-    background-color: transparent;
-    border-width: 0px;
-    padding: 0;
-    margin: 0;
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(142, 45, 226);
-}
-
-.toggle-visibility-button:hover
-{
-    color: rgb(118, 34, 191);
-}
-
-.field-label
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    margin-top: 32px;
-    margin-bottom: 14px;
-}
-
-.field-label-spaced
-{
-    margin-top: 36px;
-}
-
-.text-field
-{
-    font-size: 34px;
-    color: rgb(31, 36, 48);
-    margin: 0;
-}
-
-.text-field > .unity-text-field__input
-{
-    background-color: rgb(240, 241, 245);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.06);
-    border-radius: 22px;
-    padding: 20px 22px;
-}
-
-.field-error
-{
-    font-size: 28px;
-    color: rgb(220, 38, 38);
-    margin-top: 10px;
-}
-
-.field-hint
-{
-    font-size: 24px;
-    color: rgb(138, 143, 163);
-    margin-top: 8px;
-    white-space: normal;
-}
-
-.field-hint-pending
-{
-    color: rgb(180, 83, 9);
-    -unity-font-style: bold;
-}
-
-/* ---------- Avatar picker card ---------- */
-
-.avatar-picker-row
-{
-    flex-direction: row;
-    align-items: center;
-    margin-top: 24px;
-}
-
-.avatar-preview
-{
-    width: 159px;
-    height: 159px;
-    border-radius: 79px;
-    background-color: rgb(142, 45, 226);
-    border-width: 3px;
-    border-color: rgba(0, 0, 0, 0.06);
-    justify-content: center;
-    align-items: center;
+.card-icon-box {
+    width: 74px; height: 74px; border-radius: 24px;
+    background-color: rgb(221, 246, 234);
+    justify-content: center; align-items: center;
     flex-shrink: 0;
-    margin-right: 36px;
+    margin-right: 22px;
+}
+.card-icon {
+    width: 40px; height: 40px;
+    background-size: contain; background-position: center; background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(22, 188, 118);
+}
+.icon-profile { background-image: url("project://database/Assets/UI/Icons/profile-icon.png"); }
+.icon-email   { background-image: url("project://database/Assets/UI/Icons/email-white.png"); }
+.icon-lock    { background-image: url("project://database/Assets/UI/Icons/lock-white.png"); }
+
+.card-title { font-size: 36px; -unity-font-style: bold; color: rgb(31, 36, 48); white-space: normal; flex-shrink: 1; }
+.card-subtitle { font-size: 26px; color: rgb(138, 143, 163); margin-top: 18px; white-space: normal; }
+
+.toggle-visibility-button {
+    background-color: rgb(221, 246, 234);
+    border-width: 0; border-radius: 22px;
+    padding: 12px 26px; margin: 0 0 0 12px;
+    font-size: 26px; -unity-font-style: bold;
+    color: rgb(22, 188, 118);
+    flex-shrink: 0;
+}
+.toggle-visibility-button:hover { background-color: rgb(197, 238, 219); }
+
+/* ---------- Fields ---------- */
+
+.field-label {
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(31, 36, 48);
+    margin: 34px 0 12px 4px;
+}
+
+.text-field { font-size: 32px; color: rgb(31, 36, 48); margin: 0; }
+
+.text-field > .unity-text-field__input {
+    background-color: rgb(244, 246, 251);
+    border-width: 2px;
+    border-color: rgb(230, 233, 243);
+    border-radius: 26px;
+    padding: 24px 26px;
+}
+.text-field .unity-base-text-field__input:focus {
+    background-color: white;
+    border-color: rgb(22, 188, 118);
+}
+
+.field-error { font-size: 25px; -unity-font-style: bold; color: rgb(220, 38, 38); margin: 10px 0 0 6px; white-space: normal; }
+.field-hint { font-size: 22px; color: rgb(138, 143, 163); margin: 10px 0 0 6px; white-space: normal; }
+.field-hint-pending { color: rgb(180, 83, 9); -unity-font-style: bold; }
+.hint-centered { -unity-text-align: middle-center; margin-left: 0; }
+
+/* ---------- Photo ---------- */
+
+.avatar-picker-row,
+.avatar-photo-row { flex-direction: column; align-items: center; margin-top: 0; }
+
+.avatar-preview {
+    width: 210px; height: 210px; border-radius: 105px;
+    background-color: rgb(22, 188, 118);
+    border-width: 8px;
+    border-color: rgb(37, 99, 235);
+    justify-content: center; align-items: center;
+    flex-shrink: 0;
+    margin: 0 0 30px 0;
     overflow: hidden;
+    background-size: cover; background-position: center; background-repeat: no-repeat;
 }
+.avatar-preview-initials { font-size: 78px; -unity-font-style: bold; color: white; }
 
-.avatar-preview-initials
-{
-    font-size: 62px;
-    -unity-font-style: bold;
-    color: white;
+.avatar-picker-actions,
+.avatar-photo-actions { flex-direction: column; align-items: center; flex-grow: 0; min-width: 0; }
+
+.change-photo-button {
+    align-self: center;
+    background-color: rgb(221, 246, 234);
+    border-width: 0; border-radius: 30px;
+    padding: 20px 42px; margin: 0;
+    font-size: 28px; -unity-font-style: bold;
+    color: rgb(22, 188, 118);
 }
+.change-photo-button:hover { background-color: rgb(197, 238, 219); }
+.change-photo-button:active { background-color: rgb(197, 238, 219); scale: 0.98 0.98; }
+.change-photo-button:disabled { color: rgb(163, 167, 183); background-color: rgb(238, 240, 246); }
 
-.avatar-picker-actions
-{
-    flex-direction: column;
-    flex-grow: 1;
-    min-width: 0;
-}
+/* ---------- Verification badge ---------- */
 
-.change-photo-button
-{
-    align-self: flex-start;
-    background-color: rgb(240, 241, 245);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.08);
-    border-radius: 22px;
-    padding: 18px 30px;
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(142, 45, 226);
-}
-
-.change-photo-button:hover
-{
-    background-color: rgb(230, 231, 236);
-}
-
-.change-photo-button:disabled
-{
-    color: rgb(163, 167, 183);
-}
-
-/* ---------- Email verification card ---------- */
-
-.verify-status-badge
-{
-    font-size: 24px;
-    -unity-font-style: bold;
-    padding: 8px 18px;
-    border-radius: 20px;
-    flex-shrink: 0;
+.verify-status-badge {
+    font-size: 22px; -unity-font-style: bold;
+    padding: 9px 20px; border-radius: 22px;
+    flex-shrink: 0; margin-left: 12px;
     -unity-text-align: middle-center;
 }
+.verify-status-unverified { color: rgb(180, 83, 9); background-color: rgb(254, 243, 199); }
+.verify-status-verified   { color: rgb(6, 95, 70);  background-color: rgb(209, 250, 229); }
 
-.verify-status-unverified
-{
-    color: rgb(180, 83, 9);
-    background-color: rgb(254, 243, 199);
+/* ---------- Secondary action buttons (full width) ---------- */
+
+.action-button {
+    margin: 28px 0 0 0;
+    align-self: stretch;
+    background-color: rgb(221, 246, 234);
+    border-width: 0; border-radius: 28px;
+    padding: 26px 30px;
+    font-size: 30px; -unity-font-style: bold;
+    color: rgb(22, 188, 118);
 }
+.action-button:hover { background-color: rgb(197, 238, 219); }
+.action-button:active { background-color: rgb(197, 238, 219); scale: 0.985 0.985; }
+.action-button:disabled { color: rgb(163, 167, 183); background-color: rgb(238, 240, 246); }
 
-.verify-status-verified
-{
-    color: rgb(6, 95, 70);
-    background-color: rgb(209, 250, 229);
-}
-
-.verify-email-button
-{
+.warning-box {
     margin-top: 28px;
-    align-self: flex-start;
-    background-color: rgb(240, 241, 245);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.08);
-    border-radius: 22px;
-    padding: 18px 30px;
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(142, 45, 226);
-}
-
-.verify-email-button:hover
-{
-    background-color: rgb(230, 231, 236);
-}
-
-.verify-email-button:disabled
-{
-    color: rgb(163, 167, 183);
-}
-
-.warning-box
-{
-    margin-top: 28px;
-    padding: 24px;
-    border-radius: 22px;
+    padding: 26px 28px;
+    border-radius: 26px;
     background-color: rgb(255, 247, 237);
-    border-width: 1px;
+    border-width: 2px;
     border-color: rgb(253, 224, 176);
+    border-left-width: 8px;
+    border-left-color: rgb(245, 158, 11);
 }
+.warning-text { font-size: 25px; color: rgb(154, 74, 5); white-space: normal; }
 
-.warning-text
-{
-    font-size: 26px;
-    color: rgb(154, 74, 5);
-    white-space: normal;
-}
+/* ---------- Password overlay ---------- */
 
-/* ---------- Change Password button (opens the floating overlay) ---------- */
-
-.change-password-button
-{
-    margin-top: 28px;
-    align-self: flex-start;
-    background-color: rgb(240, 241, 245);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.08);
-    border-radius: 22px;
-    padding: 18px 30px;
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(142, 45, 226);
-}
-
-.change-password-button:hover
-{
-    background-color: rgb(230, 231, 236);
-}
-
-/* ---------- Password overlay (floats the password-card over screen-root) ---------- */
-
-.password-overlay
-{
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
+.password-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    justify-content: center; align-items: center;
     padding: 60px;
 }
-
-.password-overlay-backdrop
-{
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(17, 19, 26, 0.55);
+.password-overlay-backdrop {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(17, 19, 26, 0.6);
 }
+.password-card-floating { width: 100%; max-width: 860px; max-height: 100%; margin-bottom: 0; border-width: 0; }
 
-.password-card-floating
-{
-    width: 100%;
-    max-width: 820px;
-    max-height: 100%;
-    margin-bottom: 0;
-}
-
-.close-password-card-button
-{
-    align-self: center;
-    margin-top: 40px;
-    background-color: rgb(142, 45, 226);
-    border-width: 0px;
-    border-radius: 22px;
-    padding: 20px 60px;
-    font-size: 30px;
-    -unity-font-style: bold;
+.close-password-card-button {
+    align-self: stretch;
+    margin: 40px 0 0 0;
+    background-color: rgb(22, 188, 118);
+    border-width: 0; border-radius: 28px;
+    padding: 26px 60px;
+    font-size: 30px; -unity-font-style: bold;
     color: white;
 }
+.close-password-card-button:hover { background-color: rgb(16, 150, 94); }
+.close-password-card-button:active { background-color: rgb(16, 150, 94); scale: 0.985 0.985; }
 
-.close-password-card-button:hover
-{
-    background-color: rgb(118, 34, 191);
+/* ---------- Status + Save ---------- */
+
+.status-label {
+    font-size: 28px; color: rgb(138, 143, 163);
+    margin: 0 0 22px 0;
+    -unity-text-align: middle-center; white-space: normal;
 }
 
-/* ---------- Status label ---------- */
-
-.status-label
-{
-    font-size: 30px;
-    color: rgb(120, 123, 140);
-    margin-bottom: 20px;
-    -unity-text-align: middle-center;
+.save-changes-submit-button {
+    flex-direction: row; justify-content: center; align-items: center;
+    border-radius: 38px; border-width: 0;
+    padding: 36px 30px; margin: 6px 0 0 0;
+    background-color: rgb(22, 188, 118);
+    transition-property: scale;
+    transition-duration: 0.12s;
 }
+.save-changes-submit-button:active { scale: 0.985 0.985; }
 
-/* ---------- Submit Button (gradient applied at runtime via C#) ---------- */
-
-.save-changes-submit-button
-{
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    border-radius: 32px;
-    border-width: 0px;
-    padding-top: 34px;
-    padding-bottom: 34px;
-    margin: 0;
-    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
+.save-changes-icon {
+    width: 46px; height: 46px;
+    margin-right: 20px;
+    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
+    background-size: contain; background-position: center; background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0);
+    -unity-background-image-tint-color: white;
 }
-
-.save-changes-icon
-{
-    width: 37px;
-    height: 37px;
-    margin-right: 18px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-}
-
-.save-changes-label
-{
-    font-size: 38px;
-    -unity-font-style: bold;
-    color: white;
-}
+.save-changes-label { font-size: 38px; -unity-font-style: bold; color: white; }
 
 /* ---------- Utility ---------- */
 
-.hidden
-{
-    display: none;
-}
+.hidden { display: none; }
 
 /* =========================================================
-   Compact Layout (toggled by C# based on panel width)
+   Compact layout (toggled by C# on narrow panels)
    ========================================================= */
 
-.compact .header
-{
-    padding-left: 44px;
-    padding-right: 44px;
-    padding-top: 92px;
-    padding-bottom: 60px;
-}
+.compact .header { padding: 92px 40px 124px 40px; }
+.compact .header-title { font-size: 46px; }
+.compact .header-subtitle { font-size: 24px; }
+.compact .back-button { width: 76px; height: 76px; border-radius: 38px; margin-right: 24px; }
+.compact .back-icon { width: 34px; height: 34px; }
 
-.compact .header-title
-{
-    font-size: 48px;
-}
+.compact .content-wrapper { padding-left: 36px; padding-right: 36px; }
+.compact .form-card { padding: 34px; border-radius: 38px; margin-bottom: 28px; }
+.compact .photo-card { margin-top: -74px; }
 
-.compact .header-subtitle
-{
-    font-size: 30px;
-}
+.compact .card-icon-box { width: 62px; height: 62px; border-radius: 20px; margin-right: 18px; }
+.compact .card-icon { width: 34px; height: 34px; }
+.compact .card-title { font-size: 30px; }
+.compact .card-subtitle { font-size: 23px; }
+.compact .toggle-visibility-button { font-size: 22px; padding: 10px 20px; }
 
-.compact .back-button
-{
-    width: 104px;
-    height: 104px;
-    border-radius: 52px;
-    margin-right: 26px;
-}
+.compact .field-label { font-size: 23px; margin-top: 28px; }
+.compact .text-field { font-size: 28px; }
+.compact .text-field > .unity-text-field__input { padding: 20px 22px; border-radius: 22px; }
+.compact .field-error { font-size: 22px; }
+.compact .field-hint { font-size: 20px; }
 
-.compact .back-icon
-{
-    width: 43px;
-    height: 43px;
-}
+.compact .avatar-preview { width: 170px; height: 170px; border-radius: 85px; margin-bottom: 24px; }
+.compact .avatar-preview-initials { font-size: 62px; }
+.compact .change-photo-button { font-size: 24px; padding: 16px 32px; }
 
-.compact .content-wrapper
-{
-    padding-left: 44px;
-    padding-right: 44px;
-}
+.compact .verify-status-badge { font-size: 19px; padding: 7px 16px; }
+.compact .action-button { font-size: 26px; padding: 22px 24px; border-radius: 24px; }
+.compact .warning-text { font-size: 22px; }
 
-.compact .form-card
-{
-    padding: 34px;
-}
+.compact .password-overlay { padding: 30px; }
+.compact .close-password-card-button { font-size: 26px; padding: 22px 40px; }
 
-.compact .card-title
-{
-    font-size: 32px;
-}
-
-.compact .card-subtitle,
-.compact .toggle-visibility-button
-{
-    font-size: 24px;
-}
-
-.compact .field-label
-{
-    font-size: 26px;
-}
-
-.compact .text-field
-{
-    font-size: 30px;
-}
-
-.compact .field-error
-{
-    font-size: 24px;
-}
-
-.compact .field-hint
-{
-    font-size: 20px;
-}
-
-.compact .save-changes-label
-{
-    font-size: 32px;
-}
-
-.compact .verify-status-badge
-{
-    font-size: 20px;
-}
-
-.compact .verify-email-button
-{
-    font-size: 24px;
-    padding: 14px 24px;
-}
-
-.compact .warning-text
-{
-    font-size: 22px;
-}
-
-.compact .save-changes-submit-button
-{
-    padding-top: 26px;
-    padding-bottom: 26px;
-}
-
-.compact .change-password-button
-{
-    font-size: 24px;
-    padding: 14px 24px;
-}
-
-.compact .avatar-preview
-{
-    width: 118px;
-    height: 118px;
-    border-radius: 60px;
-    margin-right: 26px;
-}
-
-.compact .avatar-preview-initials
-{
-    font-size: 48px;
-}
-
-.compact .change-photo-button
-{
-    font-size: 24px;
-    padding: 14px 24px;
-}
-
-.compact .password-overlay
-{
-    padding: 30px;
-}
-
-.compact .close-password-card-button
-{
-    font-size: 26px;
-    padding: 16px 44px;
-}
-
+.compact .save-changes-submit-button { padding: 28px 24px; border-radius: 32px; }
+.compact .save-changes-icon { width: 38px; height: 38px; margin-right: 16px; }
+.compact .save-changes-label { font-size: 32px; }
+.compact .status-label { font-size: 24px; }
