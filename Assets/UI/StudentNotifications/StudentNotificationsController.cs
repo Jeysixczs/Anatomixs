@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -324,6 +325,7 @@ namespace Anatomia3D.UI
             if (_notificationsList == null) return;
 
             var incomingIds = new HashSet<string>();
+            int newRows = 0;   // for staggering the enter animation of freshly built rows
 
             for (int i = 0; i < _notifications.Count; i++)
             {
@@ -338,6 +340,11 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildNotificationRow(entry);
                     _rowsById[entry.Id] = refs;
+
+                    // Only brand-new rows animate in; updates to existing rows stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Row, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(newRows, 8) * 0.06f, distance: 30f);
+                    newRows++;
                 }
 
                 // Insert() on an already-parented element just moves it, so rows

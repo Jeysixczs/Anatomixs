@@ -39,7 +39,7 @@
 .fs-icon-button {
     width: 66px;
     height: 66px;
-    border-radius: 33px;
+    border-radius: 34px;
     background-color: rgba(255, 255, 255, 0.18);
     border-width: 0;
     color: rgb(255, 255, 255);
@@ -166,7 +166,7 @@
 
 .fs-meta-label {
     color: rgb(107, 114, 128);
-    font-size: 27px;
+    font-size: 28px;
 }
 
 .fs-meta-value {
@@ -177,7 +177,7 @@
 
 .fs-accepted-text {
     color: rgb(75, 85, 99);
-    font-size: 27px;
+    font-size: 28px;
     white-space: normal;
 }
 
@@ -337,7 +337,7 @@
 
 .fs-submitted-feedback {
     color: rgb(55, 65, 81);
-    font-size: 25px;
+    font-size: 26px;
     margin-top: 14px;
     white-space: normal;
 }
@@ -367,7 +367,7 @@
     border-color: rgb(203, 213, 225);
     background-color: rgb(255, 255, 255);
     color: rgb(55, 65, 81);
-    font-size: 25px;
+    font-size: 26px;
     margin-top: 18px;
 }
 

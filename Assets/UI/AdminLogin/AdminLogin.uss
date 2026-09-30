@@ -119,19 +119,19 @@
 
 .logo-circle
 {
-    width: 190px;
-    height: 190px;
+    width: 220px;
+    height: 220px;
 
     align-self: center;
 
-    border-radius: 95px;
+    border-radius: 110px;
 
     background-color: rgb(180, 45, 200); /* fallback, gradient applied at runtime */
 
     justify-content: center;
     align-items: center;
 
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
 .logo-icon
@@ -153,21 +153,21 @@
 
 .app-title
 {
-    font-size: 52px;
+    font-size: 56px;
     -unity-font-style: bold;
     color: rgb(255,255,255);
     -unity-text-align: middle-center;
 
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .app-subtitle
 {
-    font-size: 30px;
+    font-size: 34px;
     color: rgb(196,182,214);
     -unity-text-align: middle-center;
 
-    margin-bottom: 55px;
+    margin-bottom: 60px;
 }
 
 /* ---------- Card ---------- */
@@ -196,7 +196,7 @@
 
 .field-label
 {
-    font-size: 30px;
+    font-size: 32px;
     -unity-font-style: bold;
     color: rgb(230,225,240);
 
@@ -210,7 +210,7 @@
 
 .field-error
 {
-    font-size: 24px;
+    font-size: 26px;
     color: rgb(255,120,170);
 
     margin-top: 10px;
@@ -240,7 +240,7 @@
 {
     width: 100%;
 
-    height: 112px;
+    height: 118px;
 
     flex-direction: row;
 
@@ -248,7 +248,7 @@
 
     background-color: rgba(255,255,255,0.05);
 
-    border-radius: 26px;
+    border-radius: 28px;
 
     border-width: 2px;
     border-color: rgba(255,255,255,0.14);
@@ -269,8 +269,8 @@
 
 .input-icon
 {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
 
     margin-right: 20px;
     flex-shrink: 0;
@@ -292,6 +292,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    height: 44px;
+    width: 44px;
 }
 
 .icon-eye
@@ -300,8 +302,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     -unity-background-image-tint-color: white;
 }
 
@@ -311,8 +313,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     -unity-background-image-tint-color: white;
 }
 
@@ -331,7 +333,7 @@
     flex-shrink: 1;
     min-width: 0;
 
-    font-size: 32px;
+    font-size: 34px;
 
     color: rgb(240,236,248);
 
@@ -361,8 +363,8 @@
 
 .input-icon-button
 {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
 
     background-color: transparent;
 
@@ -380,19 +382,19 @@
 .send-reset-link-button
 {
     width: 100%;
-    height: 116px;
+    height: 118px;
 
-    margin-top: 44px;
+    margin-top: 48px;
 
     background-color: rgb(160,45,210); /* fallback, gradient applied at runtime */
 
     color: white;
 
-    border-radius: 26px;
+    border-radius: 28px;
 
     border-width: 0;
 
-    font-size: 34px;
+    font-size: 36px;
     -unity-font-style: bold;
 }
 
@@ -449,7 +451,7 @@
     font-size: 26px;
 
     margin-top: 16px;
-    margin-bottom: 6px;
+    margin-bottom: 24px;
 
     -unity-font-style: bold;
 }
@@ -467,8 +469,8 @@
 
     align-items: center;
 
-    margin-top: 40px;
-    margin-bottom: 40px;
+    margin-top: 48px;
+    margin-bottom: 48px;
 }
 
 .divider-line
@@ -482,12 +484,12 @@
 
 .divider-text
 {
-    font-size: 24px;
+    font-size: 28px;
 
     color: rgb(180,168,204);
 
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 24px;
+    margin-right: 24px;
 }
 
 /* ---------- Google Sign-In Button ---------- */
@@ -495,7 +497,7 @@
 .google-button
 {
     width: 100%;
-    height: 112px;
+    height: 118px;
 
     flex-direction: row;
 
@@ -507,7 +509,7 @@
     border-width: 2px;
     border-color: rgba(255,255,255,0.16);
 
-    border-radius: 26px;
+    border-radius: 28px;
 }
 
 .google-button:hover
@@ -517,10 +519,10 @@
 
 .icon-google
 {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
 
-    margin-right: 18px;
+    margin-right: 20px;
     flex-shrink: 0;
 
     background-image: url("project://database/Assets/UI/Icons/google-icon.png");
@@ -531,7 +533,7 @@
 
 .google-button-text
 {
-    font-size: 32px;
+    font-size: 34px;
     -unity-font-style: bold;
 
     color: rgb(240,236,248);
@@ -551,7 +553,7 @@
 
 .create-account-text
 {
-    font-size: 26px;
+    font-size: 28px;
 
     color: rgb(180,168,204);
 
@@ -566,7 +568,7 @@
 
     color: rgb(216,150,240);
 
-    font-size: 26px;
+    font-size: 28px;
 
     -unity-font-style: bold;
 }
@@ -589,7 +591,7 @@
 
     color: rgb(200,120,235);
 
-    font-size: 30px;
+    font-size: 28px;
 
     -unity-font-style: bold;
 
@@ -606,9 +608,9 @@
 
 .status-label
 {
-    margin-top: 24px;
+    margin-top: 28px;
 
-    font-size: 26px;
+    font-size: 28px;
 
     color: rgb(255,140,190);
 
@@ -655,10 +657,10 @@
 
 .compact .logo-circle
 {
-    width: 150px;
-    height: 150px;
+    width: 170px;
+    height: 170px;
 
-    border-radius: 75px;
+    border-radius: 85px;
 }
 
 .compact .logo-icon
@@ -669,7 +671,7 @@
 
 .compact .app-title
 {
-    font-size: 42px;
+    font-size: 46px;
 }
 
 .compact .app-subtitle
@@ -688,7 +690,7 @@
 
 .compact .field-label
 {
-    font-size: 26px;
+    font-size: 28px;
 }
 
 .compact .success-message
@@ -698,7 +700,7 @@
 
 .compact .input-container
 {
-    height: 96px;
+    height: 100px;
 }
 
 .compact .input-field
@@ -714,7 +716,7 @@
 .compact .secure-login-button,
 .compact .send-reset-link-button
 {
-    height: 102px;
+    height: 105px;
     font-size: 30px;
 }
 
@@ -726,7 +728,7 @@
 .compact .back-to-student-link,
 .compact .back-to-admin-link
 {
-    font-size: 26px;
+    font-size: 24px;
 }
 
 .compact .footer-warning-label
@@ -793,7 +795,7 @@
     width: 90px;
     height: 90px;
 
-    border-radius: 45px;
+    border-radius: 46px;
 
     margin-bottom: 10px;
 }
@@ -831,7 +833,7 @@
 
 .landscape .field-label
 {
-    font-size: 24px;
+    font-size: 26px;
 
     margin-bottom: 8px;
 }
@@ -882,7 +884,7 @@
 .landscape .forgot-password-link
 {
     margin-top: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
 }
 
 .landscape .create-account-row
@@ -913,10 +915,10 @@
 
 .ultra-compact .logo-circle
 {
-    width: 110px;
-    height: 110px;
+    width: 120px;
+    height: 120px;
 
-    border-radius: 55px;
+    border-radius: 60px;
 
     margin-bottom: 16px;
 }
@@ -929,12 +931,12 @@
 
 .ultra-compact .app-title
 {
-    font-size: 36px;
+    font-size: 38px;
 }
 
 .ultra-compact .app-subtitle
 {
-    font-size: 24px;
+    font-size: 26px;
 
     margin-bottom: 30px;
 }
@@ -952,7 +954,7 @@
 
 .ultra-compact .field-label
 {
-    font-size: 22px;
+    font-size: 24px;
 
     margin-bottom: 8px;
 }
@@ -964,7 +966,7 @@
 
 .ultra-compact .field-error
 {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .ultra-compact .success-message
@@ -976,7 +978,7 @@
 
 .ultra-compact .input-container
 {
-    height: 80px;
+    height: 84px;
 
     padding-left: 20px;
     padding-right: 14px;
@@ -984,8 +986,8 @@
 
 .ultra-compact .input-icon
 {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
 
     margin-right: 12px;
 }
@@ -993,17 +995,17 @@
 .ultra-compact .input-field,
 .ultra-compact .input-field > #unity-text-input
 {
-    font-size: 22px;
+    font-size: 24px;
 }
 
 .ultra-compact .secure-login-button,
 .ultra-compact .send-reset-link-button
 {
-    height: 86px;
+    height: 90px;
 
-    margin-top: 28px;
+    margin-top: 30px;
 
-    font-size: 26px;
+    font-size: 28px;
 }
 
 .ultra-compact .google-button
@@ -1018,13 +1020,13 @@
 
 .ultra-compact .divider-row
 {
-    margin-top: 28px;
-    margin-bottom: 28px;
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
 .ultra-compact .divider-text
 {
-    font-size: 18px;
+    font-size: 22px;
 }
 
 .ultra-compact .encryption-text
@@ -1051,5 +1053,5 @@
 
 .ultra-compact .status-label
 {
-    font-size: 20px;
+    font-size: 22px;
 }

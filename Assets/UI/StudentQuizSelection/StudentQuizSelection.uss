@@ -453,7 +453,7 @@
 
 .compact .quiz-meta-label
 {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact .quiz-meta-value
@@ -485,5 +485,5 @@
 
 .compact .quiz-stat-label
 {
-    font-size: 19px;
+    font-size: 20px;
 }

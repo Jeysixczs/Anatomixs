@@ -11,9 +11,18 @@ namespace Anatomia3D.UI
     /// code, so any screen controller can add one with just
     /// <c>new LoadingOverlay(parent)</c> and call Show()/Hide() around whatever
     /// async call it's waiting on - no matching .uxml/.uss to add or keep in
-    /// sync on that screen. A ring spinner is animated by nudging its rotation
-    /// every tick (UI Toolkit has no USS keyframe animation), and a delayed
-    /// "still working" hint appears under it for slow connections.
+    /// sync on that screen.
+    ///
+    /// Look: minimal and full-screen. A translucent dark-gray layer covers the
+    /// whole screen (it dims the screen, which stays faintly visible underneath,
+    /// and nothing under it can be tapped), with a thin white arc spinner and a
+    /// single line of white text centred on it. After a
+    /// few seconds a quiet "still working" line fades in for slow connections.
+    /// No card, no shadow, no extra decoration.
+    ///
+    /// Everything animates from ONE scheduled tick that derives its state from
+    /// real time (Time.realtimeSinceStartup), so motion stays smooth even if a
+    /// tick is late and keeps running when Time.timeScale is 0.
     ///
     /// Usage (typically from the owning controller's OnEnable, right after the
     /// screen's root is available):
@@ -31,6 +40,11 @@ namespace Anatomia3D.UI
     /// </summary>
     public class LoadingOverlay
     {
+        /// <summary>Spinner accent colour. Student = the student dashboard purple,
+        /// Admin = the admin dashboard green. Defaults to Student, so existing
+        /// <c>new LoadingOverlay(parent)</c> calls compile unchanged.</summary>
+        public enum Theme { Student, Admin }
+
         private const string DefaultMessage = "Loading...";
         private const string DefaultSlowHint = "Still working - this can take longer on a weak connection.";
 
@@ -39,15 +53,36 @@ namespace Anatomia3D.UI
         // working" hint instead of leaving the spinner as the only feedback.
         private const long SlowHintDelayMs = 6000;
 
+        // ---- Sizes (px, 1080 x 1920 reference canvas - same scale as the student/admin screens) ----
+        private const float SpinnerSize = 116f;
+
+        // ---- Motion ----
+        private const float TickMs = 16f;            // ~60 fps
+        private const float FadeInSec = 0.18f;
+        private const float HintFadeSec = 0.30f;
+        private const float SpinDegPerSec = 300f;    // base rotation of the arc
+        private const float SweepCycleSec = 1.6f;    // one grow/shrink breath of the arc
+        private const float MinSweepDeg = 60f;
+        private const float MaxSweepDeg = 240f;
+
+        // Dark gray (the app's title colour, rgb 31,36,48) laid over the screen so it dims it while
+        // staying faintly visible. 0 = invisible, 1 = solid. Lower = more of the screen shows.
+        private const float BackdropAlpha = 0.55f;
+        private static readonly Color BackdropColor = new Color(31f / 255f, 36f / 255f, 48f / 255f, BackdropAlpha);
+
         private readonly VisualElement _root;
         private readonly VisualElement _spinner;
         private readonly Label _messageLabel;
         private readonly Label _submessageLabel;
 
-        private IVisualElementScheduledItem _spinSchedule;
+        private readonly Color _tint;   // lightened theme accent - the arc's tail colour (head is white)
+
+        private IVisualElementScheduledItem _tickSchedule;
         private IVisualElementScheduledItem _slowHintSchedule;
         private IVisualElementScheduledItem _timeoutSchedule;
-        private float _spinAngle;
+
+        private float _shownAt;            // realtime the overlay was opened (fade-in + spin phase)
+        private float _hintShownAt = -1f;  // realtime the slow hint was revealed, -1 = not shown
 
         /// <summary>True while the overlay is showing (DisplayStyle.Flex).</summary>
         public bool IsVisible => _root != null && _root.style.display == DisplayStyle.Flex;
@@ -56,8 +91,15 @@ namespace Anatomia3D.UI
         /// Added as the LAST child so it paints on top of everything else already
         /// on that screen, and captures clicks so nothing underneath is
         /// interactable while it's showing.</param>
-        public LoadingOverlay(VisualElement parent)
+        /// <param name="theme">Spinner accent colour - see <see cref="Theme"/>.</param>
+        public LoadingOverlay(VisualElement parent, Theme theme = Theme.Student)
         {
+            Color accent = theme == Theme.Admin
+                ? new Color(22f / 255f, 188f / 255f, 118f / 255f)   // green
+                : new Color(142f / 255f, 45f / 255f, 226f / 255f);  // purple
+            _tint = Color.Lerp(accent, Color.white, 0.45f);          // lightened so it reads on the dark layer
+
+            // ---------------- Full-screen layer ----------------
             _root = new VisualElement { name = "loading-overlay" };
             _root.AddToClassList("reusable-loading-overlay");
             _root.style.position = Position.Absolute;
@@ -65,79 +107,60 @@ namespace Anatomia3D.UI
             _root.style.right = 0;
             _root.style.top = 0;
             _root.style.bottom = 0;
-            _root.style.backgroundColor = new Color(15f / 255f, 18f / 255f, 28f / 255f, 0.72f);
+            _root.style.backgroundColor = BackdropColor;
             _root.style.alignItems = Align.Center;
             _root.style.justifyContent = Justify.Center;
-            _root.style.paddingLeft = 60;
-            _root.style.paddingRight = 60;
-            _root.style.paddingTop = 60;
-            _root.style.paddingBottom = 60;
-            _root.style.display = DisplayStyle.None; // hidden until Show()
-            _root.pickingMode = PickingMode.Position; // block taps to whatever is underneath
+            _root.style.paddingLeft = 80;
+            _root.style.paddingRight = 80;
+            _root.style.paddingTop = 80;
+            _root.style.paddingBottom = 80;
+            _root.style.display = DisplayStyle.None;   // hidden until Show()
+            _root.pickingMode = PickingMode.Position;  // block taps to whatever is underneath
 
-            var card = new VisualElement { name = "loading-overlay-card" };
-            card.AddToClassList("reusable-loading-overlay-card");
-            card.style.backgroundColor = Color.white;
-            card.style.borderTopLeftRadius = 32;
-            card.style.borderTopRightRadius = 32;
-            card.style.borderBottomLeftRadius = 32;
-            card.style.borderBottomRightRadius = 32;
-            card.style.paddingTop = 54;
-            card.style.paddingBottom = 54;
-            card.style.paddingLeft = 48;
-            card.style.paddingRight = 48;
-            card.style.alignItems = Align.Center;
-            card.style.maxWidth = 620;
-
+            // ---------------- Spinner (Painter2D arc) ----------------
             _spinner = new VisualElement { name = "loading-overlay-spinner" };
             _spinner.AddToClassList("reusable-loading-overlay-spinner");
-            _spinner.style.width = 64;
-            _spinner.style.height = 64;
-            _spinner.style.borderTopLeftRadius = 32;
-            _spinner.style.borderTopRightRadius = 32;
-            _spinner.style.borderBottomLeftRadius = 32;
-            _spinner.style.borderBottomRightRadius = 32;
-            _spinner.style.borderTopWidth = 6;
-            _spinner.style.borderBottomWidth = 6;
-            _spinner.style.borderLeftWidth = 6;
-            _spinner.style.borderRightWidth = 6;
-            var purple = new Color(136f / 255f, 45f / 255f, 226f / 255f);
-            _spinner.style.borderTopColor = purple;
-            _spinner.style.borderLeftColor = purple;
-            _spinner.style.borderRightColor = purple;
-            _spinner.style.borderBottomColor = new Color(purple.r, purple.g, purple.b, 0.15f);
-            _spinner.style.marginBottom = 28;
-            card.Add(_spinner);
+            _spinner.style.width = SpinnerSize;
+            _spinner.style.height = SpinnerSize;
+            _spinner.style.flexShrink = 0;
+            _spinner.style.marginBottom = 56;
+            _spinner.pickingMode = PickingMode.Ignore;
+            _spinner.generateVisualContent += OnGenerateSpinner;
+            _root.Add(_spinner);
 
+            // ---------------- Headline ----------------
             _messageLabel = new Label(DefaultMessage) { name = "loading-overlay-message" };
             _messageLabel.AddToClassList("reusable-loading-overlay-message");
-            _messageLabel.style.fontSize = 30;
-            _messageLabel.style.color = new Color(31f / 255f, 36f / 255f, 48f / 255f);
+            _messageLabel.style.fontSize = 34;
+            _messageLabel.style.color = Color.white;
             _messageLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             _messageLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             _messageLabel.style.whiteSpace = WhiteSpace.Normal;
-            card.Add(_messageLabel);
+            _messageLabel.style.maxWidth = new Length(100, LengthUnit.Percent);
+            _root.Add(_messageLabel);
 
+            // ---------------- "Still working" line ----------------
             _submessageLabel = new Label(string.Empty) { name = "loading-overlay-submessage" };
             _submessageLabel.AddToClassList("reusable-loading-overlay-submessage");
-            _submessageLabel.style.fontSize = 22;
-            _submessageLabel.style.color = new Color(107f / 255f, 114f / 255f, 128f / 255f);
+            _submessageLabel.style.fontSize = 26;
+            _submessageLabel.style.color = new Color(1f, 1f, 1f, 0.72f);
             _submessageLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             _submessageLabel.style.whiteSpace = WhiteSpace.Normal;
-            _submessageLabel.style.marginTop = 12;
+            _submessageLabel.style.marginTop = 20;
+            _submessageLabel.style.maxWidth = new Length(86, LengthUnit.Percent);
+            _submessageLabel.style.opacity = 0f;
             _submessageLabel.style.display = DisplayStyle.None;
-            card.Add(_submessageLabel);
+            _root.Add(_submessageLabel);
 
-            _root.Add(card);
             parent?.Add(_root);
         }
 
         /// <summary>Shows the overlay with the given headline (or the default
-        /// "Loading..." if omitted), (re)starts the spinner spinning from 0, and
-        /// arms the delayed "still working" hint fresh. Safe to call this to open
-        /// a brand new wait - to change the headline of a wait already in
-        /// progress without resetting the spinner or hint timer, use SetMessage
-        /// instead.</summary>
+        /// "Loading..." if omitted) and arms the delayed "still working" hint
+        /// fresh. If the overlay is already up (e.g. swapping to a "Success!
+        /// Redirecting..." message) the fade-in is NOT replayed, so there's no
+        /// flicker. To change the headline of a wait already in progress without
+        /// resetting the hint timer, use SetMessage instead.</summary>
         /// <param name="slowHint">Optional override for the delayed hint text -
         /// omit for the default "Still working..." copy.</param>
         public void Show(string message = null, string slowHint = null)
@@ -149,27 +172,37 @@ namespace Anatomia3D.UI
             _timeoutSchedule?.Pause();
             _timeoutSchedule = null;
 
+            bool wasVisible = IsVisible;
+
             _messageLabel.text = string.IsNullOrEmpty(message) ? DefaultMessage : message;
+
+            // (Re)arm the slow hint: hide it until the delay passes again.
+            _hintShownAt = -1f;
             _submessageLabel.text = string.Empty;
+            _submessageLabel.style.opacity = 0f;
             _submessageLabel.style.display = DisplayStyle.None;
+
+            if (!wasVisible)
+            {
+                _shownAt = Time.realtimeSinceStartup;
+                _root.style.opacity = 0f;
+            }
+
             _root.style.display = DisplayStyle.Flex;
             _root.BringToFront();
 
-            // Spin the ring ~1.4 revolutions/sec by nudging its rotation every
-            // frame-ish tick.
-            _spinAngle = 0f;
-            _spinSchedule?.Pause();
-            _spinSchedule = _root.schedule.Execute(() =>
-            {
-                _spinAngle = (_spinAngle + 15f) % 360f;
-                _spinner.style.rotate = new StyleRotate(new Rotate(_spinAngle));
-            }).Every(30);
+            _tickSchedule?.Pause();
+            _tickSchedule = _root.schedule.Execute(() => Tick()).Every((long)TickMs);
+            Tick(); // paint the first frame immediately instead of waiting for the first interval
 
             _slowHintSchedule?.Pause();
+            string hint = string.IsNullOrEmpty(slowHint) ? DefaultSlowHint : slowHint;
             _slowHintSchedule = _root.schedule.Execute(() =>
             {
-                _submessageLabel.text = string.IsNullOrEmpty(slowHint) ? DefaultSlowHint : slowHint;
+                _submessageLabel.text = hint;
+                _submessageLabel.style.opacity = 0f;
                 _submessageLabel.style.display = DisplayStyle.Flex;
+                _hintShownAt = Time.realtimeSinceStartup; // Tick() fades it in
             });
             _slowHintSchedule.ExecuteLater(SlowHintDelayMs);
         }
@@ -208,12 +241,13 @@ namespace Anatomia3D.UI
         {
             if (_root == null) return;
             _root.style.display = DisplayStyle.None;
-            _spinSchedule?.Pause();
-            _spinSchedule = null;
+            _tickSchedule?.Pause();
+            _tickSchedule = null;
             _slowHintSchedule?.Pause();
             _slowHintSchedule = null;
             _timeoutSchedule?.Pause();
             _timeoutSchedule = null;
+            _hintShownAt = -1f;
         }
 
         /// <summary>Detaches the overlay from its parent and stops its schedules.
@@ -222,10 +256,86 @@ namespace Anatomia3D.UI
         /// OfflineOverlay.Dispose.</summary>
         public void Dispose()
         {
-            _spinSchedule?.Pause();
+            _tickSchedule?.Pause();
             _slowHintSchedule?.Pause();
             _timeoutSchedule?.Pause();
             _root?.RemoveFromHierarchy();
+        }
+
+        // ------------------------------------------------------------------
+        // Animation
+        // ------------------------------------------------------------------
+
+        /// <summary>One frame of everything that moves: fade-in, hint fade, and a
+        /// repaint of the arc.</summary>
+        private void Tick()
+        {
+            if (_root == null || !IsVisible) return;
+
+            float now = Time.realtimeSinceStartup;
+
+            _root.style.opacity = Mathf.Clamp01((now - _shownAt) / FadeInSec);
+
+            if (_hintShownAt >= 0f)
+                _submessageLabel.style.opacity = Mathf.Clamp01((now - _hintShownAt) / HintFadeSec);
+
+            _spinner.MarkDirtyRepaint();
+        }
+
+        /// <summary>Draws a faint ring and a thin sweeping arc that fades from
+        /// transparent (tail) to white (head). The arc is a run of short butt-capped
+        /// segments with rising alpha, plus one round cap drawn on the head, so the
+        /// tail can be truly transparent over the translucent layer.</summary>
+        private void OnGenerateSpinner(MeshGenerationContext mgc)
+        {
+            Rect r = _spinner.contentRect;
+            float size = Mathf.Min(r.width, r.height);
+            if (size <= 1f) return;
+
+            var p = mgc.painter2D;
+            float stroke = size * 0.07f;
+            float radius = (size - stroke) * 0.5f;
+            var center = new Vector2(r.width * 0.5f, r.height * 0.5f);
+
+            // Track ring.
+            p.lineWidth = stroke;
+            p.lineCap = LineCap.Round;
+            p.strokeColor = new Color(1f, 1f, 1f, 0.16f);
+            p.BeginPath();
+            p.Arc(center, radius, Angle.Degrees(0f), Angle.Degrees(360f));
+            p.Stroke();
+
+            // Sweeping arc.
+            float t = Time.realtimeSinceStartup - _shownAt;
+            float breath = 0.5f - 0.5f * Mathf.Cos(t * (Mathf.PI * 2f / SweepCycleSec)); // 0..1
+            float sweep = Mathf.Lerp(MinSweepDeg, MaxSweepDeg, breath);
+            float start = (t * SpinDegPerSec) % 360f - 90f; // begin at 12 o'clock
+
+            p.lineCap = LineCap.Butt;
+            int segments = Mathf.Clamp(Mathf.CeilToInt(sweep / 10f), 6, 26);
+            float step = sweep / segments;
+            for (int i = 0; i < segments; i++)
+            {
+                float k = (i + 0.5f) / segments; // 0 = tail, 1 = head
+                Color c = Color.Lerp(_tint, Color.white, k);
+                c.a = Mathf.Pow(k, 1.3f);
+
+                float a0 = start + step * i;
+                float a1 = a0 + step + (i < segments - 1 ? 0.6f : 0f); // tiny overlap hides seams
+
+                p.strokeColor = c;
+                p.BeginPath();
+                p.Arc(center, radius, Angle.Degrees(a0), Angle.Degrees(a1));
+                p.Stroke();
+            }
+
+            // Round cap on the head.
+            float headRad = (start + sweep) * Mathf.Deg2Rad;
+            var head = center + new Vector2(Mathf.Cos(headRad), Mathf.Sin(headRad)) * radius;
+            p.fillColor = Color.white;
+            p.BeginPath();
+            p.Arc(head, stroke * 0.5f, Angle.Degrees(0f), Angle.Degrees(360f));
+            p.Fill();
         }
     }
 }

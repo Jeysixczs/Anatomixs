@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -435,6 +436,10 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildBadgeCard(badge, _lastTotalPoints);
                     _badgeCardsById[badge.BadgeId] = refs;
+
+                    // Only brand-new items animate in; updates to existing ones stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Card, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(i, 8) * 0.06f, distance: 30f);
                 }
 
                 // Keep list order in sync with _lastBadges - Insert() on an

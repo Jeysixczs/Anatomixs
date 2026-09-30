@@ -551,7 +551,7 @@
 .pro-tip-icon-box {
     width: 90px;
     height: 90px;
-    border-radius: 45px;
+    border-radius: 46px;
     background-color: rgba(255, 255, 255, 0.6);
     justify-content: center;
     align-items: center;
@@ -748,7 +748,7 @@
 .compact .pro-tip-icon-box {
     width: 70px;
     height: 70px;
-    border-radius: 35px;
+    border-radius: 36px;
     margin-right: 18px;
 }
 
@@ -823,11 +823,11 @@
 }
 
 .compact-extra .sync-title-label {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact-extra .sync-status-label {
-    font-size: 15px;
+    font-size: 16px;
     margin-top: 2px;
 }
 

@@ -37,7 +37,7 @@
 {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 35px;
+    margin-bottom: 36px;
 }
 
 .back-button
@@ -337,7 +337,7 @@
 
 .progress-label
 {
-    font-size: 24px;
+    font-size: 26px;
     margin-left: 18px;
     flex-shrink: 0;
     -unity-text-align: middle-right;

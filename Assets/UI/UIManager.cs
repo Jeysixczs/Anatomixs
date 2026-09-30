@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using Anatomia3D.UI.Quiz;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -98,6 +100,14 @@ namespace Anatomia3D.UI
         private UIDocument _uiDocument;
         private VisualElement _root;
 
+        // Student screens that play the enter animation (see PlayStudentScreenEnter).
+        // Left out on purpose: the 3D anatomy screen and the timed quiz gameplay screen.
+        private HashSet<VisualTreeAsset> _animatedScreens;
+
+        [Header("Debug")]
+        [Tooltip("Logs every screen animation start/finish to the Console.")]
+        [SerializeField] private bool debugScreenAnimations;
+
         [SerializeField] private VisualTreeAsset aboutAnatomiaScreen;
         private AboutAnatomiaController _aboutAnatomiaController;
 
@@ -123,6 +133,23 @@ namespace Anatomia3D.UI
                 Permission.RequestUserPermission("android.permission.POST_NOTIFICATIONS");
             }
 #endif
+
+            _animatedScreens = new HashSet<VisualTreeAsset>
+            {
+                studentLoginScreen, createAccountScreen, forgotPasswordScreen,
+                studentDashboardScreen, studentExplore3dScreen, studentAchivementScreen,
+                studentProfileScreen, studentClassroomScreen, studentQuizSelectionScreen,
+                studentFileSubmissionScreen, studentProgressScreen, studentQuizResultScreen,
+                studentQuizResult, studentClassroomHubScreen, studentClassroomDetailScreen,
+                studentEditProfileScreen, studentNotificationsScreen,
+                // Admin screens (same layout names, so the same enter animation applies).
+                adminLoginScreen, adminForgotPasswordScreen, adminCreateAccountScreen,
+                adminDashboardScreen, adminCreateClassroomScreen, adminClassroomCreatedScreen,
+                adminGamificationSettingsScreen, adminQuizManagementScreen, adminAnalyticsReportsScreen,
+                adminClassroomDetailScreen, adminProfileScreen, adminEditProfileScreen,
+                adminAboutAnatomiaScreen, adminSubmissionReviewScreen
+            };
+            _animatedScreens.Remove(null);   // unassigned inspector slots
 
             _uiDocument = GetComponent<UIDocument>();
             if (_uiDocument == null)
@@ -802,6 +829,11 @@ private IEnumerator DecideInitialScreen()
             // Clone the new screen
             screenAsset.CloneTree(_root);
 
+            if (_animatedScreens != null && _animatedScreens.Contains(screenAsset))
+            {
+                PlayStudentScreenEnter();
+            }
+
             // Start coroutine to initialize the controller after UI is built
             if (controller != null)
             {
@@ -809,6 +841,56 @@ private IEnumerator DecideInitialScreen()
             }
 
             Debug.Log($"[UIManager] Showing {controller?.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Enter animation for student screens:
+        ///  1. the whole screen fades in,
+        ///  2. the header slides down into place,
+        ///  3. the body sections (direct children of "content-wrapper", or the items of a "*-list"
+        ///     section) fade and slide up one after another.
+        /// Only opacity/translate are animated (never scale), so it cannot interfere with FitToScreen,
+        /// which scales "content-wrapper". Cards that a controller builds later (classroom cards,
+        /// notification rows) are animated by that controller. Everything is null-safe.
+        /// </summary>
+        private void PlayStudentScreenEnter()
+        {
+            UIAnimationUtility.DebugLog = debugScreenAnimations;
+
+            // Most screens use screen-root / header / content-wrapper; File Submission has its own names.
+            // Tap feedback on every button already on this screen (idempotent).
+            UIAnimationUtility.AddPressFeedbackToAll(_root);
+
+            var screenRoot = _root.Q<VisualElement>("screen-root") ?? _root.Q<VisualElement>("file-submission-root")
+                            ?? _root.Q<VisualElement>("submission-review-root");
+            UIAnimationUtility.FadeIn(screenRoot, duration: 0.35f);
+
+            var header = _root.Q<VisualElement>("header") ?? _root.Q<VisualElement>("fs-header")
+                         ?? _root.Q<VisualElement>("sr-header");
+            UIAnimationUtility.FadeAndSlideIn(header, UIAnimationUtility.Direction.Top,
+                duration: 0.45f, delay: 0.05f, distance: 60f);
+
+            var body = _root.Q<VisualElement>("content-wrapper") ?? _root.Q<VisualElement>("fs-scroll");
+            if (body == null) return;
+
+            var sections = new List<VisualElement>();
+            foreach (var child in body.Children())
+            {
+                if (child == header) continue;   // Dashboard keeps its header inside content-wrapper
+                if (child.ClassListContains("hidden")) continue;   // e.g. admin banners hidden by USS
+
+                if (child.name != null && child.name.EndsWith("-list") && child.childCount > 0)
+                {
+                    foreach (var item in child.Children()) sections.Add(item);
+                }
+                else
+                {
+                    sections.Add(child);
+                }
+            }
+
+            UIAnimationUtility.StaggerIn(sections, UIAnimationUtility.Direction.Bottom,
+                step: 0.07f, startDelay: 0.12f, duration: 0.4f, distance: 50f, maxCount: 8);
         }
 
         /// <summary>

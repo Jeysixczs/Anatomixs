@@ -62,19 +62,19 @@
 
 .logo-circle
 {
-    width: 170px;
-    height: 170px;
+    width: 220px;
+    height: 220px;
 
     align-self: center;
 
-    border-radius: 85px;
+    border-radius: 110px;
 
     background-color: rgb(180, 45, 200); /* fallback, gradient applied at runtime */
 
     justify-content: center;
     align-items: center;
 
-    margin-bottom: 34px;
+    margin-bottom: 30px;
 }
 
 .logo-icon
@@ -96,21 +96,21 @@
 
 .app-title
 {
-    font-size: 48px;
+    font-size: 56px;
     -unity-font-style: bold;
     color: rgb(255,255,255);
     -unity-text-align: middle-center;
 
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .app-subtitle
 {
-    font-size: 28px;
+    font-size: 34px;
     color: rgb(196,182,214);
     -unity-text-align: middle-center;
 
-    margin-bottom: 45px;
+    margin-bottom: 60px;
 }
 
 /* ---------- Card ---------- */
@@ -138,7 +138,7 @@
 
 .field-label
 {
-    font-size: 28px;
+    font-size: 32px;
     -unity-font-style: bold;
     color: rgb(230,225,240);
 
@@ -147,12 +147,12 @@
 
 .field-label-spaced
 {
-    margin-top: 30px;
+    margin-top: 34px;
 }
 
 .field-error
 {
-    font-size: 22px;
+    font-size: 26px;
     color: rgb(255,120,170);
 
     margin-top: 10px;
@@ -170,7 +170,7 @@
 {
     width: 100%;
 
-    height: 106px;
+    height: 118px;
 
     flex-direction: row;
 
@@ -178,13 +178,13 @@
 
     background-color: rgba(255,255,255,0.05);
 
-    border-radius: 24px;
+    border-radius: 28px;
 
     border-width: 2px;
     border-color: rgba(255,255,255,0.14);
 
-    padding-left: 28px;
-    padding-right: 18px;
+    padding-left: 30px;
+    padding-right: 20px;
 
     overflow: hidden;
 }
@@ -199,10 +199,10 @@
 
 .input-icon
 {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
 
-    margin-right: 18px;
+    margin-right: 20px;
     flex-shrink: 0;
 
     -unity-background-image-tint-color: rgb(180,168,204);
@@ -230,6 +230,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    height: 44px;
+    width: 44px;
 }
 
 .icon-eye
@@ -238,8 +240,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     -unity-background-image-tint-color: white;
 }
 
@@ -249,8 +251,8 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     -unity-background-image-tint-color: white;
 }
 
@@ -271,7 +273,7 @@
        container, which pushes the lock/eye icons sideways. */
     min-width: 0;
 
-    font-size: 30px;
+    font-size: 34px;
 
     color: rgb(240,236,248);
 
@@ -295,15 +297,15 @@
 
 .input-field-with-right-icon
 {
-    margin-right: 8px;
+    margin-right: 10px;
 }
 
 /* ---------- Eye Button ---------- */
 
 .input-icon-button
 {
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
 
     background-color: transparent;
 
@@ -322,8 +324,9 @@
     flex-direction: row;
     align-items: flex-start;
 
-    margin-top: 34px;
-    margin-bottom: 10px;
+    margin-top: 36px;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .terms-checkbox
@@ -331,14 +334,14 @@
     width: 40px;
     height: 40px;
 
-    border-radius: 10px;
+    border-radius: 8px;
 
     border-width: 2px;
     border-color: rgba(255,255,255,0.3);
 
     background-color: rgba(255,255,255,0.05);
 
-    margin-right: 18px;
+    margin-right: 16px;
     flex-shrink: 0;
 }
 
@@ -358,7 +361,7 @@
 
 .terms-text
 {
-    font-size: 24px;
+    font-size: 26px;
     color: rgb(196,182,214);
 }
 
@@ -369,9 +372,10 @@
     padding: 0;
     margin: 0;
 
-    font-size: 24px;
+    font-size: 26px;
     -unity-font-style: bold;
     color: rgb(216,150,240);
+    height: auto;
 }
 
 .terms-link-button:hover
@@ -384,19 +388,19 @@
 .create-account-button
 {
     width: 100%;
-    height: 112px;
+    height: 118px;
 
-    margin-top: 30px;
+    margin-top: 48px;
 
     background-color: rgb(160,45,210); /* fallback, gradient applied at runtime */
 
     color: white;
 
-    border-radius: 26px;
+    border-radius: 28px;
 
     border-width: 0;
 
-    font-size: 32px;
+    font-size: 36px;
     -unity-font-style: bold;
 }
 
@@ -417,8 +421,8 @@
     flex-direction: row;
     align-items: center;
 
-    margin-top: 36px;
-    margin-bottom: 36px;
+    margin-top: 48px;
+    margin-bottom: 48px;
 }
 
 .divider-line
@@ -430,11 +434,11 @@
 
 .divider-text
 {
-    font-size: 22px;
+    font-size: 28px;
     color: rgb(180,168,204);
 
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 24px;
+    margin-right: 24px;
 }
 
 /* ---------- Google Button ---------- */
@@ -442,7 +446,7 @@
 .google-button
 {
     width: 100%;
-    height: 106px;
+    height: 118px;
 
     flex-direction: row;
 
@@ -454,7 +458,7 @@
     border-width: 2px;
     border-color: rgba(255,255,255,0.16);
 
-    border-radius: 24px;
+    border-radius: 28px;
 }
 
 .google-button:hover
@@ -464,10 +468,10 @@
 
 .icon-google
 {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
 
-    margin-right: 18px;
+    margin-right: 20px;
     flex-shrink: 0;
 
     background-image: url("project://database/Assets/UI/Icons/google-icon.png");
@@ -478,7 +482,7 @@
 
 .google-button-text
 {
-    font-size: 30px;
+    font-size: 34px;
     -unity-font-style: bold;
 
     color: rgb(240,236,248);
@@ -498,7 +502,7 @@
 
 .bottom-link-text
 {
-    font-size: 26px;
+    font-size: 28px;
     color: rgb(180,168,204);
 
     margin-right: 10px;
@@ -511,7 +515,7 @@
 
     color: rgb(216,150,240);
 
-    font-size: 26px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -524,10 +528,10 @@
 
 .status-label
 {
-    margin-top: 12px;
+    margin-top: 28px;
     margin-bottom: 20px;
 
-    font-size: 26px;
+    font-size: 28px;
 
     color: rgb(255,140,190);
 
@@ -563,10 +567,10 @@
 
 .compact .logo-circle
 {
-    width: 130px;
-    height: 130px;
+    width: 170px;
+    height: 170px;
 
-    border-radius: 65px;
+    border-radius: 85px;
 }
 
 .compact .logo-icon
@@ -577,7 +581,7 @@
 
 .compact .app-title
 {
-    font-size: 38px;
+    font-size: 46px;
 }
 
 .compact .app-subtitle
@@ -595,22 +599,22 @@
 
 .compact .field-label
 {
-    font-size: 24px;
+    font-size: 28px;
 }
 
 .compact .input-container
 {
-    height: 88px;
+    height: 100px;
 }
 
 .compact .input-field
 {
-    font-size: 26px;
+    font-size: 28px;
 }
 
 .compact .input-field > #unity-text-input
 {
-    font-size: 26px;
+    font-size: 28px;
 }
 
 .compact .terms-text,
@@ -621,7 +625,7 @@
 
 .compact .create-account-button
 {
-    height: 96px;
+    height: 105px;
     font-size: 28px;
 }
 
@@ -638,7 +642,7 @@
 .compact .bottom-link-text,
 .compact .bottom-link-button
 {
-    font-size: 22px;
+    font-size: 24px;
 }
 
 .compact .footer-warning-label

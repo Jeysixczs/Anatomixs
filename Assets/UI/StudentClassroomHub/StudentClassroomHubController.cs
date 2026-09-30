@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using Firebase.Firestore;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -494,6 +495,7 @@ namespace Anatomia3D.UI
             if (_classroomsList == null) return;
 
             var incomingIds = new HashSet<string>();
+            int newCards = 0;   // for staggering the enter animation of freshly built cards
 
             if (hasClassrooms)
             {
@@ -510,6 +512,11 @@ namespace Anatomia3D.UI
                     {
                         refs = BuildClassroomCard(summary);
                         _classroomCardsById[summary.ClassroomId] = refs;
+
+                        // Only brand-new cards animate in; updates to existing cards stay instant.
+                        UIAnimationUtility.FadeAndSlideIn(refs.Card, UIAnimationUtility.Direction.Bottom,
+                            duration: 0.35f, delay: 0.15f + Mathf.Min(newCards, 8) * 0.06f, distance: 30f);
+                        newCards++;
                     }
 
                     // Keep list order in sync with _currentClassrooms - Insert() on an

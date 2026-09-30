@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 
 namespace Anatomia3D.UI
 {
@@ -429,7 +430,7 @@ namespace Anatomia3D.UI
                 if (!maxLevelReached) _nextLevelLabel.text = $"Level {currentLevel + 1}";
             }
 
-            if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(levelProgress01) * 100f, LengthUnit.Percent);
+            if (_progressFill != null) UIAnimationUtility.AnimateFill(_progressFill, levelProgress01);
 
             if (_pointsToNextLabel != null)
             {
@@ -863,6 +864,10 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildActivityItem(entry, isLast);
                     _activityRowsByKey[entry.Key] = refs;
+
+                    // Only brand-new items animate in; updates to existing ones stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Item, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(i, 8) * 0.06f, distance: 30f);
                 }
                 else
                 {

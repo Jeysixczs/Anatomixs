@@ -1,3 +1,4 @@
+using Anatomia3D.UI.Animation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -218,7 +219,7 @@ namespace Anatomia3D.UI
             if (_quizNameLabel != null) _quizNameLabel.text = quizName;
             // "0.#" shows a decimal only when there is one (87.5% stays 87.5%, 100% stays 100%)
             // instead of rounding away a real fractional score like 87.5 -> 88.
-            if (_scorePercentLabel != null) _scorePercentLabel.text = $"{percent.ToString("0.#")}%";
+            if (_scorePercentLabel != null) UIAnimationUtility.CountUp(_scorePercentLabel, 0f, percent, duration: 1f, delay: 0.2f, format: "{0:0.#}%");
             if (_correctCountLabel != null) _correctCountLabel.text = correctCount.ToString();
             if (_incorrectCountLabel != null) _incorrectCountLabel.text = incorrectCount.ToString();
             if (_totalCountLabel != null) _totalCountLabel.text = total.ToString();
@@ -227,7 +228,7 @@ namespace Anatomia3D.UI
             if (_pointsProgressFill != null)
             {
                 float pointsPct = pointsPossible > 0 ? Mathf.Clamp01((float)pointsEarned / pointsPossible) : 0f;
-                _pointsProgressFill.style.width = new Length(pointsPct * 100f, LengthUnit.Percent);
+                UIAnimationUtility.AnimateFill(_pointsProgressFill, pointsPct, delay: 0.2f);
             }
 
             if (_pointsMiniValueLabel != null) _pointsMiniValueLabel.text = $"+{pointsEarned}";

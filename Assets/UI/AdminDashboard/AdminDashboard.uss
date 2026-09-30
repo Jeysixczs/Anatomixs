@@ -30,10 +30,10 @@
     width: 100%;
     border-bottom-left-radius: 79px;
     border-bottom-right-radius: 79px;
-    padding-left: 59px;
-    padding-right: 59px;
-    padding-top: 118px;
-    padding-bottom: 53px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 80px;
+    padding-bottom: 70px;
     flex-shrink: 0;
     flex-direction: column;
     background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
@@ -43,7 +43,7 @@
 {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 45px;
+    margin-bottom: 44px;
 }
 
 .header-icon-circle
@@ -83,6 +83,7 @@
 {
     -unity-font-style: bold;
     color: white;
+    font-size: 48px;
 }
 
 .header-text
@@ -194,9 +195,9 @@
     background-color: rgba(255, 255, 255, 0.16);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.24);
-    border-radius: 29px;
-    padding-top: 29px;
-    padding-bottom: 29px;
+    border-radius: 26px;
+    padding-top: 26px;
+    padding-bottom: 26px;
     margin: 0;
 }
 
@@ -207,15 +208,15 @@
 
 .create-classroom-plus
 {
-    font-size: 39px;
+    font-size: 36px;
     -unity-font-style: bold;
     color: white;
-    margin-right: 16px;
+    margin-right: 14px;
 }
 
 .create-classroom-header-label
 {
-    font-size: 34px;
+    font-size: 32px;
     -unity-font-style: bold;
     color: white;
 }
@@ -282,10 +283,10 @@
 
 .section-title
 {
-    font-size: 39px;
+    font-size: 38px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
-    margin-bottom: 26px;
+    margin-bottom: 36px;
 }
 
 .section-title-spaced
@@ -303,11 +304,11 @@
 .classrooms-empty-state
 {
     background-color: white;
-    border-radius: 37px;
-    padding-top: 74px;
-    padding-bottom: 59px;
-    padding-left: 39px;
-    padding-right: 39px;
+    border-radius: 34px;
+    padding-top: 66px;
+    padding-bottom: 52px;
+    padding-left: 36px;
+    padding-right: 36px;
     align-items: center;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.05);
@@ -319,13 +320,15 @@
     opacity: 0.35;
     margin-bottom: 29px;
     -unity-text-align: middle-center;
+    height: 61px;
+    width: 61px;
 }
 
 .empty-state-text
 {
-    font-size: 34px;
+    font-size: 32px;
     color: rgb(138, 143, 163);
-    margin-bottom: 39px;
+    margin-bottom: 12px;
 }
 
 .empty-state-button
@@ -333,12 +336,12 @@
     background-color: white;
     border-width: 2px;
     border-color: rgb(224, 226, 232);
-    border-radius: 24px;
-    padding-left: 45px;
-    padding-right: 45px;
-    padding-top: 26px;
-    padding-bottom: 26px;
-    font-size: 32px;
+    border-radius: 22px;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    font-size: 28px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
     margin: 0;
@@ -361,9 +364,9 @@
 {
     width: 100%;
     background-color: white;
-    border-radius: 37px;
+    border-radius: 34px;
     padding: 39px;
-    margin-bottom: 29px;
+    margin-bottom: 26px;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.05);
 }
@@ -378,29 +381,29 @@
 
 .classroom-name-label
 {
-    font-size: 39px;
+    font-size: 36px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
     flex-shrink: 1;
     flex-grow: 1;
     white-space: normal;
-    margin-right: 21px;
+    margin-right: 20px;
 }
 
 .classroom-code-badge
 {
     background-color: rgb(209, 250, 229);
     border-radius: 18px;
-    padding-left: 21px;
-    padding-right: 21px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 8px;
+    padding-bottom: 8px;
     flex-shrink: 0;
 }
 
 .classroom-code-badge-label
 {
-    font-size: 26px;
+    font-size: 24px;
     -unity-font-style: bold;
     color: rgb(5, 122, 85);
     letter-spacing: 1px;
@@ -435,13 +438,15 @@
 .classroom-students-icon
 {
     font-size: 29px;
-    margin-right: 10px;
+    margin-right: 12px;
     opacity: 0.7;
+    height: 28px;
+    width: 28px;
 }
 
 .classroom-students-label
 {
-    font-size: 29px;
+    font-size: 26px;
     color: rgb(120, 123, 140);
 }
 
@@ -579,9 +584,9 @@
     justify-content: space-between;
     flex-shrink: 0;
     padding-top: 118px;
-    padding-left: 59px;
-    padding-right: 45px;
-    padding-bottom: 39px;
+    padding-left: 50px;
+    padding-right: 40px;
+    padding-bottom: 40px;
     background-color: rgb(243, 244, 248);
     border-bottom-width: 1px;
     border-bottom-color: rgba(0, 0, 0, 0.07);
@@ -589,20 +594,20 @@
 
 .view-all-title
 {
-    font-size: 47px;
+    font-size: 44px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
 }
 
 .view-all-close-button
 {
-    width: 80px;
-    height: 80px;
-    border-radius: 40px;
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
     background-color: white;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.06);
-    font-size: 30px;
+    font-size: 28px;
     color: rgb(90, 95, 110);
     justify-content: center;
     align-items: center;
@@ -707,7 +712,7 @@
 {
     width: 100%;
     align-items: center;
-    padding-top: 59px;
+    padding-top: 60px;
 }
 
 /* ---------- Quick Actions ---------- */
@@ -876,7 +881,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 26px;
+    margin-bottom: 36px;
 }
 
 .recent-activity-title
@@ -1182,7 +1187,7 @@
 
 .activity-kind-label
 {
-    font-size: 17px;
+    font-size: 18px;
     -unity-font-style: bold;
     letter-spacing: 2px;
     margin-bottom: 4px;
@@ -1222,15 +1227,15 @@
 
 .compact .header
 {
-    padding-left: 39px;
-    padding-right: 39px;
-    padding-top: 87px;
-    padding-bottom: 43px;
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
+    padding-bottom: 60px;
 }
 
 .compact .header-top-row
 {
-    margin-bottom: 32px;
+    margin-bottom: 38px;
 }
 
 .compact .header-icon-circle
@@ -1268,7 +1273,7 @@
 
 .compact .create-classroom-header-label
 {
-    font-size: 28px;
+    font-size: 26px;
 }
 
 .compact .content-wrapper
@@ -1284,7 +1289,7 @@
 
 .compact .classroom-name-label
 {
-    font-size: 32px;
+    font-size: 28px;
 }
 
 .compact .classroom-description-label,
@@ -1316,23 +1321,23 @@
 
 .compact .view-all-title
 {
-    font-size: 34px;
+    font-size: 36px;
 }
 
 .compact .view-all-header
 {
-    padding-left: 37px;
-    padding-right: 32px;
-    padding-top: 87px;
-    padding-bottom: 29px;
+    padding-left: 34px;
+    padding-right: 30px;
+    padding-top: 88px;
+    padding-bottom: 28px;
 }
 
 .compact .view-all-close-button
 {
-    width: 68px;
-    height: 68px;
-    border-radius: 34px;
-    font-size: 26px;
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    font-size: 24px;
 }
 
 .compact .view-all-list
@@ -1380,7 +1385,7 @@
 
 .compact .recent-activity-header
 {
-    margin-bottom: 21px;
+    margin-bottom: 28px;
 }
 
 .compact .view-all-inline-button
@@ -1398,5 +1403,5 @@
     padding-right: 37px;
 }
 
-.compact .activity-kind-label { font-size: 15px; }
+.compact .activity-kind-label { font-size: 16px; }
 .compact .view-all-list .recent-activity-row { padding: 20px; border-radius: 24px; }

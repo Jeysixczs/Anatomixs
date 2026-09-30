@@ -28,12 +28,12 @@
 .header
 {
     width: 100%;
-    border-bottom-left-radius: 79px;
-    border-bottom-right-radius: 79px;
-    padding-left: 59px;
-    padding-right: 59px;
-    padding-top: 132px;
-    padding-bottom: 66px;
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 100px;
+    padding-bottom: 50px;
     flex-shrink: 0;
     background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
 }
@@ -46,14 +46,14 @@
 
 .back-button
 {
-    width: 132px;
-    height: 132px;
-    border-radius: 66px;
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
     background-color: rgba(255, 255, 255, 0.18);
     border-width: 0px;
     justify-content: center;
     align-items: center;
-    margin-right: 39px;
+    margin-right: 30px;
     flex-shrink: 0;
 }
 
@@ -64,8 +64,8 @@
 
 .back-icon
 {
-    width: 53px;
-    height: 53px;
+    width: 40px;
+    height: 40px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
@@ -84,7 +84,7 @@
 
 .header-title
 {
-    font-size: 53px;
+    font-size: 44px;
     -unity-font-style: bold;
     color: white;
     white-space: normal;
@@ -92,9 +92,9 @@
 
 .header-subtitle
 {
-    font-size: 32px;
+    font-size: 26px;
     color: rgba(255, 255, 255, 0.85);
-    margin-top: 8px;
+    margin-top: 6px;
     white-space: normal;
 }
 
@@ -103,14 +103,14 @@
     background-color: rgba(255, 255, 255, 0.16);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.24);
-    border-radius: 21px;
+    border-radius: 22px;
     padding-left: 24px;
     padding-right: 24px;
     padding-top: 16px;
     padding-bottom: 16px;
     margin: 0;
     flex-shrink: 0;
-    font-size: 25px;
+    font-size: 26px;
     -unity-font-style: bold;
     color: white;
     white-space: normal;
@@ -182,11 +182,11 @@
 {
     width: 100%;
     background-color: white;
-    border-radius: 37px;
-    padding-top: 79px;
+    border-radius: 38px;
+    padding-top: 80px;
     padding-bottom: 66px;
-    padding-left: 39px;
-    padding-right: 39px;
+    padding-left: 40px;
+    padding-right: 40px;
     align-items: center;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.05);
@@ -194,9 +194,9 @@
 
 .empty-state-icon
 {
-    font-size: 85px;
+    font-size: 86px;
     opacity: 0.35;
-    margin-bottom: 29px;
+    margin-bottom: 28px;
 }
 
 .empty-state-text
@@ -329,20 +329,20 @@
 
 .compact .header
 {
-    padding-left: 39px;
-    padding-right: 39px;
+    padding-left: 40px;
+    padding-right: 40px;
     padding-top: 92px;
-    padding-bottom: 53px;
+    padding-bottom: 52px;
 }
 
 .compact .header-title
 {
-    font-size: 43px;
+    font-size: 44px;
 }
 
 .compact .header-subtitle
 {
-    font-size: 25px;
+    font-size: 26px;
 }
 
 .compact .back-button
@@ -361,7 +361,7 @@
 
 .compact .mark-all-read-button
 {
-    font-size: 21px;
+    font-size: 22px;
     padding-left: 18px;
     padding-right: 18px;
     padding-top: 14px;
@@ -370,8 +370,8 @@
 
 .compact .content-wrapper
 {
-    padding-left: 37px;
-    padding-right: 37px;
+    padding-left: 36px;
+    padding-right: 36px;
 }
 
 .compact .notification-title
@@ -393,5 +393,5 @@
 {
     width: 66px;
     height: 66px;
-    margin-right: 21px;
+    margin-right: 20px;
 }
