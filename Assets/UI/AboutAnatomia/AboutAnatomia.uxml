@@ -11,7 +11,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="app-identity-card" class="app-identity-card">
                     <ui:VisualElement name="app-logo-circle" class="app-logo-circle">
-                        <ui:Label text="" class="app-logo-emoji" style="background-image: url(&quot;project://database/Assets/UI/Icons/Anatomia-logo.png?fileID=2800000&amp;guid=d98c520272f85c14e84436a94d5ebd88&amp;type=3#Anatomia-logo&quot;); height: 255px; width: 255px;"/>
+                        <ui:Label text="" class="app-logo-emoji" style="background-image: url(&quot;project://database/Assets/Sprite/Anatomia-logo.png?fileID=2800000&amp;guid=31a97ab8e70a6184f9b8d05c71d9233b&amp;type=3#Anatomia-logo&quot;); height: 255px; width: 255px;"/>
                     </ui:VisualElement>
                     <ui:Label name="app-name-label" text="ANATOMIA" class="app-name"/>
                     <ui:Label name="app-full-title-label" text="A Gamified Mobile Application for Interactive Human Anatomy Learning" class="app-full-title"/>
@@ -30,29 +30,23 @@
                 <ui:VisualElement name="models-license-card" class="info-card">
                     <ui:Label name="models-intro-label" text="The Skeletal System, Muscular System, and Cardiovascular System 3D models used in Anatomia are adapted from:" class="card-text card-text-first"/>
                     <ui:VisualElement name="models-citation-quote" class="card-quote">
-                        <ui:Label text="&#8220;Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0&#8221;" class="card-quote-text"/>
+                        <ui:Label text="“Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0”" class="card-quote-text"/>
                     </ui:VisualElement>
                     <ui:Label text="Z-Anatomy content is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)." class="card-text"/>
-
                     <ui:Label text="ORIGINAL MODEL SOURCE" class="card-caption"/>
                     <ui:VisualElement name="original-source-quote" class="card-quote">
-                        <ui:Label text="&#8220;BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan&#8221;" class="card-quote-text"/>
+                        <ui:Label text="“BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan”" class="card-quote-text"/>
                     </ui:VisualElement>
-
                     <ui:Label text="Z-ANATOMY SOURCE" class="card-caption"/>
                     <ui:Label text="github.com/Z-Anatomy/Models-of-human-anatomy" class="card-link"/>
-
                     <ui:Label text="BODYPARTS3D SOURCE" class="card-caption"/>
                     <ui:Label text="dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" class="card-link"/>
-
                     <ui:Label text="The models have been adapted and integrated into the Anatomia Unity application for interactive human anatomy learning." class="card-text card-text-last"/>
                 </ui:VisualElement>
-
                 <ui:Label text="License" class="section-title section-title-spaced"/>
                 <ui:VisualElement name="license-card" class="info-card">
                     <ui:Label text="CC BY-SA 4.0 permits the use, redistribution, and creation of derivative works from the licensed content, provided that appropriate attribution is given and derivative works are distributed under the same license." class="card-text card-text-first card-text-last"/>
                 </ui:VisualElement>
-
                 <ui:Label text="Z-Anatomy Authors" class="section-title section-title-spaced"/>
                 <ui:VisualElement name="authors-card" class="menu-card">
                     <ui:VisualElement name="authors-list" class="credits-list">
@@ -102,7 +96,6 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-
                 <ui:Label name="version-label" text="ANATOMIA  v1.0.0" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
