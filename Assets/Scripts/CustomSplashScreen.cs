@@ -10,7 +10,7 @@ public class CustomSplashScreen : MonoBehaviour
     [SerializeField] private RectTransform appName;
     [SerializeField] private RectTransform description;
 
-    
+
     [Header("Logo Animation")]
     [SerializeField] private float startScale = 0.01f;
     [SerializeField] private float finalScale = 1.0f;

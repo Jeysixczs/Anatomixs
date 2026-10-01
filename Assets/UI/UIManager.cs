@@ -53,7 +53,6 @@ namespace Anatomia3D.UI
         private StudentAchievementsController _studentAchievementsController;
         private StudentProfileController _studentProfileController;
         private StudentClassroomController _studentClassroomController;
-        private StudentQuizSelectionController _studentQuizSelectionController;
         private StudentQuizGameplayController _studentQuizGameplayController;
         private Anatomia3D.UI.StudentFileSubmissionController _studentFileSubmissionController;
         private StudentQuizResultController _studentQuizResultController;
@@ -165,36 +164,12 @@ namespace Anatomia3D.UI
 
         private void Start()
         {
-            // What happens next depends on connectivity AND biometric hardware -
-            // see DecideInitialScreen for the actual logic. Short version: online
-            // always shows Login; offline with biometric/PIN hardware also shows
-            // Login (so the "Sign in with biometrics" button gates access - see
-            // PlayerSessionManager.TryOfflineGate); offline with NO hardware
-            // at all falls back to auto-restoring the last cached session
-            // (PlayerSessionManager.TryRestoreSessionOffline) straight to Student
-            // Explore 3D, since there'd be no way through Login at all otherwise.
+           
 
             StartCoroutine(DecideInitialScreen());
         }
 
-        /// <summary>Android's hardware back button and the gesture-nav back
-        /// swipe both surface as the Escape key. UI Toolkit has no built-in
-        /// "close keyboard on back" behavior the way native Android views
-        /// do, so on gesture nav in particular the OS can otherwise
-        /// intercept the gesture for the IME with Unity never seeing it, or
-        /// see it and fall through to screen navigation while the keyboard
-        /// stays open. Checking TouchScreenKeyboard.visible first and
-        /// returning early makes back-to-close-keyboard the higher-priority
-        /// action and stops it from also triggering screen navigation in the
-        /// same press. Only handles the keyboard for now - this is NOT a
-        /// general back-stack/back-navigation handler.
-        ///
-        /// Uses Keyboard.current from the new Input System package, NOT
-        /// UnityEngine.Input.GetKeyDown - this project's Active Input
-        /// Handling (Project Settings > Player) is set to "Input System
-        /// Package (New)", under which the legacy Input class never
-        /// receives events at all, so Input.GetKeyDown would silently
-        /// always return false here.</summary>
+    
         private void Update()
         {
 
@@ -219,16 +194,7 @@ private IEnumerator DecideInitialScreen()
 
             if (offline)
             {
-                // FirebaseBootstrap's dependency check is async and can still be
-                // running on this exact frame. This does NOT wait for network -
-                // Auth becomes ready from Firebase's own on-device persisted state,
-                // which doesn't require a connection - it just hasn't finished
-                // initializing yet. Give it a short window so the Login screen's
-                // biometric button (see
-                // StudentLoginController.UpdateBiometricButtonVisibility /
-                // PlayerSessionManager.IsBiometricLoginAvailable) reflects the real
-                // Auth.CurrentUser state the moment it's shown, instead of coming
-                // up hidden just because Firebase was a beat slow to initialize.
+              
                 float timeout = 3f;
                 float elapsed = 0f;
                 while ((FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null) && elapsed < timeout)
@@ -242,14 +208,6 @@ private IEnumerator DecideInitialScreen()
 
                 if (!hasBiometricHardware)
                 {
-                    // Offline AND this device has no biometric/PIN hardware at all -
-                    // there's no lock screen to put in front of the student either
-                    // way, and typing a password is off the table without a
-                    // connection. Login would just be a dead end here, so fall back
-                    // to auto-restoring the last cached session instead of
-                    // stranding the student on a screen with nothing they can do.
-                    // A device WITH hardware still always goes to Login below, even
-                    // offline - that's the biometric gate doing its job.
                     bool restored = PlayerSessionManager.Instance != null
                         && PlayerSessionManager.Instance.TryRestoreSessionOffline();
 
@@ -260,24 +218,11 @@ private IEnumerator DecideInitialScreen()
                         yield break;
                     }
 
-                    // Nothing cached to restore either (never logged in on this
-                    // device) - fall through to Login, which will just show the
-                    // normal (currently unusable-offline) password form. There's
-                    // nothing better to offer a device with no prior session and no
-                    // hardware.
+                   
                 }
             }
 
-            // Being offline no longer skips straight to the dashboard on its own
-            // when there IS biometric hardware - that would bypass the security
-            // check entirely. Login is shown, and a student who was previously
-            // signed in on this device still gets in fast, but only via a real
-            // biometric/device-credential check (the "Sign in with biometrics"
-            // button). Typing a password still requires connectivity either way
-            // (Firebase Auth needs a network round-trip), so biometrics is what
-            // actually lets an offline student back in - see
-            // PlayerSessionManager.TryOfflineGate, which is what restores the
-            // cached profile once that check succeeds.
+            
             ShowStudentLogin();
         }
 
@@ -293,7 +238,6 @@ private IEnumerator DecideInitialScreen()
             _studentAchievementsController = GetComponent<StudentAchievementsController>();
             _studentProfileController = GetComponent<StudentProfileController>();
             _studentClassroomController = GetComponent<StudentClassroomController>();
-            _studentQuizSelectionController = GetComponent<StudentQuizSelectionController>();
             _studentQuizGameplayController = GetComponent<StudentQuizGameplayController>();
             _studentFileSubmissionController = GetComponent<Anatomia3D.UI.StudentFileSubmissionController>();
             _studentQuizResultController = GetComponent<StudentQuizResultController>();
@@ -346,18 +290,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(forgotPasswordScreen, _forgotPasswordController);
         }
 
-        /// <summary>The single choke point every path to the dashboard already
-        /// goes through (email login, Google sign-in, returning from any other
-        /// screen) - so it's also the one place that needs to check whether this
-        /// student still owes their one-time Pretest baseline assessment. If they
-        /// do, the pretest opens instead of the dashboard. Once the student
-        /// finishes it, BaselineAssessmentController.NavigateAfterCompletion
-        /// goes straight to ShowStudentDashboardSkipBaselineGate() instead of
-        /// calling back in here - re-querying GetStatus immediately after the
-        /// write that made it true risks a stale read of that same write.
-        /// Fails open (shows the dashboard) if BaselineAssessmentService isn't in
-        /// the scene or Firebase isn't reachable, rather than ever blocking a
-        /// student from reaching the app.</summary>
+       
         public void ShowStudentDashboard()
         {
             if (BaselineAssessmentService.Instance != null)
@@ -375,14 +308,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentDashboardScreen, _studentdashboardController);
         }
 
-        /// <summary>Shows the dashboard directly, skipping the Pretest gate
-        /// check ShowStudentDashboard() normally does. For callers that just
-        /// finished recording the pretest themselves and already know the
-        /// gate condition is satisfied - re-querying GetStatus immediately
-        /// after the write that made it true risks reading a stale snapshot
-        /// that hasn't caught up with that write yet, which would otherwise
-        /// bounce the student straight back into the pretest they just
-        /// finished. See BaselineAssessmentController.NavigateAfterCompletion.</summary>
+       
         public void ShowStudentDashboardSkipBaselineGate()
         {
             ShowScreen(studentDashboardScreen, _studentdashboardController);
@@ -393,24 +319,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentExplore3dScreen, _studentExplore3dController);
         }
 
-        /// <summary>Centralized offline-routing entry point for any screen
-        /// that requires an internet connection. This does NOT add a
-        /// connectivity listener and does NOT run automatically - it only
-        /// routes when a screen explicitly calls it after checking
-        /// connectivity itself, e.g.:
-        ///
-        ///   if (Application.internetReachability == NetworkReachability.NotReachable)
-        ///   {
-        ///       UIManager.Instance?.OfflineDetected();
-        ///       return;
-        ///   }
-        ///
-        /// Student Explore 3D is the safe landing screen because it (and
-        /// Play Mode launched from it) already works fully offline via
-        /// AnatomyPlayModeLocalStorage/AnatomyPlayModeSyncService - nothing
-        /// about that offline support is changed by this method. This is
-        /// separate from the offline-at-launch handling in Start(), which
-        /// stays exactly as-is.</summary>
+       
         public void OfflineDetected()
         {
             ShowStudentExplore3d();
@@ -434,11 +343,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentClassroomScreen, _studentClassroomController);
         }
 
-        public void ShowStudentQuizSelection()
-        {
-            ShowScreen(studentQuizSelectionScreen, _studentQuizSelectionController);
-        }
-
+   
         /// <param name="classroomId">The classroom this quiz was launched from (e.g. Student
         /// Classroom Detail's Available Quizzes tab). Threaded through to
         /// StudentQuizGameplayController so it can attach the correct classroomId to the
@@ -513,12 +418,7 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        /// <summary>Opens the same reusable Anatomy Screen, but in Teacher Selection
-        /// Mode - called from Admin Quiz Management's Image-Based system cards (see
-        /// AdminQuizManagementController.OpenAnatomyScreenForStructureSelection) so a
-        /// teacher can pick the exact 3D structure that becomes a question's correct
-        /// answer. Never used by any student-facing flow; Play Mode and Explore Mode
-        /// are untouched by this path (see AnatomyTeacherSelectionController).</summary>
+     
         public void ShowStudentAnatomyScreenForTeacherSelection(AnatomySystem system)
         {
             _studentAnatomyScreenController?.SetAnatomySystem(system);
@@ -536,11 +436,7 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        /// <summary>Opens the Anatomy Screen read-only, highlighting/focusing the exact
-        /// structure a teacher picked for an Image-Based quiz question, WITHOUT
-        /// revealing its name (see AnatomyQuizHighlightController) - called from the
-        /// quiz card's "View on 3D Model" button. Back returns to the same in-progress
-        /// attempt via ShowStudentQuizGameplayResume below, never to Student Explore 3D.</summary>
+       
         public void ShowStudentAnatomyScreenForQuizHighlight(AnatomySystem system, string structureKey)
         {
             _studentAnatomyScreenController?.SetAnatomySystem(system);
@@ -558,10 +454,7 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        /// <summary>The BaselineAssessmentController that lives on the Anatomy
-        /// Screen's own GameObject. Resolved through GetComponent (rather than a
-        /// cached field) because both baseline entry points below need it while
-        /// that GameObject is still disabled, which GetComponent handles fine.</summary>
+      
         private BaselineAssessmentController GetBaselineAssessmentController()
         {
             var controller = _studentAnatomyScreenController != null
@@ -574,28 +467,12 @@ private IEnumerator DecideInitialScreen()
             return controller;
         }
 
-        /// <summary>Opens the Anatomy Screen for the student's one-time Pretest/
-        /// Posttest baseline assessment (see BaselineAssessmentController) - a
-        /// fixed set of structures with no hints, shown across all three systems'
-        /// models at once, distinct from both normal Play Mode and the classroom
-        /// quiz's Image-Based highlight flow. Called once from ShowStudentDashboard (pretest gate, before the
-        /// dashboard itself shows) and from the Progress screen's "Take
-        /// Posttest" button.</summary>
         public void ShowStudentAnatomyScreenForBaselineAssessment(BaselineAssessmentType type)
         {
-            // Skeletal is the anchor system (see
-            // BaselineAssessmentController.SessionSystemOrder) - set explicitly so
-            // ResolveAnatomySystem has a sane "current" system regardless of
-            // whatever the screen last happened to be showing (e.g. a student
-            // coming from Explore 3D -> Cardiovascular straight into the pretest
-            // gate). The combined list below is what decides which models come up.
+            
             _studentAnatomyScreenController?.SetAnatomySystem(AnatomySystem.Skeletal);
 
-            // Brings up all three systems' models together, each restricted to just
-            // this assessment's structures - BEFORE ShowScreen re-enables the
-            // controller, since AnatomyScreenController.OnEnable is what walks the
-            // models and builds a collider per mesh piece. See
-            // BaselineAssessmentController.PrepareCombinedSession.
+           
             GetBaselineAssessmentController()?.PrepareCombinedSession();
 
             ShowScreen(studentAnatomyScreen, _studentAnatomyScreenController, () =>
@@ -644,31 +521,27 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        /// <summary>Same as ShowStudentClassroomDetail, but lands on the Available Quizzes
-        /// tab. Used by FCMNotificationService when a student taps a "quiz closes soon"
-        /// reminder - they came for the quiz, not the Overview tab's announcements.</summary>
+ 
         public void ShowStudentClassroomDetailOnQuizzesTab(string classroomId, string classroomName, string instructorName)
         {
             ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
             {
                 if (_studentClassroomDetailController == null) return;
 
-                // Identity first: it triggers the content load, and OnEnable has already
-                // forced the Overview tab by this point, so the tab switch has to come after.
+          
                 _studentClassroomDetailController.SetClassroomIdentity(classroomId, classroomName, instructorName);
                 _studentClassroomDetailController.OpenQuizzesTab();
             });
         }
 
-        /// <summary>Same as ShowStudentClassroomDetail, but lands on the Materials tab. Used
-        /// by FCMNotificationService when a student taps a "new material" notification.</summary>
+       
         public void ShowStudentClassroomDetailOnMaterialsTab(string classroomId, string classroomName, string instructorName)
         {
             ShowScreen(studentClassroomDetailScreen, _studentClassroomDetailController, () =>
             {
                 if (_studentClassroomDetailController == null) return;
 
-                // Identity first, tab switch after - same ordering rule as the Quizzes variant.
+              
                 _studentClassroomDetailController.SetClassroomIdentity(classroomId, classroomName, instructorName);
                 _studentClassroomDetailController.OpenMaterialsTab();
             });
@@ -682,10 +555,7 @@ private IEnumerator DecideInitialScreen()
             });
         }
 
-        /// <summary>Screen to return to when the Notifications back button is
-        /// tapped. Set by ShowStudentNotifications() to whichever screen opened
-        /// it (Dashboard, Profile, ...); defaults to Dashboard if none was
-        /// given, since that's the original/most common entry point.</summary>
+      
         private Action _notificationsReturnAction;
 
         /// <param name="returnAction">Call this to go back to the screen that's
@@ -697,8 +567,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(studentNotificationsScreen, _studentNotificationsController);
         }
 
-        /// <summary>Called by StudentNotificationsController's back button -
-        /// returns to whichever screen opened Notifications.</summary>
+     
         public void ReturnFromStudentNotifications()
         {
             var action = _notificationsReturnAction ?? ShowStudentDashboard;
@@ -757,10 +626,7 @@ private IEnumerator DecideInitialScreen()
             ShowScreen(adminAnalyticsReportsScreen, _adminAnalyticsController);
         }
 
-        /// <summary>Teacher's "View Submissions" list for one File Submission
-        /// assignment - called from AdminQuizManagementController's quiz detail
-        /// view, which only shows that button for a quiz whose SubmissionType is
-        /// SubmissionTypes.File.</summary>
+        
         public void ShowAdminSubmissionReview(string quizId, string classroomId, string quizTitle, int pointsPossible, int passingScorePercent)
         {
             ShowScreen(adminSubmissionReviewScreen, _adminSubmissionReviewController, () =>
@@ -811,10 +677,6 @@ private IEnumerator DecideInitialScreen()
                 return;
             }
 
-            // UI Toolkit doesn't release focus (or close the on-screen keyboard)
-            // just because the focused element is about to be removed from the
-            // tree. Force a blur here so the keyboard actually closes and no
-            // stale focus state carries over to the next screen.
             CloseKeyboard();
 
             if (_root != null)
@@ -843,22 +705,12 @@ private IEnumerator DecideInitialScreen()
             Debug.Log($"[UIManager] Showing {controller?.GetType().Name}");
         }
 
-        /// <summary>
-        /// Enter animation for student screens:
-        ///  1. the whole screen fades in,
-        ///  2. the header slides down into place,
-        ///  3. the body sections (direct children of "content-wrapper", or the items of a "*-list"
-        ///     section) fade and slide up one after another.
-        /// Only opacity/translate are animated (never scale), so it cannot interfere with FitToScreen,
-        /// which scales "content-wrapper". Cards that a controller builds later (classroom cards,
-        /// notification rows) are animated by that controller. Everything is null-safe.
-        /// </summary>
+      
         private void PlayStudentScreenEnter()
         {
             UIAnimationUtility.DebugLog = debugScreenAnimations;
 
-            // Most screens use screen-root / header / content-wrapper; File Submission has its own names.
-            // Tap feedback on every button already on this screen (idempotent).
+         
             UIAnimationUtility.AddPressFeedbackToAll(_root);
 
             var screenRoot = _root.Q<VisualElement>("screen-root") ?? _root.Q<VisualElement>("file-submission-root")
@@ -893,21 +745,7 @@ private IEnumerator DecideInitialScreen()
                 step: 0.07f, startDelay: 0.12f, duration: 0.4f, distance: 50f, maxCount: 8);
         }
 
-        /// <summary>
-        /// Blurs whatever element currently has keyboard focus (e.g. a TextField
-        /// left focused on the current screen) and closes the mobile on-screen
-        /// keyboard if one is open. UI Toolkit does not do this automatically -
-        /// not on tree rebuild, and not just because a button was clicked - so
-        /// call this explicitly.
-        ///
-        /// ShowScreen() already calls this on every screen transition, so you
-        /// don't need to call it yourself when navigating to another screen.
-        /// Call it directly from a controller when a "Done"/"Save"/"Submit"
-        /// action should close the keyboard WITHOUT necessarily leaving the
-        /// current screen (e.g. StudentEditProfileController staying on-screen
-        /// after a pending email change, or AnatomyPlayModeController's letter-box
-        /// Submit).
-        /// </summary>
+      
         public void CloseKeyboard()
         {
             if (_root?.panel?.focusController != null)
@@ -916,11 +754,7 @@ private IEnumerator DecideInitialScreen()
                 focused?.Blur();
             }
 
-            // Blur() alone is not reliable on real Android devices when focus
-            // is dropped by script (e.g. navigating away) rather than the user
-            // tapping somewhere else on screen - the IME window can be left
-            // open even though UI Toolkit's own focus state is correctly
-            // cleared. Ask Android's InputMethodManager directly as a backup.
+           
             ForceHideAndroidKeyboard();
         }
 
@@ -968,7 +802,7 @@ private IEnumerator DecideInitialScreen()
                 controller.enabled = false;
                 controller.enabled = true;
                 onReady?.Invoke();
-                Debug.Log($"[UIManager] Controller initialized: {controller.GetType().Name}");
+              //  Debug.Log($"[UIManager] Controller initialized: {controller.GetType().Name}");
             }
         }
 
@@ -982,7 +816,6 @@ private IEnumerator DecideInitialScreen()
             if (_studentAchievementsController != null) _studentAchievementsController.enabled = false;
             if (_studentProfileController != null) _studentProfileController.enabled = false;
             if (_studentClassroomController != null) _studentClassroomController.enabled = false;
-            if (_studentQuizSelectionController != null) _studentQuizSelectionController.enabled = false;
             if (_studentQuizGameplayController != null) _studentQuizGameplayController.enabled = false;
             if (_studentFileSubmissionController != null) _studentFileSubmissionController.enabled = false;
             if (_studentQuizResultController != null) _studentQuizResultController.enabled = false;
@@ -1023,11 +856,7 @@ private IEnumerator DecideInitialScreen()
             }
         }
 
-        /// <summary>Call after this student's classroom enrollment changes (e.g. right
-        /// after StudentClassroomController.OnJoinResult's join succeeds) so
-        /// StudentClassroomHub re-fetches instead of showing a stale "My Classrooms"
-        /// list next time it's opened. See StudentClassroomHubController.
-        /// InvalidateClassrooms().</summary>
+
         public void InvalidateStudentClassroomHub()
         {
             _studentClassroomHubController?.InvalidateClassrooms();

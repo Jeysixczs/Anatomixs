@@ -646,9 +646,40 @@
 .classroom-card-top-row
 {
     flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+/* Rounded icon tile (classroom-icon.png, tinted green) */
+.classroom-card-icon-tile
+{
+    width: 104px;
+    height: 104px;
+    border-radius: 30px;
+    background-color: rgb(209, 250, 229);
+    justify-content: center;
+    align-items: center;
+    margin-right: 28px;
+    flex-shrink: 0;
+}
+
+.classroom-card-icon
+{
+    width: 56px;
+    height: 56px;
+    background-image: url("project://database/Assets/UI/Icons/classroom-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(5, 150, 105);
+}
+
+.classroom-card-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 20px;
 }
 
 .classroom-name-label
@@ -656,10 +687,15 @@
     font-size: 36px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
-    flex-shrink: 1;
-    flex-grow: 1;
     white-space: normal;
-    margin-right: 20px;
+    margin-bottom: 6px;
+}
+
+.classroom-card-side
+{
+    flex-shrink: 0;
+    align-items: flex-end;
+    align-self: flex-start;
 }
 
 .classroom-code-badge
@@ -681,12 +717,38 @@
     letter-spacing: 1px;
 }
 
+.classroom-teacher-row
+{
+    flex-direction: row;
+    align-items: center;
+}
+
+.classroom-teacher-icon
+{
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/student-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(150, 155, 168);
+}
+
 .classroom-teacher-label
 {
     font-size: 26px;
     color: rgb(138, 143, 163);
-    margin-bottom: 26px;
     white-space: normal;
+    flex-shrink: 1;
+}
+
+.classroom-card-divider
+{
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.06);
+    margin-bottom: 26px;
 }
 
 .classroom-card-bottom-row
@@ -696,44 +758,113 @@
     align-items: center;
 }
 
+/* Students chip (users-icon.png) */
 .classroom-students-row
 {
     flex-direction: row;
     align-items: center;
+    background-color: rgb(243, 246, 250);
+    border-radius: 26px;
+    padding: 10px 22px 10px 18px;
 }
 
 .classroom-students-icon
 {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     margin-right: 12px;
-    background-image: url("project://database/Assets/UI/Icons/userclassroom-icon.png");
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/users-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: rgb(150, 155, 168);
+    -unity-background-image-tint-color: rgb(37, 99, 235);
 }
 
 .classroom-students-label
 {
     font-size: 26px;
-    color: rgb(120, 123, 140);
+    color: rgb(75, 85, 99);
 }
 
+/* Pill button with a chevron (back-icon.png rotated 180deg) */
+/* Pill button: label + chevron laid out in a row (no overlap at any width) */
 .view-classroom-button
 {
-    background-color: transparent;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: rgb(239, 246, 255);
     border-width: 0;
-    padding: 0;
+    border-radius: 28px;
+    padding: 16px 26px 16px 32px;
     margin: 0;
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: rgb(37, 99, 235);
 }
 
 .view-classroom-button:hover
 {
+    background-color: rgb(219, 234, 254);
+}
+
+.classroom-card-button-label
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+}
+
+.view-classroom-button:hover .classroom-card-button-label
+{
     color: rgb(29, 78, 216);
+}
+
+/* back-icon.png rotated 180deg = right-pointing chevron, sits after the label */
+.classroom-card-chevron
+{
+    width: 24px;
+    height: 24px;
+    margin-left: 14px;
+    flex-shrink: 0;
+    rotate: 180deg;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(37, 99, 235);
+}
+
+.compact .classroom-card-icon-tile
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 24px;
+    margin-right: 20px;
+}
+
+.compact .classroom-card-icon
+{
+    width: 44px;
+    height: 44px;
+}
+
+.view-classroom-button-disabled
+{
+    background-color: rgb(243, 244, 246);
+    padding-right: 32px;
+}
+
+.view-classroom-button-disabled .classroom-card-button-label
+{
+    color: rgb(156, 163, 175);
+}
+
+.view-classroom-button-disabled .classroom-card-chevron
+{
+    display: none;
 }
 
 /* ---------- Utility ---------- */
