@@ -89,20 +89,24 @@
 
 /* ---------------- SYNC ROW ---------------- */
 
-/* Frosted-glass row that belongs to the header: translucent white over the
-   blue->green gradient with a soft light edge, white text, and white circle
-   badges - the same white-on-gradient language as the back button and the
-   Play pill. Icon PNGs are single-color black, so their color comes from
-   -unity-background-image-tint-color. */
+/* Same white-on-gradient language as the back button and Play pill:
+   frosted translucent row over the blue->green header, white text, white
+   badges that carry the only color (Play-pill blue / app green / amber / red).
+   Layout:  (cloud badge) [title / status text] [white state pill]
+            [---------- progress bar (syncing only) ----------]
+   Hooks kept for the controller: sync-progress-button, sync-icon,
+   sync-title-label, sync-status-label, sync-status-icon-box (+ .sync-status-icon-*),
+   sync-status-icon. New: sync-chip-label, sync-bar-track, sync-bar-fill,
+   .sync-row-syncing (on the button), .sync-bar-fill-end (sweep toggle). */
 .sync-progress-row {
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
     height: auto;
-    min-height: 116px;
+    min-height: 128px;
     margin: 34px 0 0 0;
-    padding: 20px 26px 20px 20px;
+    padding: 22px 26px 30px 22px;
     box-sizing: border-box;
     background-color: rgba(255, 255, 255, 0.18);
     border-width: 2px;
@@ -112,21 +116,21 @@
     transition-property: background-color, scale;
     transition-duration: 0.12s;
 }
-.sync-progress-row:hover { background-color: rgba(255, 255, 255, 0.26); }
+.sync-progress-row:hover  { background-color: rgba(255, 255, 255, 0.26); }
 .sync-progress-row:active { background-color: rgba(255, 255, 255, 0.34); scale: 0.985 0.985; }
-.sync-progress-row:disabled { opacity: 0.85; }
-.sync-progress-row:focus { border-width: 2px; border-color: rgba(255, 255, 255, 0.32); }
+.sync-progress-row:disabled { opacity: 1; }
+.sync-progress-row:focus  { border-width: 2px; border-color: rgba(255, 255, 255, 0.32); }
 
 /* Left badge: white circle, blue cloud (same blue as the Play pill text) */
 .sync-icon-box {
-    width: 76px; height: 76px; border-radius: 38px;
+    width: 80px; height: 80px; border-radius: 40px;
     background-color: rgb(255, 255, 255);
     justify-content: center; align-items: center;
     flex-shrink: 0;
     margin-right: 22px;
 }
 .sync-icon {
-    width: 40px; height: 40px;
+    width: 42px; height: 42px;
     -unity-background-image-tint-color: rgb(37, 99, 235);
 }
 
@@ -144,17 +148,28 @@
     white-space: normal;
 }
 
-/* Right badge: white circle; only the icon carries the state color */
+/* Right: white state pill (like the Play pill). Only the icon and the
+   one-word label take the state color. */
 .sync-status-icon-box {
-    width: 64px; height: 64px; border-radius: 32px;
-    background-color: rgb(255, 255, 255);
-    justify-content: center; align-items: center;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 62px;
+    padding: 0 24px 0 18px;
+    border-radius: 31px;
     flex-shrink: 0;
     margin-left: 18px;
+    background-color: rgb(255, 255, 255);
 }
 .sync-status-icon {
-    width: 34px; height: 34px;
-    -unity-background-image-tint-color: rgb(22, 150, 95);
+    width: 30px; height: 30px;
+    margin-right: 10px;
+    -unity-background-image-tint-color: rgb(37, 99, 235);
+}
+.sync-chip-label {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(37, 99, 235);
 }
 
 .sync-status-icon-synced  .sync-status-icon { -unity-background-image-tint-color: rgb(22, 150, 95); }
@@ -162,6 +177,38 @@
 .sync-status-icon-syncing .sync-status-icon { -unity-background-image-tint-color: rgb(37, 99, 235); }
 .sync-status-icon-failed  .sync-status-icon { -unity-background-image-tint-color: rgb(220, 38, 38); }
 .sync-status-icon-offline .sync-status-icon { -unity-background-image-tint-color: rgb(107, 114, 128); }
+
+.sync-status-icon-synced  .sync-chip-label { color: rgb(22, 150, 95); }
+.sync-status-icon-pending .sync-chip-label { color: rgb(217, 119, 6); }
+.sync-status-icon-syncing .sync-chip-label { color: rgb(37, 99, 235); }
+.sync-status-icon-failed  .sync-chip-label { color: rgb(220, 38, 38); }
+.sync-status-icon-offline .sync-chip-label { color: rgb(107, 114, 128); }
+
+/* Indeterminate progress bar along the row's bottom edge (syncing only):
+   translucent white track, solid white sweep. */
+.sync-bar-track {
+    position: absolute;
+    left: 28px; right: 28px; bottom: 12px;
+    height: 7px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.28);
+    overflow: hidden;
+    display: none;
+}
+.sync-row-syncing .sync-bar-track { display: flex; }
+
+.sync-bar-fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0%;
+    width: 34%;
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+    transition-property: left;
+    transition-duration: 0.9s;
+    transition-timing-function: ease-in-out;
+}
+.sync-bar-fill.sync-bar-fill-end { left: 66%; }
 
 /* ---------------- SCROLL VIEW (unchanged fixes) ---------------- */
 

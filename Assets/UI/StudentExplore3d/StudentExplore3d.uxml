@@ -26,6 +26,10 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="sync-status-icon-box" picking-mode="Ignore" class="sync-status-icon-box sync-status-icon-syncing">
                         <ui:Image name="sync-status-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-status-icon"/>
+                        <ui:Label name="sync-chip-label" text="Syncing" picking-mode="Ignore" class="sync-chip-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="sync-bar-track" picking-mode="Ignore" class="sync-bar-track">
+                        <ui:VisualElement name="sync-bar-fill" picking-mode="Ignore" class="sync-bar-fill"/>
                     </ui:VisualElement>
                 </ui:Button>
             </ui:VisualElement>

@@ -61,6 +61,12 @@ public class StudentExplore3dController : MonoBehaviour
     private Image _syncStatusIcon;
     private Image _syncIcon;
 
+    private Label _syncChipLabel;
+    private VisualElement _syncBarFill;
+    private IVisualElementScheduledItem _syncAnim;
+    private float _syncSpinAngle;
+    private int _syncAnimTick;
+
     // Icons are loaded by name from Resources/Icons at runtime (see
     // LoadSyncIcon below) rather than baked into the UXML, so drop the
     // corresponding .png/.jpg files into Assets/Resources/Icons/ with these
@@ -126,6 +132,7 @@ public class StudentExplore3dController : MonoBehaviour
             syncService.OnStatusChanged -= HandleSyncStatusChanged;
 
         if (_syncProgressButton != null) _syncProgressButton.clicked -= OnSyncProgressButtonClicked;
+        StopSyncAnimation();
 
         if (_screenRoot == null) return;
 
@@ -174,10 +181,17 @@ public class StudentExplore3dController : MonoBehaviour
         _syncStatusIconBox = _screenRoot.Q<VisualElement>("sync-status-icon-box");
         _syncStatusIcon = _screenRoot.Q<Image>("sync-status-icon");
         _syncIcon = _screenRoot.Q<Image>("sync-icon");
+        _syncChipLabel = _screenRoot.Q<Label>("sync-chip-label");
+        _syncBarFill = _screenRoot.Q<VisualElement>("sync-bar-fill");
 
         // Static left-hand cloud icon never changes with sync state, so it's
         // set once here instead of in HandleSyncStatusChanged.
-        if (_syncIcon != null) _syncIcon.image = LoadSyncIcon("sync_icon_cloud");
+        if (_syncIcon != null)
+        {
+            _syncIcon.image = LoadSyncIcon("sync_icon_cloud");
+            // The icon PNGs have their colors baked in; white = no tint change.
+            _syncIcon.tintColor = Color.white;
+        }
 
         _skeletalImageFade = _screenRoot.Q<VisualElement>("skeletal-image-fade");
         _muscularImageFade = _screenRoot.Q<VisualElement>("muscular-image-fade");
@@ -360,7 +374,32 @@ public class StudentExplore3dController : MonoBehaviour
     // SyncStatusIconClasses) to match the current sync state.
     private void SetSyncStatusIcon(string iconResourceName, string activeClass)
     {
-        if (_syncStatusIcon != null) _syncStatusIcon.image = LoadSyncIcon(iconResourceName);
+        if (_syncStatusIcon != null)
+        {
+            _syncStatusIcon.image = LoadSyncIcon(iconResourceName);
+            _syncStatusIcon.tintColor = Color.white; // colors are baked into each state PNG
+        }
+
+        if (_syncChipLabel != null)
+        {
+            switch (activeClass)
+            {
+                case "sync-status-icon-synced":  _syncChipLabel.text = "Synced"; break;
+                case "sync-status-icon-pending": _syncChipLabel.text = "Pending"; break;
+                case "sync-status-icon-failed":  _syncChipLabel.text = "Retry"; break;
+                case "sync-status-icon-offline": _syncChipLabel.text = "Offline"; break;
+                default:                         _syncChipLabel.text = "Syncing"; break;
+            }
+        }
+
+        // Spinner + sweeping bar only while a sync is actually running.
+        bool syncing = activeClass == "sync-status-icon-syncing";
+        if (_syncProgressButton != null)
+        {
+            if (syncing) _syncProgressButton.AddToClassList("sync-row-syncing");
+            else _syncProgressButton.RemoveFromClassList("sync-row-syncing");
+        }
+        if (syncing) StartSyncAnimation(); else StopSyncAnimation();
 
         if (_syncStatusIconBox == null) return;
 
@@ -369,6 +408,37 @@ public class StudentExplore3dController : MonoBehaviour
             if (cls == activeClass) _syncStatusIconBox.AddToClassList(cls);
             else _syncStatusIconBox.RemoveFromClassList(cls);
         }
+    }
+
+    // Spins the right-hand status icon and sweeps the indeterminate bar.
+    // One 30 ms scheduler item drives both; it's stopped (and the icon reset)
+    // the moment the state leaves "syncing".
+    private void StartSyncAnimation()
+    {
+        if (_syncAnim != null) { _syncAnim.Resume(); return; }
+        if (_syncStatusIcon == null && _syncBarFill == null) return;
+
+        _syncAnim = (_syncStatusIcon ?? _syncBarFill).schedule.Execute(() =>
+        {
+            if (_syncStatusIcon != null)
+            {
+                _syncSpinAngle = (_syncSpinAngle + 10f) % 360f;
+                _syncStatusIcon.style.rotate = new StyleRotate(new Rotate(new Angle(_syncSpinAngle, AngleUnit.Degree)));
+            }
+
+            // Flip the bar between its two ends every ~0.9 s (USS transition animates it).
+            if (_syncBarFill != null && ++_syncAnimTick % 30 == 1)
+                _syncBarFill.ToggleInClassList("sync-bar-fill-end");
+        }).Every(30);
+    }
+
+    private void StopSyncAnimation()
+    {
+        if (_syncAnim != null) { _syncAnim.Pause(); _syncAnim = null; }
+        _syncSpinAngle = 0f;
+        _syncAnimTick = 0;
+        if (_syncStatusIcon != null) _syncStatusIcon.style.rotate = StyleKeyword.Null;
+        if (_syncBarFill != null) _syncBarFill.RemoveFromClassList("sync-bar-fill-end");
     }
 
     // Loads a sync icon by name from Assets/Resources/Icons/<name>.
