@@ -1,9 +1,10 @@
 /* ==========================================================
-   Anatomy Systems - USS (ENLARGED VERSION)
-   Reference resolution: 1080 x 1920
-   Use Panel Settings > Scale Mode = "Scale With Screen Size"
-   with Reference Resolution = 1080 x 1920 and
-   Screen Match Mode = 0.5 for best responsiveness.
+   Student Explore 3D - redesign
+   Reference resolution: 1080 x 1920 (Scale With Screen Size)
+   Element names / class hooks used by StudentExplore3dController
+   are unchanged: .card, .icon-skeletal/.icon-muscular/.icon-cardio,
+   .card-image-fade, .hidden, .card-play-armed,
+   .play-mode-entry-button-active, .sync-status-icon-*.
    ========================================================== */
 
 .screen-root {
@@ -11,7 +12,7 @@
     height: 100%;
     flex-grow: 1;
     flex-direction: column;
-    background-color: rgb(243, 244, 248);
+    background-color: rgb(238, 242, 249);
     overflow: hidden;
 }
 
@@ -19,56 +20,42 @@
 
 .header {
     width: 100%;
-    border-bottom-left-radius: 60px;
-    border-bottom-right-radius: 60px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
+    border-bottom-left-radius: 64px;
+    border-bottom-right-radius: 64px;
+    padding: 100px 50px 46px 50px;
     flex-shrink: 0;
     flex-direction: column;
 }
 
-.header-top-row {
-    flex-direction: row;
-    align-items: center;
-}
+.header-top-row { flex-direction: row; align-items: center; }
 
 .back-button {
-    width: 88px;
-    height: 88px;
-    border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
-    justify-content: center;
-    align-items: center;
-    margin-right: 30px;
+    width: 88px; height: 88px; border-radius: 44px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-width: 0;
+    justify-content: center; align-items: center;
+    margin: 0 30px 0 0;
     flex-shrink: 0;
 }
+.back-button:hover { background-color: rgba(255, 255, 255, 0.3); }
+.back-button:active { background-color: rgba(255, 255, 255, 0.4); }
 
 .back-icon {
-    width: 40px;
-    height: 40px;
-    background-image: url("project://database/Assets/UI/Icons/back-icon.png?fileID=2800000&guid=654673ba2b0b2264293f6bc9049c798e&type=3#back-icon");
+    width: 40px; height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     -unity-background-image-tint-color: white;
 }
 
-.header-text {
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    min-width: 0;
-}
+.header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
 
 .header-title {
-    font-size: 44px;
+    font-size: 54px;
     -unity-font-style: bold;
     color: white;
     white-space: normal;
-    word-wrap: break-word;
 }
 
 .header-subtitle {
@@ -76,285 +63,191 @@
     color: rgba(255, 255, 255, 0.85);
     margin-top: 6px;
     white-space: normal;
-    word-wrap: break-word;
 }
 
-/* ---------------- PLAY MODE ENTRY BUTTON ---------------- */
+/* ---------------- PLAY BUTTON (white pill, stands out from header) ---------------- */
 
 .play-mode-entry-button {
     flex-shrink: 0;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
     align-self: center;
     width: auto;
-    height: 64px;
-    padding-left: 26px;
-    padding-right: 26px;
-    margin-left: 12px;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
+    height: 72px;
+    padding: 0 34px;
+    margin: 0 0 0 12px;
     border-width: 0;
-    border-radius: 32px;
-    background-color: rgba(255, 255, 255, 0.18);
-    color: white;
-    font-size: 26px;
+    border-radius: 36px;
+    background-color: white;
+    color: rgb(37, 99, 235);
+    font-size: 28px;
     -unity-font-style: bold;
 }
+.play-mode-entry-button:hover { background-color: rgb(240, 245, 255); }
+.play-mode-entry-button:active { background-color: rgb(225, 235, 255); }
 
-.play-mode-entry-button:hover {
-    background-color: rgba(255, 255, 255, 0.28);
+.play-mode-entry-button-active { background-color: rgb(34, 160, 110); color: white; }
+.play-mode-entry-button-active:hover { background-color: rgb(30, 145, 100); }
+
+/* ---------------- SYNC ROW ---------------- */
+
+/* Frosted-glass row that belongs to the header: translucent white over the
+   blue->green gradient with a soft light edge, white text, and white circle
+   badges - the same white-on-gradient language as the back button and the
+   Play pill. Icon PNGs are single-color black, so their color comes from
+   -unity-background-image-tint-color. */
+.sync-progress-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: auto;
+    min-height: 116px;
+    margin: 34px 0 0 0;
+    padding: 20px 26px 20px 20px;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.32);
+    border-radius: 34px;
+    -unity-font-style: normal;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+.sync-progress-row:hover { background-color: rgba(255, 255, 255, 0.26); }
+.sync-progress-row:active { background-color: rgba(255, 255, 255, 0.34); scale: 0.985 0.985; }
+.sync-progress-row:disabled { opacity: 0.85; }
+.sync-progress-row:focus { border-width: 2px; border-color: rgba(255, 255, 255, 0.32); }
+
+/* Left badge: white circle, blue cloud (same blue as the Play pill text) */
+.sync-icon-box {
+    width: 76px; height: 76px; border-radius: 38px;
+    background-color: rgb(255, 255, 255);
+    justify-content: center; align-items: center;
+    flex-shrink: 0;
+    margin-right: 22px;
+}
+.sync-icon {
+    width: 40px; height: 40px;
+    -unity-background-image-tint-color: rgb(37, 99, 235);
 }
 
-.play-mode-entry-button:active {
-    background-color: rgba(255, 255, 255, 0.36);
+.sync-text-col { flex-grow: 1; flex-shrink: 1; flex-direction: column; min-width: 0; }
+.sync-title-label {
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    white-space: normal;
+}
+.sync-status-label {
+    font-size: 23px;
+    color: rgba(255, 255, 255, 0.88);
+    margin-top: 4px;
+    white-space: normal;
 }
 
-/* While Play Mode picking is armed - matches the toolbar's own
-   .toolbar-btn-active green accent (AnatomyScreen.uss) so the "on" state
-   reads the same way across the app. */
-.play-mode-entry-button-active {
-    background-color: rgb(34, 160, 110);
-    color: white;
+/* Right badge: white circle; only the icon carries the state color */
+.sync-status-icon-box {
+    width: 64px; height: 64px; border-radius: 32px;
+    background-color: rgb(255, 255, 255);
+    justify-content: center; align-items: center;
+    flex-shrink: 0;
+    margin-left: 18px;
+}
+.sync-status-icon {
+    width: 34px; height: 34px;
+    -unity-background-image-tint-color: rgb(22, 150, 95);
 }
 
-.play-mode-entry-button-active:hover {
-    background-color: rgb(30, 145, 100);
+.sync-status-icon-synced  .sync-status-icon { -unity-background-image-tint-color: rgb(22, 150, 95); }
+.sync-status-icon-pending .sync-status-icon { -unity-background-image-tint-color: rgb(217, 119, 6); }
+.sync-status-icon-syncing .sync-status-icon { -unity-background-image-tint-color: rgb(37, 99, 235); }
+.sync-status-icon-failed  .sync-status-icon { -unity-background-image-tint-color: rgb(220, 38, 38); }
+.sync-status-icon-offline .sync-status-icon { -unity-background-image-tint-color: rgb(107, 114, 128); }
+
+/* ---------------- SCROLL VIEW (unchanged fixes) ---------------- */
+
+.screen-scroll {
+    flex-grow: 1; width: 100%; height: 100%;
+    padding: 0; margin: 0;
+    justify-content: flex-start; align-items: flex-start;
 }
 
-/* ---------------- PLAY MODE PICKER BANNER ---------------- */
+.screen-scroll .unity-scroller--vertical,
+.screen-scroll #unity-scroller { width: 0; display: none; }
 
-/* Sits above the card list once Play Mode is armed and tells the student
-   their next tap on a card launches that system in Play Mode instead of
-   Explore Mode - the card list itself is the picker, this is just the
-   instruction + a way out. */
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
+    padding: 0; margin: 0; flex-grow: 1; height: 100%;
+}
+
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+    padding: 0; margin: 0;
+    translate: none;
+    transform-origin: center;
+    position: relative; top: 0; left: 0;
+    justify-content: flex-start; align-items: stretch;
+    flex-grow: 0;
+    height: auto; min-height: 100%;
+}
+
+/* ---------------- CONTENT ---------------- */
+
+.content-wrapper {
+    width: 100%;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 0; margin: 0;
+}
+
+/* Play Mode banner */
 .play-mode-picker-banner {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    background-color: rgb(230, 247, 240);
-    border-radius: 24px;
+    background-color: rgb(225, 246, 237);
+    border-radius: 28px;
+    border-width: 2px;
+    border-color: rgb(120, 205, 165);
     padding: 22px 26px;
-    margin-left: 50px;
-    margin-right: 50px;
-    margin-top: 30px;
+    margin: 34px 50px 0 50px;
     box-sizing: border-box;
 }
-
-.play-mode-picker-banner.hidden {
-    display: none;
-}
+.play-mode-picker-banner.hidden { display: none; }
 
 .play-mode-picker-banner-label {
     font-size: 26px;
     -unity-font-style: bold;
     color: rgb(20, 110, 75);
     white-space: normal;
-    word-wrap: break-word;
-    flex-grow: 1;
-    flex-shrink: 1;
+    flex-grow: 1; flex-shrink: 1;
     margin-right: 16px;
 }
 
 .play-mode-picker-cancel {
-    align-self: center;
-    flex-shrink: 0;
-    width: auto;
-    height: 52px;
-    padding-left: 24px;
-    padding-right: 24px;
-    border-width: 0;
-    border-radius: 26px;
-    background-color: rgb(255, 255, 255);
+    align-self: center; flex-shrink: 0;
+    width: auto; height: 54px;
+    padding: 0 26px;
+    border-width: 0; border-radius: 27px;
+    background-color: white;
     color: rgb(20, 110, 75);
     font-size: 24px;
     -unity-font-style: bold;
 }
-
-.play-mode-picker-cancel:hover {
-    background-color: rgb(245, 245, 245);
-}
-
-/* Applied to each .card while Play Mode is armed, so it's visually
-   obvious tapping a card right now starts a game rather than opening
-   Explore Mode - a colored ring rather than moving/hiding anything, so
-   layout never shifts when picking mode toggles on. */
-.card-play-armed {
-    border-width: 3px;
-    border-color: rgb(34, 160, 110);
-}
-
-/* ---------------- SYNC PROGRESS ---------------- */
-
-/* Sits below the header-top-row, above the card list. StudentExplore3dController
-   sets both the button text and the status label text/color from
-   AnatomyPlayModeSyncService's current state (synced/pending/offline/
-   syncing/failed) - the classes below only cover layout, not per-state
-   coloring, which is applied inline via USS class swaps below. */
-.sync-progress-row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: rgba(255, 255, 255, 0.16);
-    border-radius: 26px;
-    padding: 18px 24px;
-    margin-top: 24px;
-    box-sizing: border-box;
-    width: 100%;
-    height: auto;
-    border-width: 0;
-    -unity-font-style: normal;
-}
-
-.sync-progress-row:hover {
-    background-color: rgba(255, 255, 255, 0.24);
-}
-
-.sync-progress-row:active {
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-.sync-progress-row:disabled {
-    opacity: 0.7;
-}
-
-.sync-progress-row:focus {
-    border-width: 0;
-}
-
-/* White circular badge on the left holding the cloud glyph */
-.sync-icon-box {
-    width: 76px;
-    height: 76px;
-    border-radius: 38px;
-    background-color: rgb(255, 255, 255);
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    margin-right: 24px;
-}
-
-.sync-icon {
-    width: 40px;
-    height: 40px;
-}
-
-.sync-text-col {
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.sync-title-label {
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-.sync-status-label {
-    font-size: 22px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 4px;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-/* White circular badge on the right showing sync state (check / warning / spinner / cloud) */
-.sync-status-icon-box {
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
-    background-color: rgb(255, 255, 255);
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    margin-left: 20px;
-}
-
-.sync-status-icon {
-    width: 30px;
-    height: 30px;
-}
-
-/* No more per-state color tint here - each state now loads its own colored
-   icon asset (see SetSyncStatusIcon in StudentExplore3dController.cs), so
-   the color lives in the image file itself, not in USS. The
-   .sync-status-icon-* classes are still swapped onto sync-status-icon-box
-   in case you want to vary the badge background/border per state. */
-
-/* ---------------- SCROLL VIEW ---------------- */
-
-.screen-scroll {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-
-/* Hide scrollbar completely (descendant selector - the scroller lives inside
-   #unity-content-and-vertical-scroll-container, not as a direct child) */
-.screen-scroll .unity-scroller--vertical,
-.screen-scroll #unity-scroller {
-    width: 0;
-    display: none;
-}
-
-/* Fix the content viewport to fill the scroll view */
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    padding: 0;
-    margin: 0;
-    flex-grow: 1;
-    height: 100%;
-}
-
-/* CRITICAL: Reset the translate transform on the content container */
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
-{
-    padding: 0;
-    margin: 0;
-    translate: none;
-    transform-origin: center;
-    position: relative;
-    top: 0;
-    left: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-    flex-grow: 0;
-    height: auto;
-    min-height: 100%;
-}
-
-/* ---------------- CONTENT WRAPPER ---------------- */
-
-.content-wrapper {
-    width: 100%;
-    flex-direction: column;
-    padding: 0;
-    max-width: 100%;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-    flex-shrink: 0;
-}
+.play-mode-picker-cancel:hover { background-color: rgb(245, 245, 245); }
 
 /* ---------------- CARD LIST ---------------- */
 
 .card-list {
     flex-direction: column;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 36px;
-    padding-bottom: 52px;
+    padding: 40px 50px 70px 50px;
     width: 100%;
     box-sizing: border-box;
+}
+
+.section-label {
+    font-size: 24px;
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+    color: rgb(120, 128, 150);
+    margin: 0 0 22px 8px;
 }
 
 /* ---------------- CARD ---------------- */
@@ -362,579 +255,144 @@
 .card {
     flex-direction: row;
     align-items: stretch;
-    background-color: rgb(255, 255, 255);
-    border-radius: 30px;
-    padding: 30px;
-    margin-bottom: 30px;
+    background-color: white;
+    border-radius: 40px;
+    padding: 0;
+    margin: 0 0 32px 0;
     width: 100%;
+    min-height: 310px;
     box-sizing: border-box;
     overflow: hidden;
 }
 
-/* Body-system image on the right of each card. align-items: stretch on
-   .card makes this element's height match the row's content height (driven
-   by .icon-box), then the negative top/right/bottom margins push it out
-   through the card's own padding so it bleeds flush to the top, right and
-   bottom edges - overflow: hidden on .card clips it to the rounded corners. */
-.card-image {
-    width: 240px;
-    flex-shrink: 0;
-    margin-top: -30px;
-    margin-right: -30px;
-    margin-bottom: -30px;
-    margin-left: 20px;
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    position: relative;
-}
-
-/* Fades the left edge of the body-system image into the card's white
-   background so it reads as one blended photo rather than a hard-edged
-   cutout. background-image is assigned at runtime in
-   StudentExplore3dController.ApplyCardImageFades() to a white->transparent
-   horizontal gradient texture (same generated-texture approach as the
-   header's ApplyHeaderGradient), since USS has no linear-gradient(). */
-.card-image-fade {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* Must stay fully transparent here. background-color and background-image
-       are composited onto this element's OWN box before that box is drawn
-       over the .card-image photo behind it - an opaque color would hide the
-       photo everywhere, no matter what alpha the runtime gradient image
-       uses. The white side of the fade comes entirely from the gradient
-       texture's own opaque pixels (see
-       StudentExplore3dController.ApplyCardImageFades()). */
-    background-color: rgba(255, 255, 255, 0);
-    background-repeat: no-repeat;
-}
-
-/* Reset default Unity Button chrome (border/focus outline/margin) so the
-   .card-button style matches the original VisualElement look exactly. */
 .card-button {
     border-width: 0;
-    border-left-width: 0;
-    border-right-width: 0;
-    border-top-width: 0;
-    border-bottom-width: 0;
-    margin-left: 0;
-    margin-right: 0;
-    margin-top: 0;
     -unity-font-style: normal;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
 }
+.card-button:hover { background-color: rgb(250, 251, 255); }
+.card-button:active { background-color: rgb(238, 242, 252); scale: 0.985 0.985; }
+.card-button:focus { border-width: 0; }
 
-.card-button:hover {
-    background-color: rgb(250, 250, 250);
+/* Armed for Play Mode: colored ring (declared after .card-button so it wins) */
+.card-play-armed {
+    border-width: 4px;
+    border-color: rgb(34, 160, 110);
 }
+.card-play-armed:focus { border-width: 4px; }
 
-.card-button:active {
-    background-color: rgb(240, 240, 240);
-}
+/* Thin colored spine on the left edge */
+.card-accent { width: 14px; flex-shrink: 0; }
+.accent-skeletal { background-color: rgb(41, 98, 224); }
+.accent-muscular { background-color: rgb(224, 49, 63); }
+.accent-cardio   { background-color: rgb(224, 41, 130); }
 
-.card-button:focus {
-    border-width: 0;
+.card-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 34px 10px 34px 34px;
 }
 
 .icon-box {
-    width: 114px;
-    height: 114px;
-    border-radius: 28px;
-    justify-content: center;
-    align-items: center;
+    width: 96px; height: 96px;
+    border-radius: 30px;
+    justify-content: center; align-items: center;
     flex-shrink: 0;
-    margin-right: 30px;
+    margin-bottom: 22px;
 }
+.icon-skeletal { background-color: rgb(41, 98, 224); }
+.icon-muscular { background-color: rgb(224, 49, 63); }
+.icon-cardio   { background-color: rgb(224, 41, 130); }
 
 .icon-emoji {
+    width: 54px; height: 54px;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    width: 76px;
-    height: 76px;
 }
-
-.icon-skeletal .icon-emoji {
-    background-image: url("project://database/Assets/UI/Icons/bone-icon.png?fileID=2800000&guid=5f2ddac3878d0804aa57af268471e5c9&type=3#bone-icon");
-}
-
-.icon-muscular .icon-emoji {
-    background-image: url("project://database/Assets/UI/Icons/heart-icon.png?fileID=2800000&guid=851c6857ff514bd4dbbca36eb494fe14&type=3#heart-icon");
-}
-
-.icon-cardio .icon-emoji {
-    background-image: url("project://database/Assets/UI/Icons/beat-icon.png?fileID=2800000&guid=1ae2eacb79bdd984cbbb6e3fb624774b&type=3#beat-icon");
-}
-
-.icon-skeletal { background-color: rgb(41, 98, 224); }
-.icon-muscular { background-color: rgb(224, 49, 63); }
-.icon-cardio { background-color: rgb(224, 41, 130); }
-
-.card-info {
-    flex-grow: 1;
-    flex-direction: column;
-    min-width: 0;
-}
+.icon-skeletal .icon-emoji { background-image: url("project://database/Assets/UI/Icons/skull-white.png"); }
+.icon-muscular .icon-emoji { background-image: url("project://database/Assets/UI/Icons/muscular-white.png"); }
+.icon-cardio   .icon-emoji { background-image: url("project://database/Assets/UI/Icons/cardio-white.png"); }
 
 .card-title {
-    font-size: 38px;
+    font-size: 40px;
     -unity-font-style: bold;
-    color: rgb(26, 27, 38);
+    color: rgb(24, 27, 44);
     white-space: normal;
-    word-wrap: break-word;
 }
 
 .card-subtitle {
     font-size: 26px;
-    color: rgb(120, 123, 140);
-    margin-top: 4px;
+    color: rgb(112, 118, 140);
+    margin-top: 6px;
     white-space: normal;
-    word-wrap: break-word;
 }
 
-/* ---------------- PROGRESS BAR ---------------- */
-
-.progress-row {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 18px;
-    width: 100%;
+.card-cta {
+    margin-top: 22px;
+    padding: 10px 26px;
+    border-radius: 26px;
+    align-self: flex-start;
 }
+.cta-skeletal { background-color: rgb(228, 237, 255); }
+.cta-muscular { background-color: rgb(255, 230, 233); }
+.cta-cardio   { background-color: rgb(255, 228, 241); }
 
-.progress-track {
-    flex-grow: 1;
-    height: 16px;
-    border-radius: 8px;
-    background-color: rgb(228, 229, 235);
-    position: relative;
-    overflow: hidden;
-    min-width: 0;
-}
+.card-cta-label { font-size: 24px; -unity-font-style: bold; }
+.cta-label-skeletal { color: rgb(41, 98, 224); }
+.cta-label-muscular { color: rgb(200, 35, 50); }
+.cta-label-cardio   { color: rgb(200, 25, 110); }
 
-.progress-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    border-radius: 8px;
-    height: 100%;
-}
-
-.fill-skeletal { width: 75%; background-color: rgb(41, 98, 224); }
-.fill-muscular { width: 45%; background-color: rgb(224, 49, 63); }
-.fill-cardio { width: 30%; background-color: rgb(224, 41, 130); }
-
-.progress-label {
-    font-size: 26px;
-    color: rgb(120, 123, 140);
-    margin-left: 20px;
+/* Body-system picture: fills the full right side of the card, tinted panel,
+   left edge dissolves into the white card via the runtime-generated fade. */
+.card-image {
+    width: 330px;
     flex-shrink: 0;
-    min-width: 64px;
-    -unity-text-align: middle-right;
+    position: relative;
+    background-size: contain;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+}
+.image-skeletal { background-color: rgb(232, 240, 255); background-image: url("project://database/Assets/UI/Icons/skeletal-body.png"); }
+.image-muscular { background-color: rgb(255, 236, 239); background-image: url("project://database/Assets/UI/Icons/muscular-body.png"); }
+.image-cardio   { background-color: rgb(253, 233, 244); background-image: url("project://database/Assets/UI/Icons/cardio-body.png"); }
+
+.card-image-fade {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Must stay transparent - gradient texture is assigned in
+       StudentExplore3dController.ApplyCardImageFades(). */
+    background-color: rgba(255, 255, 255, 0);
+    background-repeat: no-repeat;
 }
 
-/* ---------------- PRO TIP CARD ---------------- */
+/* ---------------- PRO TIP ---------------- */
 
 .pro-tip-card {
     flex-direction: row;
     align-items: center;
-    background-color: rgb(238, 232, 252);
-    border-radius: 30px;
-    padding: 30px;
+    background-color: rgb(240, 234, 253);
+    border-radius: 36px;
+    padding: 28px 30px;
     margin-top: 6px;
     width: 100%;
     box-sizing: border-box;
 }
 
 .pro-tip-icon-box {
-    width: 90px;
-    height: 90px;
-    border-radius: 45px;
-    background-color: rgba(255, 255, 255, 0.6);
-    justify-content: center;
-    align-items: center;
+    width: 84px; height: 84px; border-radius: 42px;
+    background-color: rgba(255, 255, 255, 0.75);
+    justify-content: center; align-items: center;
     flex-shrink: 0;
-    margin-right: 26px;
+    margin-right: 24px;
 }
+.pro-tip-icon { font-size: 40px; -unity-text-align: middle-center; }
 
-.pro-tip-icon {
-    font-size: 44px;
-    -unity-text-align: middle-center;
-}
-
-.pro-tip-text-col {
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.pro-tip-title {
-    font-size: 34px;
-    -unity-font-style: bold;
-    color: rgb(90, 60, 160);
-    margin-bottom: 8px;
-}
-
-.pro-tip-text {
-    font-size: 26px;
-    color: rgb(90, 80, 120);
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-.pro-tip-chevron {
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: rgb(120, 90, 190);
-    margin-left: 16px;
-    flex-shrink: 0;
-    -unity-text-align: middle-center;
-}
-
-/* ==========================================================
-   RESPONSIVE ADJUSTMENTS - ENLARGED
-   ========================================================== */
-
-/* Compact mode for smaller screens */
-.compact .header {
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 70px;
-    padding-bottom: 40px;
-}
-
-.compact .back-button {
-    width: 68px;
-    height: 68px;
-    border-radius: 34px;
-    margin-right: 20px;
-}
-
-.compact .back-icon {
-    width: 32px;
-    height: 32px;
-}
-
-.compact .header-title {
-    font-size: 36px;
-}
-
-.compact .header-subtitle {
-    font-size: 22px;
-}
-
-.compact .play-mode-entry-button {
-    height: 52px;
-    padding-left: 20px;
-    padding-right: 20px;
-    font-size: 22px;
-}
-
-.compact .sync-progress-row {
-    padding: 14px 18px;
-    margin-top: 16px;
-    border-radius: 20px;
-}
-
-.compact .sync-icon-box {
-    width: 60px;
-    height: 60px;
-    border-radius: 30px;
-    margin-right: 18px;
-}
-
-.compact .sync-icon {
-    width: 32px;
-    height: 32px;
-}
-
-.compact .sync-title-label {
-    font-size: 24px;
-}
-
-.compact .sync-status-label {
-    font-size: 18px;
-    margin-top: 2px;
-}
-
-.compact .sync-status-icon-box {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
-    margin-left: 14px;
-}
-
-.compact .sync-status-icon {
-    width: 24px;
-    height: 24px;
-}
-
-.compact .play-mode-picker-banner {
-    margin-left: 34px;
-    margin-right: 34px;
-    margin-top: 22px;
-    padding: 18px 20px;
-}
-
-.compact .play-mode-picker-banner-label {
-    font-size: 22px;
-}
-
-.compact .play-mode-picker-cancel {
-    height: 44px;
-    padding-left: 18px;
-    padding-right: 18px;
-    font-size: 20px;
-}
-
-.compact .card-list {
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 26px;
-}
-
-.compact .card {
-    padding: 22px;
-    border-radius: 22px;
-    margin-bottom: 22px;
-}
-
-.compact .card-image {
-    width: 190px;
-    margin-top: -22px;
-    margin-right: -22px;
-    margin-bottom: -22px;
-    margin-left: 16px;
-}
-
-.compact .icon-box {
-    width: 90px;
-    height: 90px;
-    border-radius: 22px;
-    margin-right: 22px;
-}
-
-.compact .icon-emoji {
-    width: 56px;
-    height: 56px;
-}
-
-.compact .card-title {
-    font-size: 30px;
-}
-
-.compact .card-subtitle {
-    font-size: 22px;
-}
-
-.compact .progress-track {
-    height: 12px;
-}
-
-.compact .progress-label {
-    font-size: 22px;
-    min-width: 50px;
-    margin-left: 14px;
-}
-
-.compact .pro-tip-card {
-    padding: 22px;
-    border-radius: 22px;
-}
-
-.compact .pro-tip-icon-box {
-    width: 70px;
-    height: 70px;
-    border-radius: 35px;
-    margin-right: 18px;
-}
-
-.compact .pro-tip-icon {
-    font-size: 34px;
-}
-
-.compact .pro-tip-title {
-    font-size: 30px;
-}
-
-.compact .pro-tip-text {
-    font-size: 22px;
-}
-
-.compact .pro-tip-chevron {
-    font-size: 36px;
-}
-
-/* Extra compact for very small screens */
-.compact-extra .header {
-    padding-left: 26px;
-    padding-right: 26px;
-    padding-top: 60px;
-    padding-bottom: 30px;
-}
-
-.compact-extra .back-button {
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
-    margin-right: 16px;
-}
-
-.compact-extra .back-icon {
-    width: 28px;
-    height: 28px;
-}
-
-.compact-extra .header-title {
-    font-size: 30px;
-}
-
-.compact-extra .header-subtitle {
-    font-size: 20px;
-}
-
-.compact-extra .play-mode-entry-button {
-    height: 44px;
-    padding-left: 16px;
-    padding-right: 16px;
-    font-size: 18px;
-    border-radius: 22px;
-}
-
-.compact-extra .sync-progress-row {
-    padding: 10px 14px;
-    margin-top: 12px;
-    border-radius: 16px;
-}
-
-.compact-extra .sync-icon-box {
-    width: 48px;
-    height: 48px;
-    border-radius: 24px;
-    margin-right: 14px;
-}
-
-.compact-extra .sync-icon {
-    width: 24px;
-    height: 24px;
-}
-
-.compact-extra .sync-title-label {
-    font-size: 19px;
-}
-
-.compact-extra .sync-status-label {
-    font-size: 15px;
-    margin-top: 2px;
-}
-
-.compact-extra .sync-status-icon-box {
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
-    margin-left: 10px;
-}
-
-.compact-extra .sync-status-icon {
-    width: 20px;
-    height: 20px;
-}
-
-.compact-extra .play-mode-picker-banner {
-    margin-left: 20px;
-    margin-right: 20px;
-    margin-top: 16px;
-    padding: 14px 16px;
-}
-
-.compact-extra .play-mode-picker-banner-label {
-    font-size: 18px;
-}
-
-.compact-extra .play-mode-picker-cancel {
-    height: 38px;
-    padding-left: 14px;
-    padding-right: 14px;
-    font-size: 16px;
-}
-
-.compact-extra .card-list {
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 20px;
-}
-
-.compact-extra .card {
-    padding: 18px;
-    border-radius: 18px;
-    margin-bottom: 18px;
-}
-
-.compact-extra .card-image {
-    width: 150px;
-    margin-top: -18px;
-    margin-right: -18px;
-    margin-bottom: -18px;
-    margin-left: 12px;
-}
-
-.compact-extra .icon-box {
-    width: 70px;
-    height: 70px;
-    border-radius: 18px;
-    margin-right: 18px;
-}
-
-.compact-extra .icon-emoji {
-    width: 44px;
-    height: 44px;
-}
-
-.compact-extra .card-title {
-    font-size: 26px;
-}
-
-.compact-extra .card-subtitle {
-    font-size: 18px;
-}
-
-.compact-extra .progress-track {
-    height: 10px;
-}
-
-.compact-extra .progress-label {
-    font-size: 18px;
-    min-width: 44px;
-    margin-left: 12px;
-}
-
-.compact-extra .pro-tip-card {
-    padding: 18px;
-    border-radius: 18px;
-}
-
-.compact-extra .pro-tip-icon-box {
-    width: 56px;
-    height: 56px;
-    border-radius: 28px;
-    margin-right: 14px;
-}
-
-.compact-extra .pro-tip-icon {
-    font-size: 28px;
-}
-
-.compact-extra .pro-tip-title {
-    font-size: 26px;
-}
-
-.compact-extra .pro-tip-text {
-    font-size: 18px;
-}
-
-.compact-extra .pro-tip-chevron {
-    font-size: 30px;
-}
+.pro-tip-text-col { flex-grow: 1; flex-shrink: 1; flex-direction: column; min-width: 0; }
+.pro-tip-title { font-size: 30px; -unity-font-style: bold; color: rgb(90, 60, 160); margin-bottom: 6px; }
+.pro-tip-text { font-size: 24px; color: rgb(95, 85, 125); white-space: normal; }

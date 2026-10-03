@@ -452,7 +452,7 @@
 
 .stat-label
 {
-    font-size: 20px;
+    font-size: 24px;
     color: rgb(138,143,163);
     white-space: normal;
 }
@@ -697,7 +697,7 @@
     flex-grow: 1;
     height: 14px;
     background-color: rgb(230,233,240);
-    border-radius: 7px;
+    border-radius: 8px;
     overflow: hidden;
     margin-right: 16px;
 }
@@ -706,7 +706,7 @@
 {
     height: 100%;
     background-color: rgb(20,20,20);
-    border-radius: 7px;
+    border-radius: 8px;
 }
 
 .category-percent
@@ -784,7 +784,7 @@
 
 .compact .level-caption
 {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact .level-roadmap-card
@@ -807,7 +807,7 @@
 {
     width: 50px;
     height: 50px;
-    border-radius: 25px;
+    border-radius: 26px;
     margin-right: 14px;
 }
 
@@ -823,7 +823,7 @@
 
 .compact .level-roadmap-points
 {
-    font-size: 17px;
+    font-size: 18px;
 }
 
 .compact .level-roadmap-status
@@ -865,7 +865,7 @@
 
 .compact .stat-icon-glyph
 {
-    font-size: 21px;
+    font-size: 22px;
 }
 
 .compact .tab-button
@@ -903,7 +903,7 @@
 
 .compact .chart-day-label
 {
-    font-size: 17px;
+    font-size: 18px;
 }
 
 .compact .chart-x-axis
@@ -918,7 +918,7 @@
 
 .compact .category-count
 {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact .category-percent

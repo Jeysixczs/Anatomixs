@@ -462,7 +462,7 @@
 {
     width: 110px;
     height: 110px;
-    border-radius: 55px;
+    border-radius: 56px;
     margin-bottom: 22px;
 }
 
@@ -512,7 +512,7 @@
 
 .compact .score-stat-label
 {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact .points-earned-label,
@@ -548,7 +548,7 @@
 
 .compact .mini-label
 {
-    font-size: 19px;
+    font-size: 20px;
 }
 
 .compact .back-to-dashboard-button

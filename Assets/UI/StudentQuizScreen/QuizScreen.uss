@@ -35,7 +35,7 @@
 .icon-button {
     width: 66px;
     height: 66px;
-    border-radius: 33px;
+    border-radius: 34px;
     background-color: rgba(255, 255, 255, 0.18);
     border-width: 0;
     color: rgb(255, 255, 255);
@@ -115,16 +115,16 @@
 .progress-track {
     height: 9px;
     background-color: rgba(255, 255, 255, 0.35);
-    border-radius: 5px;
+    border-radius: 6px;
     overflow: hidden;
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .progress-fill {
     height: 9px;
     width: 16%;
     background-color: rgb(17, 24, 39);
-    border-radius: 5px;
+    border-radius: 6px;
 }
 
 .question-counter {
@@ -178,18 +178,18 @@
 .card-top-row {
     flex-direction: row;
     justify-content: space-between;
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .type-label {
-    font-size: 21px;
+    font-size: 22px;
     -unity-font-style: bold;
     color: rgb(59, 130, 246);
     letter-spacing: 1.5px;
 }
 
 .quiz-label {
-    font-size: 21px;
+    font-size: 22px;
     color: rgb(148, 163, 184);
 }
 
@@ -219,9 +219,9 @@
     background-color: rgb(255, 255, 255);
     border-width: 3px;
     border-color: rgb(229, 231, 235);
-    border-radius: 21px;
-    padding: 27px 30px;
-    margin-bottom: 21px;
+    border-radius: 22px;
+    padding: 28px 30px;
+    margin-bottom: 20px;
 }
 
 .option-row:hover {
@@ -236,7 +236,7 @@
 .radio-outer {
     width: 30px;
     height: 30px;
-    border-radius: 15px;
+    border-radius: 16px;
     border-width: 3px;
     border-color: rgb(203, 213, 225);
     align-items: center;
@@ -261,7 +261,7 @@
 }
 
 .option-label {
-    font-size: 27px;
+    font-size: 28px;
     color: rgb(30, 41, 59);
 }
 
@@ -270,7 +270,7 @@
 .checkbox-outer {
     width: 33px;
     height: 33px;
-    border-radius: 9px;
+    border-radius: 10px;
     border-width: 3px;
     border-color: rgb(203, 213, 225);
     background-color: rgb(255, 255, 255);
@@ -286,7 +286,7 @@
 
 .checkbox-check {
     color: rgb(255, 255, 255);
-    font-size: 21px;
+    font-size: 22px;
     -unity-font-style: bold;
     display: none;
 }
@@ -298,7 +298,7 @@
 /* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
 
 .answer-text-field {
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .answer-text-field > .unity-text-field__input {
@@ -306,7 +306,7 @@
     border-width: 2px;
     border-color: rgb(229, 231, 235);
     border-radius: 18px;
-    padding: 24px 27px;
+    padding: 24px 28px;
     font-size: 26px;
     color: rgb(17, 24, 39);
 }
@@ -321,7 +321,7 @@
     background-color: rgb(255, 255, 255);
     border-width: 2px;
     border-color: rgb(229, 231, 235);
-    border-radius: 21px;
+    border-radius: 22px;
     align-items: center;
     justify-content: center;
     height: 390px;
@@ -351,7 +351,7 @@
     border-radius: 24px;
     border-width: 0;
     color: rgb(255, 255, 255);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -366,17 +366,17 @@
 }
 
 .compact .option-row {
-    padding: 21px 24px;
+    padding: 20px 24px;
 }
 
 .compact .card {
-    padding: 30px 27px;
+    padding: 30px 28px;
     margin: 16px 24px 24px 24px;
 }
 
 .compact .action-button {
     height: 84px;
-    margin: 9px 24px 30px 24px;
+    margin: 8px 24px 30px 24px;
 }
 /* =========================================================
    Anatomia 3D - Quiz Screen
@@ -415,7 +415,7 @@
 .icon-button {
     width: 66px;
     height: 66px;
-    border-radius: 33px;
+    border-radius: 34px;
     background-color: rgba(255, 255, 255, 0.18);
     border-width: 0;
     color: rgb(255, 255, 255);
@@ -495,16 +495,16 @@
 .progress-track {
     height: 9px;
     background-color: rgba(255, 255, 255, 0.35);
-    border-radius: 5px;
+    border-radius: 6px;
     overflow: hidden;
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .progress-fill {
     height: 9px;
     width: 16%;
     background-color: rgb(17, 24, 39);
-    border-radius: 5px;
+    border-radius: 6px;
 }
 
 .question-counter {
@@ -567,18 +567,18 @@
 .card-top-row {
     flex-direction: row;
     justify-content: space-between;
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .type-label {
-    font-size: 21px;
+    font-size: 22px;
     -unity-font-style: bold;
     color: rgb(59, 130, 246);
     letter-spacing: 1.5px;
 }
 
 .quiz-label {
-    font-size: 21px;
+    font-size: 22px;
     color: rgb(148, 163, 184);
 }
 
@@ -608,9 +608,9 @@
     background-color: rgb(255, 255, 255);
     border-width: 3px;
     border-color: rgb(229, 231, 235);
-    border-radius: 21px;
-    padding: 27px 30px;
-    margin-bottom: 21px;
+    border-radius: 22px;
+    padding: 28px 30px;
+    margin-bottom: 20px;
 }
 
 .option-row:hover {
@@ -625,7 +625,7 @@
 .radio-outer {
     width: 30px;
     height: 30px;
-    border-radius: 15px;
+    border-radius: 16px;
     border-width: 3px;
     border-color: rgb(203, 213, 225);
     align-items: center;
@@ -650,7 +650,7 @@
 }
 
 .option-label {
-    font-size: 27px;
+    font-size: 28px;
     color: rgb(30, 41, 59);
 }
 
@@ -659,7 +659,7 @@
 .checkbox-outer {
     width: 33px;
     height: 33px;
-    border-radius: 9px;
+    border-radius: 10px;
     border-width: 3px;
     border-color: rgb(203, 213, 225);
     background-color: rgb(255, 255, 255);
@@ -675,7 +675,7 @@
 
 .checkbox-check {
     color: rgb(255, 255, 255);
-    font-size: 21px;
+    font-size: 22px;
     -unity-font-style: bold;
     display: none;
 }
@@ -687,7 +687,7 @@
 /* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
 
 .answer-text-field {
-    margin-bottom: 21px;
+    margin-bottom: 20px;
 }
 
 .answer-text-field > .unity-text-field__input {
@@ -695,7 +695,7 @@
     border-width: 2px;
     border-color: rgb(229, 231, 235);
     border-radius: 18px;
-    padding: 24px 27px;
+    padding: 24px 28px;
     font-size: 26px;
     color: rgb(17, 24, 39);
 }
@@ -710,7 +710,7 @@
     background-color: rgb(255, 255, 255);
     border-width: 2px;
     border-color: rgb(229, 231, 235);
-    border-radius: 21px;
+    border-radius: 22px;
     align-items: center;
     justify-content: center;
     height: 390px;
@@ -746,7 +746,7 @@
     border-radius: 24px;
     border-width: 0;
     color: rgb(255, 255, 255);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -764,7 +764,7 @@
     border-color: rgb(203, 213, 225);
     background-color: rgb(255, 255, 255);
     color: rgb(30, 41, 59);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -795,7 +795,7 @@
     background-color: rgba(15, 18, 28, 0.72);
     justify-content: center;
     align-items: center;
-    padding: 53px;
+    padding: 52px;
 }
 
 .blocked-card {
@@ -828,7 +828,7 @@
     border-radius: 24px;
     border-width: 0;
     color: rgb(255, 255, 255);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -851,7 +851,7 @@
     background-color: rgba(15, 18, 28, 0.72);
     justify-content: center;
     align-items: center;
-    padding: 53px;
+    padding: 52px;
 }
 
 .loading-card {
@@ -901,7 +901,7 @@
 }
 
 .compact .option-row {
-    padding: 21px 24px;
+    padding: 20px 24px;
 }
 
 .compact .card-wrapper {
@@ -909,11 +909,11 @@
 }
 
 .compact .card {
-    padding: 30px 27px;
+    padding: 30px 28px;
 }
 
 .compact .action-row {
-    margin: 9px 24px 30px 24px;
+    margin: 8px 24px 30px 24px;
 }
 
 .compact .action-button,
@@ -925,8 +925,8 @@
 
 .view-model-button {
     height: 78px;
-    margin: 0 0 21px 0;
-    border-radius: 21px;
+    margin: 0 0 20px 0;
+    border-radius: 22px;
     border-width: 0;
     background-color: rgb(59, 130, 246);
     color: rgb(255, 255, 255);
@@ -940,7 +940,7 @@
 
 .compact .view-model-button {
     height: 66px;
-    font-size: 21px;
+    font-size: 22px;
 }
 
 /* ---------------- EXIT CONFIRM OVERLAY (close-button tap mid-quiz) ---------------- */
@@ -961,7 +961,7 @@
 .exit-cancel-button {
     flex-grow: 1;
     flex-basis: 0;
-    margin: 0 9px 0 0;
+    margin: 0 8px 0 0;
     padding: 0 24px;
     height: 90px;
     border-radius: 24px;
@@ -969,7 +969,7 @@
     border-color: rgb(229, 231, 235);
     background-color: rgb(255, 255, 255);
     color: rgb(31, 36, 48);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 
@@ -980,14 +980,14 @@
 .exit-submit-button {
     flex-grow: 1;
     flex-basis: 0;
-    margin: 0 0 0 9px;
+    margin: 0 0 0 8px;
     padding: 0 24px;
     height: 90px;
     border-radius: 24px;
     border-width: 0;
     background-color: rgb(59, 130, 246);
     color: rgb(255, 255, 255);
-    font-size: 27px;
+    font-size: 28px;
     -unity-font-style: bold;
 }
 

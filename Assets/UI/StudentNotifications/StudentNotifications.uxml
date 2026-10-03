@@ -22,7 +22,9 @@
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
 
                 <ui:VisualElement name="notifications-empty-state" class="notifications-empty-state hidden">
-                    <ui:Label text="&#128276;" class="empty-state-icon"/>
+                    <ui:VisualElement class="empty-state-icon-box">
+                        <ui:VisualElement class="empty-state-icon"/>
+                    </ui:VisualElement>
                     <ui:Label text="No notifications yet" class="empty-state-text"/>
                     <ui:Label text="We'll let you know when something new happens." class="empty-state-subtext"/>
                 </ui:VisualElement>

@@ -837,49 +837,77 @@ namespace Anatomia3D.UI
             card.AddToClassList("classroom-card");
             if (classroom.IsArchived) card.AddToClassList("classroom-card-archived");
 
+            // ---- Top row: icon tile | name + description | code (+ archived) ----
             var topRow = new VisualElement();
             topRow.AddToClassList("classroom-card-top-row");
 
+            var iconTile = new VisualElement();
+            iconTile.AddToClassList("classroom-card-icon-tile");
+            var tileIcon = new VisualElement();
+            tileIcon.AddToClassList("classroom-card-icon");
+            iconTile.Add(tileIcon);
+
+            var textColumn = new VisualElement();
+            textColumn.AddToClassList("classroom-card-text");
+
             var nameLabel = new Label(classroom.Name);
             nameLabel.AddToClassList("classroom-name-label");
+
+            var descLabel = new Label(string.IsNullOrEmpty(classroom.Description) ? "Description" : classroom.Description);
+            descLabel.AddToClassList("classroom-description-label");
+            if (string.IsNullOrEmpty(classroom.Description)) descLabel.AddToClassList("classroom-description-placeholder");
+
+            textColumn.Add(nameLabel);
+            textColumn.Add(descLabel);
+
+            var side = new VisualElement();
+            side.AddToClassList("classroom-card-side");
 
             var codeBadge = new VisualElement();
             codeBadge.AddToClassList("classroom-code-badge");
             var codeLabel = new Label(classroom.Code);
             codeLabel.AddToClassList("classroom-code-badge-label");
             codeBadge.Add(codeLabel);
-
-            topRow.Add(nameLabel);
-            topRow.Add(codeBadge);
+            side.Add(codeBadge);
 
             if (classroom.IsArchived)
             {
                 var archivedBadge = new Label("Archived");
                 archivedBadge.AddToClassList("classroom-archived-badge");
-                topRow.Add(archivedBadge);
+                side.Add(archivedBadge);
             }
 
+            topRow.Add(iconTile);
+            topRow.Add(textColumn);
+            topRow.Add(side);
             card.Add(topRow);
 
-            var descLabel = new Label(string.IsNullOrEmpty(classroom.Description) ? "Description" : classroom.Description);
-            descLabel.AddToClassList("classroom-description-label");
-            if (string.IsNullOrEmpty(classroom.Description)) descLabel.AddToClassList("classroom-description-placeholder");
-            card.Add(descLabel);
+            // ---- Divider ----
+            var divider = new VisualElement();
+            divider.AddToClassList("classroom-card-divider");
+            card.Add(divider);
 
+            // ---- Bottom row: students chip | View Details pill ----
             var bottomRow = new VisualElement();
             bottomRow.AddToClassList("classroom-card-bottom-row");
 
             var studentsRow = new VisualElement();
             studentsRow.AddToClassList("classroom-students-row");
-            var studentsIcon = new Label("\U0001F465");
+            var studentsIcon = new VisualElement();            // users-icon.png via USS
             studentsIcon.AddToClassList("classroom-students-icon");
-            var studentsLabel = new Label($"{classroom.StudentCount} students");
+            var studentsLabel = new Label($"{classroom.StudentCount} student{(classroom.StudentCount == 1 ? "" : "s")}");
             studentsLabel.AddToClassList("classroom-students-label");
             studentsRow.Add(studentsIcon);
             studentsRow.Add(studentsLabel);
 
-            var viewDetailsButton = new Button(() => OnViewClassroomDetailsClicked(classroom)) { text = "View Details" };
+            var viewDetailsButton = new Button(() => OnViewClassroomDetailsClicked(classroom));
             viewDetailsButton.AddToClassList("view-details-button");
+            var buttonLabel = new Label("View Details") { pickingMode = PickingMode.Ignore };
+            buttonLabel.AddToClassList("classroom-card-button-label");
+            var chevron = new VisualElement { pickingMode = PickingMode.Ignore };   // back-icon.png rotated via USS
+            chevron.AddToClassList("classroom-card-chevron");
+            viewDetailsButton.Add(buttonLabel);
+            viewDetailsButton.Add(chevron);
 
             bottomRow.Add(studentsRow);
             bottomRow.Add(viewDetailsButton);

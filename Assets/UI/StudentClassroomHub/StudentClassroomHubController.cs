@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using Firebase.Firestore;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -142,6 +143,7 @@ namespace Anatomia3D.UI
             public Label TeacherLabel;
             public Label StudentsLabel;
             public Button ViewButton;
+            public Label ViewButtonLabel;
             public ClassroomSummary LastSummary;
 
             // Kept so ApplyCardContent can unregister the previous closure before
@@ -494,6 +496,7 @@ namespace Anatomia3D.UI
             if (_classroomsList == null) return;
 
             var incomingIds = new HashSet<string>();
+            int newCards = 0;   // for staggering the enter animation of freshly built cards
 
             if (hasClassrooms)
             {
@@ -510,6 +513,11 @@ namespace Anatomia3D.UI
                     {
                         refs = BuildClassroomCard(summary);
                         _classroomCardsById[summary.ClassroomId] = refs;
+
+                        // Only brand-new cards animate in; updates to existing cards stay instant.
+                        UIAnimationUtility.FadeAndSlideIn(refs.Card, UIAnimationUtility.Direction.Bottom,
+                            duration: 0.35f, delay: 0.15f + Mathf.Min(newCards, 8) * 0.06f, distance: 30f);
+                        newCards++;
                     }
 
                     // Keep list order in sync with _currentClassrooms - Insert() on an
@@ -742,33 +750,61 @@ namespace Anatomia3D.UI
             var card = new VisualElement();
             card.AddToClassList("classroom-card");
 
+            // ---- Top row: icon tile | name + teacher | code ----
             var topRow = new VisualElement();
             topRow.AddToClassList("classroom-card-top-row");
 
+            var iconTile = new VisualElement();
+            iconTile.AddToClassList("classroom-card-icon-tile");
+            var tileIcon = new VisualElement();
+            tileIcon.AddToClassList("classroom-card-icon");
+            iconTile.Add(tileIcon);
+
+            var textColumn = new VisualElement();
+            textColumn.AddToClassList("classroom-card-text");
+
             var nameLabel = new Label();
             nameLabel.AddToClassList("classroom-name-label");
+
+            var teacherRow = new VisualElement();
+            teacherRow.AddToClassList("classroom-teacher-row");
+            var teacherIcon = new VisualElement();             // student-icon.png via USS
+            teacherIcon.AddToClassList("classroom-teacher-icon");
+            var teacherLabel = new Label();
+            teacherLabel.AddToClassList("classroom-teacher-label");
+            teacherRow.Add(teacherIcon);
+            teacherRow.Add(teacherLabel);
+
+            textColumn.Add(nameLabel);
+            textColumn.Add(teacherRow);
+
+            var side = new VisualElement();
+            side.AddToClassList("classroom-card-side");
 
             var codeBadge = new VisualElement();
             codeBadge.AddToClassList("classroom-code-badge");
             var codeLabel = new Label();
             codeLabel.AddToClassList("classroom-code-badge-label");
             codeBadge.Add(codeLabel);
+            side.Add(codeBadge);
 
-            topRow.Add(nameLabel);
-            topRow.Add(codeBadge);
-
+            topRow.Add(iconTile);
+            topRow.Add(textColumn);
+            topRow.Add(side);
             card.Add(topRow);
 
-            var teacherLabel = new Label();
-            teacherLabel.AddToClassList("classroom-teacher-label");
-            card.Add(teacherLabel);
+            // ---- Divider ----
+            var divider = new VisualElement();
+            divider.AddToClassList("classroom-card-divider");
+            card.Add(divider);
 
+            // ---- Bottom row: students chip | View Classroom pill ----
             var bottomRow = new VisualElement();
             bottomRow.AddToClassList("classroom-card-bottom-row");
 
             var studentsRow = new VisualElement();
             studentsRow.AddToClassList("classroom-students-row");
-            var studentsIcon = new VisualElement();
+            var studentsIcon = new VisualElement();            // users-icon.png via USS
             studentsIcon.AddToClassList("classroom-students-icon");
             var studentsLabel = new Label();
             studentsLabel.AddToClassList("classroom-students-label");
@@ -777,6 +813,12 @@ namespace Anatomia3D.UI
 
             var viewClassroomButton = new Button();
             viewClassroomButton.AddToClassList("view-classroom-button");
+            var viewButtonLabel = new Label { pickingMode = PickingMode.Ignore };   // text set in ApplyCardContent
+            viewButtonLabel.AddToClassList("classroom-card-button-label");
+            var chevron = new VisualElement { pickingMode = PickingMode.Ignore };   // back-icon.png rotated via USS
+            chevron.AddToClassList("classroom-card-chevron");
+            viewClassroomButton.Add(viewButtonLabel);
+            viewClassroomButton.Add(chevron);
 
             bottomRow.Add(studentsRow);
             bottomRow.Add(viewClassroomButton);
@@ -789,7 +831,8 @@ namespace Anatomia3D.UI
                 CodeLabel = codeLabel,
                 TeacherLabel = teacherLabel,
                 StudentsLabel = studentsLabel,
-                ViewButton = viewClassroomButton
+                ViewButton = viewClassroomButton,
+                ViewButtonLabel = viewButtonLabel
             };
 
             ApplyCardContent(refs, classroom);
@@ -824,7 +867,7 @@ namespace Anatomia3D.UI
             if (isFirstPaint || last.IsArchived != classroom.IsArchived)
             {
                 refs.Card.EnableInClassList("classroom-card-archived", classroom.IsArchived);
-                refs.ViewButton.text = classroom.IsArchived ? "Locked" : "View Classroom";
+                refs.ViewButtonLabel.text = classroom.IsArchived ? "Locked" : "View Classroom";
                 refs.ViewButton.EnableInClassList("view-classroom-button-disabled", classroom.IsArchived);
                 refs.ViewButton.SetEnabled(!classroom.IsArchived);
 

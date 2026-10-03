@@ -30,9 +30,9 @@
     width: 100%;
     border-bottom-left-radius: 60px;
     border-bottom-right-radius: 60px;
-    padding-left: 44px;
-    padding-right: 44px;
-    padding-top: 90px;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 100px;
     padding-bottom: 50px;
     flex-shrink: 0;
     background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
@@ -189,15 +189,15 @@
 
 .field-label
 {
-    font-size: 24px;
+    font-size: 30px;
     -unity-font-style: bold;
     color: rgb(31, 36, 48);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .field-label-spaced
 {
-    margin-top: 26px;
+    margin-top: 0;
 }
 
 .text-field
@@ -226,9 +226,9 @@
 
 .field-error
 {
-    font-size: 22px;
+    font-size: 28px;
     color: rgb(220, 38, 38);
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 /* ---------- Info Box ---------- */
@@ -240,7 +240,7 @@
     padding: 26px;
     border-width: 1px;
     border-color: rgba(16, 185, 129, 0.18);
-    margin-top: 30px;
+    margin-top: 34px;
     margin-bottom: 32px;
 }
 
@@ -285,7 +285,7 @@
 
 .status-label
 {
-    font-size: 22px;
+    font-size: 30px;
     color: rgb(120, 123, 140);
     margin-bottom: 16px;
     -unity-text-align: middle-center;
@@ -328,9 +328,9 @@
 
 .compact .header
 {
-    padding-left: 30px;
-    padding-right: 30px;
-    padding-top: 66px;
+    padding-left: 34px;
+    padding-right: 34px;
+    padding-top: 70px;
     padding-bottom: 40px;
 }
 

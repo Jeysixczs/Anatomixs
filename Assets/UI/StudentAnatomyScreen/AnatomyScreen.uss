@@ -318,7 +318,7 @@
     translate: -50% 0;
     width: 64px;
     height: 6px;
-    border-radius: 3px;
+    border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -613,7 +613,7 @@
 
 .toolbar-section-label {
     -unity-text-align: middle-center;
-    font-size: 15px;
+    font-size: 16px;
     -unity-font-style: bold;
     color: rgb(150, 160, 158);
     letter-spacing: 3px;
@@ -1262,7 +1262,7 @@
 
 .controls-guide-note {
     color: rgb(150, 160, 158);
-    font-size: 21px;
+    font-size: 22px;
     white-space: normal;
     margin-bottom: 22px;
 }
@@ -1304,7 +1304,7 @@
     height: 66px;
     padding: 0 32px;
     margin: 0;
-    border-radius: 33px;
+    border-radius: 34px;
     background-color: rgb(59, 130, 246);
     border-width: 0;
     color: rgb(255, 255, 255);
@@ -1336,7 +1336,7 @@
     background-color: rgba(15, 18, 28, 0.72);
     justify-content: center;
     align-items: center;
-    padding: 53px;
+    padding: 52px;
 }
 
 .baseline-confirm-card {

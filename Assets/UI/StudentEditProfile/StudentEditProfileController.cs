@@ -33,8 +33,8 @@ namespace Anatomia3D.UI
     public class StudentEditProfileController : MonoBehaviour
     {
         [Header("Gradient colors (matches StudentProfile: purple -> pink)")]
-        [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f);
-        [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);
+        [SerializeField] private Color gradientStart = new Color(0.086f, 0.737f, 0.463f); // green
+        [SerializeField] private Color gradientEnd = new Color(0.145f, 0.388f, 0.922f); // blue
 
         [Header("Compact breakpoint (px, reference is 1080x1920)")]
         [SerializeField] private int compactWidthThreshold = 900;

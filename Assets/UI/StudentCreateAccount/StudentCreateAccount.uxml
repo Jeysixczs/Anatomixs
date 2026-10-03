@@ -1,10 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
-    <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss"/>
+    <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss?fileID=7433441132597879392&amp;guid=e188d20bee8fcba44a3b70d245d72c03&amp;type=3#StudentLogin"/>
     <ui:VisualElement name="screen-root" class="screen-root">
         <ui:VisualElement name="screen-container" class="screen-container">
-        <ui:ScrollView name="scroll-view" class="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden">    
-        <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                    <ui:VisualElement name="logo-circle" class="logo-circle"/>
+            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="scroll-view">
+                <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                    <ui:VisualElement name="logo-circle" class="logo-circle" style="background-image: url(&quot;project://database/Assets/Sprite/Anatomia-logo.png?fileID=2800000&amp;guid=31a97ab8e70a6184f9b8d05c71d9233b&amp;type=3#Anatomia-logo&quot;);"/>
                     <ui:Label text="Anatomia 3D" class="app-title"/>
                     <ui:Label text="Create your student account" class="app-subtitle"/>
                     <ui:VisualElement name="create-account-card" class="create-account-card">

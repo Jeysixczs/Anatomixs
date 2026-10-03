@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 
 namespace Anatomia3D.UI
 {
@@ -688,6 +689,10 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildLevelRoadmapRow(level, currentLevelNumber, totalPoints);
                     _roadmapRowsByLevel[level.LevelNumber] = refs;
+
+                    // Only brand-new items animate in; updates to existing ones stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Row, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(i, 8) * 0.06f, distance: 30f);
                 }
 
                 if (_levelRoadmapList.IndexOf(refs.Row) != i)
@@ -819,7 +824,7 @@ namespace Anatomia3D.UI
             if (_currentLevelTitleLabel != null) _currentLevelTitleLabel.text = currentLevelTitle;
             if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {nextLevel}";
             if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = nextLevelTitle;
-            if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(levelProgress01) * 100f, LengthUnit.Percent);
+            if (_progressFill != null) UIAnimationUtility.AnimateFill(_progressFill, levelProgress01);
             if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();

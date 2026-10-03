@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using Firebase.Firestore;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -1008,6 +1009,10 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildAnnouncementCard(announcement);
                     _announcementCardsById[announcement.AnnouncementId] = refs;
+
+                    // Only brand-new items animate in; updates to existing ones stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Card, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(i, 8) * 0.06f, distance: 30f);
                 }
 
                 if (_announcementsList.IndexOf(refs.Card) != i)
@@ -1160,6 +1165,10 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildQuizCard(quiz);
                     _quizCardsById[quiz.QuizId] = refs;
+
+                    // Only brand-new items animate in; updates to existing ones stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Card, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(i, 8) * 0.06f, distance: 30f);
                 }
 
                 if (_quizzesList.IndexOf(refs.Card) != i)

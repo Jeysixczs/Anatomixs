@@ -73,7 +73,7 @@
 
 .header-title
 {
-    font-size: 50px;
+    font-size: 44px;
     -unity-font-style: bold;
     color: white;
     white-space: normal;
@@ -82,7 +82,7 @@
 
 .header-subtitle
 {
-    font-size: 30px;
+    font-size: 26px;
     color: rgba(255, 255, 255, 0.85);
     margin-top: 6px;
     white-space: normal;
@@ -138,7 +138,7 @@
 {
     width: 100%;
     flex-direction: column;
-    padding: 44px;
+    padding: 40px;
     max-width: 100%;
     margin: 0;
     justify-content: flex-start;
@@ -210,7 +210,7 @@
 .input-container
 {
     width: 100%;
-    height: 128px;
+    height: 118px;
     flex-direction: row;
     align-items: center;
     background-color: rgb(244, 245, 247);
@@ -228,8 +228,8 @@
 
 .input-icon
 {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     margin-right: 20px;
     flex-shrink: 0;
 }
@@ -245,7 +245,7 @@
 .input-field
 {
     flex-grow: 1;
-    font-size: 36px;
+    font-size: 34px;
     color: rgb(31, 36, 48);
     background-color: transparent;
     border-width: 0;
@@ -513,7 +513,7 @@
 .compact .info-text,
 .compact .info-bullet
 {
-    font-size: 21px;
+    font-size: 22px;
 }
 
 .compact .join-submit-button
@@ -546,5 +546,5 @@
 
 .compact .tip-subtitle
 {
-    font-size: 21px;
+    font-size: 22px;
 }

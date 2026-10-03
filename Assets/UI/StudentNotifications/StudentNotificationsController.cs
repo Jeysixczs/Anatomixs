@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anatomia3D.Backend;
+using Anatomia3D.UI.Animation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -77,7 +78,7 @@ namespace Anatomia3D.UI
         {
             public VisualElement Row;
             public VisualElement IconBox;
-            public Label IconLabel;
+            public VisualElement IconGlyph;
             public Label TitleLabel;
             public VisualElement UnreadDot;
             public Label MessageLabel;
@@ -324,6 +325,7 @@ namespace Anatomia3D.UI
             if (_notificationsList == null) return;
 
             var incomingIds = new HashSet<string>();
+            int newRows = 0;   // for staggering the enter animation of freshly built rows
 
             for (int i = 0; i < _notifications.Count; i++)
             {
@@ -338,6 +340,11 @@ namespace Anatomia3D.UI
                 {
                     refs = BuildNotificationRow(entry);
                     _rowsById[entry.Id] = refs;
+
+                    // Only brand-new rows animate in; updates to existing rows stay instant.
+                    UIAnimationUtility.FadeAndSlideIn(refs.Row, UIAnimationUtility.Direction.Bottom,
+                        duration: 0.35f, delay: 0.15f + Mathf.Min(newRows, 8) * 0.06f, distance: 30f);
+                    newRows++;
                 }
 
                 // Insert() on an already-parented element just moves it, so rows
@@ -376,11 +383,15 @@ namespace Anatomia3D.UI
 
             var iconBox = new VisualElement();
             iconBox.AddToClassList("notification-icon-box");
-            var iconLabel = new Label();
-            iconLabel.AddToClassList("notification-icon-emoji");
-            iconBox.Add(iconLabel);
+            // Image glyph instead of an emoji Label: which picture shows is chosen
+            // purely in USS from the icon box's color class (see
+            // .notification-icon-purple .notification-icon-glyph etc.), so the
+            // Label/emoji text handling is gone.
+            var iconGlyph = new VisualElement { pickingMode = PickingMode.Ignore };
+            iconGlyph.AddToClassList("notification-icon-glyph");
+            iconBox.Add(iconGlyph);
             refs.IconBox = iconBox;
-            refs.IconLabel = iconLabel;
+            refs.IconGlyph = iconGlyph;
 
             var textCol = new VisualElement();
             textCol.AddToClassList("notification-text");
@@ -442,9 +453,6 @@ namespace Anatomia3D.UI
             refs.Row.EnableInClassList("notification-row-unread", !entry.IsRead);
             refs.UnreadDot.EnableInClassList("hidden", entry.IsRead);
 
-            string iconEmoji = GetIconEmoji(entry.Icon);
-            if (refs.IconLabel.text != iconEmoji) refs.IconLabel.text = iconEmoji;
-
             string iconColorClass = GetIconColorClass(entry.Icon);
             if (refs.LastIconColorClass != iconColorClass)
             {
@@ -460,17 +468,6 @@ namespace Anatomia3D.UI
                 ? entry.TimeAgo
                 : $"{entry.ClassroomName} • {entry.TimeAgo}";
             if (refs.TimeLabel.text != timeText) refs.TimeLabel.text = timeText;
-        }
-
-        private static string GetIconEmoji(NotificationIcon icon)
-        {
-            switch (icon)
-            {
-                case NotificationIcon.Quiz: return "\U0001F4DA";        // 📚
-                case NotificationIcon.Achievement: return "\U0001F3C6"; // 🏆
-                case NotificationIcon.Classroom: return "\U0001F465";   // 👥
-                default: return "\U0001F514";                          // 🔔
-            }
         }
 
         private static string GetIconColorClass(NotificationIcon icon)
