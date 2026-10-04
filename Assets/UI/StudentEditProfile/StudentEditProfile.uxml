@@ -1,9 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentEditProfile/StudentEditProfile.uss?fileID=7433441132597879392&amp;guid=994ab4ec73bc85949bb1161386367106&amp;type=3#StudentEditProfile"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-edit-profile screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
 
-            <!-- ============ HEADER (gradient applied at runtime by controller) ============ -->
+            <!-- ============ HEADER ============ -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
@@ -18,15 +19,17 @@
 
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
 
-                <!-- ============ PHOTO (overlaps the header) ============ -->
+                <!-- ============ PHOTO ============ -->
                 <ui:VisualElement name="avatar-card" class="form-card photo-card">
                     <ui:VisualElement name="avatar-picker-row" class="avatar-picker-row">
                         <ui:VisualElement name="avatar-preview" class="avatar-preview">
                             <ui:Label name="avatar-preview-initials-label" text="JC" class="avatar-preview-initials"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="avatar-picker-actions" class="avatar-picker-actions">
+                            <ui:Label text="Profile photo" class="photo-title"/>
+                            <ui:Label text="Choose how you appear in the app" class="photo-caption"/>
                             <ui:Button name="change-photo-button" text="Change Photo" class="change-photo-button"/>
-                            <ui:Label name="avatar-status-label" text="" class="field-hint hint-centered hidden"/>
+                            <ui:Label name="avatar-status-label" text="" class="field-hint hint-start hidden"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -40,13 +43,18 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
 
-                    <ui:Label text="First Name" class="field-label"/>
-                    <ui:TextField name="first-name-field" class="text-field"/>
-                    <ui:Label name="first-name-error" text="" class="field-error hidden"/>
-
-                    <ui:Label text="Last Name" class="field-label"/>
-                    <ui:TextField name="last-name-field" class="text-field"/>
-                    <ui:Label name="last-name-error" text="" class="field-error hidden"/>
+                    <ui:VisualElement name="name-row" class="name-row">
+                        <ui:VisualElement name="first-name-col" class="name-col name-col-first">
+                            <ui:Label text="First Name" class="field-label"/>
+                            <ui:TextField name="first-name-field" class="text-field"/>
+                            <ui:Label name="first-name-error" text="" class="field-error hidden"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="last-name-col" class="name-col name-col-last">
+                            <ui:Label text="Last Name" class="field-label"/>
+                            <ui:TextField name="last-name-field" class="text-field"/>
+                            <ui:Label name="last-name-error" text="" class="field-error hidden"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
                     <ui:Label text="Email Address" class="field-label"/>
                     <ui:TextField name="email-field" class="text-field"/>
@@ -73,26 +81,28 @@
                 </ui:VisualElement>
 
                 <!-- ============ SECURITY ============ -->
-                <ui:VisualElement name="password-summary-card" class="form-card">
-                    <ui:VisualElement class="card-header-row">
+                <ui:VisualElement name="password-summary-card" class="form-card security-card">
+                    <ui:VisualElement class="security-text">
                         <ui:VisualElement class="card-title-group">
                             <ui:VisualElement class="card-icon-box"><ui:VisualElement class="card-icon icon-lock"/></ui:VisualElement>
                             <ui:Label text="Security" class="card-title"/>
                         </ui:VisualElement>
+                        <ui:Label text="Change your password to keep your account secure." class="card-subtitle"/>
                     </ui:VisualElement>
-                    <ui:Label text="Change your password to keep your account secure." class="card-subtitle"/>
-                    <ui:Button name="change-password-button" text="Change Password" class="action-button"/>
+                    <ui:Button name="change-password-button" text="Change" class="action-button action-button-inline"/>
                 </ui:VisualElement>
-
-                <ui:Label name="status-label" text="" class="status-label hidden"/>
-
-                <ui:Button name="save-changes-button" class="save-changes-submit-button">
-                    <ui:VisualElement name="save-changes-icon" picking-mode="Ignore" class="save-changes-icon"/>
-                    <ui:Label text="Save Changes" picking-mode="Ignore" class="save-changes-label"/>
-                </ui:Button>
 
             </ui:VisualElement>
         </ui:ScrollView>
+
+        <!-- ============ BOTTOM ACTION BAR (status + save) ============ -->
+        <ui:VisualElement name="save-bar" class="save-bar">
+            <ui:Label name="status-label" text="" class="status-label hidden"/>
+            <ui:Button name="save-changes-button" class="save-changes-submit-button">
+                <ui:VisualElement name="save-changes-icon" picking-mode="Ignore" class="save-changes-icon"/>
+                <ui:Label text="Save Changes" picking-mode="Ignore" class="save-changes-label"/>
+            </ui:Button>
+        </ui:VisualElement>
 
         <!-- ============ CHANGE PASSWORD OVERLAY ============ -->
         <ui:VisualElement name="password-overlay" class="password-overlay hidden">

@@ -1,132 +1,71 @@
 /* =========================================================
-   Anatomia 3D - Progress Tracker (Unity 6 UI Toolkit)
+   Anatomia 3D - Progress Tracker (redesign)
    Reference canvas: 1080 x 1920 (portrait phone).
+   Layout: fixed slim header | scroll: level hero, 2x2 stat tiles,
+   tabs (Activity / Skills / Levels).
+   Everything is scoped under .anatomia-theme.theme-progress so it out-ranks the shared
+   Quiet Glass theme. Nothing here affects other screens.
    ========================================================= */
 
-/* ---------- Screen ---------- */
-
-.screen-root
+.anatomia-theme.theme-progress.screen-root
 {
     width: 100%;
     height: 100%;
     flex-grow: 1;
     flex-direction: column;
-    background-color: rgb(234,243,251);
-    padding: 0;
-    margin: 0;
     overflow: hidden;
     justify-content: flex-start;
     align-items: stretch;
 }
 
-/* ---------- Header (gradient applied at runtime via C#) ---------- */
+.hidden { display: none; }
 
-.header
+/* ---------- Header (fixed) ---------- */
+
+.anatomia-theme.theme-progress .header
 {
-    width: 100%;
-    border-bottom-left-radius: 60px;
-    border-bottom-right-radius: 60px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
     flex-shrink: 0;
     flex-direction: column;
+    padding: 84px 40px 12px 40px;
 }
 
-.header-top-row
-{
-    flex-direction: row;
-    align-items: center;
-}
+.anatomia-theme.theme-progress .header-top-row { flex-direction: row; align-items: center; margin-bottom: 8px; }
 
-.back-button
+.anatomia-theme.theme-progress .back-button
 {
     width: 88px;
     height: 88px;
+    min-width: 88px;
     border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
+    margin: 0 28px 0 0;
+    padding: 0;
     justify-content: center;
     align-items: center;
-    margin-right: 30px;
     flex-shrink: 0;
 }
 
 .back-icon
 {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
 }
 
-.header-text
-{
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    min-width: 0;
-}
+.header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
+.anatomia-theme.theme-progress .header-title { font-size: 50px; white-space: nowrap; }
+.anatomia-theme.theme-progress .header-subtitle { font-size: 26px; margin-top: 2px; white-space: nowrap; }
 
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-}
+/* ---------- Scroll ---------- */
 
-.header-subtitle
-{
-    font-size: 26px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 6px;
-    white-space: normal;
-}
-
-/* ---------- ScrollView ---------- */
-
-.screen-scroll
-{
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-height: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
-    -unity-overflow-scrolling: touch;
-}
-
-.screen-scroll .unity-scroller--vertical {
-    width: 0;
-    display: none;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    padding: 0;
-    margin: 0;
-    flex-grow: 1;
-    min-height: 0;
-    height: 100%;
-}
-
+.screen-scroll { flex-grow: 1; flex-shrink: 1; min-height: 0; width: 100%; -unity-overflow-scrolling: touch; }
+.screen-scroll .unity-scroller--vertical { width: 0; display: none; }
+.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport { flex-grow: 1; min-height: 0; height: 100%; }
 .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
 {
-    padding: 0;
-    margin: 0;
-    translate: none;
-    transform-origin: center;
     position: relative;
-    top: 0;
-    left: 0;
     justify-content: flex-start;
     align-items: stretch;
     flex-grow: 0;
@@ -134,795 +73,369 @@
     min-height: 100%;
 }
 
-/* ---------- Content Wrapper ---------- */
-
-.content-wrapper
+.anatomia-theme.theme-progress .content-wrapper
 {
-    width: 100%;
     flex-direction: column;
-    padding: 40px;
-    max-width: 100%;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: stretch;
     flex-shrink: 0;
+    padding: 16px 40px 100px 40px;
 }
 
-.section-title
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-    margin-bottom: 24px;
-}
+.anatomia-theme.theme-progress .section-title { font-size: 36px; -unity-font-style: bold; color: var(--ink); margin: 0 0 4px 0; }
+.anatomia-theme.theme-progress .section-subtitle { font-size: 26px; color: var(--ink-3); margin: 0 0 28px 0; white-space: normal; }
 
-/* ---------- Level Progress Card ---------- */
+/* ---------- Level hero: solid accent card ---------- */
 
-.level-progress-card
-{
-    background-color: white;
-    border-radius: 32px;
-    padding: 40px;
-    margin-bottom: 30px;
-    border-width: 1px;
-    border-color: rgba(0,0,0,0.05);
-}
-
-.level-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.level-block
+.anatomia-theme.theme-progress .level-hero
 {
     flex-direction: column;
-}
-
-.level-block-right
-{
-    align-items: flex-end;
-}
-
-.level-number
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-}
-
-.level-caption-small
-{
-    font-size: 20px;
-    color: rgb(138,143,163);
-    margin-top: 4px;
-}
-
-.progress-track
-{
-    width: 100%;
-    height: 16px;
-    background-color: rgb(230,233,240);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.progress-fill
-{
-    height: 100%;
-    background-color: rgb(20,20,20);
-    border-radius: 8px;
-}
-
-.level-caption
-{
-    font-size: 22px;
-    color: rgb(138,143,163);
-    margin-top: 16px;
-}
-
-/* ---------- Level Roadmap Card ---------- */
-
-.level-roadmap-card
-{
-    background-color: white;
-    border-radius: 32px;
     padding: 40px;
-    margin-bottom: 30px;
-    border-width: 1px;
-    border-color: rgba(0,0,0,0.05);
-}
-
-.level-roadmap-subtitle
-{
-    font-size: 20px;
-    color: rgb(138,143,163);
-    margin-top: -16px;
     margin-bottom: 24px;
+    border-radius: 40px;
+    background-color: var(--accent);
+    border-width: 0;
 }
 
-.level-roadmap-list
-{
-    flex-direction: column;
-}
+.anatomia-theme.theme-progress .hero-caption { font-size: 22px; -unity-font-style: bold; letter-spacing: 3px; color: rgba(255,255,255,0.7); }
+.anatomia-theme.theme-progress .hero-caption-right { -unity-text-align: upper-right; }
 
-.level-roadmap-item
-{
-    flex-direction: row;
-    align-items: center;
-    padding: 18px 20px;
-    border-radius: 20px;
-    background-color: rgb(246,248,251);
-    margin-bottom: 14px;
-    border-width: 2px;
-    border-color: transparent;
-}
+.anatomia-theme.theme-progress .level-row { flex-direction: row; justify-content: space-between; align-items: flex-end; margin: 6px 0 30px 0; }
+.anatomia-theme.theme-progress .level-block { flex-direction: column; align-items: flex-start; }
+.anatomia-theme.theme-progress .level-block-right { align-items: flex-end; }
 
-.level-roadmap-badge
-{
-    width: 64px;
-    height: 64px;
-    border-radius: 32px;
-    background-color: rgb(230,233,240);
-    justify-content: center;
-    align-items: center;
-    margin-right: 20px;
-    flex-shrink: 0;
-}
+.anatomia-theme.theme-progress .level-number { font-size: 76px; -unity-font-style: bold; color: white; letter-spacing: -1.5px; margin-top: 2px; }
 
-.level-roadmap-badge-number
+.anatomia-theme.theme-progress .level-title-pill
 {
     font-size: 24px;
     -unity-font-style: bold;
-    color: rgb(110,115,133);
+    color: white;
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 6px 22px;
+    margin-top: 8px;
 }
 
-.level-roadmap-text-col
+.anatomia-theme.theme-progress .level-next-number { font-size: 34px; -unity-font-style: bold; color: white; margin-top: 4px; }
+.anatomia-theme.theme-progress .level-caption-small { font-size: 24px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+.anatomia-theme.theme-progress .level-hero .progress-track { width: 100%; height: 20px; border-radius: 10px; background-color: rgba(255,255,255,0.25); overflow: hidden; }
+.anatomia-theme.theme-progress .level-hero .progress-fill { height: 100%; border-radius: 10px; background-color: white; }
+.anatomia-theme.theme-progress .level-caption { font-size: 26px; color: white; margin-top: 18px; }
+
+/* ---------- Stat tiles ---------- */
+
+.anatomia-theme.theme-progress .stats-row { flex-direction: row; margin-bottom: 16px; }
+
+.anatomia-theme.theme-progress .stat-tile
 {
     flex-grow: 1;
-    flex-direction: column;
+    flex-basis: 0;
+    flex-shrink: 1;
     min-width: 0;
-}
-
-.level-roadmap-title
-{
-    font-size: 24px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-    white-space: normal;
-}
-
-.level-roadmap-points
-{
-    font-size: 20px;
-    color: rgb(138,143,163);
-    margin-top: 4px;
-    white-space: normal;
-}
-
-.level-roadmap-status
-{
-    font-size: 18px;
-    -unity-font-style: bold;
-    padding: 8px 16px;
-    border-radius: 14px;
-    -unity-text-align: middle-center;
-    flex-shrink: 0;
-    background-color: rgb(230,233,240);
-    color: rgb(110,115,133);
-}
-
-/* Current level: highlighted card + blue badge/pill */
-.level-roadmap-item-current
-{
-    background-color: rgba(37,99,235,0.08);
-    border-color: rgb(37,99,235);
-}
-
-.level-roadmap-item-current .level-roadmap-badge
-{
-    background-color: rgb(37,99,235);
-}
-
-.level-roadmap-item-current .level-roadmap-badge-number
-{
-    color: white;
-}
-
-.level-roadmap-item-current .level-roadmap-status
-{
-    background-color: rgb(37,99,235);
-    color: white;
-}
-
-/* Already-reached levels below the current one: green badge/pill */
-.level-roadmap-item-completed .level-roadmap-badge
-{
-    background-color: rgb(22,163,74);
-}
-
-.level-roadmap-item-completed .level-roadmap-badge-number
-{
-    color: white;
-}
-
-.level-roadmap-item-completed .level-roadmap-status
-{
-    background-color: rgba(22,163,74,0.14);
-    color: rgb(22,163,74);
-}
-
-/* Not-yet-reached levels: muted */
-.level-roadmap-item-locked
-{
-    opacity: 0.85;
-}
-
-/* ---------- Stat Cards ---------- */
-
-.stats-row
-{
     flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 0px;
-}
-
-.stats-row-spaced
-{
-    margin-top: 20px;
-}
-
-.stat-card
-{
-    flex: 1;
-    background-color: white;
-    border-radius: 28px;
-    padding: 28px;
-    flex-shrink: 0;
-    min-width: 0;
-    border-width: 1px;
-    border-color: rgba(0,0,0,0.05);
-}
-
-.stat-card-left
-{
-    margin-right: 10px;
-}
-
-.stat-card-right
-{
-    margin-left: 10px;
-}
-
-.stat-icon
-{
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    margin-bottom: 18px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    -unity-background-image-tint-color: white;
-    justify-content: center;
     align-items: center;
-}
-
-.stat-icon-glyph
-{
-    font-size: 26px;
-    color: white;
-    -unity-text-align: middle-center;
-    -unity-font-style: bold;
-}
-
-.stat-icon-blue { background-color: rgb(37,99,235); }
-.stat-icon-green { background-color: rgb(22,163,74); }
-.stat-icon-purple { background-color: rgb(147,51,234); }
-.stat-icon-gold { background-color: rgb(217,119,6); }
-
-.icon-book
-{
-    background-image: url("project://database/Assets/UI/Icons/book-icon.png");
-}
-
-.icon-target
-{
-    background-image: url("project://database/Assets/UI/Icons/target-icon.png");
-}
-
-.icon-trophy
-{
-    background-image: url("project://database/Assets/UI/Icons/trophy-icon.png");
-}
-
-.icon-badge
-{
-    background-image: url("project://database/Assets/UI/Icons/badges-icon.png");
-}
-
-.stat-value
-{
-    font-size: 42px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-    margin-bottom: 6px;
-}
-
-.stat-label
-{
-    font-size: 24px;
-    color: rgb(138,143,163);
-    white-space: normal;
-}
-
-/* ---------- Tab Toggle ---------- */
-
-.tab-toggle
-{
-    flex-direction: row;
-    background-color: rgb(228,231,238);
-    border-radius: 28px;
-    padding: 6px;
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
-
-.tab-button
-{
-    flex: 1;
-    height: 68px;
-    border-radius: 22px;
-    border-width: 0px;
-    background-color: transparent;
-    color: rgb(110,115,133);
-    font-size: 24px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-}
-
-.tab-button-active
-{
-    background-color: white;
-    color: rgb(31,36,48);
-}
-
-/* ---------- Tab Panel ---------- */
-
-.tab-panel
-{
-    width: 100%;
-}
-
-.hidden
-{
-    display: none;
-}
-
-/* ---------- Weekly Chart Card ---------- */
-
-.weekly-chart-card
-{
-    background-color: white;
-    border-radius: 32px;
-    padding: 40px;
-    margin-bottom: 30px;
-    border-width: 1px;
-    border-color: rgba(0,0,0,0.05);
-}
-
-.chart-area
-{
-    flex-direction: row;
-    height: 320px;
-}
-
-.chart-y-axis
-{
-    flex-direction: column;
-    justify-content: space-between;
-    width: 60px;
-    height: 100%;
-    margin-right: 12px;
-}
-
-.chart-axis-label
-{
-    font-size: 18px;
-    color: rgb(150,155,168);
-}
-
-.chart-bars-row
-{
-    flex-direction: row;
-    flex-grow: 1;
-    height: 100%;
-    align-items: flex-end;
-    justify-content: space-between;
-    border-left-width: 1px;
-    border-bottom-width: 1px;
-    border-left-color: rgb(232,234,240);
-    border-bottom-color: rgb(232,234,240);
-    padding-left: 10px;
-}
-
-.bar-col
-{
-    flex: 1;
-    height: 100%;
-    align-items: center;
-    justify-content: flex-end;
-    margin-left: 6px;
-    margin-right: 6px;
-}
-
-.chart-bar
-{
-    width: 100%;
-    max-width: 40px;
-    background-color: rgb(147,51,234);
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-.chart-x-axis
-{
-    flex-direction: row;
-    justify-content: space-between;
-    margin-top: 16px;
-    padding-left: 72px;
-}
-
-.chart-day-label
-{
-    flex: 1;
-    font-size: 20px;
-    color: rgb(110,115,133);
-    -unity-text-align: middle-center;
-}
-
-/* ---------- Category Card ---------- */
-
-.category-card
-{
-    background-color: white;
-    border-radius: 32px;
-    padding: 40px;
-    margin-bottom: 40px;
-    border-width: 1px;
-    border-color: rgba(0,0,0,0.05);
-}
-
-.category-item
-{
-    margin-bottom: 30px;
-}
-
-.category-item-last
-{
-    margin-bottom: 0px;
-}
-
-.category-header-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 14px;
-}
-
-.category-name
-{
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-}
-
-.category-count
-{
-    font-size: 22px;
-    color: rgb(138,143,163);
-}
-
-/* ---------- Take Posttest button (Pretest / Posttest card) ----------
-   Solid blue (same blue as the header gradient's end colour) with a darker
-   bottom edge so it reads as a raised, tappable button. Deliberately does NOT set
-   "display", so the .hidden class (display: none) keeps working. */
-
-.baseline-cta-button
-{
-    height: 100px;
-    margin-top: 34px;
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    padding-left: 32px;
-    padding-right: 32px;
-    padding-top: 0;
-    padding-bottom: 0;
+    padding: 24px;
     border-radius: 30px;
-    border-width: 0px;
-    border-bottom-width: 6px;
-    border-bottom-color: rgb(29,78,216);
-    background-color: rgb(37,99,235);
-    flex-direction: row;
-    align-items: center;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.anatomia-theme.theme-progress #quizzes-card, .anatomia-theme.theme-progress #points-card { margin-right: 8px; }
+.anatomia-theme.theme-progress #avg-score-card, .anatomia-theme.theme-progress #badges-card { margin-left: 8px; }
+
+.stat-tile-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 24px;
+    background-color: var(--accent-soft);
     justify-content: center;
+    align-items: center;
+    margin-right: 20px;
     flex-shrink: 0;
-    transition-property: background-color, scale;
-    transition-duration: 0.12s;
 }
 
-.baseline-cta-button:hover
+.stat-tile-icon
 {
-    background-color: rgb(59,130,246);
-}
-
-.baseline-cta-button:active
-{
-    background-color: rgb(29,78,216);
-    border-bottom-color: rgb(30,64,175);
-    scale: 0.98 0.98;
-}
-
-.baseline-cta-icon
-{
-    width: 38px;
-    height: 38px;
-    margin-right: 16px;
-    flex-shrink: 0;
-    background-image: url("project://database/Assets/UI/Icons/book-icon.png");
+    width: 40px;
+    height: 40px;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
+    -unity-background-image-tint-color: var(--accent);
 }
 
-.baseline-cta-label
+.icon-quizzes { background-image: url("project://database/Assets/UI/Icons/quiz-iconss.png"); }
+.icon-target { background-image: url("project://database/Assets/UI/Icons/target-iconss.png"); }
+.icon-points { background-image: url("project://database/Assets/UI/Icons/total-points-icon.png"); }
+.icon-badges { background-image: url("project://database/Assets/UI/Icons/reward-icon-black.png"); }
+
+.stat-tile-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-progress .stat-value { font-size: 44px; -unity-font-style: bold; color: var(--ink); letter-spacing: -0.5px; margin: 0; }
+.anatomia-theme.theme-progress .stat-label { font-size: 22px; color: var(--ink-3); white-space: nowrap; margin: 0; }
+
+/* ---------- Tabs: 3 equal pills ---------- */
+
+.anatomia-theme.theme-progress .tab-toggle
 {
-    color: white;
-    font-size: 30px;
+    flex-direction: row;
+    margin: 16px 0 28px 0;
+    padding: 0;
+    background-color: rgba(0,0,0,0);
+}
+
+.anatomia-theme.theme-progress .tab-button
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 84px;
+    margin: 0 6px;
+    padding: 0 8px;
+    border-radius: 42px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    color: var(--ink-2);
+    font-size: 28px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
 
-.category-progress-row
+.anatomia-theme.theme-progress .tab-button:hover { background-color: var(--surface-hover); color: var(--ink); }
+
+.anatomia-theme.theme-progress .tab-button-active,
+.anatomia-theme.theme-progress .tab-button-active:hover
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.anatomia-theme.theme-progress .tab-panel { width: 100%; flex-direction: column; }
+
+/* ---------- Shared card ---------- */
+
+.anatomia-theme.theme-progress .weekly-chart-card,
+.anatomia-theme.theme-progress .category-card,
+.anatomia-theme.theme-progress .level-roadmap-card
+{
+    padding: 40px;
+    border-radius: 36px;
+    margin-bottom: 24px;
+}
+
+/* ---------- Weekly chart ---------- */
+
+.anatomia-theme.theme-progress .chart-area { flex-direction: row; height: 360px; }
+.anatomia-theme.theme-progress .chart-y-axis { flex-direction: column; justify-content: space-between; width: 64px; height: 100%; margin-right: 8px; }
+.anatomia-theme.theme-progress .chart-axis-label { font-size: 20px; color: var(--ink-3); -unity-text-align: middle-left; }
+
+.anatomia-theme.theme-progress .chart-bars-row
 {
     flex-direction: row;
-    align-items: center;
-}
-
-.category-track
-{
     flex-grow: 1;
-    height: 14px;
-    background-color: rgb(230,233,240);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-right: 16px;
-}
-
-.category-fill
-{
     height: 100%;
-    background-color: rgb(20,20,20);
-    border-radius: 8px;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-left-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--line-strong);
+    padding: 0;
 }
 
-.category-percent
+.chart-gridline { position: absolute; left: 0; right: 0; height: 1px; background-color: var(--line); }
+
+.anatomia-theme.theme-progress .bar-col { flex-grow: 1; flex-basis: 0; height: 100%; align-items: center; justify-content: flex-end; margin: 0 8px; }
+
+.anatomia-theme.theme-progress .chart-bar
 {
-    font-size: 24px;
-    -unity-font-style: bold;
-    color: rgb(37,99,235);
-    width: 70px;
-    flex-shrink: 0;
-    -unity-text-align: middle-right;
+    width: 100%;
+    max-width: 48px;
+    min-height: 6px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    background-color: var(--accent);
 }
 
-/* =========================================================
-   Compact Layout (toggled by C# based on panel width)
-   ========================================================= */
+.anatomia-theme.theme-progress .chart-x-axis { flex-direction: row; margin-top: 16px; padding-left: 72px; }
+.anatomia-theme.theme-progress .chart-day-label { flex-grow: 1; flex-basis: 0; font-size: 22px; color: var(--ink-3); -unity-text-align: middle-center; margin: 0 8px; }
 
-.compact .header
+/* ---------- Skills: category tiles ---------- */
+
+.anatomia-theme.theme-progress .category-item
 {
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 70px;
-    padding-bottom: 40px;
+    padding: 26px 28px;
+    margin-bottom: 14px;
+    border-radius: 28px;
+    background-color: var(--sunken);
+    border-bottom-width: 0;
 }
 
-.compact .header-title
-{
-    font-size: 36px;
-}
+.anatomia-theme.theme-progress .category-item-last { margin-bottom: 0; }
 
-.compact .header-subtitle
-{
-    font-size: 22px;
-}
+.anatomia-theme.theme-progress .category-header-row { flex-direction: row; align-items: center; justify-content: flex-start; margin-bottom: 18px; }
 
-.compact .back-button
+.category-icon-box
 {
-    width: 68px;
-    height: 68px;
-    border-radius: 34px;
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+    background-color: var(--surface-solid);
+    justify-content: center;
+    align-items: center;
     margin-right: 20px;
+    flex-shrink: 0;
 }
 
-.compact .back-icon
+.category-icon
 {
     width: 32px;
     height: 32px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
 }
 
-.compact .content-wrapper
-{
-    padding: 26px;
-}
+.icon-skeletal { background-image: url("project://database/Assets/UI/Icons/skeletal-icon.png"); }
+.icon-muscular { background-image: url("project://database/Assets/UI/Icons/muscular-icon.png"); }
+.icon-nervous { background-image: url("project://database/Assets/UI/Icons/brain-icon.png"); }
+.icon-cardio { background-image: url("project://database/Assets/UI/Icons/cardio-icon.png"); }
 
-.compact .section-title
-{
-    font-size: 26px;
-    margin-bottom: 18px;
-}
+.anatomia-theme.theme-progress .category-name { font-size: 32px; -unity-font-style: bold; color: var(--ink); flex-grow: 1; }
+.anatomia-theme.theme-progress .category-count { font-size: 22px; color: var(--ink-3); }
 
-.compact .level-progress-card
+.anatomia-theme.theme-progress .category-progress-row { flex-direction: row; align-items: center; }
+.anatomia-theme.theme-progress .category-track { flex-grow: 1; height: 18px; border-radius: 9px; background-color: var(--track); overflow: hidden; margin-right: 20px; }
+.anatomia-theme.theme-progress .category-fill { height: 100%; border-radius: 9px; background-color: var(--accent); }
+.anatomia-theme.theme-progress .category-percent { font-size: 28px; -unity-font-style: bold; color: var(--accent); width: 120px; flex-shrink: 0; -unity-text-align: middle-right; }
+
+/* ---------- Pretest / Posttest ---------- */
+
+.anatomia-theme.theme-progress .baseline-grid { flex-direction: row; }
+
+.anatomia-theme.theme-progress .baseline-tile
 {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
     padding: 28px;
-    border-radius: 26px;
-}
-
-.compact .level-number
-{
-    font-size: 26px;
-}
-
-.compact .level-caption-small
-{
-    font-size: 18px;
-}
-
-.compact .level-caption
-{
-    font-size: 20px;
-}
-
-.compact .level-roadmap-card
-{
-    padding: 28px;
-    border-radius: 26px;
-}
-
-.compact .level-roadmap-subtitle
-{
-    font-size: 18px;
-}
-
-.compact .level-roadmap-item
-{
-    padding: 14px 16px;
-}
-
-.compact .level-roadmap-badge
-{
-    width: 50px;
-    height: 50px;
-    border-radius: 26px;
-    margin-right: 14px;
-}
-
-.compact .level-roadmap-badge-number
-{
-    font-size: 20px;
-}
-
-.compact .level-roadmap-title
-{
-    font-size: 20px;
-}
-
-.compact .level-roadmap-points
-{
-    font-size: 18px;
-}
-
-.compact .level-roadmap-status
-{
-    font-size: 16px;
-    padding: 6px 12px;
-}
-
-.compact .stat-card
-{
-    padding: 22px;
-}
-
-.compact .stat-card-left
-{
     margin-right: 8px;
+    border-radius: 28px;
+    background-color: var(--sunken);
 }
 
-.compact .stat-card-right
-{
-    margin-left: 8px;
-}
+.anatomia-theme.theme-progress .baseline-tile-last { margin-right: 0; margin-left: 8px; background-color: var(--accent-soft); }
 
-.compact .stat-value
-{
-    font-size: 34px;
-}
+.anatomia-theme.theme-progress .baseline-caption { font-size: 22px; -unity-font-style: bold; letter-spacing: 2px; color: var(--ink-3); margin-bottom: 8px; }
+.anatomia-theme.theme-progress .baseline-tile-last .baseline-caption { color: var(--accent); }
+.anatomia-theme.theme-progress .baseline-score { font-size: 30px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
 
-.compact .stat-label
+.anatomia-theme.theme-progress .baseline-improvement
 {
-    font-size: 18px;
-}
-
-.compact .stat-icon
-{
-    width: 44px;
-    height: 44px;
-}
-
-.compact .stat-icon-glyph
-{
-    font-size: 22px;
-}
-
-.compact .tab-button
-{
-    font-size: 20px;
-    height: 58px;
-}
-
-.compact .baseline-cta-button
-{
-    height: 88px;
-}
-
-.compact .baseline-cta-label
-{
+    align-self: flex-start;
+    margin-top: 22px;
+    padding: 10px 26px;
+    border-radius: 100px;
+    background-color: var(--success-soft);
+    color: var(--success);
     font-size: 26px;
+    -unity-font-style: bold;
 }
 
-.compact .weekly-chart-card,
-.compact .category-card
+.anatomia-theme.theme-progress .baseline-cta-button
 {
-    padding: 26px;
-    border-radius: 26px;
+    height: 96px;
+    margin: 28px 0 0 0;
+    padding: 0 40px;
+    border-width: 0;
+    border-radius: 48px;
+    background-color: var(--accent);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.compact .chart-area
+.anatomia-theme.theme-progress .baseline-cta-button:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-progress .baseline-cta-button:active { background-color: var(--accent-press); }
+.anatomia-theme.theme-progress .baseline-cta-label { color: white; font-size: 30px; -unity-font-style: bold; -unity-text-align: middle-center; }
+
+/* ---------- Level roadmap (rows are built in C#) ---------- */
+
+.anatomia-theme.theme-progress .level-roadmap-list { flex-direction: column; }
+
+.anatomia-theme.theme-progress .level-roadmap-item
 {
-    height: 260px;
+    flex-direction: row;
+    align-items: center;
+    padding: 22px 24px;
+    margin-bottom: 12px;
+    border-radius: 28px;
+    background-color: var(--sunken);
+    border-width: 2px;
+    border-color: rgba(0,0,0,0);
 }
 
-.compact .chart-axis-label
+.anatomia-theme.theme-progress .level-roadmap-badge
 {
-    font-size: 16px;
+    width: 72px;
+    height: 72px;
+    border-radius: 36px;
+    background-color: var(--track);
+    justify-content: center;
+    align-items: center;
+    margin-right: 22px;
+    flex-shrink: 0;
 }
 
-.compact .chart-day-label
-{
-    font-size: 18px;
-}
+.anatomia-theme.theme-progress .level-roadmap-badge-number { font-size: 30px; -unity-font-style: bold; color: var(--ink-3); }
+.anatomia-theme.theme-progress .level-roadmap-text-col { flex-grow: 1; flex-direction: column; min-width: 0; }
+.anatomia-theme.theme-progress .level-roadmap-title { font-size: 32px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-progress .level-roadmap-points { font-size: 24px; color: var(--ink-3); margin-top: 2px; white-space: normal; }
 
-.compact .chart-x-axis
-{
-    padding-left: 58px;
-}
-
-.compact .category-name
+.anatomia-theme.theme-progress .level-roadmap-status
 {
     font-size: 22px;
+    -unity-font-style: bold;
+    padding: 8px 20px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    background-color: var(--track);
+    color: var(--ink-3);
 }
 
-.compact .category-count
-{
-    font-size: 20px;
-}
+.anatomia-theme.theme-progress .level-roadmap-item-current { background-color: var(--accent-soft); border-color: var(--accent); }
+.anatomia-theme.theme-progress .level-roadmap-item-current .level-roadmap-badge { background-color: var(--accent); }
+.anatomia-theme.theme-progress .level-roadmap-item-current .level-roadmap-badge-number { color: white; }
+.anatomia-theme.theme-progress .level-roadmap-item-current .level-roadmap-status { background-color: var(--accent); color: white; }
 
-.compact .category-percent
-{
-    font-size: 20px;
-    width: 58px;
-}
+.anatomia-theme.theme-progress .level-roadmap-item-completed .level-roadmap-badge { background-color: var(--success); }
+.anatomia-theme.theme-progress .level-roadmap-item-completed .level-roadmap-badge-number { color: white; }
+.anatomia-theme.theme-progress .level-roadmap-item-completed .level-roadmap-status { background-color: var(--success-soft); color: var(--success); }
+
+.anatomia-theme.theme-progress .level-roadmap-item-locked { opacity: 0.8; }
+
+/* =========================================================
+   Compact (narrow phones) - toggled by the controller
+   ========================================================= */
+
+.anatomia-theme.theme-progress.compact .header { padding: 72px 32px 8px 32px; }
+.anatomia-theme.theme-progress.compact .back-button { width: 76px; height: 76px; min-width: 76px; border-radius: 38px; margin-right: 22px; }
+.anatomia-theme.theme-progress.compact .header-title { font-size: 40px; }
+.anatomia-theme.theme-progress.compact .content-wrapper { padding: 12px 28px 90px 28px; }
+.anatomia-theme.theme-progress.compact .level-hero { padding: 30px; border-radius: 32px; }
+.anatomia-theme.theme-progress.compact .level-number { font-size: 60px; }
+.anatomia-theme.theme-progress.compact .stat-tile { padding: 18px; }
+.anatomia-theme.theme-progress.compact .stat-tile-icon-box { width: 62px; height: 62px; border-radius: 20px; margin-right: 14px; }
+.anatomia-theme.theme-progress.compact .stat-value { font-size: 36px; }
+.anatomia-theme.theme-progress.compact .stat-label { font-size: 19px; }
+.anatomia-theme.theme-progress.compact .tab-button { height: 72px; font-size: 24px; }
+.anatomia-theme.theme-progress.compact .weekly-chart-card, .anatomia-theme.theme-progress.compact .category-card, .anatomia-theme.theme-progress.compact .level-roadmap-card { padding: 28px; border-radius: 28px; }
+.anatomia-theme.theme-progress.compact .chart-area { height: 290px; }
+.anatomia-theme.theme-progress.compact .category-item { padding: 20px; }
+.anatomia-theme.theme-progress.compact .baseline-score { font-size: 26px; }
+.anatomia-theme.theme-progress.compact .level-roadmap-title { font-size: 28px; }

@@ -25,7 +25,7 @@ namespace Anatomia3D.UI
         [SerializeField] private VisualTreeAsset studentAchivementScreen;
         [SerializeField] private VisualTreeAsset studentProfileScreen;
         [SerializeField] private VisualTreeAsset studentClassroomScreen;
-        [SerializeField] private VisualTreeAsset studentQuizSelectionScreen;
+      //  [SerializeField] private VisualTreeAsset studentQuizSelectionScreen;
         [SerializeField] private VisualTreeAsset studentQuizGameplayScreen;
         // File Submission assignment type - shown instead of studentQuizGameplayScreen
         // when the quiz's submissionType is "file" (see ShowStudentFileSubmission).
@@ -137,7 +137,7 @@ namespace Anatomia3D.UI
             {
                 studentLoginScreen, createAccountScreen, forgotPasswordScreen,
                 studentDashboardScreen, studentExplore3dScreen, studentAchivementScreen,
-                studentProfileScreen, studentClassroomScreen, studentQuizSelectionScreen,
+                studentProfileScreen, studentClassroomScreen,
                 studentFileSubmissionScreen, studentProgressScreen, studentQuizResultScreen,
                 studentQuizResult, studentClassroomHubScreen, studentClassroomDetailScreen,
                 studentEditProfileScreen, studentNotificationsScreen,

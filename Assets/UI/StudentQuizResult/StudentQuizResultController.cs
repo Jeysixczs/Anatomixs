@@ -315,16 +315,23 @@ namespace Anatomia3D.UI
                 title = "Keep Practicing!";
             }
 
+            if (_screenRoot != null)
+            {
+                _screenRoot.EnableInClassList("tier-high", percent >= greatScoreThreshold);
+                _screenRoot.EnableInClassList("tier-mid", percent >= goodScoreThreshold && percent < greatScoreThreshold);
+                _screenRoot.EnableInClassList("tier-low", percent < goodScoreThreshold);
+            }
+
             if (_resultTitleLabel != null) _resultTitleLabel.text = title;
 
-            if (_header != null)
+            if (_header != null && AnatomiaTheme.UseGradientChrome)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
                 _headerGradientTexture = BuildGradientTexture(start, end);
                 _header.style.backgroundImage = new StyleBackground(_headerGradientTexture);
             }
 
-            if (_backToDashboardButton != null)
+            if (_backToDashboardButton != null && AnatomiaTheme.UseGradientChrome)
             {
                 if (_buttonGradientTexture != null) Destroy(_buttonGradientTexture);
                 _buttonGradientTexture = BuildGradientTexture(start, end);

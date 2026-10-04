@@ -1,7 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentClassroom/StudentClassroom.uss?fileID=7433441132597879392&amp;guid=7250e04e856057c45b5e9ff771676df3&amp;type=3#StudentClassroom"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-classroom screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+
+            <!-- ============ HEADER ============ -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
@@ -13,54 +16,70 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
+                <!-- ============ CODE ENTRY ============ -->
                 <ui:VisualElement name="classroom-card" class="classroom-card">
+                    <ui:VisualElement class="hero-icon-ring">
+                        <ui:VisualElement class="hero-icon"/>
+                    </ui:VisualElement>
                     <ui:Label text="Enter Classroom Code" class="card-title"/>
                     <ui:Label text="Ask your teacher for the classroom code" class="card-subtitle"/>
+
                     <ui:Label text="CLASSROOM CODE" class="field-label field-label-spaced"/>
                     <ui:VisualElement class="input-container">
-                        <ui:VisualElement class="input-icon icon-key" style="background-image: url(&quot;project://database/Assets/UI/Icons/key-icon.png?fileID=2800000&amp;guid=d984037cdc2b20b44a3c6a0df87fa72b&amp;type=3#key-icon&quot;); height: 79px; width: 52px;"/>
                         <ui:TextField name="classroom-code-field" placeholder-text="e.g., ANAT101A" hide-placeholder-on-focus="true" max-length="8" class="input-field code-input-field"/>
+                        <ui:VisualElement picking-mode="Ignore" class="input-icon icon-key"/>
                     </ui:VisualElement>
                     <ui:Label text="Codes are usually 6-8 characters long" class="helper-text"/>
                     <ui:Label name="code-error" text="Please enter a valid classroom code" class="field-error hidden"/>
-                    <ui:VisualElement name="info-box" class="info-box">
-                        <ui:Label text="What is a classroom code?" class="info-title"/>
-                        <ui:VisualElement class="info-list">
-                            <ui:VisualElement class="info-item">
-                                <ui:Label text="•" class="info-bullet"/>
-                                <ui:Label text="Your teacher will provide a unique code" class="info-text"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="info-item">
-                                <ui:Label text="•" class="info-bullet"/>
-                                <ui:Label text="Use it to join their classroom" class="info-text"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="info-item">
-                                <ui:Label text="•" class="info-bullet"/>
-                                <ui:Label text="Your progress will be tracked" class="info-text"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="info-item info-item-last">
-                                <ui:Label text="•" class="info-bullet"/>
-                                <ui:Label text="Teacher can see your quiz scores" class="info-text"/>
-                            </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- ============ WHAT IS A CODE ============ -->
+                <ui:VisualElement name="info-box" class="info-box">
+                    <ui:Label text="What is a classroom code?" class="info-title"/>
+                    <ui:VisualElement class="info-list">
+                        <ui:VisualElement class="info-item">
+                            <ui:VisualElement class="info-check"/>
+                            <ui:Label text="Your teacher will provide a unique code" class="info-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-item">
+                            <ui:VisualElement class="info-check"/>
+                            <ui:Label text="Use it to join their classroom" class="info-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-item">
+                            <ui:VisualElement class="info-check"/>
+                            <ui:Label text="Your progress will be tracked" class="info-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-item info-item-last">
+                            <ui:VisualElement class="info-check"/>
+                            <ui:Label text="Teacher can see your quiz scores" class="info-text"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label name="status-label" text="" class="status-label hidden"/>
-                    <ui:Button name="join-classroom-submit-button" class="join-submit-button">
-                        <ui:VisualElement class="join-submit-icon icon-people" style="background-image: url(&quot;project://database/Assets/UI/Icons/users-icon.png?fileID=2800000&amp;guid=283e313d0909bc04882c7217209f7b5f&amp;type=3#users-icon&quot;); height: 60px; width: 61px;"/>
-                        <ui:Label text="Join Classroom" class="join-submit-label"/>
-                    </ui:Button>
                 </ui:VisualElement>
+
+                <!-- ============ TIP ============ -->
                 <ui:VisualElement name="tip-card" class="tip-card">
                     <ui:VisualElement class="tip-icon-box">
-                        <ui:Label text="💡" class="tip-icon-emoji"/>
+                        <ui:VisualElement class="tip-icon"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="tip-text-block">
                         <ui:Label text="Don&apos;t have a code?" class="tip-title"/>
                         <ui:Label text="Ask your teacher for the classroom code. They can find it in their teacher dashboard." class="tip-subtitle"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
             </ui:VisualElement>
         </ui:ScrollView>
+
+        <!-- ============ BOTTOM ACTION BAR (status + join) ============ -->
+        <ui:VisualElement name="join-bar" class="join-bar">
+            <ui:Label name="status-label" text="" class="status-label hidden"/>
+            <ui:Button name="join-classroom-submit-button" class="join-submit-button">
+                <ui:VisualElement picking-mode="Ignore" class="join-submit-icon icon-people"/>
+                <ui:Label text="Join Classroom" picking-mode="Ignore" class="join-submit-label"/>
+            </ui:Button>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

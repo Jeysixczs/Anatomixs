@@ -606,7 +606,6 @@ GameObject:
   - component: {fileID: 1051780011}
   - component: {fileID: 1051780013}
   - component: {fileID: 1051780016}
-  - component: {fileID: 1051780017}
   - component: {fileID: 1051780018}
   - component: {fileID: 1051780019}
   - component: {fileID: 1051780020}
@@ -762,6 +761,7 @@ MonoBehaviour:
   adminProfileScreen: {fileID: 9197481963319205126, guid: a986c6d2909501b4aa68d1d84b2c0fc0, type: 3}
   adminEditProfileScreen: {fileID: 9197481963319205126, guid: b38baf6cb5d2ddf4c952653fadad4e05, type: 3}
   adminAboutAnatomiaScreen: {fileID: 9197481963319205126, guid: f3f7d4a237dd92c4cbf8934f1339fa3c, type: 3}
+  debugScreenAnimations: 0
   aboutAnatomiaScreen: {fileID: 9197481963319205126, guid: 9c6499bb7dece614abf64115582e508a, type: 3}
 --- !u!114 &1051780009
 MonoBehaviour:
@@ -831,6 +831,7 @@ MonoBehaviour:
   eyeOnIcon: {fileID: 2800000, guid: 0189665e15811c44e901e9116cc261a6, type: 3}
   eyeOffIcon: {fileID: 2800000, guid: 737d9792ad11ddb4bb90c30ac38fe564, type: 3}
   minimumPasswordLength: 8
+  allowedEmailDomains: []
 --- !u!114 &1051780013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -862,21 +863,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentAchievementsController
   gradientStart: {r: 0.08627451, g: 0.7372549, b: 0.4627451, a: 1}
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
-  compactWidthThreshold: 900
---- !u!114 &1051780017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1051780004}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3cd062d72806a24ca96f8f7160b0ff8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.StudentQuizSelectionController
-  gradientStart: {r: 0.086, g: 0.737, b: 0.463, a: 1}
-  gradientEnd: {r: 0.145, g: 0.388, b: 0.922, a: 1}
   compactWidthThreshold: 900
 --- !u!114 &1051780018
 MonoBehaviour:
@@ -974,6 +960,7 @@ MonoBehaviour:
   eyeOnIcon: {fileID: 2800000, guid: 75a1bb60b8ff3cd4e814dc6ab6dfb72d, type: 3}
   eyeOffIcon: {fileID: 2800000, guid: e0e412575a7d3c746b4baae60a2fad7d, type: 3}
   minimumPasswordLength: 8
+  allowedEmailDomains: []
 --- !u!114 &1051780023
 MonoBehaviour:
   m_ObjectHideFlags: 0

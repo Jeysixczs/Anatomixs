@@ -391,6 +391,7 @@ namespace Anatomia3D.UI.Quiz
 
         private void PaintGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
             _headerGradientTexture = GradientTextureUtility.CreateDiagonalGradient(64, 64, gradientStart, gradientEnd);
             if (_header != null) _header.style.backgroundImage = new StyleBackground(Background.FromTexture2D(_headerGradientTexture));

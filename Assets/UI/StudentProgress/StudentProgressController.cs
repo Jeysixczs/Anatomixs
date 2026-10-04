@@ -73,6 +73,8 @@ namespace Anatomia3D.UI
         private Button _performanceTabButton;
         private VisualElement _weeklyActivityPanel;
         private VisualElement _performancePanel;
+        private Button _roadmapTabButton;
+        private VisualElement _roadmapPanel;
 
         // Weekly chart bars (Mon..Sun)
         private readonly VisualElement[] _chartBars = new VisualElement[7];
@@ -240,6 +242,7 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.UnregisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _roadmapTabButton?.UnregisterCallback<ClickEvent>(OnRoadmapTabClicked);
             _baselineTakePosttestButton?.UnregisterCallback<ClickEvent>(OnTakePosttestClicked);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -275,6 +278,8 @@ namespace Anatomia3D.UI
             _performanceTabButton = _screenRoot.Q<Button>("performance-tab-button");
             _weeklyActivityPanel = _screenRoot.Q<VisualElement>("weekly-activity-panel");
             _performancePanel = _screenRoot.Q<VisualElement>("performance-panel");
+            _roadmapTabButton = _screenRoot.Q<Button>("roadmap-tab-button");
+            _roadmapPanel = _screenRoot.Q<VisualElement>("roadmap-panel");
 
             for (int i = 0; i < BarNames.Length; i++)
             {
@@ -318,6 +323,7 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.RegisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _roadmapTabButton?.RegisterCallback<ClickEvent>(OnRoadmapTabClicked);
             _baselineTakePosttestButton?.RegisterCallback<ClickEvent>(OnTakePosttestClicked);
 
             if (_screenRoot != null)
@@ -881,22 +887,23 @@ namespace Anatomia3D.UI
 
         private void OnPerformanceTabClicked(ClickEvent evt) => ShowPerformanceTab();
 
-        private void ShowWeeklyTab()
-        {
-            _weeklyTabButton?.AddToClassList("tab-button-active");
-            _performanceTabButton?.RemoveFromClassList("tab-button-active");
+        private void OnRoadmapTabClicked(ClickEvent evt) => ShowRoadmapTab();
 
-            _weeklyActivityPanel?.RemoveFromClassList("hidden");
-            _performancePanel?.AddToClassList("hidden");
-        }
+        private void ShowWeeklyTab() => SetActiveTab(_weeklyTabButton, _weeklyActivityPanel);
+        private void ShowPerformanceTab() => SetActiveTab(_performanceTabButton, _performancePanel);
+        private void ShowRoadmapTab() => SetActiveTab(_roadmapTabButton, _roadmapPanel);
 
-        private void ShowPerformanceTab()
+        private void SetActiveTab(Button activeButton, VisualElement activePanel)
         {
-            _performanceTabButton?.AddToClassList("tab-button-active");
             _weeklyTabButton?.RemoveFromClassList("tab-button-active");
+            _performanceTabButton?.RemoveFromClassList("tab-button-active");
+            _roadmapTabButton?.RemoveFromClassList("tab-button-active");
+            activeButton?.AddToClassList("tab-button-active");
 
-            _performancePanel?.RemoveFromClassList("hidden");
             _weeklyActivityPanel?.AddToClassList("hidden");
+            _performancePanel?.AddToClassList("hidden");
+            _roadmapPanel?.AddToClassList("hidden");
+            activePanel?.RemoveFromClassList("hidden");
         }
 
         // ---------------- Responsive layout ----------------
@@ -914,6 +921,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

@@ -931,3 +931,73 @@
 {
     font-size: 26px;
 }
+
+
+/* =========================================================
+   Filter row + filter sheet: consistent rounded corners (v2)
+   The shared theme gave Filter / Reset / Apply 100px pill corners while the
+   search box used 26px and the sheet rounded all four corners (so the bottom
+   of the sheet curled away from the screen edge). Scoped under .anatomia-theme.theme-hub
+   so these rules out-rank AnatomiaTheme.uss without editing it.
+   ========================================================= */
+
+/* Search box and Filter button: same height, same full-pill radius */
+.anatomia-theme.theme-hub .hub-search-row { flex-direction: row; align-items: center; margin-bottom: 28px; }
+.anatomia-theme.theme-hub .hub-search-wrapper
+{
+    height: 96px;
+    border-radius: 48px;
+    padding-left: 32px;
+    padding-right: 24px;
+    overflow: hidden;
+}
+.anatomia-theme.theme-hub .hub-search-field > TextInput { padding-top: 0; padding-bottom: 0; }
+
+.anatomia-theme.theme-hub .hub-filter-button
+{
+    height: 96px;
+    margin: 0 0 0 16px;
+    padding: 0 38px;
+    border-width: 1px;
+    border-radius: 48px;
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+    overflow: hidden;
+}
+.anatomia-theme.theme-hub .hub-filter-button-active { border-width: 0; }
+
+/* Bottom sheet: round only the top corners (it sits flush on the screen edge) */
+.anatomia-theme.theme-hub .hub-filter-sheet
+{
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-width: 0;
+}
+.anatomia-theme.theme-hub .hub-filter-close-button { width: 72px; height: 72px; border-radius: 36px; }
+.anatomia-theme.theme-hub .hub-filter-option { border-radius: 30px; }
+.anatomia-theme.theme-hub .hub-filter-option-count { border-radius: 26px; }
+
+/* Reset + Apply: equal height, matching pill corners */
+.anatomia-theme.theme-hub .hub-filter-footer { flex-direction: row; align-items: center; margin-top: 28px; }
+.anatomia-theme.theme-hub .hub-filter-reset-button,
+.anatomia-theme.theme-hub .hub-filter-apply-button
+{
+    height: 104px;
+    margin: 0;
+    padding: 0;
+    border-radius: 52px;
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+    overflow: hidden;
+}
+.anatomia-theme.theme-hub .hub-filter-reset-button { margin-right: 16px; border-width: 2px; }
+.anatomia-theme.theme-hub .hub-filter-apply-button { border-width: 0; }
+
+.anatomia-theme.theme-hub.compact .hub-search-wrapper { height: 84px; border-radius: 42px; padding-left: 26px; }
+.anatomia-theme.theme-hub.compact .hub-filter-button { height: 84px; border-radius: 42px; padding: 0 28px; }
+.anatomia-theme.theme-hub.compact .hub-filter-reset-button,
+.anatomia-theme.theme-hub.compact .hub-filter-apply-button { height: 92px; border-radius: 46px; }

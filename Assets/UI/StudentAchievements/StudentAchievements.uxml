@@ -1,15 +1,15 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentAchievements/StudentAchievements.uss"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-achievements screen-root">
 
-        <!-- ===================== SCROLLABLE CONTENT ===================== -->
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
 
             <!-- ===================== HEADER ===================== -->
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
                     <ui:Button name="back-button" class="back-button">
-                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                        <ui:VisualElement name="back-icon" picking-mode="Ignore" class="back-icon"/>
                     </ui:Button>
                     <ui:VisualElement name="header-text" class="header-text">
                         <ui:Label text="Achievements" class="header-title"/>
@@ -17,30 +17,26 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
+                <!-- Two stat tiles: points (accent) + badges earned -->
                 <ui:VisualElement name="summary-card" class="summary-card">
-                    <ui:VisualElement name="summary-row-points" class="summary-row">
-                        <ui:Label text="Total Points" class="summary-label"/>
+                    <ui:VisualElement name="summary-row-points" class="summary-row summary-row-points">
+                        <ui:Label text="Total points" class="summary-label"/>
                         <ui:Label name="total-points-label" text="1,250" class="summary-value"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="summary-divider" class="summary-divider"/>
-                    <ui:VisualElement name="summary-row-badges" class="summary-row">
-                        <ui:Label text="Badges Earned" class="summary-label"/>
+                    <ui:VisualElement name="summary-row-badges" class="summary-row summary-row-badges">
+                        <ui:Label text="Badges earned" class="summary-label"/>
                         <ui:Label name="badges-earned-label" text="3 / 4" class="summary-value"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
 
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-
+                <ui:Label text="Your badges" class="section-title"/>
                 <ui:VisualElement name="badge-list" class="badge-list">
-                    <!-- Populated at runtime via SetBadges() from the teacher's
-                         AdminGamificationService badge config + this student's
-                         earned badges/points - see StudentAchievementsController. -->
+                    <!-- Populated at runtime via SetBadges() - see StudentAchievementsController. -->
                 </ui:VisualElement>
-
-                
-
             </ui:VisualElement>
+
         </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

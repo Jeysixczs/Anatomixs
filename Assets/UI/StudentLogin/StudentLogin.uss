@@ -18,7 +18,6 @@
     justify-content: center;
     align-items: center;
 
-    background-color: rgb(234,243,251);
 }
 
 /* ---------- Center Container ---------- */
@@ -108,923 +107,556 @@
     flex-shrink: 0;
 }
 
-/* ---------- Logo ---------- */
+/* =========================================================
+   REDESIGN: shared by Student Login, Create Account and Forgot Password.
+   Rules are scoped as ".anatomia-theme.screen-root .x" so they out-rank
+   the generic theme rules (AnatomiaTheme.uss loads after this file).
+   Each text field is the visible box (so :focus can outline it); its icon
+   and the eye button float over the box. No emoji or glyph characters.
+   ========================================================= */
 
-.logo-circle
+/* ---------- Logo + titles ---------- */
+.anatomia-theme.screen-root .logo-circle
 {
-    width: 220px;
-    height: 220px;
-
+    width: 168px;
+    height: 168px;
+    border-radius: 84px;
     align-self: center;
-
-    border-radius: 110px;
-
+    margin-bottom: 26px;
+    border-width: 4px;
+    border-color: var(--surface-solid);
     background-image: url("project://database/Assets/UI/Icons/Anatomia-logo.png");
-
     background-position: center;
     background-size: cover;
-
-    margin-bottom: 30px;
 }
 
-/* ---------- Title ---------- */
-
-.app-title
+.anatomia-theme.screen-root .app-title
 {
-    font-size: 56px;
+    font-size: 52px;
     -unity-font-style: bold;
-    color: rgb(31,36,48);
+    letter-spacing: -1px;
+    color: var(--ink);
     -unity-text-align: middle-center;
-
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
-.app-subtitle
+.anatomia-theme.screen-root .app-subtitle
 {
-    font-size: 34px;
-    color: rgb(138,143,163);
+    font-size: 28px;
+    color: var(--ink-3);
     -unity-text-align: middle-center;
-
-    margin-bottom: 60px;
-}
-
-/* ---------- Card ---------- */
-
-.login-card,
-.create-account-card
-{
-    width: 100%;
-
-    background-color: white;
-
-    border-radius: 48px;
-
-    padding-left: 60px;
-    padding-right: 60px;
-    padding-top: 60px;
-    padding-bottom: 60px;
-
-    margin-bottom: 50px;
-}
-
-/* ---------- Labels ---------- */
-
-.field-label
-{
-    font-size: 32px;
-    -unity-font-style: bold;
-    color: rgb(31,36,48);
-
-    margin-bottom: 14px;
-}
-
-.field-label-spaced
-{
-    margin-top: 34px;
-}
-
-.field-error
-{
-    font-size: 26px;
-    color: rgb(224,33,138);
-
-    margin-top: 10px;
+    margin-bottom: 44px;
     white-space: normal;
 }
 
-.hidden
-{
-    display: none;
-}
-
-/* ---------- Input Container ---------- */
-
-.input-container
+/* ---------- Card ---------- */
+.anatomia-theme.screen-root .login-card,
+.anatomia-theme.screen-root .create-account-card
 {
     width: 100%;
+    padding: 52px;
+    margin-bottom: 36px;
+    border-radius: 48px;
+}
 
-    height: 118px;
+/* ---------- Labels / errors ---------- */
+.anatomia-theme.screen-root .field-label
+{
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: var(--ink-2);
+    margin: 0 0 12px 4px;
+}
+.anatomia-theme.screen-root .field-label-spaced { margin-top: 30px; }
 
+.anatomia-theme.screen-root .field-error
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--danger);
+    margin: 10px 0 0 6px;
+    white-space: normal;
+}
+
+/* ---------- Inputs ---------- */
+.anatomia-theme.screen-root .input-container
+{
+    position: relative;
+    width: 100%;
+    height: auto;
     flex-direction: row;
-
     align-items: center;
-
-    background-color: rgb(244,245,247);
-
-    border-radius: 28px;
-
-    border-width: 2px;
-    border-color: rgb(231,232,237);
-
-    padding-left: 30px;
-    padding-right: 20px;
-
-    overflow: hidden;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    overflow: visible;
 }
 
-/* ---------- Icons ---------- */
-
-.input-icon
+.anatomia-theme.screen-root .input-icon
 {
+    position: absolute;
+    left: 30px;
+    top: 34px;
     width: 44px;
     height: 44px;
-
-    margin-right: 20px;
+    margin: 0;
     flex-shrink: 0;
-}
-
-.icon-user
-{
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-3);
 }
 
-.icon-email
-{
-    background-image: url("project://database/Assets/UI/Icons/email-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
+.anatomia-theme.screen-root .icon-email { background-image: url("project://database/Assets/UI/Icons/email-icon.png"); }
+.anatomia-theme.screen-root .icon-lock { background-image: url("project://database/Assets/UI/Icons/lock-icon.png"); }
+.anatomia-theme.screen-root .icon-google { background-image: url("project://database/Assets/UI/Icons/google-icon.png"); background-size: contain; background-position: center; background-repeat: no-repeat; }
+.anatomia-theme.screen-root .icon-fingerprint { background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png"); background-size: contain; background-position: center; background-repeat: no-repeat; }
+.anatomia-theme.screen-root .icon-user { background-image: url("project://database/Assets/UI/Icons/user-icon.png"); }
 
-.icon-lock
-{
-    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.icon-eye
-{
-    background-image: url("project://database/Assets/UI/Icons/eye.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 44px;
-    height: 44px;
-}
-.icon-eye-off
-{
-    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 44px;
-    height: 44px;
-}
-
-/* Two-class selector so the "off" image always wins over .icon-eye,
-   no matter which rule comes first in this file. */
-.icon-eye.icon-eye-off
-{
-    background-image: url("project://database/Assets/UI/Icons/eye-off.png");
-}
-.icon-google
-{
-    width: 44px;
-    height: 44px;
-
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    background-image: url("project://database/Assets/UI/Icons/google-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.icon-lock
-{
-    width: 44px;
-    height: 44px;
-
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
-}
-
-.icon-fingerprint
-{
-    width: 44px;
-    height: 44px;
-
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-/* ---------- TextField ---------- */
-
-.input-field
+.anatomia-theme.screen-root .input-field
 {
     flex-grow: 1;
     flex-shrink: 1;
     min-width: 0;
-
-    font-size: 34px;
-
-    color: rgb(31,36,48);
-
-    background-color: transparent;
-
+    margin: 0;
+    padding: 0;
+    font-size: 33px;
+    color: var(--ink);
+    background-color: rgba(0, 0, 0, 0);
     border-width: 0;
 }
 
-.input-field > #unity-text-input
-{
-    background-color: transparent;
-    border-width: 0;
+.anatomia-theme.screen-root .input-field-with-right-icon { margin-right: 0; }
 
-    /* Keep long text scrolling inside the field instead of stretching the row. */
+.anatomia-theme.screen-root .input-field > #unity-text-input
+{
+    height: 112px;
+    padding-left: 92px;
+    padding-right: 28px;
     flex-shrink: 1;
     min-width: 0;
     overflow: hidden;
+    background-color: var(--sunken);
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 30px;
+    color: var(--ink);
+    font-size: 33px;
+    -unity-text-align: middle-left;
 }
+.anatomia-theme.screen-root .input-field-with-right-icon > #unity-text-input { padding-right: 100px; }
+.anatomia-theme.screen-root .input-field > #unity-text-input:hover { border-color: var(--line-strong); }
+.anatomia-theme.screen-root .input-field > #unity-text-input:focus { background-color: var(--surface-solid); border-color: var(--accent); }
 
-.input-field-with-right-icon
+/* Eye button floats over the right edge of the field */
+.anatomia-theme.screen-root .input-icon-button
 {
-    margin-right: 10px;
+    position: absolute;
+    right: 16px;
+    top: 22px;
+    width: 68px;
+    height: 68px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    -unity-background-image-tint-color: var(--ink-3);
 }
-
-/* ---------- Eye Button ---------- */
-
-.input-icon-button
+.anatomia-theme.screen-root .input-icon-button.icon-eye,
+.anatomia-theme.screen-root .input-icon-button.icon-eye-off
 {
     width: 68px;
     height: 68px;
+    background-size: 40px 40px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.anatomia-theme.screen-root .input-icon-button .icon-eye,
+.anatomia-theme.screen-root .input-icon-button .icon-eye-off
+{
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: var(--ink-3);
+}
+.anatomia-theme.screen-root .icon-eye { background-image: url("project://database/Assets/UI/Icons/eye.png"); }
+.anatomia-theme.screen-root .icon-eye.icon-eye-off,
+.anatomia-theme.screen-root .icon-eye-off { background-image: url("project://database/Assets/UI/Icons/eye-off.png"); }
+.anatomia-theme.screen-root .input-icon-button:hover { background-color: var(--sunken); border-radius: 34px; }
 
-    background-color: transparent;
+/* Icons that live inside buttons (not floating) */
+.anatomia-theme.screen-root .icon-google,
+.anatomia-theme.screen-root .icon-fingerprint
+{
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    margin: 0 16px 0 0;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+.anatomia-theme.screen-root .icon-google { -unity-background-image-tint-color: rgb(255, 255, 255); }
+.anatomia-theme.screen-root .icon-fingerprint { -unity-background-image-tint-color: var(--accent); }
 
-    border-width: 0;
-
-    justify-content: center;
-    align-items: center;
-
-    flex-shrink: 0;
+.anatomia-theme.screen-root #biometric-icon
+{
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    margin: 0 16px 0 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
 }
 
-/* ---------- Sign In / Create Account Button ---------- */
-
-.sign-in-button,
-.create-account-button
+/* ---------- Links ---------- */
+.anatomia-theme.screen-root .forgot-password-link
 {
-    width: 100%;
-    height: 118px;
-
-    margin-top: 48px;
-
-    background-color: rgb(142,45,226);
-
-    color: white;
-
-    border-radius: 28px;
-
-    border-width: 0;
-
-    font-size: 36px;
+    align-self: flex-end;
+    margin: 16px 0 0 0;
+    padding: 0;
+    font-size: 26px;
     -unity-font-style: bold;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
-/* ---------- Biometric Login Button ---------- */
-/* Outlined (not filled) so it reads as a secondary/quick action next to the
-   primary purple Sign In button - same footprint as .google-button, just
-   with the brand purple for the border/text/icon instead of Google's colors. */
-
-.biometric-button
+/* ---------- Primary button ---------- */
+.anatomia-theme.screen-root .sign-in-button,
+.anatomia-theme.screen-root .create-account-button
 {
     width: 100%;
-    height: 118px;
-
-    flex-direction: row;
-
-    justify-content: center;
-    align-items: center;
-
-    background-color: rgb(244,245,247);
-
-    border-width: 2px;
-    border-color: rgb(142,45,226);
-
-    border-radius: 28px;
-}
-
-.biometric-button-text
-{
+    height: 112px;
+    margin: 36px 0 0 0;
+    padding: 0;
     font-size: 34px;
     -unity-font-style: bold;
-
-    color: rgb(142,45,226);
+    color: white;
+    border-width: 0;
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    border-bottom-left-radius: 56px;
+    border-bottom-right-radius: 56px;
 }
+
+/* ---------- Biometric (outlined) ---------- */
+.anatomia-theme.screen-root .biometric-button
+{
+    width: 100%;
+    height: 112px;
+    margin: 28px 0 0 0;
+    padding: 0;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-faint);
+    border-width: 2px;
+    border-color: var(--accent);
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    border-bottom-left-radius: 56px;
+    border-bottom-right-radius: 56px;
+}
+.anatomia-theme.screen-root .biometric-button:hover { background-color: var(--accent-soft); }
+.anatomia-theme.screen-root .biometric-button-text { font-size: 32px; -unity-font-style: bold; color: var(--accent); }
 
 /* ---------- Divider ---------- */
+.anatomia-theme.screen-root .divider-row { flex-direction: row; align-items: center; margin: 34px 0; }
+.anatomia-theme.screen-root .divider-line { flex-grow: 1; height: 1px; background-color: var(--line-strong); }
+.anatomia-theme.screen-root .divider-text { margin: 0 22px; font-size: 24px; color: var(--ink-3); }
 
-.divider-row
-{
-    flex-direction: row;
-
-    align-items: center;
-
-    margin-top: 48px;
-    margin-bottom: 48px;
-}
-
-.divider-line
-{
-    flex-grow: 1;
-
-    height: 2px;
-
-    background-color: rgb(231,232,237);
-}
-
-.divider-text
-{
-    margin-left: 24px;
-    margin-right: 24px;
-
-    font-size: 28px;
-
-    color: rgb(138,143,163);
-}
-
-/* ---------- Google Button ---------- */
-
-.google-button
+/* ---------- Google ---------- */
+.anatomia-theme.screen-root .google-button
 {
     width: 100%;
-    height: 118px;
-
+    height: 112px;
+    margin: 0;
+    padding: 0;
     flex-direction: row;
-
     justify-content: center;
     align-items: center;
-
-    background-color: white;
-
-    border-width: 2px;
-    border-color: rgb(231,232,237);
-
-    border-radius: 28px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    border-bottom-left-radius: 56px;
+    border-bottom-right-radius: 56px;
 }
+.anatomia-theme.screen-root .google-button:hover { background-color: var(--sunken); }
+.anatomia-theme.screen-root .google-button-text { font-size: 32px; -unity-font-style: bold; color: var(--ink); }
+.anatomia-theme.screen-root .google-button .icon-google { -unity-background-image-tint-color: rgb(255, 255, 255); }
 
-.google-button-text
+/* ---------- Bottom links ---------- */
+.anatomia-theme.screen-root .create-account-row,
+.anatomia-theme.screen-root .bottom-links { flex-direction: row; justify-content: center; align-items: center; margin-top: 4px; }
+.anatomia-theme.screen-root .create-account-text,
+.anatomia-theme.screen-root .bottom-link-text { font-size: 27px; color: var(--ink-3); margin-right: 8px; }
+.anatomia-theme.screen-root .create-account-link,
+.anatomia-theme.screen-root .bottom-link-button
 {
-    font-size: 34px;
+    padding: 0;
+    margin: 0;
+    font-size: 27px;
     -unity-font-style: bold;
-
-    color: rgb(31,36,48);
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
-/* ---------- Admin Link ---------- */
-
-.admin-login-link
+.anatomia-theme.screen-root .admin-login-link
 {
     align-self: center;
-
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(142,45,226);
-
-    font-size: 34px;
-
+    margin-top: 22px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 34px;
+    padding-right: 34px;
+    font-size: 25px;
     -unity-font-style: bold;
+    color: var(--ink-2);
+    background-color: var(--sunken);
+    border-width: 0;
+    border-top-left-radius: 30px;
+    border-top-right-radius: 30px;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+}
+.anatomia-theme.screen-root .admin-login-link:hover { background-color: var(--track); }
+
+/* Forgot password: back link with icon */
+.anatomia-theme.screen-root .back-login-link
+{
+    position: relative;
+    align-self: center;
+    margin-top: 22px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-left: 54px;
+    padding-right: 20px;
+    font-size: 27px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.screen-root .back-link-icon
+{
+    position: absolute;
+    left: 6px;
+    top: 14px;
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
 }
 
 /* ---------- Status ---------- */
-
-.status-label
+.anatomia-theme.screen-root .status-label
 {
-    margin-top: 28px;
-
-    font-size: 28px;
-
-    color: rgb(224,33,138);
-
+    margin-top: 22px;
+    font-size: 26px;
+    color: var(--danger);
     -unity-text-align: middle-center;
+    white-space: normal;
 }
-
-/* ---------- Forgot Password ---------- */
-
-.forgot-password-link
-{
-    align-self: flex-end;
-
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(142,45,226);
-
-    font-size: 26px;
-
-    margin-top: 16px;
-    margin-bottom: 24px;
-
-    -unity-font-style: bold;
-}
-
-/* ---------- Create Account ---------- */
-
-.create-account-row
-{
-    flex-direction: row;
-
-    justify-content: center;
-
-    align-items: center;
-
-    margin-top: 20px;
-}
-
-.create-account-text
-{
-    font-size: 28px;
-
-    color: rgb(138,143,163);
-
-    margin-right: 10px;
-}
-
-.create-account-link
-{
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(142,45,226);
-
-    font-size: 28px;
-
-    -unity-font-style: bold;
-}
-
-/* =========================================================
-   CREATE ACCOUNT SPECIFIC STYLES
-   ========================================================= */
-
-/* ---------- Terms Row ---------- */
-
-.terms-row
-{
-    flex-direction: row;
-    align-items: flex-start;
-    margin-top: 36px;
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-.terms-checkbox
-{
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    margin-right: 16px;
-    background-color: rgb(244,245,247);
-    border-width: 2px;
-    border-color: rgb(231,232,237);
-    border-radius: 8px;
-    align-self: flex-start;
-    margin-top: 2px;
-}
-
-.terms-label-container
-{
-    flex-grow: 1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.terms-text
-{
-    font-size: 26px;
-    color: rgb(138,143,163);
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-.terms-link-button
-{
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(142,45,226);
-    background-color: transparent;
-    border-width: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    padding-right: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    margin-right: 0;
-    height: auto;
-    min-height: 0;
-}
-
-/* ---------- Bottom Links (Create Account) ---------- */
-
-.bottom-links
-{
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.bottom-link-text
-{
-    font-size: 28px;
-    color: rgb(138,143,163);
-    margin-right: 10px;
-}
-
-.bottom-link-button
-{
-    background-color: transparent;
-    border-width: 0;
-    color: rgb(142,45,226);
-    font-size: 28px;
-    -unity-font-style: bold;
-}
-
-/* ---------- Hover States ---------- */
-
-.sign-in-button:hover,
-.create-account-button:hover
-{
-    background-color: rgb(128,35,210);
-}
-
-.google-button:hover
-{
-    background-color: rgb(244,245,247);
-}
-
-.biometric-button:hover
-{
-    background-color: rgb(238,230,250);
-}
-
-.bottom-link-button:hover,
-.create-account-link:hover,
-.admin-login-link:hover,
-.terms-link-button:hover,
-.forgot-password-link:hover
-{
-    opacity: 0.8;
-}
-
-/* =========================================================
-   COMPACT MODE (Both Screens)
-   ========================================================= */
-
-.compact .screen-container
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 60px;
-    padding-bottom: 60px;
-}
-
-.compact .content-wrapper
-{
-    max-width: 760px;
-}
-
-.compact .logo-circle
-{
-    width: 170px;
-    height: 170px;
-
-    border-radius: 85px;
-}
-
-.compact .app-title
-{
-    font-size: 46px;
-}
-
-.compact .login-card,
-.compact .create-account-card
-{
-    padding-left: 42px;
-    padding-right: 42px;
-    padding-top: 42px;
-    padding-bottom: 42px;
-}
-
-.compact .field-label
-{
-    font-size: 28px;
-}
-
-.compact .input-container
-{
-    height: 100px;
-}
-
-.compact .input-field
-{
-    font-size: 28px;
-}
-
-.compact .input-field > #unity-text-input
-{
-    font-size: 28px;
-}
-
-.compact .terms-checkbox
-{
-    width: 35px;
-    height: 35px;
-    min-width: 35px;
-}
-
-.compact .terms-text
-{
-    font-size: 24px;
-}
-
-.compact .terms-link-button
-{
-    font-size: 24px;
-}
-
-.compact .sign-in-button,
-.compact .create-account-button,
-.compact .google-button,
-.compact .biometric-button
-{
-    height: 105px;
-}
-
-.compact .google-button-text,
-.compact .biometric-button-text
-{
-    font-size: 30px;
-}
-
-.compact .bottom-link-text,
-.compact .bottom-link-button
-{
-    font-size: 24px;
-}
-
-/* =========================================================
-   LANDSCAPE / SHORT-HEIGHT MODE
-   Triggered by the controller when the panel's resolved height
-   gets short (typically after rotating a phone to landscape).
-   Compact narrows things down; landscape shortens them up.
-   Both classes can be active at the same time.
-   ========================================================= */
-
-.landscape .screen-container
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 30px;
-    padding-bottom: 30px;
-}
-
-.landscape .logo-circle
-{
-    width: 90px;
-    height: 90px;
-
-    border-radius: 46px;
-
-    margin-bottom: 10px;
-}
-
-.landscape .app-title
-{
-    font-size: 34px;
-
-    margin-bottom: 4px;
-}
-
-.landscape .app-subtitle
-{
-    font-size: 24px;
-
-    margin-bottom: 20px;
-}
-
-.landscape .login-card,
-.landscape .create-account-card
-{
-    padding-left: 42px;
-    padding-right: 42px;
-    padding-top: 30px;
-    padding-bottom: 30px;
-
-    margin-bottom: 20px;
-}
-
-.landscape .field-label
-{
-    font-size: 26px;
-
-    margin-bottom: 8px;
-}
-
-.landscape .field-label-spaced
-{
-    margin-top: 16px;
-}
-
-.landscape .input-container
-{
-    height: 84px;
-}
-
-.landscape .input-field,
-.landscape .input-field > #unity-text-input
-{
-    font-size: 26px;
-}
-
-.landscape .sign-in-button,
-.landscape .create-account-button,
-.landscape .google-button
-{
-    height: 84px;
-
-    margin-top: 24px;
-}
-
-.landscape .biometric-button
-{
-    height: 84px;
-}
-
-.landscape .divider-row
+.anatomia-theme.screen-root .success-message
 {
     margin-top: 24px;
-    margin-bottom: 24px;
+    padding: 20px 26px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--success);
+    background-color: var(--success-soft);
+    border-radius: 28px;
+    -unity-text-align: middle-center;
+    white-space: normal;
 }
 
-.landscape .forgot-password-link
-{
-    margin-top: 8px;
-    margin-bottom: 12px;
-}
+/* ---------- Terms (create account, if present) ---------- */
+.anatomia-theme.screen-root .terms-row { flex-direction: row; align-items: flex-start; margin: 30px 0 10px 0; width: 100%; }
+.anatomia-theme.screen-root .terms-checkbox { width: 40px; height: 40px; min-width: 40px; margin: 2px 16px 0 0; border-radius: 12px; align-self: flex-start; }
+.anatomia-theme.screen-root .terms-label-container { flex-grow: 1; flex-direction: row; flex-wrap: wrap; align-items: center; }
+.anatomia-theme.screen-root .terms-text { font-size: 25px; padding: 0; margin: 0; }
+.anatomia-theme.screen-root .terms-link-button { font-size: 25px; -unity-font-style: bold; color: var(--accent); background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; height: auto; min-height: 0; }
 
-.landscape .create-account-row,
-.landscape .bottom-links
-{
-    margin-top: 10px;
-}
-
-.input-container-focused
-{
-    border-color: rgb(142,45,226);
-    border-width: 2px;
-}
-
-/* ---------- Terms Checkbox States ---------- */
-
-.terms-checkbox.checked
-{
-    background-color: rgb(142,45,226);
-    border-color: rgb(142,45,226);
-    background-image: none;
-}
+/* ---------- Hover ---------- */
+.anatomia-theme.screen-root .forgot-password-link:hover,
+.anatomia-theme.screen-root .create-account-link:hover,
+.anatomia-theme.screen-root .bottom-link-button:hover,
+.anatomia-theme.screen-root .back-login-link:hover,
+.anatomia-theme.screen-root .terms-link-button:hover { opacity: 0.8; }
 
 /* =========================================================
-   ULTRA-COMPACT MODE
-   Very narrow panels only (small phones in portrait, split
-   screen / multi-window, folded foldables). Stacks on top of
-   .compact - both classes are active together in this state.
+   LAYOUT V2 - "open form": left-aligned brand block, no card around
+   the form (fields sit directly on the ambient background), white
+   bordered inputs, rounded-rectangle buttons. Placed before the
+   compact/landscape blocks, whose selectors are more specific, so
+   those still shrink things on small screens.
    ========================================================= */
+.anatomia-theme.screen-root .content-wrapper { align-items: stretch; }
 
-.ultra-compact .screen-container
-{
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 40px;
-    padding-bottom: 40px;
-}
-
-.ultra-compact .logo-circle
+.anatomia-theme.screen-root .logo-circle
 {
     width: 120px;
     height: 120px;
-
-    border-radius: 60px;
-
-    margin-bottom: 16px;
+    border-radius: 36px;
+    align-self: flex-start;
+    margin-bottom: 34px;
+    border-width: 0;
+    background-color: var(--surface-solid);
 }
 
-.ultra-compact .app-title
+.anatomia-theme.screen-root .app-title
 {
-    font-size: 38px;
-}
-
-.ultra-compact .app-subtitle
-{
-    font-size: 26px;
-
-    margin-bottom: 30px;
-}
-
-.ultra-compact .login-card,
-.ultra-compact .create-account-card
-{
-    padding-left: 28px;
-    padding-right: 28px;
-    padding-top: 32px;
-    padding-bottom: 32px;
-
-    margin-bottom: 30px;
-}
-
-.ultra-compact .field-label
-{
-    font-size: 24px;
-
+    font-size: 62px;
+    letter-spacing: -1.5px;
+    -unity-text-align: middle-left;
     margin-bottom: 8px;
 }
 
-.ultra-compact .field-label-spaced
+.anatomia-theme.screen-root .app-subtitle
 {
-    margin-top: 20px;
+    font-size: 30px;
+    -unity-text-align: middle-left;
+    margin-bottom: 52px;
 }
 
-.ultra-compact .field-error
+.anatomia-theme.screen-root .login-card,
+.anatomia-theme.screen-root .create-account-card
 {
-    font-size: 20px;
+    padding: 0;
+    margin-bottom: 34px;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
 }
 
-.ultra-compact .input-container
-{
-    height: 84px;
+.anatomia-theme.screen-root .field-label { font-size: 24px; margin-left: 2px; }
+.anatomia-theme.screen-root .field-label-spaced { margin-top: 28px; }
+.anatomia-theme.screen-root .field-error { margin-left: 2px; }
 
-    padding-left: 20px;
-    padding-right: 14px;
+.anatomia-theme.screen-root .input-icon { top: 32px; }
+.anatomia-theme.screen-root .input-icon-button { top: 20px; }
+
+.anatomia-theme.screen-root .input-field > #unity-text-input
+{
+    height: 108px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 28px;
+}
+.anatomia-theme.screen-root .input-field > #unity-text-input:hover { border-color: var(--ink-4); }
+.anatomia-theme.screen-root .input-field > #unity-text-input:focus { background-color: var(--surface-solid); border-width: 2px; border-color: var(--accent); }
+
+.anatomia-theme.screen-root .forgot-password-link { margin-top: 18px; }
+
+.anatomia-theme.screen-root .sign-in-button,
+.anatomia-theme.screen-root .create-account-button
+{
+    height: 108px;
+    margin-top: 40px;
+    border-radius: 32px;
 }
 
-.ultra-compact .input-icon
+.anatomia-theme.screen-root .biometric-button
 {
-    width: 34px;
-    height: 34px;
-
-    margin-right: 12px;
+    height: 108px;
+    border-radius: 32px;
 }
 
-.ultra-compact .input-field,
-.ultra-compact .input-field > #unity-text-input
+.anatomia-theme.screen-root .google-button
 {
-    font-size: 24px;
+    height: 108px;
+    border-radius: 32px;
 }
 
-.ultra-compact .sign-in-button,
-.ultra-compact .create-account-button,
-.ultra-compact .google-button,
-.ultra-compact .biometric-button
+.anatomia-theme.screen-root .divider-row { margin: 36px 0; }
+
+.anatomia-theme.screen-root .create-account-row,
+.anatomia-theme.screen-root .bottom-links
 {
-    height: 90px;
-
-    margin-top: 30px;
-
-    font-size: 28px;
+    justify-content: center;
+    margin-top: 6px;
+    padding-top: 26px;
+    border-top-width: 1px;
+    border-top-color: var(--line);
 }
 
-.ultra-compact .google-button-text,
-.ultra-compact .biometric-button-text
-{
-    font-size: 26px;
-}
+.anatomia-theme.screen-root .admin-login-link { margin-top: 26px; }
 
-.ultra-compact .divider-row
-{
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
+/* =========================================================
+   Compact (narrow / short) - stacks with landscape and ultra-compact
+   ========================================================= */
+.compact .screen-container { padding-left: 40px; padding-right: 40px; padding-top: 60px; padding-bottom: 60px; }
+.compact .content-wrapper { max-width: 100%; }
+.anatomia-theme.screen-root.compact .logo-circle { width: 100px; height: 100px; border-radius: 30px; margin-bottom: 24px; }
+.anatomia-theme.screen-root.compact .app-title { font-size: 50px; }
+.anatomia-theme.screen-root.compact .app-subtitle { font-size: 24px; margin-bottom: 32px; }
+.anatomia-theme.screen-root.compact .login-card,
+.anatomia-theme.screen-root.compact .create-account-card { padding: 0; border-radius: 0; }
+.anatomia-theme.screen-root.compact .field-label { font-size: 22px; }
+.anatomia-theme.screen-root.compact .field-label-spaced { margin-top: 24px; }
+.anatomia-theme.screen-root.compact .input-icon { left: 26px; top: 29px; width: 38px; height: 38px; }
+.anatomia-theme.screen-root.compact .input-field > #unity-text-input { height: 100px; padding-left: 80px; font-size: 29px; border-radius: 26px; }
+.anatomia-theme.screen-root.compact .input-field-with-right-icon > #unity-text-input { padding-right: 88px; }
+.anatomia-theme.screen-root.compact .input-icon-button { top: 16px; right: 12px; }
+.anatomia-theme.screen-root.compact .sign-in-button,
+.anatomia-theme.screen-root.compact .create-account-button,
+.anatomia-theme.screen-root.compact .google-button,
+.anatomia-theme.screen-root.compact .biometric-button { height: 98px; margin-top: 28px; }
+.anatomia-theme.screen-root.compact .google-button { margin-top: 0; }
+.anatomia-theme.screen-root.compact .sign-in-button,
+.anatomia-theme.screen-root.compact .create-account-button { font-size: 30px; }
+.anatomia-theme.screen-root.compact .google-button-text,
+.anatomia-theme.screen-root.compact .biometric-button-text { font-size: 28px; }
+.anatomia-theme.screen-root.compact .divider-row { margin: 26px 0; }
+.anatomia-theme.screen-root.compact .create-account-text,
+.anatomia-theme.screen-root.compact .bottom-link-text,
+.anatomia-theme.screen-root.compact .create-account-link,
+.anatomia-theme.screen-root.compact .bottom-link-button { font-size: 24px; }
+.anatomia-theme.screen-root.compact .terms-text,
+.anatomia-theme.screen-root.compact .terms-link-button { font-size: 22px; }
 
-.ultra-compact .divider-text
-{
-    font-size: 22px;
-}
+.landscape .screen-container { padding-top: 24px; padding-bottom: 24px; }
+.anatomia-theme.screen-root.landscape .logo-circle { width: 72px; height: 72px; border-radius: 22px; margin-bottom: 10px; }
+.anatomia-theme.screen-root.landscape .app-title { font-size: 36px; }
+.anatomia-theme.screen-root.landscape .app-subtitle { font-size: 22px; margin-bottom: 18px; }
+.anatomia-theme.screen-root.landscape .login-card,
+.anatomia-theme.screen-root.landscape .create-account-card { padding: 0; margin-bottom: 18px; }
+.anatomia-theme.screen-root.landscape .field-label-spaced { margin-top: 16px; }
+.anatomia-theme.screen-root.landscape .input-icon { top: 22px; }
+.anatomia-theme.screen-root.landscape .input-field > #unity-text-input { height: 82px; }
+.anatomia-theme.screen-root.landscape .input-icon-button { top: 7px; }
+.anatomia-theme.screen-root.landscape .sign-in-button,
+.anatomia-theme.screen-root.landscape .create-account-button,
+.anatomia-theme.screen-root.landscape .google-button,
+.anatomia-theme.screen-root.landscape .biometric-button { height: 80px; margin-top: 20px; }
+.anatomia-theme.screen-root.landscape .google-button { margin-top: 0; }
+.anatomia-theme.screen-root.landscape .divider-row { margin: 16px 0; }
 
-.ultra-compact .admin-login-link
-{
-    font-size: 26px;
-}
-
-.ultra-compact .status-label
-{
-    font-size: 22px;
-}
+.ultra-compact .screen-container { padding-left: 24px; padding-right: 24px; }
+.anatomia-theme.screen-root.ultra-compact .login-card,
+.anatomia-theme.screen-root.ultra-compact .create-account-card { padding: 0; }
+.anatomia-theme.screen-root.ultra-compact .app-title { font-size: 38px; }
+.anatomia-theme.screen-root.ultra-compact .field-label { font-size: 20px; }
+.anatomia-theme.screen-root.ultra-compact .input-field > #unity-text-input { font-size: 26px; padding-left: 70px; }
+.anatomia-theme.screen-root.ultra-compact .input-icon { left: 22px; width: 34px; height: 34px; }
+.anatomia-theme.screen-root.ultra-compact .sign-in-button,
+.anatomia-theme.screen-root.ultra-compact .create-account-button { font-size: 28px; }
+.anatomia-theme.screen-root.ultra-compact .google-button-text,
+.anatomia-theme.screen-root.ultra-compact .biometric-button-text { font-size: 25px; }

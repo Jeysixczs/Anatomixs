@@ -1,68 +1,48 @@
 /* =========================================================
    Anatomia 3D - Student Edit Profile (redesign)
-   Reference canvas: 1080 x 1920. Header and Save-button gradients
-   are generated at runtime by the controller; colors here are
-   fallbacks. Accent: green -> blue (same as the Admin Edit Profile).
-   Element names/classes used by the controller are unchanged:
-   .hidden, .compact, .verify-status-verified/-unverified.
+   Reference canvas: 1080 x 1920.
+   Layout: back chip + title | photo card (avatar left, actions right) |
+   Profile Information (names side by side) | Email Verification |
+   Security row | fixed bottom bar with status + Save Changes.
+   All rules are scoped under .anatomia-theme.theme-edit-profile so they
+   out-rank the generic theme rules (AnatomiaTheme.uss loads after this file).
+   Controller-toggled classes kept: .hidden, .compact,
+   .verify-status-verified / .verify-status-unverified.
+   Pill shapes use exact corner radii (half the element height).
    ========================================================= */
 
-.screen-root {
-    width: 100%; height: 100%; flex-grow: 1;
-    background-color: rgb(243, 244, 248);
-    padding: 0; margin: 0;
-    overflow: hidden;
-    justify-content: flex-start; align-items: stretch;
-}
-
-/* ---------- Header ---------- */
-
-.header {
+/* ---------- Screen ---------- */
+.anatomia-theme.theme-edit-profile.screen-root
+{
     width: 100%;
-    border-bottom-left-radius: 79px;
-    border-bottom-right-radius: 79px;
-    padding: 100px 50px 140px 50px;   /* extra bottom room: photo card overlaps it */
-    flex-shrink: 0;
-    background-color: rgb(22, 188, 118);
+    height: 100%;
+    flex-grow: 1;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
 }
-
-.header-top-row { flex-direction: row; align-items: center; }
-
-.back-button {
-    width: 88px; height: 88px; border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-width: 0;
-    justify-content: center; align-items: center;
-    margin: 0 30px 0 0;
-    flex-shrink: 0;
-}
-.back-button:hover { background-color: rgba(255, 255, 255, 0.3); }
-.back-button:active { background-color: rgba(255, 255, 255, 0.4); }
-
-.back-icon {
-    width: 40px; height: 40px;
-    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
-    background-size: contain; background-position: center; background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
-}
-
-.header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
-.header-title { font-size: 52px; -unity-font-style: bold; color: white; white-space: normal; }
-.header-subtitle { font-size: 26px; color: rgba(255, 255, 255, 0.88); margin-top: 6px; white-space: normal; }
 
 /* ---------- ScrollView ---------- */
-
-.screen-scroll {
-    flex-grow: 1; width: 100%; height: 100%;
-    padding: 0; margin: 0;
-    justify-content: flex-start; align-items: flex-start;
+.anatomia-theme.theme-edit-profile .screen-scroll
+{
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
     -unity-overflow-scrolling: touch;
 }
-.screen-scroll .unity-scroller--vertical { width: 0; display: none; }
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
+.anatomia-theme.theme-edit-profile .screen-scroll .unity-scroller--vertical { width: 0; display: none; }
+.anatomia-theme.theme-edit-profile .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+{
     padding: 0; margin: 0; flex-grow: 1; height: 100%;
 }
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+.anatomia-theme.theme-edit-profile .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
     padding: 0; margin: 0;
     translate: none; transform-origin: center;
     position: relative; top: 0; left: 0;
@@ -70,264 +50,433 @@
     flex-grow: 0; height: auto; min-height: 100%;
 }
 
-/* ---------- Content ---------- */
-
-.content-wrapper {
+/* ---------- Header ---------- */
+.anatomia-theme.theme-edit-profile .header
+{
     width: 100%;
-    flex-direction: column;
-    padding: 0 50px 70px 50px;
-    max-width: 100%;
-    margin: 0;
     flex-shrink: 0;
+    flex-direction: column;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 96px;
+    padding-bottom: 8px;
 }
 
-/* ---------- Cards ---------- */
+.anatomia-theme.theme-edit-profile .header-top-row { flex-direction: row; align-items: center; margin-bottom: 0; }
 
-.form-card {
-    width: 100%;
-    background-color: white;
-    border-radius: 44px;
-    padding: 44px;
-    margin-bottom: 34px;
-    border-width: 2px;
-    border-color: rgb(233, 236, 245);
-}
-
-/* Photo card: pulled up over the gradient header */
-.photo-card {
-    margin-top: -84px;
-    padding: 44px 44px 40px 44px;
+.anatomia-theme.theme-edit-profile .back-button
+{
+    margin: 0 28px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
     align-items: center;
 }
 
-.card-header-row { flex-direction: row; justify-content: space-between; align-items: center; }
-.card-title-group { flex-direction: row; align-items: center; flex-grow: 1; flex-shrink: 1; min-width: 0; }
-
-.card-icon-box {
-    width: 74px; height: 74px; border-radius: 24px;
-    background-color: rgb(221, 246, 234);
-    justify-content: center; align-items: center;
+.anatomia-theme.theme-edit-profile .back-icon
+{
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
-    margin-right: 22px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink);
 }
-.card-icon {
-    width: 40px; height: 40px;
-    background-size: contain; background-position: center; background-repeat: no-repeat;
-    -unity-background-image-tint-color: rgb(22, 188, 118);
-}
-.icon-profile { background-image: url("project://database/Assets/UI/Icons/profile-icon.png"); }
-.icon-email   { background-image: url("project://database/Assets/UI/Icons/email-white.png"); }
-.icon-lock    { background-image: url("project://database/Assets/UI/Icons/lock-white.png"); }
 
-.card-title { font-size: 36px; -unity-font-style: bold; color: rgb(31, 36, 48); white-space: normal; flex-shrink: 1; }
-.card-subtitle { font-size: 26px; color: rgb(138, 143, 163); margin-top: 18px; white-space: normal; }
+.anatomia-theme.theme-edit-profile .header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
+.anatomia-theme.theme-edit-profile .header-title { white-space: normal; word-wrap: break-word; }
+.anatomia-theme.theme-edit-profile .header-subtitle { margin-top: 4px; white-space: normal; word-wrap: break-word; }
 
-.toggle-visibility-button {
-    background-color: rgb(221, 246, 234);
-    border-width: 0; border-radius: 22px;
-    padding: 12px 26px; margin: 0 0 0 12px;
-    font-size: 26px; -unity-font-style: bold;
-    color: rgb(22, 188, 118);
+/* ---------- Content (extra bottom room for the fixed save bar) ---------- */
+.anatomia-theme.theme-edit-profile .content-wrapper
+{
+    flex-direction: column;
     flex-shrink: 0;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 20px;
+    padding-bottom: 300px;
+    justify-content: flex-start;
+    align-items: stretch;
 }
-.toggle-visibility-button:hover { background-color: rgb(197, 238, 219); }
 
-/* ---------- Fields ---------- */
+/* ---------- Cards ---------- */
+.anatomia-theme.theme-edit-profile .form-card
+{
+    width: 100%;
+    padding: 40px;
+    margin: 0 0 24px 0;
+    border-radius: 40px;
+}
 
-.field-label {
+.anatomia-theme.theme-edit-profile .card-header-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.anatomia-theme.theme-edit-profile .card-title-group { flex-direction: row; align-items: center; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+
+.anatomia-theme.theme-edit-profile .card-icon-box
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-edit-profile .card-icon
+{
+    width: 36px;
+    height: 36px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+.anatomia-theme.theme-edit-profile .icon-profile { background-image: url("project://database/Assets/UI/Icons/profile-icon.png"); }
+.anatomia-theme.theme-edit-profile .icon-email   { background-image: url("project://database/Assets/UI/Icons/email-white.png"); }
+.anatomia-theme.theme-edit-profile .icon-lock    { background-image: url("project://database/Assets/UI/Icons/lock-white.png"); }
+
+.anatomia-theme.theme-edit-profile .card-title { font-size: 34px; -unity-font-style: bold; letter-spacing: -0.2px; white-space: normal; flex-shrink: 1; }
+.anatomia-theme.theme-edit-profile .card-subtitle { font-size: 25px; margin-top: 16px; white-space: normal; }
+
+/* ---------- Photo card: avatar left, actions right ---------- */
+.anatomia-theme.theme-edit-profile .photo-card { flex-direction: row; align-items: center; padding: 36px; }
+
+.anatomia-theme.theme-edit-profile .avatar-picker-row
+{
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+.anatomia-theme.theme-edit-profile .avatar-preview
+{
+    width: 176px;
+    height: 176px;
+    border-radius: 88px;
+    flex-shrink: 0;
+    margin: 0 34px 0 0;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+    border-width: 5px;
+    border-color: var(--surface-solid);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.anatomia-theme.theme-edit-profile .avatar-preview-initials { font-size: 68px; -unity-font-style: bold; color: var(--accent); }
+
+.anatomia-theme.theme-edit-profile .avatar-picker-actions
+{
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-edit-profile .photo-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); letter-spacing: -0.2px; }
+.anatomia-theme.theme-edit-profile .photo-caption { font-size: 24px; color: var(--ink-3); margin-top: 4px; white-space: normal; }
+
+.anatomia-theme.theme-edit-profile .change-photo-button
+{
+    align-self: flex-start;
+    margin: 20px 0 0 0;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    padding-left: 34px;
+    padding-right: 34px;
     font-size: 26px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    margin: 34px 0 12px 4px;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border-width: 0;
+    border-top-left-radius: 33px;
+    border-top-right-radius: 33px;
+    border-bottom-left-radius: 33px;
+    border-bottom-right-radius: 33px;
+}
+.anatomia-theme.theme-edit-profile .change-photo-button:hover { background-color: rgba(91, 76, 219, 0.18); border-width: 0; }
+.anatomia-theme.theme-edit-profile .change-photo-button:active { background-color: rgba(91, 76, 219, 0.26); }
+.anatomia-theme.theme-edit-profile .change-photo-button:disabled { color: var(--ink-4); background-color: var(--sunken); }
+
+.anatomia-theme.theme-edit-profile .hint-start { margin: 12px 0 0 0; -unity-text-align: middle-left; }
+
+/* ---------- Fields ---------- */
+.anatomia-theme.theme-edit-profile .name-row { flex-direction: row; align-items: flex-start; }
+.anatomia-theme.theme-edit-profile .name-col { flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-edit-profile .name-col-first { margin-right: 10px; }
+.anatomia-theme.theme-edit-profile .name-col-last { margin-left: 10px; }
+
+.anatomia-theme.theme-edit-profile .field-label
+{
+    font-size: 24px;
+    margin: 30px 0 10px 4px;
 }
 
-.text-field { font-size: 32px; color: rgb(31, 36, 48); margin: 0; }
+.anatomia-theme.theme-edit-profile .text-field
+{
+    font-size: 31px;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
 
-.text-field > .unity-text-field__input {
-    background-color: rgb(244, 246, 251);
-    border-width: 2px;
-    border-color: rgb(230, 233, 243);
+.anatomia-theme.theme-edit-profile .text-field > .unity-base-text-field__input
+{
+    background-color: var(--sunken);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
     border-radius: 26px;
-    padding: 24px 26px;
-}
-.text-field .unity-base-text-field__input:focus {
-    background-color: white;
-    border-color: rgb(22, 188, 118);
+    padding: 22px 26px;
+    color: var(--ink);
 }
 
-.field-error { font-size: 25px; -unity-font-style: bold; color: rgb(220, 38, 38); margin: 10px 0 0 6px; white-space: normal; }
-.field-hint { font-size: 22px; color: rgb(138, 143, 163); margin: 10px 0 0 6px; white-space: normal; }
-.field-hint-pending { color: rgb(180, 83, 9); -unity-font-style: bold; }
-.hint-centered { -unity-text-align: middle-center; margin-left: 0; }
+.anatomia-theme.theme-edit-profile .text-field > .unity-base-text-field__input:hover { border-color: var(--line-strong); }
 
-/* ---------- Photo ---------- */
+.anatomia-theme.theme-edit-profile .text-field > .unity-base-text-field__input:focus
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+    border-width: 2px;
+}
 
-.avatar-picker-row,
-.avatar-photo-row { flex-direction: column; align-items: center; margin-top: 0; }
+.anatomia-theme.theme-edit-profile .field-error { font-size: 23px; -unity-font-style: bold; margin: 10px 0 0 6px; white-space: normal; }
+.anatomia-theme.theme-edit-profile .field-hint { font-size: 22px; margin: 10px 0 0 6px; white-space: normal; }
+.anatomia-theme.theme-edit-profile .field-hint-pending { color: var(--warn); -unity-font-style: bold; }
 
-.avatar-preview {
-    width: 210px; height: 210px; border-radius: 105px;
-    background-color: rgb(22, 188, 118);
-    border-width: 8px;
-    border-color: rgb(37, 99, 235);
-    justify-content: center; align-items: center;
+/* ---------- Verification ---------- */
+.anatomia-theme.theme-edit-profile .verify-status-badge
+{
+    font-size: 21px;
+    -unity-font-style: bold;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-left: 12px;
     flex-shrink: 0;
-    margin: 0 0 30px 0;
-    overflow: hidden;
-    background-size: cover; background-position: center; background-repeat: no-repeat;
-}
-.avatar-preview-initials { font-size: 78px; -unity-font-style: bold; color: white; }
-
-.avatar-picker-actions,
-.avatar-photo-actions { flex-direction: column; align-items: center; flex-grow: 0; min-width: 0; }
-
-.change-photo-button {
-    align-self: center;
-    background-color: rgb(221, 246, 234);
-    border-width: 0; border-radius: 30px;
-    padding: 20px 42px; margin: 0;
-    font-size: 28px; -unity-font-style: bold;
-    color: rgb(22, 188, 118);
-}
-.change-photo-button:hover { background-color: rgb(197, 238, 219); }
-.change-photo-button:active { background-color: rgb(197, 238, 219); scale: 0.98 0.98; }
-.change-photo-button:disabled { color: rgb(163, 167, 183); background-color: rgb(238, 240, 246); }
-
-/* ---------- Verification badge ---------- */
-
-.verify-status-badge {
-    font-size: 22px; -unity-font-style: bold;
-    padding: 9px 20px; border-radius: 22px;
-    flex-shrink: 0; margin-left: 12px;
     -unity-text-align: middle-center;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
 }
-.verify-status-unverified { color: rgb(180, 83, 9); background-color: rgb(254, 243, 199); }
-.verify-status-verified   { color: rgb(6, 95, 70);  background-color: rgb(209, 250, 229); }
+.anatomia-theme.theme-edit-profile .verify-status-unverified { color: var(--warn); background-color: var(--warn-soft); }
+.anatomia-theme.theme-edit-profile .verify-status-verified { color: var(--success); background-color: var(--success-soft); }
 
-/* ---------- Secondary action buttons (full width) ---------- */
-
-.action-button {
-    margin: 28px 0 0 0;
-    align-self: stretch;
-    background-color: rgb(221, 246, 234);
-    border-width: 0; border-radius: 28px;
-    padding: 26px 30px;
-    font-size: 30px; -unity-font-style: bold;
-    color: rgb(22, 188, 118);
-}
-.action-button:hover { background-color: rgb(197, 238, 219); }
-.action-button:active { background-color: rgb(197, 238, 219); scale: 0.985 0.985; }
-.action-button:disabled { color: rgb(163, 167, 183); background-color: rgb(238, 240, 246); }
-
-.warning-box {
-    margin-top: 28px;
-    padding: 26px 28px;
+.anatomia-theme.theme-edit-profile .warning-box
+{
+    margin-top: 24px;
+    padding: 24px 26px;
     border-radius: 26px;
-    background-color: rgb(255, 247, 237);
-    border-width: 2px;
-    border-color: rgb(253, 224, 176);
-    border-left-width: 8px;
-    border-left-color: rgb(245, 158, 11);
+    border-width: 0;
+    background-color: var(--warn-soft);
 }
-.warning-text { font-size: 25px; color: rgb(154, 74, 5); white-space: normal; }
+.anatomia-theme.theme-edit-profile .warning-text { font-size: 24px; color: var(--warn); white-space: normal; }
+
+/* ---------- Action buttons ---------- */
+.anatomia-theme.theme-edit-profile .action-button
+{
+    align-self: stretch;
+    margin: 26px 0 0 0;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    padding-left: 30px;
+    padding-right: 30px;
+    font-size: 29px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border-width: 0;
+    border-top-left-radius: 42px;
+    border-top-right-radius: 42px;
+    border-bottom-left-radius: 42px;
+    border-bottom-right-radius: 42px;
+}
+.anatomia-theme.theme-edit-profile .action-button:hover { background-color: rgba(91, 76, 219, 0.18); }
+.anatomia-theme.theme-edit-profile .action-button:active { background-color: rgba(91, 76, 219, 0.26); }
+.anatomia-theme.theme-edit-profile .action-button:disabled { color: var(--ink-4); background-color: var(--sunken); }
+
+/* Security: text left, button right */
+.anatomia-theme.theme-edit-profile .security-card { flex-direction: row; align-items: center; }
+.anatomia-theme.theme-edit-profile .security-text { flex-grow: 1; flex-shrink: 1; min-width: 0; flex-direction: column; }
+.anatomia-theme.theme-edit-profile .action-button-inline
+{
+    align-self: center;
+    flex-shrink: 0;
+    margin: 0 0 0 20px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    padding-left: 34px;
+    padding-right: 34px;
+    font-size: 26px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+    border-bottom-left-radius: 34px;
+    border-bottom-right-radius: 34px;
+}
+
+/* ---------- Fixed bottom bar: status + Save ---------- */
+.anatomia-theme.theme-edit-profile .save-bar
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    padding: 24px 52px 44px 52px;
+    background-color: var(--surface-solid);
+    border-top-width: 1px;
+    border-top-color: var(--line);
+}
+
+.anatomia-theme.theme-edit-profile .status-label
+{
+    font-size: 25px;
+    color: var(--ink-2);
+    margin: 0 0 16px 0;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-edit-profile .save-changes-submit-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    border-width: 0;
+    border-top-left-radius: 54px;
+    border-top-right-radius: 54px;
+    border-bottom-left-radius: 54px;
+    border-bottom-right-radius: 54px;
+}
+
+.anatomia-theme.theme-edit-profile .save-changes-icon
+{
+    width: 42px;
+    height: 42px;
+    margin-right: 18px;
+    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0);
+    -unity-background-image-tint-color: white;
+}
+.anatomia-theme.theme-edit-profile .save-changes-label { font-size: 34px; -unity-font-style: bold; color: white; }
 
 /* ---------- Password overlay ---------- */
-
-.password-overlay {
+.anatomia-theme.theme-edit-profile .password-overlay
+{
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100%; height: 100%;
     justify-content: center; align-items: center;
     padding: 60px;
 }
-.password-overlay-backdrop {
+.anatomia-theme.theme-edit-profile .password-overlay-backdrop
+{
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100%; height: 100%;
     background-color: rgba(17, 19, 26, 0.6);
 }
-.password-card-floating { width: 100%; max-width: 860px; max-height: 100%; margin-bottom: 0; border-width: 0; }
+.anatomia-theme.theme-edit-profile .password-card-floating { width: 100%; max-width: 860px; max-height: 100%; margin-bottom: 0; border-width: 0; }
 
-.close-password-card-button {
+.anatomia-theme.theme-edit-profile .toggle-visibility-button
+{
+    flex-shrink: 0;
+    margin: 0 0 0 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-left: 26px;
+    padding-right: 26px;
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border-width: 0;
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
+}
+.anatomia-theme.theme-edit-profile .toggle-visibility-button:hover { background-color: rgba(91, 76, 219, 0.18); }
+
+.anatomia-theme.theme-edit-profile .close-password-card-button
+{
     align-self: stretch;
-    margin: 40px 0 0 0;
-    background-color: rgb(22, 188, 118);
-    border-width: 0; border-radius: 28px;
-    padding: 26px 60px;
-    font-size: 30px; -unity-font-style: bold;
+    margin: 36px 0 0 0;
+    padding-top: 26px;
+    padding-bottom: 26px;
+    padding-left: 60px;
+    padding-right: 60px;
+    font-size: 30px;
+    -unity-font-style: bold;
     color: white;
+    background-color: var(--accent);
+    border-width: 0;
+    border-top-left-radius: 46px;
+    border-top-right-radius: 46px;
+    border-bottom-left-radius: 46px;
+    border-bottom-right-radius: 46px;
 }
-.close-password-card-button:hover { background-color: rgb(16, 150, 94); }
-.close-password-card-button:active { background-color: rgb(16, 150, 94); scale: 0.985 0.985; }
-
-/* ---------- Status + Save ---------- */
-
-.status-label {
-    font-size: 28px; color: rgb(138, 143, 163);
-    margin: 0 0 22px 0;
-    -unity-text-align: middle-center; white-space: normal;
-}
-
-.save-changes-submit-button {
-    flex-direction: row; justify-content: center; align-items: center;
-    border-radius: 38px; border-width: 0;
-    padding: 36px 30px; margin: 6px 0 0 0;
-    background-color: rgb(22, 188, 118);
-    transition-property: scale;
-    transition-duration: 0.12s;
-}
-.save-changes-submit-button:active { scale: 0.985 0.985; }
-
-.save-changes-icon {
-    width: 46px; height: 46px;
-    margin-right: 20px;
-    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
-    background-size: contain; background-position: center; background-repeat: no-repeat;
-    background-color: rgba(255, 255, 255, 0);
-    -unity-background-image-tint-color: white;
-}
-.save-changes-label { font-size: 38px; -unity-font-style: bold; color: white; }
+.anatomia-theme.theme-edit-profile .close-password-card-button:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-edit-profile .close-password-card-button:active { background-color: var(--accent-press); }
 
 /* ---------- Utility ---------- */
-
-.hidden { display: none; }
+.anatomia-theme.theme-edit-profile .hidden { display: none; }
 
 /* =========================================================
    Compact layout (toggled by C# on narrow panels)
    ========================================================= */
+.anatomia-theme.theme-edit-profile.compact .header { padding-left: 40px; padding-right: 40px; padding-top: 80px; }
+.anatomia-theme.theme-edit-profile.compact .back-icon { width: 32px; height: 32px; }
+.anatomia-theme.theme-edit-profile.compact .content-wrapper { padding-left: 40px; padding-right: 40px; padding-bottom: 270px; }
+.anatomia-theme.theme-edit-profile.compact .form-card { padding: 32px; border-radius: 34px; margin-bottom: 20px; }
+.anatomia-theme.theme-edit-profile.compact .photo-card { padding: 28px; }
 
-.compact .header { padding: 92px 40px 124px 40px; }
-.compact .header-title { font-size: 46px; }
-.compact .header-subtitle { font-size: 24px; }
-.compact .back-button { width: 76px; height: 76px; border-radius: 38px; margin-right: 24px; }
-.compact .back-icon { width: 34px; height: 34px; }
+.anatomia-theme.theme-edit-profile.compact .card-icon-box { width: 58px; height: 58px; border-radius: 18px; margin-right: 16px; }
+.anatomia-theme.theme-edit-profile.compact .card-icon { width: 32px; height: 32px; }
+.anatomia-theme.theme-edit-profile.compact .card-title { font-size: 30px; }
+.anatomia-theme.theme-edit-profile.compact .card-subtitle { font-size: 22px; }
 
-.compact .content-wrapper { padding-left: 36px; padding-right: 36px; }
-.compact .form-card { padding: 34px; border-radius: 38px; margin-bottom: 28px; }
-.compact .photo-card { margin-top: -74px; }
+.anatomia-theme.theme-edit-profile.compact .avatar-preview { width: 140px; height: 140px; border-radius: 70px; margin-right: 24px; }
+.anatomia-theme.theme-edit-profile.compact .avatar-preview-initials { font-size: 54px; }
+.anatomia-theme.theme-edit-profile.compact .photo-title { font-size: 30px; }
+.anatomia-theme.theme-edit-profile.compact .photo-caption { font-size: 21px; }
+.anatomia-theme.theme-edit-profile.compact .change-photo-button { font-size: 23px; padding-left: 26px; padding-right: 26px; padding-top: 13px; padding-bottom: 13px; }
 
-.compact .card-icon-box { width: 62px; height: 62px; border-radius: 20px; margin-right: 18px; }
-.compact .card-icon { width: 34px; height: 34px; }
-.compact .card-title { font-size: 30px; }
-.compact .card-subtitle { font-size: 23px; }
-.compact .toggle-visibility-button { font-size: 22px; padding: 10px 20px; }
+.anatomia-theme.theme-edit-profile.compact .field-label { font-size: 22px; margin-top: 24px; }
+.anatomia-theme.theme-edit-profile.compact .text-field { font-size: 27px; }
+.anatomia-theme.theme-edit-profile.compact .text-field > .unity-base-text-field__input { padding: 18px 20px; border-radius: 22px; }
+.anatomia-theme.theme-edit-profile.compact .field-error { font-size: 21px; }
+.anatomia-theme.theme-edit-profile.compact .field-hint { font-size: 20px; }
 
-.compact .field-label { font-size: 23px; margin-top: 28px; }
-.compact .text-field { font-size: 28px; }
-.compact .text-field > .unity-text-field__input { padding: 20px 22px; border-radius: 22px; }
-.compact .field-error { font-size: 22px; }
-.compact .field-hint { font-size: 20px; }
+.anatomia-theme.theme-edit-profile.compact .verify-status-badge { font-size: 19px; padding-left: 16px; padding-right: 16px; }
+.anatomia-theme.theme-edit-profile.compact .warning-text { font-size: 21px; }
+.anatomia-theme.theme-edit-profile.compact .action-button { font-size: 26px; padding-top: 20px; padding-bottom: 20px; }
+.anatomia-theme.theme-edit-profile.compact .action-button-inline { font-size: 23px; padding-left: 26px; padding-right: 26px; }
 
-.compact .avatar-preview { width: 170px; height: 170px; border-radius: 85px; margin-bottom: 24px; }
-.compact .avatar-preview-initials { font-size: 62px; }
-.compact .change-photo-button { font-size: 24px; padding: 16px 32px; }
+.anatomia-theme.theme-edit-profile.compact .save-bar { padding: 20px 40px 36px 40px; }
+.anatomia-theme.theme-edit-profile.compact .save-changes-submit-button { padding-top: 26px; padding-bottom: 26px; }
+.anatomia-theme.theme-edit-profile.compact .save-changes-icon { width: 36px; height: 36px; margin-right: 14px; }
+.anatomia-theme.theme-edit-profile.compact .save-changes-label { font-size: 30px; }
+.anatomia-theme.theme-edit-profile.compact .status-label { font-size: 22px; }
 
-.compact .verify-status-badge { font-size: 19px; padding: 7px 16px; }
-.compact .action-button { font-size: 26px; padding: 22px 24px; border-radius: 24px; }
-.compact .warning-text { font-size: 22px; }
-
-.compact .password-overlay { padding: 30px; }
-.compact .close-password-card-button { font-size: 26px; padding: 22px 40px; }
-
-.compact .save-changes-submit-button { padding: 28px 24px; border-radius: 32px; }
-.compact .save-changes-icon { width: 38px; height: 38px; margin-right: 16px; }
-.compact .save-changes-label { font-size: 32px; }
-.compact .status-label { font-size: 24px; }
+.anatomia-theme.theme-edit-profile.compact .password-overlay { padding: 30px; }
+.anatomia-theme.theme-edit-profile.compact .close-password-card-button { font-size: 26px; padding-top: 22px; padding-bottom: 22px; }
+.anatomia-theme.theme-edit-profile.compact .toggle-visibility-button { font-size: 22px; }

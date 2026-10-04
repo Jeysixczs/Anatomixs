@@ -371,6 +371,14 @@ namespace Anatomia3D.UI
                     _rowsById.Remove(id);
                 }
             }
+
+            // USS has no :last-child, so flag the final row with a class instead
+            // (the theme drops its bottom divider).
+            for (int i = 0; i < _notifications.Count; i++)
+            {
+                if (_rowsById.TryGetValue(_notifications[i].Id, out var rowRefs))
+                    rowRefs.Row.EnableInClassList("notification-row-last", i == _notifications.Count - 1);
+            }
         }
 
         private NotificationRowRefs BuildNotificationRow(NotificationEntry entry)
@@ -531,6 +539,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

@@ -1,0 +1,693 @@
+/* =========================================================
+   Anatomia 3D - Layout layer
+   Loaded AFTER AnatomiaTheme.uss (third <Style> tag in each screen).
+
+   PRINCIPLES
+   - ONE source of horizontal spacing: .content-wrapper owns the side padding.
+     Cards no longer carry their own left/right margins (the old per-card
+     50px margins + negative-margin overlaps are gone).
+   - ONE vertical rhythm: every top-level section is separated by 24px
+     (margin-bottom), set once per screen below.
+   - Sizes come from classes, not inline style="" attributes.
+   - Responsive: max-width 1100 + align-self:center for tablet/desktop;
+     the existing .compact / .extra-small classes (set by the controller)
+     tighten spacing on narrow windows.
+   - Specificity: .anatomia-theme.theme-X .y out-ranks both the screen .uss
+     and the .compact/.extra-small rules, so they are re-declared at the end.
+   ========================================================= */
+
+/* ---------- Shared tokens for layout ---------- */
+
+.anatomia-theme
+{
+    --gap: 24px;
+    --gap-sm: 16px;
+    --radius-card: 36px;
+    --radius-ctl: 28px;
+    --pad-card: 40px;
+}
+
+/* =========================================================
+   STUDENT DASHBOARD  (v4 - bento grid)
+   Asymmetric 3:2 tiles on a 16px gutter.
+     Row A  Level (3)            | Quizzes / Points stacked (2)
+     Row B  Explore 3D tall (3)  | Classroom Hub / Progress stacked (2)
+     Row C  Badges (2)           | Join a Classroom (3)
+     Feed   Recent activity, full width
+   Gutter = 8px margin on each side of the seam, so tiles never need
+   negative margins. Below 600px wide every row collapses to one column.
+   ========================================================= */
+
+.anatomia-theme.theme-dashboard .content-wrapper
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 0;
+    padding-bottom: 40px;
+}
+
+/* ---- Editorial header ---- */
+.anatomia-theme.theme-dashboard .header
+{
+    padding: 96px 0 0 0;
+    margin-bottom: 44px;
+}
+
+.anatomia-theme.theme-dashboard .header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 36px 0;
+}
+
+.anatomia-theme.theme-dashboard .profile-avatar-button
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .icon-button
+{
+    width: 84px;
+    height: 84px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .header-title-block
+{
+    margin: 0;
+    padding: 0;
+    align-items: flex-start;
+}
+
+.anatomia-theme.theme-dashboard .welcome-title
+{
+    font-size: 32px;
+    margin-bottom: 4px;
+}
+
+.anatomia-theme.theme-dashboard .welcome-subtitle
+{
+    margin: 0;
+    font-size: 80px;
+    -unity-font-style: bold;
+    letter-spacing: -1.5px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ---- Bento primitives ---- */
+.anatomia-theme.theme-dashboard .bento-row
+{
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-row-last
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-w3
+{
+    flex-grow: 3;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-w2
+{
+    flex-grow: 2;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-l
+{
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+.anatomia-theme.theme-dashboard .bento-r
+{
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack
+{
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* ---- Row A: level tile ---- */
+.anatomia-theme.theme-dashboard .level-card
+{
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 36px;
+    border-radius: 36px;
+    height: auto;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.anatomia-theme.theme-dashboard .level-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+}
+
+.anatomia-theme.theme-dashboard .level-text
+{
+    font-size: 34px;
+}
+
+.anatomia-theme.theme-dashboard .level-bottom
+{
+    margin-top: 40px;
+}
+
+.anatomia-theme.theme-dashboard .progress-track
+{
+    width: 100%;
+    height: 16px;
+    border-radius: 8px;
+}
+
+.anatomia-theme.theme-dashboard .progress-fill
+{
+    height: 100%;
+    border-radius: 8px;
+}
+
+.anatomia-theme.theme-dashboard .level-caption
+{
+    margin-top: 18px;
+}
+
+/* ---- Row A: stats column (two stacked tiles) ---- */
+.anatomia-theme.theme-dashboard .stats-row
+{
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-card
+{
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 150px;
+    padding: 24px 28px;
+    border-radius: 32px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-card-left
+{
+    margin-bottom: 8px;
+}
+
+.anatomia-theme.theme-dashboard .stat-card-right
+{
+    margin-top: 8px;
+}
+
+.anatomia-theme.theme-dashboard .stat-icon
+{
+    width: 56px;
+    height: 56px;
+    margin: 0 20px 0 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+.anatomia-theme.theme-dashboard .stat-value
+{
+    font-size: 46px;
+    margin: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-label
+{
+    font-size: 22px;
+    margin: 0;
+    white-space: normal;
+}
+
+/* ---- Rows B + C: actions wrapper is bare ---- */
+.anatomia-theme.theme-dashboard .quick-actions-card
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 40px 0 24px 0;
+    height: auto;
+}
+
+.anatomia-theme.theme-dashboard .section-title
+{
+    font-size: 30px;
+    color: var(--ink-2);
+    margin-bottom: 20px;
+    padding-left: 8px;
+}
+
+.anatomia-theme.theme-dashboard .action-button
+{
+    margin: 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Hero tile: tall, accent, icon top-left / label bottom-left */
+.anatomia-theme.theme-dashboard .action-primary
+{
+    height: 408px;
+    padding: 40px;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-radius: 40px;
+    border-width: 0;
+    background-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .action-primary:hover,
+.anatomia-theme.theme-dashboard .action-primary:active
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-dashboard .action-primary .action-icon
+{
+    width: 104px;
+    height: 104px;
+    margin: 0;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.anatomia-theme.theme-dashboard .action-primary .action-label
+{
+    font-size: 54px;
+    color: rgb(255, 255, 255);
+    -unity-text-align: lower-left;
+}
+
+/* Small tiles */
+.anatomia-theme.theme-dashboard .action-tile
+{
+    height: 196px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack .action-tile
+{
+    margin-bottom: 16px;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack .action-tile-last
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .action-tile .action-icon
+{
+    width: 64px;
+    height: 64px;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard .action-tile .action-label
+{
+    font-size: 28px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+/* Badges sits in a row whose height is set by the join tile; let it fill */
+.anatomia-theme.theme-dashboard .bento-row-last .action-tile
+{
+    height: auto;
+    flex-grow: 2;
+    align-self: stretch;
+}
+
+/* ---- Join tile --------------------------------------------------
+   Two lines inside the tile:
+     line 1:  [icon]  Title / subtitle          (icon fixed, text grows)
+     line 2:  [            Join button           ]  (100% wide -> wraps)
+   flex-wrap does the line break, so no extra UXML containers are needed.
+   ------------------------------------------------------------------ */
+.anatomia-theme.theme-dashboard .join-classroom-card
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+    justify-content: flex-start;
+    padding: 28px 32px;
+    margin: 0 0 0 8px;
+    border-radius: 36px;
+    height: auto;
+    min-height: 0;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 24px;
+    margin: 0 20px 0 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-icon-emoji
+{
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    justify-content: center;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-title
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    margin: 0;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-subtitle
+{
+    font-size: 22px;
+    margin: 4px 0 0 0;
+    white-space: normal;
+}
+
+/* Button: full-width pill on its own line */
+.anatomia-theme.theme-dashboard .join-classroom-button
+{
+    width: 100%;
+    height: 76px;
+    min-width: 0;
+    min-height: 76px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: 24px 0 0 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 38px;
+    background-color: var(--accent);
+    color: rgb(255, 255, 255);
+    font-size: 28px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 0.4px;
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-button:hover
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-button:active
+{
+    background-color: var(--accent-press);
+}
+
+/* ---- Feed ---- */
+.anatomia-theme.theme-dashboard .recent-activity-card
+{
+    margin: 0;
+    border-radius: 40px;
+    padding: 36px 40px 12px 40px;
+    min-height: 0;
+    height: auto;
+}
+
+.anatomia-theme.theme-dashboard .recent-activity-header
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.anatomia-theme.theme-dashboard .recent-activity-title
+{
+    font-size: 36px;
+    color: var(--ink);
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+/* ---- Narrow windows (< 900px) ---- */
+.anatomia-theme.theme-dashboard.compact .content-wrapper
+{
+    padding-left: 36px;
+    padding-right: 36px;
+}
+
+.anatomia-theme.theme-dashboard.compact .welcome-subtitle
+{
+    font-size: 64px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-primary
+{
+    height: 360px;
+    padding: 32px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-primary .action-label
+{
+    font-size: 44px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-tile
+{
+    height: 172px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-tile .action-label
+{
+    font-size: 24px;
+}
+
+.anatomia-theme.theme-dashboard.compact .level-card,
+.anatomia-theme.theme-dashboard.compact .join-classroom-card
+{
+    padding: 28px;
+}
+
+/* ---- Very narrow (< 600px): single column ---- */
+.anatomia-theme.theme-dashboard.extra-small .content-wrapper
+{
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .header
+{
+    padding-top: 64px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .welcome-subtitle
+{
+    font-size: 52px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row
+{
+    flex-direction: column;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-w3,
+.anatomia-theme.theme-dashboard.extra-small .bento-w2
+{
+    flex-grow: 0;
+    flex-basis: auto;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-l,
+.anatomia-theme.theme-dashboard.extra-small .bento-r
+{
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row-last .bento-r
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stats-row
+{
+    flex-direction: row;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stat-card-left
+{
+    margin: 0 8px 0 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stat-card-right
+{
+    margin: 0 0 0 8px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .action-primary
+{
+    height: 260px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row-last .action-tile
+{
+    height: 150px;
+    flex-grow: 0;
+}
+
+
+/* =========================================================
+   STUDENT CLASSROOM HUB
+   Join button in the header ("join-classroom-header-button")
+   [ (+)  Join a Classroom ]  - one solid accent pill, fixed height,
+   the "+" sits in its own translucent circle so it centres properly.
+   ========================================================= */
+
+.anatomia-theme.theme-hub .header-stats-row
+{
+    margin-bottom: 28px;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 96px;
+    min-height: 96px;
+    margin: 0;
+    padding: 0 40px;
+    border-width: 0;
+    border-radius: 48px;
+    background-color: var(--accent);
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button:hover
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button:active
+{
+    background-color: var(--accent-press);
+}
+
+.anatomia-theme.theme-hub .create-classroom-plus
+{
+    width: 48px;
+    height: 48px;
+    margin: 0 20px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: rgb(255, 255, 255);
+    font-size: 36px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-label
+{
+    margin: 0;
+    padding: 0;
+    flex-shrink: 1;
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-header-button
+{
+    height: 88px;
+    min-height: 88px;
+    padding: 0 28px;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-plus
+{
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    margin-right: 16px;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-header-label
+{
+    font-size: 28px;
+}

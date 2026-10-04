@@ -1,0 +1,186 @@
+/* =========================================================
+   Student Login - layout v7 "Minimal"
+   Scoped to .theme-login, so Create Account and Forgot Password
+   (which share AnatomiaAuth.uss) are NOT affected.
+   Reference canvas 1080 x 1920. Loaded after AnatomiaAuth.uss; every
+   selector out-ranks the shared sheet, and compact / landscape /
+   ultra-compact variants are repeated at the end.
+
+     [logo] Anatomia 3D
+
+     Welcome back
+     Sign in to continue.
+
+     Email
+     ______________________________      underline fields:
+                                         no boxes, no icons,
+     Password            Forgot password?  accent line on focus
+     ______________________________ (o)
+
+     [           Sign in            ]
+                    or
+     [ Sign in with biometrics ]         quiet outlined buttons
+     [   Continue with Google  ]
+
+          New here? Create account
+                Admin login
+   ========================================================= */
+
+/* ---------- Header ---------- */
+.anatomia-theme.auth-root.theme-login .auth-hero { padding: 0; background-color: rgba(0, 0, 0, 0); }
+.anatomia-theme.auth-root.theme-login .auth-hero-inner { align-items: stretch; }
+
+.anatomia-theme.auth-root.theme-login .auth-brand
+{
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 96px;
+}
+.anatomia-theme.auth-root.theme-login .logo-circle
+{
+    width: 92px;
+    height: 92px;
+    margin: 0 22px 0 0;
+    border-radius: 28px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root.theme-login .app-title
+{
+    font-size: 38px;
+    letter-spacing: 0;
+    color: var(--ink);
+    -unity-font-style: bold;
+}
+
+.anatomia-theme.auth-root.theme-login .auth-headline
+{
+    margin: 0 0 14px 0;
+    font-size: 64px;
+    letter-spacing: -1.5px;
+    -unity-text-align: middle-left;
+}
+.anatomia-theme.auth-root.theme-login .app-subtitle
+{
+    margin: 0;
+    font-size: 29px;
+    color: var(--ink-3);
+    -unity-text-align: middle-left;
+}
+
+/* ---------- Form: underline fields ---------- */
+.anatomia-theme.auth-root.theme-login .auth-card-wrap { margin-top: 72px; padding: 0; }
+.anatomia-theme.auth-root.theme-login .auth-card { padding: 0; }
+
+.anatomia-theme.auth-root.theme-login .field-label
+{
+    margin: 0 0 2px 0;
+    font-size: 23px;
+    -unity-font-style: normal;
+    letter-spacing: 0;
+    color: var(--ink-3);
+}
+.anatomia-theme.auth-root.theme-login .field-label-row
+{
+    margin-top: 44px;
+    margin-bottom: 2px;
+    align-items: flex-end;
+}
+.anatomia-theme.auth-root.theme-login .field-label-row .field-label { margin: 0; }
+.anatomia-theme.auth-root.theme-login .forgot-password-link { font-size: 23px; -unity-font-style: normal; color: var(--ink-3); }
+.anatomia-theme.auth-root.theme-login .forgot-password-link:hover { color: var(--accent); opacity: 1; }
+
+.anatomia-theme.auth-root.theme-login .input-field > #unity-text-input
+{
+    height: 92px;
+    padding-left: 0;
+    padding-right: 0;
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-bottom-color: var(--line-strong);
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 33px;
+}
+.anatomia-theme.auth-root.theme-login .input-field > #unity-text-input:hover { background-color: rgba(0, 0, 0, 0); border-bottom-color: var(--ink-4); }
+.anatomia-theme.auth-root.theme-login .input-field > #unity-text-input:focus { background-color: rgba(0, 0, 0, 0); border-bottom-width: 3px; border-bottom-color: var(--accent); }
+.anatomia-theme.auth-root.theme-login .input-field-with-right-icon > #unity-text-input { padding-right: 84px; }
+
+.anatomia-theme.auth-root.theme-login .input-icon { display: none; }
+.anatomia-theme.auth-root.theme-login .input-icon-button { right: 0; top: 12px; }
+
+.anatomia-theme.auth-root.theme-login .field-error { margin: 10px 0 0 0; font-size: 23px; }
+
+/* ---------- Primary button ---------- */
+.anatomia-theme.auth-root.theme-login .sign-in-button
+{
+    height: 108px;
+    margin-top: 64px;
+    border-radius: 26px;
+    font-size: 33px;
+}
+
+/* ---------- Divider: just "or" ---------- */
+.anatomia-theme.auth-root.theme-login .divider-row { justify-content: center; margin: 30px 0 22px 0; }
+.anatomia-theme.auth-root.theme-login .divider-line { display: none; }
+.anatomia-theme.auth-root.theme-login .divider-text { margin: 0; font-size: 23px; color: var(--ink-4); }
+
+/* ---------- Quiet outlined alternatives ---------- */
+.anatomia-theme.auth-root.theme-login .biometric-button,
+.anatomia-theme.auth-root.theme-login .google-button
+{
+    height: 100px;
+    border-width: 2px;
+    border-color: var(--line-strong);
+    border-radius: 26px;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root.theme-login .biometric-button { margin: 0 0 16px 0; }
+.anatomia-theme.auth-root.theme-login .biometric-button:hover,
+.anatomia-theme.auth-root.theme-login .google-button:hover { background-color: var(--sunken); }
+.anatomia-theme.auth-root.theme-login .biometric-button-text,
+.anatomia-theme.auth-root.theme-login .google-button-text { font-size: 29px; -unity-font-style: normal; color: var(--ink); }
+
+/* ---------- Foot ---------- */
+.anatomia-theme.auth-root.theme-login .auth-foot { padding: 60px 0 0 0; }
+.anatomia-theme.auth-root.theme-login .auth-foot-text,
+.anatomia-theme.auth-root.theme-login .auth-foot-link { font-size: 27px; }
+.anatomia-theme.auth-root.theme-login .admin-login-link { margin-top: 18px; font-size: 22px; -unity-font-style: normal; color: var(--ink-4); }
+.anatomia-theme.auth-root.theme-login .admin-login-link:hover { color: var(--ink-2); background-color: rgba(0, 0, 0, 0); }
+
+/* =========================================================
+   Responsive variants (toggled by StudentLoginController)
+   ========================================================= */
+.anatomia-theme.auth-root.theme-login.compact .auth-brand { margin-bottom: 72px; }
+.anatomia-theme.auth-root.theme-login.compact .logo-circle { width: 78px; height: 78px; border-radius: 24px; }
+.anatomia-theme.auth-root.theme-login.compact .app-title { font-size: 33px; }
+.anatomia-theme.auth-root.theme-login.compact .auth-headline { font-size: 54px; }
+.anatomia-theme.auth-root.theme-login.compact .app-subtitle { font-size: 26px; }
+.anatomia-theme.auth-root.theme-login.compact .auth-card-wrap { margin-top: 56px; }
+.anatomia-theme.auth-root.theme-login.compact .field-label-row { margin-top: 34px; }
+.anatomia-theme.auth-root.theme-login.compact .input-field > #unity-text-input { height: 84px; font-size: 30px; }
+.anatomia-theme.auth-root.theme-login.compact .input-icon-button { top: 8px; }
+.anatomia-theme.auth-root.theme-login.compact .sign-in-button { height: 98px; margin-top: 48px; font-size: 30px; }
+.anatomia-theme.auth-root.theme-login.compact .biometric-button,
+.anatomia-theme.auth-root.theme-login.compact .google-button { height: 92px; }
+.anatomia-theme.auth-root.theme-login.compact .auth-foot { padding-top: 44px; }
+
+.anatomia-theme.auth-root.theme-login.landscape .auth-brand { margin-bottom: 14px; }
+.anatomia-theme.auth-root.theme-login.landscape .logo-circle { width: 52px; height: 52px; border-radius: 16px; margin-right: 14px; }
+.anatomia-theme.auth-root.theme-login.landscape .app-title { font-size: 28px; }
+.anatomia-theme.auth-root.theme-login.landscape .auth-headline { font-size: 34px; margin-bottom: 2px; }
+.anatomia-theme.auth-root.theme-login.landscape .app-subtitle { font-size: 20px; }
+.anatomia-theme.auth-root.theme-login.landscape .auth-card-wrap { margin-top: 16px; }
+.anatomia-theme.auth-root.theme-login.landscape .field-label-row { margin-top: 10px; }
+.anatomia-theme.auth-root.theme-login.landscape .input-field > #unity-text-input { height: 62px; font-size: 26px; }
+.anatomia-theme.auth-root.theme-login.landscape .input-icon-button { top: -3px; }
+.anatomia-theme.auth-root.theme-login.landscape .sign-in-button { height: 72px; margin-top: 18px; border-radius: 22px; font-size: 26px; }
+.anatomia-theme.auth-root.theme-login.landscape .divider-row { margin: 10px 0 8px 0; }
+.anatomia-theme.auth-root.theme-login.landscape .biometric-button,
+.anatomia-theme.auth-root.theme-login.landscape .google-button { height: 68px; border-radius: 22px; }
+.anatomia-theme.auth-root.theme-login.landscape .biometric-button { margin-bottom: 8px; }
+.anatomia-theme.auth-root.theme-login.landscape .auth-foot { padding-top: 12px; }
+
+.anatomia-theme.auth-root.theme-login.ultra-compact .auth-headline { font-size: 44px; }
+.anatomia-theme.auth-root.theme-login.ultra-compact .input-field > #unity-text-input { font-size: 26px; }

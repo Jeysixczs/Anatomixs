@@ -516,12 +516,12 @@ public class StudentExplore3dController : MonoBehaviour
             if (armed)
             {
                 _playModeEntryButton.AddToClassList("play-mode-entry-button-active");
-                _playModeEntryButton.text = "✕ Cancel";
+                _playModeEntryButton.text = "Cancel";
             }
             else
             {
                 _playModeEntryButton.RemoveFromClassList("play-mode-entry-button-active");
-                _playModeEntryButton.text = "▶ Play";
+                _playModeEntryButton.text = "Play";
             }
         }
 
@@ -611,6 +611,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void ApplyHeaderGradient()
     {
+        if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
         if (_header == null) return;
 
         if (_headerGradientTexture != null)

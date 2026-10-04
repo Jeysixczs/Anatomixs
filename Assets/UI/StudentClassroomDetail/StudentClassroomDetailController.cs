@@ -71,6 +71,14 @@ namespace Anatomia3D.UI
         private Button _scoresTabButton;
         private Button _badgesTabButton;
         private Button _materialsTabButton;
+        private Button _menuButton;
+        private Button _drawerCloseButton;
+        private VisualElement _drawerScrim;
+        private VisualElement _drawerPanel;
+        private Label _sectionTitleLabel;
+        private Button _drawerBackButton;
+        private Label _drawerClassroomLabel;
+        private Label _drawerInstructorLabel;
         private VisualElement _overviewPanel;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
@@ -382,6 +390,8 @@ namespace Anatomia3D.UI
             // Re-apply cached identity/state (survives screen rebuilds within the same session).
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
             if (_instructorLabel != null) _instructorLabel.text = $"Instructor: {_instructorName}";
+            if (_drawerClassroomLabel != null) _drawerClassroomLabel.text = _classroomName;
+            if (_drawerInstructorLabel != null) _drawerInstructorLabel.text = $"Instructor: {_instructorName}";
             SetAnnouncements(_lastAnnouncements);
             SetPeers(_lastPeers);
             SetQuizzes(_lastQuizzes);
@@ -514,6 +524,10 @@ namespace Anatomia3D.UI
             _scoresTabButton?.UnregisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.UnregisterCallback<ClickEvent>(OnBadgesTabClicked);
             _materialsTabButton?.UnregisterCallback<ClickEvent>(OnMaterialsTabClicked);
+            _menuButton?.UnregisterCallback<ClickEvent>(OnMenuClicked);
+            _drawerCloseButton?.UnregisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerScrim?.UnregisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerBackButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -546,6 +560,14 @@ namespace Anatomia3D.UI
             _scoresTabButton = _screenRoot.Q<Button>("scores-tab-button");
             _badgesTabButton = _screenRoot.Q<Button>("badges-tab-button");
             _materialsTabButton = _screenRoot.Q<Button>("materials-tab-button");
+            _menuButton = _screenRoot.Q<Button>("menu-button");
+            _drawerCloseButton = _screenRoot.Q<Button>("drawer-close-button");
+            _drawerScrim = _screenRoot.Q<VisualElement>("drawer-scrim");
+            _drawerPanel = _screenRoot.Q<VisualElement>("drawer-panel");
+            _sectionTitleLabel = _screenRoot.Q<Label>("section-title-label");
+            _drawerBackButton = _screenRoot.Q<Button>("drawer-back-button");
+            _drawerClassroomLabel = _screenRoot.Q<Label>("drawer-classroom-label");
+            _drawerInstructorLabel = _screenRoot.Q<Label>("drawer-instructor-label");
             _overviewPanel = _screenRoot.Q<VisualElement>("overview-panel");
             _studentsPanel = _screenRoot.Q<VisualElement>("students-panel");
             _quizzesPanel = _screenRoot.Q<VisualElement>("quizzes-panel");
@@ -598,6 +620,10 @@ namespace Anatomia3D.UI
             _scoresTabButton?.RegisterCallback<ClickEvent>(OnScoresTabClicked);
             _badgesTabButton?.RegisterCallback<ClickEvent>(OnBadgesTabClicked);
             _materialsTabButton?.RegisterCallback<ClickEvent>(OnMaterialsTabClicked);
+            _menuButton?.RegisterCallback<ClickEvent>(OnMenuClicked);
+            _drawerCloseButton?.RegisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerScrim?.RegisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerBackButton?.RegisterCallback<ClickEvent>(OnBackClicked);
 
             if (_screenRoot != null)
             {
@@ -618,6 +644,8 @@ namespace Anatomia3D.UI
 
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
             if (_instructorLabel != null) _instructorLabel.text = $"Instructor: {_instructorName}";
+            if (_drawerClassroomLabel != null) _drawerClassroomLabel.text = _classroomName;
+            if (_drawerInstructorLabel != null) _drawerInstructorLabel.text = $"Instructor: {_instructorName}";
 
             // This screen is reused across classrooms - make sure a previous classroom's
             // archived-block isn't still showing while we load this one.
@@ -1090,14 +1118,6 @@ namespace Anatomia3D.UI
             textColumn.Add(metaLabel);
 
             headerRow.Add(textColumn);
-            card.Add(headerRow);
-
-            if (!string.IsNullOrEmpty(material.Description))
-            {
-                var descriptionLabel = new Label(material.Description);
-                descriptionLabel.AddToClassList("material-description-label");
-                card.Add(descriptionLabel);
-            }
 
             var openButton = new Button { text = "Open" };
             openButton.AddToClassList("material-open-button");
@@ -1108,7 +1128,15 @@ namespace Anatomia3D.UI
                     busy => { openButton.SetEnabled(!busy); openButton.text = busy ? "Opening..." : "Open"; },
                     SetMaterialsError);
             };
-            card.Add(openButton);
+            headerRow.Add(openButton); // compact pill on the right of the header row
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(material.Description))
+            {
+                var descriptionLabel = new Label(material.Description);
+                descriptionLabel.AddToClassList("material-description-label");
+                card.Add(descriptionLabel);
+            }
 
             return card;
         }
@@ -1739,6 +1767,7 @@ namespace Anatomia3D.UI
         {
             var card = new VisualElement();
             card.AddToClassList("score-card");
+            card.AddToClassList(score.Passed ? "score-card-passed" : "score-card-failed");
 
             var topRow = new VisualElement();
             topRow.AddToClassList("score-top-row");
@@ -1962,6 +1991,45 @@ namespace Anatomia3D.UI
             _badgesPanel?.AddToClassList("hidden");
             _materialsPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
+
+            if (_sectionTitleLabel != null) _sectionTitleLabel.text = tabName;
+            SetDrawerOpen(false);
+            _screenScroll?.schedule.Execute(() =>
+            {
+                if (_screenScroll is ScrollView sv) sv.scrollOffset = Vector2.zero;
+            }).ExecuteLater(0);
+        }
+
+        // ---------------- Hamburger drawer ----------------
+
+        private void OnMenuClicked(ClickEvent evt) => SetDrawerOpen(true);
+        private void OnMenuCloseClicked(ClickEvent evt) => SetDrawerOpen(false);
+
+        private void SetDrawerOpen(bool open)
+        {
+            if (_drawerScrim == null || _drawerPanel == null) return;
+
+            if (open)
+            {
+                // Show first, then flip the "on" classes one frame later so the
+                // fade / slide transitions actually run.
+                _drawerScrim.RemoveFromClassList("hidden");
+                _drawerScrim.schedule.Execute(() =>
+                {
+                    _drawerScrim.AddToClassList("drawer-scrim-on");
+                    _drawerPanel.RemoveFromClassList("drawer-closed");
+                }).ExecuteLater(10);
+            }
+            else
+            {
+                _drawerScrim.RemoveFromClassList("drawer-scrim-on");
+                _drawerPanel.AddToClassList("drawer-closed");
+                // Remove the scrim after the fade so it stops swallowing taps.
+                _drawerScrim.schedule.Execute(() =>
+                {
+                    if (_drawerPanel.ClassListContains("drawer-closed")) _drawerScrim.AddToClassList("hidden");
+                }).ExecuteLater(260);
+            }
         }
 
         private void OnStartQuizClicked(QuizCardInfo quiz)
@@ -2007,6 +2075,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

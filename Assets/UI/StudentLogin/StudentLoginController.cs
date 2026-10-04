@@ -495,6 +495,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
             var diagonal = BuildGradientTexture(gradientStart, gradientEnd, false);
 

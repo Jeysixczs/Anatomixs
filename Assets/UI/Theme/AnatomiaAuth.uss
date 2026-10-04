@@ -1,0 +1,511 @@
+/* =========================================================
+   Anatomia 3D - Auth screens v4 "Clean Sheet"
+   Student Login / Create Account / Forgot Password
+   Reference canvas: 1080 x 1920. Load AFTER AnatomiaTheme.uss.
+
+   LAYOUT
+     no banner, no card : content sits directly on the ambient background
+     brand row          : logo + name, top-left
+     chip + headline    : "Student" chip, big dark headline, muted subtitle
+     fields             : filled rounded boxes (sunken fill, accent ring on focus)
+     actions            : full-width pill primary, outlined Google / biometrics
+     foot               : switch link, then (login only) admin link
+   Primary buttons do NOT set background-color so the theme's
+   accent / hover / pressed colours keep working.
+   ========================================================= */
+
+/* ---------- Skeleton ---------- */
+.anatomia-theme.auth-root { width: 100%; height: 100%; flex-grow: 1; flex-direction: column; }
+
+.anatomia-theme.auth-root .screen-container
+{
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* scroll-view: plain VisualElement on Login (FitToScreen centres + scales the
+   content), real ScrollView on Create Account / Forgot Password. */
+.anatomia-theme.auth-root .scroll-view
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.anatomia-theme.auth-root .scroll-view #unity-content-and-vertical-scroll-container,
+.anatomia-theme.auth-root .scroll-view #unity-content-viewport { flex-grow: 1; }
+.anatomia-theme.auth-root .scroll-view #unity-content-container
+{
+    min-height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* Content keeps its natural height (FitToScreen needs that) and is centred. */
+.anatomia-theme.auth-root .content-wrapper
+{
+    width: 100%;
+    max-width: 880px;
+    padding: 72px 52px 56px 52px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    align-self: center;
+}
+
+/* ---------- Slim overlay scrollbar ---------- */
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical
+{
+    position: absolute;
+    right: 5px;
+    top: 10px;
+    bottom: 10px;
+    width: 10px;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller__low-button,
+.anatomia-theme.auth-root .scroll-view .unity-scroller__high-button,
+.anatomia-theme.auth-root .scroll-view #unity-dragger-border { display: none; }
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-tracker
+{
+    width: 10px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-dragger
+{
+    width: 10px;
+    min-height: 90px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: var(--accent-soft);
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-dragger:hover { background-color: var(--accent); }
+
+/* ---------- Header block ---------- */
+.anatomia-theme.auth-root .auth-hero
+{
+    width: 100%;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.auth-root .auth-hero-inner { width: 100%; align-self: stretch; }
+
+.anatomia-theme.auth-root .auth-brand { flex-direction: row; align-items: center; margin-bottom: 64px; }
+
+.anatomia-theme.auth-root .logo-circle
+{
+    width: 72px;
+    height: 72px;
+    margin: 0 18px 0 0;
+    flex-shrink: 0;
+    border-radius: 22px;
+    border-width: 1px;
+    border-color: var(--line);
+    background-color: var(--surface-solid);
+    background-image: url("project://database/Assets/UI/Icons/Anatomia-logo.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.auth-root .app-title { margin: 0; font-size: 32px; -unity-font-style: bold; letter-spacing: -0.5px; color: var(--ink); }
+
+/* "Student" chip above the headline */
+.anatomia-theme.auth-root .auth-chip
+{
+    align-self: flex-start;
+    margin: 0 0 22px 0;
+    padding: 8px 24px;
+    border-radius: 100px;
+    font-size: 22px;
+    -unity-font-style: bold;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.auth-root .auth-headline
+{
+    margin: 0 0 14px 0;
+    font-size: 72px;
+    -unity-font-style: bold;
+    letter-spacing: -2px;
+    color: var(--ink);
+    -unity-text-align: middle-left;
+    white-space: normal;
+}
+
+.anatomia-theme.auth-root .app-subtitle
+{
+    margin: 0;
+    font-size: 30px;
+    color: var(--ink-3);
+    -unity-text-align: middle-left;
+    white-space: normal;
+}
+
+/* Forgot password: soft back pill + key badge */
+.anatomia-theme.auth-root .auth-topbar { flex-direction: row; justify-content: flex-start; margin-bottom: 56px; }
+.anatomia-theme.auth-root .auth-back-pill
+{
+    height: 76px;
+    margin: 0;
+    padding: 0 32px 0 20px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-width: 0;
+    border-radius: 38px;
+    background-color: var(--sunken);
+}
+.anatomia-theme.auth-root .auth-back-pill:hover { background-color: var(--track); }
+.anatomia-theme.auth-root .back-link-icon
+{
+    width: 34px;
+    height: 34px;
+    margin: 0 10px 0 0;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-2);
+}
+.anatomia-theme.auth-root .auth-back-label { margin: 0; padding: 0; font-size: 27px; -unity-font-style: bold; color: var(--ink-2); }
+
+.anatomia-theme.auth-root .auth-badge
+{
+    width: 112px;
+    height: 112px;
+    margin-bottom: 36px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 56px;
+    background-color: var(--accent-soft);
+}
+.anatomia-theme.auth-root .auth-badge-icon
+{
+    width: 52px;
+    height: 52px;
+    background-image: url("project://database/Assets/UI/Icons/key-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+/* ---------- Form block (no card chrome) ---------- */
+.anatomia-theme.auth-root .auth-card-wrap { width: 100%; padding: 0; margin-top: 56px; }
+.anatomia-theme.auth-root .auth-card
+{
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* ---------- Foot (switch link) ---------- */
+.anatomia-theme.auth-root .auth-foot
+{
+    flex-grow: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 44px 0 0 0;
+}
+.anatomia-theme.auth-root .auth-foot-row { flex-direction: row; align-items: center; justify-content: center; }
+.anatomia-theme.auth-root .auth-foot-text { margin: 0 10px 0 0; font-size: 28px; color: var(--ink-3); }
+.anatomia-theme.auth-root .auth-foot-link
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .auth-foot-link:hover { opacity: 0.8; }
+
+.anatomia-theme.auth-root .admin-login-link
+{
+    align-self: center;
+    margin: 28px 0 0 0;
+    padding: 10px 28px;
+    border-width: 0;
+    border-radius: 28px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--ink-3);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .admin-login-link:hover { color: var(--ink-2); background-color: var(--sunken); }
+
+/* ---------- Labels, hints, errors ---------- */
+.anatomia-theme.auth-root .field-label { margin: 0 0 12px 6px; font-size: 25px; -unity-font-style: bold; color: var(--ink-2); }
+.anatomia-theme.auth-root .field-label-spaced { margin-top: 30px; }
+.anatomia-theme.auth-root .field-label-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 30px;
+    margin-bottom: 12px;
+}
+.anatomia-theme.auth-root .field-label-row .field-label { margin: 0 0 0 6px; }
+.anatomia-theme.auth-root .field-hint { margin: 12px 0 0 6px; font-size: 22px; color: var(--ink-3); white-space: normal; }
+.anatomia-theme.auth-root .field-error { margin: 12px 0 0 6px; font-size: 24px; -unity-font-style: bold; color: var(--danger); white-space: normal; }
+
+.anatomia-theme.auth-root .field-row { flex-direction: row; }
+.anatomia-theme.auth-root .field-col { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.anatomia-theme.auth-root .field-col-gap { margin-left: 20px; }
+
+/* ---------- Inputs (filled, rounded) ---------- */
+.anatomia-theme.auth-root .input-container
+{
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    align-items: center;
+    overflow: visible;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .input-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 32px;
+    color: var(--ink);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .input-field > #unity-text-input
+{
+    height: 104px;
+    min-width: 0;
+    padding-left: 96px;
+    padding-right: 28px;
+    overflow: hidden;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 28px;
+    background-color: var(--sunken);
+    color: var(--ink);
+    font-size: 32px;
+    -unity-text-align: middle-left;
+}
+.anatomia-theme.auth-root .input-field > #unity-text-input:hover { background-color: var(--track); }
+.anatomia-theme.auth-root .input-field > #unity-text-input:focus { border-color: var(--accent); background-color: var(--surface-solid); }
+.anatomia-theme.auth-root .input-field > #unity-text-input.unity-base-text-field__input--placeholder { color: var(--ink-3); -unity-font-style: normal; }
+.anatomia-theme.auth-root .input-field > #unity-text-input:focus.unity-base-text-field__input--placeholder { color: var(--ink-4); }
+.anatomia-theme.auth-root .input-field-plain > #unity-text-input { padding-left: 30px; }
+.anatomia-theme.auth-root .input-field-with-right-icon > #unity-text-input { padding-right: 100px; }
+
+.anatomia-theme.auth-root .input-icon
+{
+    position: absolute;
+    left: 32px;
+    top: 33px;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-3);
+}
+.anatomia-theme.auth-root .icon-email { background-image: url("project://database/Assets/UI/Icons/email-icon.png"); }
+.anatomia-theme.auth-root .icon-lock  { background-image: url("project://database/Assets/UI/Icons/lock-icon.png"); }
+
+.anatomia-theme.auth-root .input-icon-button
+{
+    position: absolute;
+    right: 14px;
+    top: 18px;
+    width: 68px;
+    height: 68px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 34px;
+    background-color: rgba(0, 0, 0, 0);
+    background-size: 40px 40px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-3);
+}
+.anatomia-theme.auth-root .input-icon-button:hover { background-color: var(--track); }
+.anatomia-theme.auth-root .icon-eye { background-image: url("project://database/Assets/UI/Icons/eye.png"); }
+.anatomia-theme.auth-root .icon-eye.icon-eye-off { background-image: url("project://database/Assets/UI/Icons/eye-off.png"); }
+
+/* ---------- Buttons ---------- */
+.anatomia-theme.auth-root .sign-in-button,
+.anatomia-theme.auth-root .create-account-button
+{
+    width: 100%;
+    height: 112px;
+    margin: 48px 0 0 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 56px;
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.anatomia-theme.auth-root .forgot-password-link
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 25px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.anatomia-theme.auth-root .biometric-button,
+.anatomia-theme.auth-root .google-button
+{
+    width: 100%;
+    height: 108px;
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-radius: 54px;
+}
+.anatomia-theme.auth-root .biometric-button { margin-top: 20px; border-width: 2px; border-color: var(--accent); background-color: var(--accent-faint); }
+.anatomia-theme.auth-root .biometric-button:hover { background-color: var(--accent-soft); }
+.anatomia-theme.auth-root .biometric-button-text { font-size: 31px; -unity-font-style: bold; color: var(--accent); }
+.anatomia-theme.auth-root .google-button { border-width: 2px; border-color: var(--line-strong); background-color: var(--surface-solid); }
+.anatomia-theme.auth-root .google-button:hover { background-color: var(--sunken); }
+.anatomia-theme.auth-root .google-button-text { font-size: 31px; -unity-font-style: bold; color: var(--ink); }
+
+.anatomia-theme.auth-root .icon-google,
+.anatomia-theme.auth-root .icon-fingerprint,
+.anatomia-theme.auth-root #biometric-icon
+{
+    width: 40px;
+    height: 40px;
+    margin: 0 16px 0 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.anatomia-theme.auth-root .icon-google { background-image: url("project://database/Assets/UI/Icons/google-icon.png"); -unity-background-image-tint-color: rgb(255, 255, 255); }
+.anatomia-theme.auth-root .icon-fingerprint,
+.anatomia-theme.auth-root #biometric-icon { background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png"); -unity-background-image-tint-color: var(--accent); }
+
+.anatomia-theme.auth-root .divider-row { flex-direction: row; align-items: center; margin: 36px 0; }
+.anatomia-theme.auth-root .divider-line { flex-grow: 1; height: 1px; background-color: var(--line-strong); }
+.anatomia-theme.auth-root .divider-text { margin: 0 24px; font-size: 24px; color: var(--ink-3); }
+
+/* ---------- Status ---------- */
+.anatomia-theme.auth-root .status-label { margin-top: 26px; font-size: 26px; color: var(--danger); -unity-text-align: middle-center; white-space: normal; }
+.anatomia-theme.auth-root .success-message
+{
+    margin-top: 30px;
+    padding: 24px 30px;
+    border-radius: 28px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--success);
+    background-color: var(--success-soft);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* =========================================================
+   Responsive (classes toggled by the controllers)
+   ========================================================= */
+.anatomia-theme.auth-root.compact .content-wrapper { padding: 56px 36px 44px 36px; }
+.anatomia-theme.auth-root.compact .auth-brand { margin-bottom: 48px; }
+.anatomia-theme.auth-root.compact .logo-circle { width: 62px; height: 62px; border-radius: 19px; margin-right: 14px; }
+.anatomia-theme.auth-root.compact .app-title { font-size: 29px; }
+.anatomia-theme.auth-root.compact .auth-chip { margin-bottom: 18px; font-size: 20px; }
+.anatomia-theme.auth-root.compact .auth-headline { font-size: 58px; }
+.anatomia-theme.auth-root.compact .app-subtitle { font-size: 27px; }
+.anatomia-theme.auth-root.compact .auth-topbar { margin-bottom: 40px; }
+.anatomia-theme.auth-root.compact .auth-badge { width: 96px; height: 96px; margin-bottom: 28px; }
+.anatomia-theme.auth-root.compact .auth-card-wrap { margin-top: 44px; }
+.anatomia-theme.auth-root.compact .field-label,
+.anatomia-theme.auth-root.compact .forgot-password-link { font-size: 23px; }
+.anatomia-theme.auth-root.compact .field-label-spaced,
+.anatomia-theme.auth-root.compact .field-label-row { margin-top: 22px; }
+.anatomia-theme.auth-root.compact .input-field > #unity-text-input { height: 96px; padding-left: 90px; font-size: 29px; }
+.anatomia-theme.auth-root.compact .input-field-plain > #unity-text-input { padding-left: 26px; }
+.anatomia-theme.auth-root.compact .input-icon { left: 30px; top: 30px; width: 36px; height: 36px; }
+.anatomia-theme.auth-root.compact .input-icon-button { top: 14px; }
+.anatomia-theme.auth-root.compact .sign-in-button,
+.anatomia-theme.auth-root.compact .create-account-button { height: 100px; margin-top: 36px; font-size: 30px; border-radius: 50px; }
+.anatomia-theme.auth-root.compact .biometric-button,
+.anatomia-theme.auth-root.compact .google-button { height: 98px; border-radius: 49px; }
+.anatomia-theme.auth-root.compact .biometric-button-text,
+.anatomia-theme.auth-root.compact .google-button-text { font-size: 28px; }
+.anatomia-theme.auth-root.compact .divider-row { margin: 28px 0; }
+.anatomia-theme.auth-root.compact .auth-foot { padding-top: 34px; }
+.anatomia-theme.auth-root.compact .auth-foot-text,
+.anatomia-theme.auth-root.compact .auth-foot-link { font-size: 26px; }
+
+.anatomia-theme.auth-root.landscape .content-wrapper { padding: 20px 28px 20px 28px; }
+.anatomia-theme.auth-root.landscape .auth-brand { margin-bottom: 12px; }
+.anatomia-theme.auth-root.landscape .logo-circle { width: 44px; height: 44px; border-radius: 14px; }
+.anatomia-theme.auth-root.landscape .app-title { font-size: 24px; }
+.anatomia-theme.auth-root.landscape .auth-chip { display: none; }
+.anatomia-theme.auth-root.landscape .auth-headline { font-size: 38px; margin-bottom: 2px; }
+.anatomia-theme.auth-root.landscape .app-subtitle { font-size: 21px; }
+.anatomia-theme.auth-root.landscape .auth-topbar { margin-bottom: 10px; }
+.anatomia-theme.auth-root.landscape .auth-back-pill { height: 56px; }
+.anatomia-theme.auth-root.landscape .auth-badge { width: 56px; height: 56px; margin-bottom: 8px; }
+.anatomia-theme.auth-root.landscape .auth-badge-icon { width: 28px; height: 28px; }
+.anatomia-theme.auth-root.landscape .auth-card-wrap { margin-top: 18px; }
+.anatomia-theme.auth-root.landscape .field-label { margin-bottom: 6px; }
+.anatomia-theme.auth-root.landscape .field-label-spaced,
+.anatomia-theme.auth-root.landscape .field-label-row { margin-top: 12px; }
+.anatomia-theme.auth-root.landscape .input-field > #unity-text-input { height: 72px; }
+.anatomia-theme.auth-root.landscape .input-icon { top: 17px; }
+.anatomia-theme.auth-root.landscape .input-icon-button { top: 2px; }
+.anatomia-theme.auth-root.landscape .sign-in-button,
+.anatomia-theme.auth-root.landscape .create-account-button { height: 74px; margin-top: 18px; border-radius: 37px; }
+.anatomia-theme.auth-root.landscape .biometric-button,
+.anatomia-theme.auth-root.landscape .google-button { height: 74px; border-radius: 37px; }
+.anatomia-theme.auth-root.landscape .divider-row { margin: 12px 0; }
+.anatomia-theme.auth-root.landscape .auth-foot { padding-top: 14px; }
+.anatomia-theme.auth-root.landscape .admin-login-link { margin-top: 8px; }
+
+.anatomia-theme.auth-root.ultra-compact .content-wrapper { padding-left: 24px; padding-right: 24px; }
+.anatomia-theme.auth-root.ultra-compact .auth-headline { font-size: 46px; }
+.anatomia-theme.auth-root.ultra-compact .input-field > #unity-text-input { font-size: 26px; }
+.anatomia-theme.auth-root.ultra-compact .field-col-gap { margin-left: 12px; }
+
+/* ---------- Visibility helper (LAST so it wins ties) ---------- */
+.anatomia-theme.auth-root .hidden { display: none; }
+.hidden { display: none; }
