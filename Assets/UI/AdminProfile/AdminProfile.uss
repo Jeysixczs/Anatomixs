@@ -1,17 +1,25 @@
 /* =========================================================
-   Anatomia 3D - Admin (Teacher) Profile (Unity 6 UI Toolkit)
+   Anatomia 3D - Admin Profile (Unity 6 UI Toolkit)  -- redesign
    Reference canvas: 1080 x 1920 (portrait phone).
-   Layout: gradient header with a centered avatar block, a stats card
-   that floats over the header's bottom edge, then grouped menu cards.
+
+   Layout (top to bottom):
+     header      : back chip + "Profile" title (sits on the ambient background)
+     hero card   : avatar on the left, name / email / role pill on the right
+     stat tiles  : three separate tiles (classrooms, students, quizzes)
+     Account     : edit profile, notifications
+     About       : about Anatomia 3D
+     Log out     : quiet destructive row
+   All rules are scoped under .anatomia-theme.theme-adminprofile so they out-rank
+   the generic theme rules in AnatomiaTheme.uss (which loads after this file).
+   USS has no sibling combinator, so spacing uses explicit margins.
    ========================================================= */
 
 /* ---------- Screen ---------- */
-.screen-root
+.anatomia-theme.theme-adminprofile.screen-root
 {
     width: 100%;
     height: 100%;
     flex-grow: 1;
-    background-color: rgb(243, 244, 248);
     padding: 0;
     margin: 0;
     overflow: hidden;
@@ -19,157 +27,8 @@
     align-items: stretch;
 }
 
-/* ---------- Header (gradient applied at runtime via C#) ---------- */
-.header
-{
-    width: 100%;
-    border-bottom-left-radius: 60px;
-    border-bottom-right-radius: 60px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 120px;   /* room for the stats card that overlaps the bottom edge */
-    flex-shrink: 0;
-    flex-direction: column;
-}
-
-.header-top-row
-{
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 44px;
-}
-
-.back-button
-{
-    width: 88px;
-    height: 88px;
-    border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
-    justify-content: center;
-    align-items: center;
-    margin-right: 30px;
-    margin-left: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding: 0;
-    flex-shrink: 0;
-}
-
-.back-icon
-{
-    width: 40px;
-    height: 40px;
-    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
-}
-
-.header-text
-{
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    min-width: 0;
-}
-
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-.header-subtitle
-{
-    font-size: 26px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 6px;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-/* ---------- Profile summary (centered) ---------- */
-.profile-summary-card
-{
-    flex-direction: column;
-    align-items: center;
-    background-color: transparent;
-    padding: 0;
-}
-
-.avatar
-{
-    width: 200px;
-    height: 200px;
-    border-radius: 100px;
-    background-color: rgba(255, 255, 255, 0.25);
-    border-width: 6px;
-    border-color: rgba(255, 255, 255, 0.9);
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    margin-bottom: 28px;
-    overflow: hidden;
-}
-
-.avatar-initials
-{
-    font-size: 76px;
-    -unity-font-style: bold;
-    color: white;
-}
-
-.profile-name
-{
-    font-size: 48px;
-    -unity-font-style: bold;
-    color: white;
-    -unity-text-align: middle-center;
-    white-space: normal;
-    word-wrap: break-word;
-    max-width: 100%;
-}
-
-.profile-email
-{
-    font-size: 28px;
-    color: rgba(255, 255, 255, 0.82);
-    -unity-text-align: middle-center;
-    margin-top: 6px;
-    white-space: normal;
-    word-wrap: break-word;
-    max-width: 100%;
-}
-
-.role-badge
-{
-    align-self: center;
-    background-color: rgba(255, 255, 255, 0.22);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.35);
-    border-radius: 30px;
-    padding-left: 32px;
-    padding-right: 32px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    margin-top: 22px;
-}
-
-.role-badge-label
-{
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: white;
-}
-
 /* ---------- ScrollView ---------- */
-.screen-scroll
+.anatomia-theme.theme-adminprofile .screen-scroll
 {
     flex-grow: 1;
     width: 100%;
@@ -181,12 +40,9 @@
     -unity-overflow-scrolling: touch;
 }
 
-.screen-scroll .unity-scroller--vertical {
-    width: 0;
-    display: none;
-}
+.anatomia-theme.theme-adminprofile .screen-scroll .unity-scroller--vertical { width: 0; display: none; }
 
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+.anatomia-theme.theme-adminprofile .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
 {
     padding: 0;
     margin: 0;
@@ -194,7 +50,7 @@
     height: 100%;
 }
 
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+.anatomia-theme.theme-adminprofile .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
 {
     padding: 0;
     margin: 0;
@@ -210,383 +66,363 @@
     min-height: 100%;
 }
 
-/* ---------- Content Wrapper ---------- */
-.content-wrapper
+/* ---------- Header: just back chip + title ---------- */
+.anatomia-theme.theme-adminprofile .header
 {
     width: 100%;
-    flex-direction: column;
-    padding: 0;
-    max-width: 100%;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: stretch;
     flex-shrink: 0;
+    flex-direction: column;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 96px;
+    padding-bottom: 8px;
 }
 
-/* ---------- Stats card (one white card, three columns, floats over the header) ---------- */
-.stats-row
+.anatomia-theme.theme-adminprofile .header-top-row
 {
     flex-direction: row;
-    margin-left: 50px;
-    margin-right: 50px;
-    margin-top: -72px;
-    margin-bottom: 12px;
-    background-color: white;
-    border-radius: 40px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
-    padding-top: 36px;
-    padding-bottom: 36px;
-}
-
-.stat-card
-{
-    flex: 1;
-    flex-shrink: 0;
-    min-width: 0;
-    background-color: transparent;
     align-items: center;
-    padding-left: 12px;
-    padding-right: 12px;
-    border-left-width: 0;
+    margin-bottom: 0;
 }
 
-.stat-card-mid,
-.stat-card-right
+.anatomia-theme.theme-adminprofile .back-button
 {
-    border-left-width: 1px;
-    border-left-color: rgba(0, 0, 0, 0.07);
-}
-
-.stat-icon
-{
-    width: 72px;
-    height: 72px;
-    border-radius: 22px;
-    margin-bottom: 16px;
+    margin: 0 28px 0 0;
+    padding: 0;
+    flex-shrink: 0;
     justify-content: center;
     align-items: center;
 }
 
-.stat-icon-glyph
+.anatomia-theme.theme-adminprofile .back-icon
 {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink);
 }
 
-.stat-icon-blue   { background-color: rgb(37, 99, 235); }
-.stat-icon-orange { background-color: rgb(217, 119, 6); }
-.stat-icon-purple { background-color: rgb(147, 51, 234); }
+.anatomia-theme.theme-adminprofile .header-text
+{
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+}
 
-.stat-value
+.anatomia-theme.theme-adminprofile .header-title { white-space: normal; word-wrap: break-word; }
+.anatomia-theme.theme-adminprofile .header-subtitle { margin-top: 4px; white-space: normal; word-wrap: break-word; }
+
+/* ---------- Content ---------- */
+.anatomia-theme.theme-adminprofile .content-wrapper
+{
+    flex-direction: column;
+    flex-shrink: 0;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 20px;
+    padding-bottom: 72px;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* ---------- Hero card ---------- */
+.anatomia-theme.theme-adminprofile .profile-summary-card
+{
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 44px;
+    padding: 36px;
+    margin: 0;
+}
+
+.anatomia-theme.theme-adminprofile .avatar
+{
+    width: 188px;
+    height: 188px;
+    border-radius: 94px;
+    flex-shrink: 0;
+    margin: 0 36px 0 0;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+    border-width: 5px;
+    border-color: var(--surface-solid);
+}
+
+.anatomia-theme.theme-adminprofile .avatar-initials
+{
+    font-size: 72px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-adminprofile .profile-info
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+.anatomia-theme.theme-adminprofile .profile-name
 {
     font-size: 46px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    -unity-text-align: middle-center;
-    margin-bottom: 4px;
-}
-
-.stat-label
-{
-    font-size: 24px;
-    color: rgb(138, 143, 163);
-    -unity-text-align: middle-center;
+    letter-spacing: -0.6px;
+    -unity-text-align: middle-left;
     white-space: normal;
+    word-wrap: break-word;
+    max-width: 100%;
 }
 
-/* ---------- Menu ---------- */
-.section-title
+.anatomia-theme.theme-adminprofile .profile-email
+{
+    font-size: 27px;
+    -unity-text-align: middle-left;
+    margin-top: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+.anatomia-theme.theme-adminprofile .role-badge
+{
+    align-self: flex-start;
+    margin-top: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 28px;
+    padding-right: 28px;
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
+    border-width: 0;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-adminprofile .role-badge-label
 {
     font-size: 26px;
     -unity-font-style: bold;
-    color: rgb(138, 143, 163);
-    padding-left: 66px;
-    padding-right: 66px;
-    margin-top: 40px;
-    margin-bottom: 18px;
+    color: var(--accent);
 }
 
-.menu-card
+/* ---------- Stat tiles (three separate cards) ---------- */
+.anatomia-theme.theme-adminprofile .stats-row
 {
-    background-color: white;
-    border-radius: 40px;
-    margin-left: 50px;
-    margin-right: 50px;
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-top: 8px;
-    padding-bottom: 8px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    flex-direction: row;
+    margin: 24px 0 0 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
-.menu-item
+.anatomia-theme.theme-adminprofile .stat-card
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 24px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-adminprofile .stat-card-left { margin-right: 10px; }
+.anatomia-theme.theme-adminprofile .stat-card-mid { margin-left: 10px; margin-right: 10px; }
+.anatomia-theme.theme-adminprofile .stat-card-right { margin-left: 10px; }
+
+.anatomia-theme.theme-adminprofile .stat-icon
+{
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
+    margin-bottom: 22px;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-adminprofile .stat-icon-glyph { width: 38px; height: 38px; -unity-background-image-tint-color: var(--accent); background-size: contain; background-position: center; background-repeat: no-repeat; }
+
+.anatomia-theme.theme-adminprofile .stat-value
+{
+    font-size: 52px;
+    -unity-font-style: bold;
+    letter-spacing: -0.8px;
+    -unity-text-align: middle-left;
+    margin-bottom: 2px;
+}
+
+.anatomia-theme.theme-adminprofile .stat-label
+{
+    font-size: 24px;
+    -unity-text-align: middle-left;
+    white-space: normal;
+}
+
+/* ---------- Menu groups ---------- */
+.anatomia-theme.theme-adminprofile .section-title
+{
+    font-size: 24px;
+    -unity-font-style: bold;
+    letter-spacing: 3px;
+    color: var(--ink-3);
+    padding: 0 12px;
+    margin: 44px 0 16px 0;
+    -unity-text-align: middle-left;
+}
+
+.anatomia-theme.theme-adminprofile .menu-card
+{
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 40px;
+}
+
+.anatomia-theme.theme-adminprofile .menu-item
 {
     flex-direction: row;
     align-items: center;
-    background-color: transparent;
-    border-width: 0px;
-    padding: 24px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 30px;
+    padding: 22px;
     margin: 0;
-    border-radius: 28px;
 }
 
-.menu-item:hover
-{
-    background-color: rgba(0, 0, 0, 0.03);
-}
+.anatomia-theme.theme-adminprofile .menu-divider { height: 1px; margin: 0 24px 0 122px; }
 
-.menu-item:active
+.anatomia-theme.theme-adminprofile .menu-icon-box
 {
-    background-color: rgba(0, 0, 0, 0.06);
-}
-
-.menu-divider
-{
-    height: 1px;
-    background-color: rgba(0, 0, 0, 0.06);
-    margin-left: 128px;
-    margin-right: 24px;
-}
-
-.menu-icon-box
-{
-    width: 80px;
-    height: 80px;
+    width: 76px;
+    height: 76px;
     border-radius: 24px;
-    margin-right: 28px;
+    margin-right: 26px;
     flex-shrink: 0;
     justify-content: center;
     align-items: center;
+    background-color: var(--accent-soft);
 }
 
-.menu-icon-blue   { background-color: rgb(226, 236, 254); }
-.menu-icon-orange { background-color: rgb(254, 240, 218); }
-.menu-icon-green  { background-color: rgb(220, 244, 228); }
-.menu-icon-purple { background-color: rgb(240, 228, 254); }
-.menu-icon-gray   { background-color: rgb(236, 238, 243); }
-.menu-icon-red    { background-color: rgb(254, 226, 226); }
+.anatomia-theme.theme-adminprofile .menu-icon-glyph { width: 40px; height: 40px; background-size: contain; background-position: center; background-repeat: no-repeat; }
 
-.menu-icon-glyph
+.anatomia-theme.theme-adminprofile .menu-item-label
 {
-    width: 42px;
-    height: 42px;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.menu-item-label
-{
-    font-size: 34px;
-    color: rgb(31, 36, 48);
+    font-size: 33px;
     flex-grow: 1;
     -unity-text-align: middle-left;
 }
 
-.menu-chevron
+.anatomia-theme.theme-adminprofile .menu-chevron
 {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-top-width: 4px;
     border-right-width: 4px;
-    border-color: rgb(190, 193, 204);
     rotate: 45deg;
     flex-shrink: 0;
-    margin-right: 10px;
+    margin-right: 12px;
 }
 
-/* ---------- Log Out ---------- */
-.logout-button
+/* ---------- Log out ---------- */
+.anatomia-theme.theme-adminprofile .logout-button
 {
     flex-direction: row;
+    justify-content: center;
     align-items: center;
-    background-color: rgb(255, 245, 245);
-    border-radius: 40px;
-    margin-left: 50px;
-    margin-right: 50px;
-    margin-top: 36px;
-    margin-bottom: 0;
+    margin: 44px 0 0 0;
     padding: 24px;
-    border-width: 1px;
-    border-color: rgba(220, 38, 38, 0.18);
+    border-top-left-radius: 48px;
+    border-top-right-radius: 48px;
+    border-bottom-left-radius: 48px;
+    border-bottom-right-radius: 48px;
+    border-width: 0;
+    background-color: var(--danger-soft);
 }
 
-.logout-button:hover
+.anatomia-theme.theme-adminprofile .logout-button:hover { background-color: rgba(204, 64, 64, 0.16); }
+.anatomia-theme.theme-adminprofile .logout-button:active { background-color: rgba(204, 64, 64, 0.22); }
+
+.anatomia-theme.theme-adminprofile .logout-button .menu-icon-box
 {
-    background-color: rgb(254, 236, 236);
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    margin-right: 16px;
+    background-color: rgba(0, 0, 0, 0);
 }
 
-.logout-button:active
-{
-    background-color: rgb(254, 226, 226);
-}
-
-.logout-label
-{
-    font-size: 34px;
-    -unity-font-style: bold;
-    color: rgb(220, 38, 38);
-}
-
-.version-label
-{
-    font-size: 24px;
-    color: rgb(160, 165, 178);
-    -unity-text-align: middle-center;
-    margin-top: 36px;
-    margin-bottom: 72px;
-}
-
-/* =========================================================
-   Compact Layout (toggled by C# based on panel width)
-   ========================================================= */
-.compact .header
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 80px;
-    padding-bottom: 100px;
-}
-
-.compact .header-top-row
-{
-    margin-bottom: 32px;
-}
-
-.compact .header-title
-{
-    font-size: 38px;
-}
-
-.compact .header-subtitle
-{
-    font-size: 24px;
-}
-
-.compact .back-button
-{
-    width: 76px;
-    height: 76px;
-    border-radius: 38px;
-    margin-right: 24px;
-}
-
-.compact .back-icon
-{
-    width: 34px;
-    height: 34px;
-}
-
-.compact .avatar
-{
-    width: 160px;
-    height: 160px;
-    border-radius: 80px;
-    margin-bottom: 22px;
-}
-
-.compact .avatar-initials
-{
-    font-size: 60px;
-}
-
-.compact .profile-name
-{
-    font-size: 40px;
-}
-
-.compact .profile-email
-{
-    font-size: 24px;
-}
-
-.compact .role-badge-label
-{
-    font-size: 24px;
-}
-
-.compact .stats-row
-{
-    margin-left: 40px;
-    margin-right: 40px;
-    margin-top: -60px;
-    padding-top: 28px;
-    padding-bottom: 28px;
-}
-
-.compact .stat-icon
-{
-    width: 60px;
-    height: 60px;
-    border-radius: 18px;
-}
-
-.compact .stat-icon-glyph
-{
-    width: 34px;
-    height: 34px;
-}
-
-.compact .stat-value
-{
-    font-size: 38px;
-}
-
-.compact .stat-label
-{
-    font-size: 20px;
-}
-
-.compact .section-title
-{
-    font-size: 22px;
-    padding-left: 52px;
-    margin-top: 32px;
-}
-
-.compact .menu-card,
-.compact .logout-button
-{
-    margin-left: 40px;
-    margin-right: 40px;
-}
-
-.compact .menu-item
-{
-    padding: 20px;
-}
-
-.compact .menu-icon-box
-{
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-    margin-right: 22px;
-}
-
-.compact .menu-icon-glyph
+.anatomia-theme.theme-adminprofile .logout-button .menu-icon-glyph
 {
     width: 36px;
     height: 36px;
+    -unity-background-image-tint-color: var(--danger);
 }
 
-.compact .menu-divider
+.anatomia-theme.theme-adminprofile .logout-label { font-size: 32px; -unity-font-style: bold; }
+
+.anatomia-theme.theme-adminprofile .version-label
 {
-    margin-left: 108px;
+    font-size: 23px;
+    -unity-text-align: middle-center;
+    margin: 36px 0 0 0;
 }
 
-.compact .menu-item-label,
-.compact .logout-label
-{
-    font-size: 30px;
-}
+/* =========================================================
+   Compact layout (toggled by C# when the panel is narrow)
+   ========================================================= */
+.anatomia-theme.theme-adminprofile.compact .back-icon { width: 32px; height: 32px; }
+.anatomia-theme.theme-adminprofile.compact .header { padding-left: 40px; padding-right: 40px; padding-top: 80px; }
+.anatomia-theme.theme-adminprofile.compact .content-wrapper { padding-left: 40px; padding-right: 40px; }
 
-.compact .version-label
+.anatomia-theme.theme-adminprofile.compact .profile-summary-card { padding: 28px; border-radius: 38px; }
+.anatomia-theme.theme-adminprofile.compact .avatar { width: 148px; height: 148px; border-radius: 74px; margin-right: 26px; }
+.anatomia-theme.theme-adminprofile.compact .avatar-initials { font-size: 56px; }
+.anatomia-theme.theme-adminprofile.compact .profile-name { font-size: 38px; }
+.anatomia-theme.theme-adminprofile.compact .profile-email { font-size: 23px; }
+.anatomia-theme.theme-adminprofile.compact .role-badge
 {
-    font-size: 20px;
+    margin-top: 14px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 22px;
+    padding-right: 22px;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
 }
+.anatomia-theme.theme-adminprofile.compact .role-badge-label { font-size: 22px; }
+
+.anatomia-theme.theme-adminprofile.compact .stat-card { padding: 22px 18px; border-radius: 30px; }
+.anatomia-theme.theme-adminprofile.compact .stat-icon { width: 56px; height: 56px; border-radius: 18px; margin-bottom: 16px; }
+.anatomia-theme.theme-adminprofile.compact .stat-icon-glyph { width: 32px; height: 32px; }
+.anatomia-theme.theme-adminprofile.compact .stat-value { font-size: 42px; }
+.anatomia-theme.theme-adminprofile.compact .stat-label { font-size: 20px; }
+
+.anatomia-theme.theme-adminprofile.compact .section-title { font-size: 21px; margin-top: 34px; }
+.anatomia-theme.theme-adminprofile.compact .menu-item { padding: 18px; }
+.anatomia-theme.theme-adminprofile.compact .menu-icon-box { width: 64px; height: 64px; border-radius: 20px; margin-right: 20px; }
+.anatomia-theme.theme-adminprofile.compact .menu-icon-glyph { width: 34px; height: 34px; }
+.anatomia-theme.theme-adminprofile.compact .menu-divider { margin-left: 102px; }
+.anatomia-theme.theme-adminprofile.compact .menu-item-label { font-size: 29px; }
+.anatomia-theme.theme-adminprofile.compact .logout-label { font-size: 28px; }
+.anatomia-theme.theme-adminprofile.compact .version-label { font-size: 20px; }

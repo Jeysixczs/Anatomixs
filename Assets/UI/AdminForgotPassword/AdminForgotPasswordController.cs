@@ -21,6 +21,10 @@ namespace Anatomia3D.UI
     [RequireComponent(typeof(UIDocument))]
     public class AdminForgotPasswordController : MonoBehaviour
     {
+        [Header("Legacy dark theme")]
+        [Tooltip("These screens now use the light Anatomia auth theme. Turn this on only to paint the old purple gradients over it.")]
+        [SerializeField] private bool applyRuntimeGradients = false;
+
         [Header("Gradient colors (matches AdminLogin: purple -> pink)")]
         [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f); // purple
         [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);   // pink
@@ -294,6 +298,8 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!applyRuntimeGradients) return;
+
             if (_screenRoot != null)
             {
                 if (_backgroundGradientTexture != null) Destroy(_backgroundGradientTexture);

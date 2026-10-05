@@ -1,412 +1,360 @@
 /* =========================================================
-   Anatomia 3D - About (SANATOMIA) (Unity 6 UI Toolkit)
-   Reference canvas: 1080 x 1920 (portrait phone).
+   Anatomia 3D - About (admin)   Reference canvas: 1080 x 1920
+   Loaded AFTER AnatomiaTheme.uss. Overwrite the old file in place so the
+   GUID referenced by the UXML stays valid.
 
-   NOTE: USS has no linear-gradient, so the header is generated as
-   a Texture2D at runtime from AboutAnatomiaController (see
-   BuildGradientTexture), matching StudentProfile's purple->pink
-   header. The color below is a flat fallback.
+   LAYOUT
+     top bar  : fixed, back button + title (always reachable while scrolling)
+     identity : centered logo tile, app name, tagline
+     sections : sentence-case title above a white card
+     credits  : developer + author rows with dividers
+
+   The controller builds the developer rows in code with these classes:
+   developer-row, developer-row-last, developer-avatar,
+   developer-avatar-initials, developer-name-label, menu-divider.
    ========================================================= */
 
-/* ---------- Screen ---------- */
-
-.screen-root
+.anatomia-theme.about-root
 {
     width: 100%;
     height: 100%;
-    flex-grow: 1;
-    background-color: rgb(243, 244, 248);
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    justify-content: flex-start;
-    align-items: stretch;
-}
-
-/* ---------- Header (gradient applied at runtime via C#) ---------- */
-
-.header
-{
-    width: 100%;
-    border-bottom-left-radius: 79px;
-    border-bottom-right-radius: 79px;
-    padding-left: 66px;
-    padding-right: 66px;
-    padding-top: 132px;
-    padding-bottom: 74px;
-    flex-shrink: 0;
     flex-direction: column;
-    background-color: rgb(142, 45, 226); /* fallback, overridden by gradient texture */
 }
 
-.header-top-row
+/* ---------- Top bar ---------- */
+.anatomia-theme.about-root .about-topbar
 {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 53px;
+    padding: 76px 28px 12px 28px;
+    background-color: rgba(0, 0, 0, 0);
 }
 
-.back-button
+.anatomia-theme.about-root .about-back
 {
-    width: 132px;
-    height: 132px;
-    border-radius: 66px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
+    width: 84px;
+    height: 84px;
+    margin: 0 20px 0 0;
+    padding: 0;
     justify-content: center;
     align-items: center;
-    margin-right: 39px;
-    flex-shrink: 0;
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 42px;
+    background-color: var(--surface);
 }
+.anatomia-theme.about-root .about-back:hover { background-color: var(--surface-hover); }
 
-.back-button:hover
+.anatomia-theme.about-root .back-icon
 {
-    background-color: rgba(255, 255, 255, 0.26);
-}
-
-.back-icon
-{
-    width: 53px;
-    height: 53px;
+    width: 36px;
+    height: 36px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
+    -unity-background-image-tint-color: var(--ink);
 }
 
-.header-title
+.anatomia-theme.about-root .about-title
 {
-    font-size: 53px;
+    margin: 0;
+    font-size: 44px;
     -unity-font-style: bold;
-    color: white;
+    letter-spacing: -0.5px;
+    color: var(--ink);
 }
 
-/* ---------- App Identity: logo, title, full description ---------- */
-
-.app-identity-card
-{
-    flex-direction: column;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.16);
-    border-radius: 37px;
-    padding: 44px 34px;
-}
-
-.app-logo-circle
-{
-    width: 169px;
-    height: 169px;
-    border-radius: 85px;
-    background-color: rgba(255, 255, 255, 0.25);
-    border-width: 3px;
-    border-color: rgba(255, 255, 255, 0.6);
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 32px;
-}
-
-.app-logo-emoji
-{
-    font-size: 74px;
-    -unity-text-align: middle-center;
-}
-
-.app-name
-{
-    font-size: 53px;
-    -unity-font-style: bold;
-    color: white;
-    -unity-text-align: middle-center;
-    letter-spacing: 1px;
-    white-space: normal;
-}
-
-.app-full-title
-{
-    font-size: 29px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 16px;
-    -unity-text-align: middle-center;
-    white-space: normal;
-    word-wrap: break-word;
-    max-width: 820px;
-}
-
-/* ---------- ScrollView ---------- */
-
-.screen-scroll
+/* ---------- Scroll area ---------- */
+.anatomia-theme.about-root .screen-scroll
 {
     flex-grow: 1;
     width: 100%;
-    height: 100%;
-    padding: 0;
     margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
+    padding: 0;
     -unity-overflow-scrolling: touch;
 }
 
-.screen-scroll .unity-scroller--vertical
+/* ---------- Scrollbar: slim rounded overlay (no layout width) ----------
+   Sits over the right edge, only the thumb is prominent, arrow buttons removed. */
+.anatomia-theme.about-root .screen-scroll .unity-scroller--vertical
 {
-    width: 0;
-    display: none;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    padding: 0;
+    position: absolute;
+    right: 5px;
+    top: 10px;
+    bottom: 10px;
+    width: 10px;
     margin: 0;
-    flex-grow: 1;
-    height: 100%;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
-{
     padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.about-root .screen-scroll .unity-scroller__low-button,
+.anatomia-theme.about-root .screen-scroll .unity-scroller__high-button,
+.anatomia-theme.about-root .screen-scroll #unity-dragger-border { display: none; }
+.anatomia-theme.about-root .screen-scroll .unity-scroller--vertical #unity-tracker
+{
+    width: 10px;
     margin: 0;
-    translate: none;
-    transform-origin: center;
-    position: relative;
-    top: 0;
-    left: 0;
-    justify-content: flex-start;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: var(--sunken);
+}
+.anatomia-theme.about-root .screen-scroll .unity-scroller--vertical #unity-dragger
+{
+    width: 10px;
+    min-height: 90px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: var(--accent-soft);
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+.anatomia-theme.about-root .screen-scroll .unity-scroller--vertical #unity-dragger:hover { background-color: var(--accent); }
+.anatomia-theme.about-root .screen-scroll .unity-scroller--vertical #unity-dragger:active { background-color: var(--accent-strong); }
+.anatomia-theme.about-root .screen-scroll #unity-content-container
+{
+    margin: 0;
+    padding: 0;
     align-items: stretch;
-    flex-grow: 0;
-    height: auto;
-    min-height: 100%;
 }
 
-/* ---------- Content Wrapper ---------- */
-
-.content-wrapper
+.anatomia-theme.about-root .about-page
 {
     width: 100%;
-    flex-direction: column;
-    padding: 0;
-    max-width: 100%;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-    flex-shrink: 0;
+    max-width: 860px;
+    align-self: center;
+    padding: 4px 28px 56px 28px;
 }
 
-/* ---------- Section titles ---------- */
+/* ---------- Identity ---------- */
+.anatomia-theme.about-root .about-identity { align-items: center; padding: 8px 0 32px 0; }
 
-.section-title
+.anatomia-theme.about-root .about-logo
 {
-    font-size: 37px;
+    width: 132px;
+    height: 132px;
+    margin-bottom: 22px;
+    border-radius: 42px;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    background-color: var(--surface-solid);
+    background-image: url("project://database/Assets/UI/Icons/Anatomia-logo.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.about-root .about-app-name
+{
+    margin: 0;
+    font-size: 64px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    padding-left: 66px;
-    padding-right: 66px;
-    margin-top: 45px;
-    margin-bottom: 21px;
+    letter-spacing: -1.5px;
+    color: var(--ink);
+    -unity-text-align: middle-center;
 }
 
-.section-title-spaced
+.anatomia-theme.about-root .about-app-tagline
 {
-    margin-top: 53px;
-}
-
-/* ---------- Description card ---------- */
-
-.info-card
-{
-    background-color: white;
-    border-radius: 37px;
-    margin-left: 66px;
-    margin-right: 66px;
-    padding: 43px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
-}
-
-.info-card-text
-{
-    font-size: 30px;
-    color: rgb(90, 95, 112);
+    max-width: 700px;
+    margin: 10px 0 0 0;
+    font-size: 28px;
+    color: var(--ink-3);
+    -unity-text-align: middle-center;
     white-space: normal;
-    word-wrap: break-word;
 }
 
-/* ---------- Developers list ---------- */
-
-.menu-card
+/* ---------- Sections ---------- */
+.anatomia-theme.about-root .about-section-title
 {
-    background-color: white;
-    border-radius: 37px;
-    margin-left: 66px;
-    margin-right: 66px;
-    padding-left: 14px;
-    padding-right: 14px;
+    margin: 0 0 12px 6px;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+.anatomia-theme.about-root .about-section-spaced { margin-top: 30px; }
+
+.anatomia-theme.about-root .about-card
+{
+    padding: 28px;
+    background-color: var(--surface-solid);
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
 }
+.anatomia-theme.about-root .about-card-list { padding: 4px 0; }
 
-.developers-list
+.anatomia-theme.about-root .about-text
 {
-    width: 100%;
-    flex-direction: column;
+    margin: 0;
+    font-size: 29px;
+    color: var(--ink-2);
+    white-space: normal;
+}
+.anatomia-theme.about-root .about-text-gap { margin-top: 18px; }
+
+/* ---------- Citations ---------- */
+.anatomia-theme.about-root .about-quote
+{
+    margin-top: 18px;
+    padding: 20px 24px;
+    border-left-width: 6px;
+    border-left-color: var(--accent);
+    border-radius: 20px;
+    background-color: var(--accent-faint);
+}
+.anatomia-theme.about-root .about-quote-text
+{
+    margin: 0;
+    font-size: 28px;
+    -unity-font-style: italic;
+    color: var(--ink);
+    white-space: normal;
 }
 
-.developer-row
+.anatomia-theme.about-root .about-caption
+{
+    margin: 22px 0 0 0;
+    font-size: 23px;
+    -unity-font-style: bold;
+    color: var(--ink-3);
+}
+
+.anatomia-theme.about-root .about-sources
+{
+    margin-top: 22px;
+    padding: 22px 24px;
+    border-radius: 24px;
+    background-color: var(--sunken);
+}
+.anatomia-theme.about-root .about-source-label
+{
+    margin: 0 0 6px 0;
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--ink-3);
+}
+.anatomia-theme.about-root .about-source-label-spaced { margin-top: 18px; }
+.anatomia-theme.about-root .about-link
+{
+    margin: 0;
+    font-size: 25px;
+    color: var(--accent);
+    white-space: normal;
+}
+
+.anatomia-theme.about-root .about-badge
+{
+    align-self: flex-start;
+    margin: 0 0 16px 0;
+    padding: 8px 22px;
+    border-radius: 24px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+/* ---------- Developers (rows are generated by the controller) ---------- */
+.anatomia-theme.about-root .developers-list,
+.anatomia-theme.about-root .credits-list { width: 100%; flex-direction: column; }
+
+.anatomia-theme.about-root .developer-row
 {
     flex-direction: row;
     align-items: center;
-    padding: 29px;
+    padding: 14px 24px;
 }
+.anatomia-theme.about-root .developer-row-last { padding-bottom: 14px; }
 
-.developer-row-last
+.anatomia-theme.about-root .developer-avatar
 {
-    padding-bottom: 29px;
-}
-
-.developer-avatar
-{
-    width: 79px;
-    height: 79px;
-    border-radius: 39px;
-    background-color: rgb(147, 51, 234);
+    width: 72px;
+    height: 72px;
+    margin-right: 26px;
+    flex-shrink: 0;
     justify-content: center;
     align-items: center;
-    margin-right: 32px;
-    flex-shrink: 0;
+    border-radius: 36px;
+    background-color: var(--accent-soft);
 }
-
-.developer-avatar-initials
+.anatomia-theme.about-root .developer-avatar-initials
 {
-    font-size: 29px;
+    margin: 0;
+    font-size: 26px;
     -unity-font-style: bold;
-    color: white;
+    color: var(--accent);
 }
-
-.developer-name-label
+.anatomia-theme.about-root .developer-name-label
 {
-    font-size: 33px;
-    color: rgb(31, 36, 48);
     flex-grow: 1;
     flex-shrink: 1;
     min-width: 0;
+    margin: 0;
+    font-size: 31px;
+    color: var(--ink);
     white-space: normal;
 }
 
-.menu-divider
+.anatomia-theme.about-root .menu-divider,
+.anatomia-theme.about-root .credit-divider
 {
     height: 1px;
-    background-color: rgba(0, 0, 0, 0.06);
-    margin-left: 29px;
-    margin-right: 29px;
+    margin: 0 24px;
+    background-color: var(--line);
+}
+
+/* ---------- Authors ---------- */
+.anatomia-theme.about-root .credit-row { flex-direction: column; padding: 16px 24px; }
+.anatomia-theme.about-root .credit-name
+{
+    margin: 0;
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    white-space: normal;
+}
+.anatomia-theme.about-root .credit-role
+{
+    margin: 4px 0 0 0;
+    font-size: 25px;
+    color: var(--ink-3);
+    white-space: normal;
 }
 
 /* ---------- Footer ---------- */
-
-.version-label
+.anatomia-theme.about-root .version-label
 {
-    font-size: 26px;
-    color: rgb(160, 165, 178);
+    margin-top: 36px;
+    font-size: 24px;
+    color: var(--ink-3);
     -unity-text-align: middle-center;
-    margin-top: 47px;
-    margin-bottom: 66px;
 }
 
-/* =========================================================
-   Compact Layout (toggled by C# based on panel width)
-   ========================================================= */
-
-.compact .header
-{
-    padding-left: 45px;
-    padding-right: 45px;
-    padding-top: 92px;
-    padding-bottom: 55px;
-}
-
-.compact .header-top-row
-{
-    margin-bottom: 37px;
-}
-
-.compact .header-title
-{
-    font-size: 43px;
-}
-
-.compact .back-button
-{
-    width: 104px;
-    height: 104px;
-    border-radius: 52px;
-    margin-right: 26px;
-}
-
-.compact .back-icon
-{
-    width: 43px;
-    height: 43px;
-}
-
-.compact .app-identity-card
-{
-    padding: 32px 22px;
-}
-
-.compact .app-logo-circle
-{
-    width: 126px;
-    height: 126px;
-    border-radius: 63px;
-    margin-bottom: 24px;
-}
-
-.compact .app-logo-emoji
-{
-    font-size: 55px;
-}
-
-.compact .app-name
-{
-    font-size: 39px;
-}
-
-.compact .app-full-title
-{
-    font-size: 24px;
-}
-
-.compact .section-title
-{
-    font-size: 32px;
-    padding-left: 45px;
-    padding-right: 45px;
-}
-
-.compact .info-card,
-.compact .menu-card
-{
-    margin-left: 45px;
-    margin-right: 45px;
-}
-
-.compact .info-card-text
-{
-    font-size: 25px;
-}
-
-.compact .developer-name-label
-{
-    font-size: 28px;
-}
-
-.compact .developer-avatar
-{
-    width: 66px;
-    height: 66px;
-    border-radius: 33px;
-    margin-right: 24px;
-}
-
-.compact .developer-avatar-initials
-{
-    font-size: 24px;
-}
+/* ---------- Compact (narrow phones) ---------- */
+.anatomia-theme.about-root.compact .about-topbar { padding: 68px 20px 10px 20px; }
+.anatomia-theme.about-root.compact .about-back { width: 76px; height: 76px; border-radius: 38px; }
+.anatomia-theme.about-root.compact .about-title { font-size: 40px; }
+.anatomia-theme.about-root.compact .about-page { padding: 2px 20px 44px 20px; }
+.anatomia-theme.about-root.compact .about-logo { width: 112px; height: 112px; border-radius: 36px; margin-bottom: 18px; }
+.anatomia-theme.about-root.compact .about-app-name { font-size: 52px; }
+.anatomia-theme.about-root.compact .about-app-tagline { font-size: 26px; }
+.anatomia-theme.about-root.compact .about-section-title { font-size: 29px; }
+.anatomia-theme.about-root.compact .about-card { padding: 22px; border-radius: 30px; }
+.anatomia-theme.about-root.compact .about-card-list { padding: 2px 0; }
+.anatomia-theme.about-root.compact .about-text { font-size: 27px; }
+.anatomia-theme.about-root.compact .about-quote-text { font-size: 26px; }
+.anatomia-theme.about-root.compact .about-link { font-size: 22px; }
+.anatomia-theme.about-root.compact .developer-row,
+.anatomia-theme.about-root.compact .credit-row { padding-left: 20px; padding-right: 20px; }
+.anatomia-theme.about-root.compact .developer-avatar { width: 64px; height: 64px; border-radius: 32px; margin-right: 22px; }
+.anatomia-theme.about-root.compact .developer-avatar-initials { font-size: 23px; }
+.anatomia-theme.about-root.compact .developer-name-label { font-size: 28px; }
+.anatomia-theme.about-root.compact .credit-name { font-size: 27px; }
+.anatomia-theme.about-root.compact .credit-role { font-size: 23px; }
+.anatomia-theme.about-root.compact .menu-divider,
+.anatomia-theme.about-root.compact .credit-divider { margin-left: 20px; margin-right: 20px; }

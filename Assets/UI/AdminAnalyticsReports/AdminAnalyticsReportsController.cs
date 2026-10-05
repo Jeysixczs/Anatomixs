@@ -197,6 +197,13 @@ namespace Anatomia3D.UI
         // button of their own.
         private DropdownField _quizExportPicker;
 
+        /// <summary>StyleSheets THIS controller copied onto the shared panel root so the
+        /// dropdown choices popup (which Unity attaches to panel.visualTree, outside this
+        /// screen) picks up the .unity-base-dropdown__* rules. Tracked so OnDisable can
+        /// remove exactly these and nothing leaks into other screens.</summary>
+        private readonly List<StyleSheet> _stylesheetsCopiedToPanelRoot = new List<StyleSheet>();
+        private VisualElement _panelRootWithCopiedStyles;
+
         private List<QuizService.QuizRecord> _classroomQuizzes = new List<QuizService.QuizRecord>();
         private string _selectedQuizExportId;
 
@@ -259,6 +266,7 @@ namespace Anatomia3D.UI
 
             QueryElements();
             WireCallbacks();
+            PropagateStyleSheetsToPanelRoot();
             UpdateResponsiveLayout();
 
             _quizExportPicker?.SetEnabled(false);
@@ -276,6 +284,7 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            RemoveCopiedStyleSheetsFromPanelRoot();
 
             // The screen's whole UXML tree gets re-instantiated on the next OnEnable
             // (QueryElements() re-queries "screen-root" from scratch), so the old
@@ -290,6 +299,74 @@ namespace Anatomia3D.UI
             // into a freshly re-instantiated tree.
             _classroomQuizzes.Clear();
             _selectedQuizExportId = null;
+        }
+
+        // ---------------- Dropdown popup styling ----------------
+
+        /// <summary>Dropdown choice popups attach to VisualElement.panel.visualTree, a SIBLING
+        /// of this screen under the shared UIDocument, so styles on the screen never reach
+        /// them. Same approach as AdminQuizManagementController: copy this screen's
+        /// stylesheets onto the panel root while the screen is active.</summary>
+        private void PropagateStyleSheetsToPanelRoot()
+        {
+            if (_screenRoot == null) return;
+
+            var panelRoot = _screenRoot.panel?.visualTree;
+            if (panelRoot == null)
+            {
+                _screenRoot.RegisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+                return;
+            }
+
+            CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        private void OnScreenRootAttachedToPanel(AttachToPanelEvent evt)
+        {
+            _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+            var panelRoot = _screenRoot.panel?.visualTree;
+            if (panelRoot != null) CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        /// <summary>The UXML &lt;Style&gt; tags attach to the TemplateContainer ABOVE screen-root,
+        /// so walk up from screen-root to the panel root collecting every sheet on the way.</summary>
+        private void CopyAncestorStyleSheetsOnto(VisualElement panelRoot)
+        {
+            var current = _screenRoot;
+            while (current != null && current != panelRoot)
+            {
+                for (int i = 0; i < current.styleSheets.count; i++)
+                {
+                    var sheet = current.styleSheets[i];
+                    if (sheet != null && !panelRoot.styleSheets.Contains(sheet))
+                    {
+                        panelRoot.styleSheets.Add(sheet);
+                        _stylesheetsCopiedToPanelRoot.Add(sheet);
+                    }
+                }
+                current = current.parent;
+            }
+            _panelRootWithCopiedStyles = panelRoot;
+        }
+
+        private void RemoveCopiedStyleSheetsFromPanelRoot()
+        {
+            _screenRoot?.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+
+            if (_stylesheetsCopiedToPanelRoot.Count == 0) return;
+
+            var panelRoot = _panelRootWithCopiedStyles ?? _screenRoot?.panel?.visualTree;
+            if (panelRoot != null)
+            {
+                foreach (var sheet in _stylesheetsCopiedToPanelRoot)
+                {
+                    if (sheet != null && panelRoot.styleSheets.Contains(sheet))
+                        panelRoot.styleSheets.Remove(sheet);
+                }
+            }
+
+            _stylesheetsCopiedToPanelRoot.Clear();
+            _panelRootWithCopiedStyles = null;
         }
 
         private void UnregisterCallbacks()

@@ -3,17 +3,16 @@
     <Style src="project://database/Assets/UI/Theme/AnatomiaAuth.uss?fileID=7433441132597879392&amp;guid=7b1848b4e2e9bc34fbd3c5e0e140870d&amp;type=3#AnatomiaAuth"/>
     <Style src="project://database/Assets/UI/StudentLogin/StudentLoginLayout.uss?fileID=7433441132597879392&amp;guid=8997d65cf34e812409519f425333ef45&amp;type=3#StudentLoginLayout"/>
     <ui:VisualElement name="screen-root" class="anatomia-theme auth-root theme-login screen-root fit-screen">
+        <ui:VisualElement picking-mode="Ignore" class="auth-top-gradient"/>
         <ui:VisualElement name="screen-container" class="screen-container">
             <ui:VisualElement name="scroll-view" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
                     <ui:VisualElement class="auth-hero">
-                        <ui:VisualElement class="auth-hero-inner">
-                            <ui:VisualElement class="auth-brand">
-                                <ui:VisualElement name="logo-circle" class="logo-circle" style="background-image: url(&quot;project://database/Assets/Sprite/Anatomia-logo.png?fileID=2800000&amp;guid=31a97ab8e70a6184f9b8d05c71d9233b&amp;type=3#Anatomia-logo&quot;);"/>
-                                <ui:Label name="app-title" text="Anatomia 3D" class="app-title"/>
-                            </ui:VisualElement>
-                            <ui:Label text="Sign in" class="auth-headline"/>
-                            <ui:Label name="app-subtitle" text="Enter your email and password to continue." class="app-subtitle"/>
+                        <ui:VisualElement picking-mode="Ignore" class="auth-illus illus-lock" style="-unity-text-align: upper-center; width: 766px; background-image: url(&quot;project://database/Assets/UI/Theme/auth-illus-lock.png?fileID=2800000&amp;guid=9b77817838c07144380ffcbce5ab91f5&amp;type=3#auth-illus-lock&quot;);"/>
+                        <ui:Label text="Sign in" class="auth-headline" style="-unity-text-align: middle-left;"/>
+                        <ui:Label name="app-subtitle" text="Sign in to continue your anatomy journey." class="app-subtitle" style="-unity-text-align: middle-left;"/>
+                        <ui:VisualElement class="auth-hero-inner" style="-unity-text-align: upper-left;">
+                            <ui:VisualElement class="auth-brand"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement class="auth-card-wrap">
@@ -21,7 +20,6 @@
                             <ui:Label text="Email" class="field-label"/>
                             <ui:VisualElement class="input-container">
                                 <ui:TextField name="email-field" placeholder-text="Enter your email" hide-placeholder-on-focus="true" class="input-field"/>
-                                <ui:VisualElement picking-mode="Ignore" class="input-icon icon-email"/>
                             </ui:VisualElement>
                             <ui:Label name="email-error" text="Please enter a valid email" class="field-error hidden"/>
                             <ui:VisualElement class="field-label-row">
@@ -30,24 +28,25 @@
                             </ui:VisualElement>
                             <ui:VisualElement class="input-container">
                                 <ui:TextField name="password-field" password="true" placeholder-text="Enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
-                                <ui:VisualElement picking-mode="Ignore" class="input-icon icon-lock"/>
                                 <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
                             </ui:VisualElement>
                             <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
-                            <ui:Button name="sign-in-button" text="Sign in" class="sign-in-button"/>
+                            <ui:Button name="sign-in-button" text="Sign in" class="sign-in-button" style="margin-top: 20px;"/>
                             <ui:VisualElement class="divider-row">
                                 <ui:VisualElement class="divider-line"/>
-                                <ui:Label text="or" class="divider-text"/>
+                                <ui:Label text="Or" class="divider-text"/>
                                 <ui:VisualElement class="divider-line"/>
                             </ui:VisualElement>
-                            <ui:Button name="biometric-login-button" class="biometric-button hidden">
-                                <ui:VisualElement name="biometric-icon" picking-mode="Ignore" class="icon-fingerprint"/>
-                                <ui:Label name="biometric-label" text="Sign in with biometrics" picking-mode="Ignore" class="biometric-button-text"/>
-                            </ui:Button>
-                            <ui:Button name="google-signin-button" class="google-button">
-                                <ui:VisualElement picking-mode="Ignore" class="icon-google"/>
-                                <ui:Label text="Continue with Google" picking-mode="Ignore" class="google-button-text"/>
-                            </ui:Button>
+                            <ui:VisualElement class="social-row">
+                                <ui:Button name="biometric-login-button" class="biometric-button hidden">
+                                    <ui:VisualElement name="biometric-icon" picking-mode="Ignore" class="icon-fingerprint"/>
+                                    <ui:Label name="biometric-label" text="Sign in with biometrics" picking-mode="Ignore" class="biometric-button-text"/>
+                                </ui:Button>
+                                <ui:Button name="google-signin-button" class="google-button">
+                                    <ui:VisualElement picking-mode="Ignore" class="icon-google"/>
+                                    <ui:Label text="Continue with Google" picking-mode="Ignore" class="google-button-text"/>
+                                </ui:Button>
+                            </ui:VisualElement>
                             <ui:Label name="status-label" text="" class="status-label hidden"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
@@ -56,7 +55,7 @@
                             <ui:Label text="New here?" class="auth-foot-text"/>
                             <ui:Button name="navigate-to-create-account-button" text="Create account" class="auth-foot-link"/>
                         </ui:VisualElement>
-                        <ui:Button name="admin-login-button" text="Admin login" class="admin-login-link"/>
+                        <ui:Button name="admin-login-button" text="Teacher Login" class="admin-login-link"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

@@ -162,7 +162,7 @@
                     <ui:VisualElement picking-mode="Ignore" class="close-icon"/>
                 </ui:Button>
             </ui:VisualElement>
-            <ui:ScrollView name="drawer-scroll" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" class="drawer-scroll">
+            <ui:VisualElement name="drawer-scroll" class="drawer-scroll">
                 <ui:Label text="LEARN" class="drawer-group-caption"/>
             <ui:Button name="overview-tab-button" class="drawer-item tab-button-active">
                 <ui:VisualElement picking-mode="Ignore" class="drawer-item-tile">
@@ -207,7 +207,7 @@
                 </ui:VisualElement>
                 <ui:Label picking-mode="Ignore" text="Badges" class="drawer-item-label"/>
             </ui:Button>
-            </ui:ScrollView>
+            </ui:VisualElement>
             <ui:Button name="drawer-back-button" text="Back to Classrooms" class="drawer-footer-button"/>
         </ui:VisualElement>
 

@@ -59,7 +59,7 @@ namespace Anatomia3D.UI
     [RequireComponent(typeof(UIDocument))]
     public class AdminClassroomDetailController : MonoBehaviour
     {
-        [Header("Gradient colors (matches AdminDashboard: green -> blue)")]
+        [Header("Legacy gradient colors (only used when AnatomiaTheme.UseGradientChrome = true)")]
         [SerializeField] private Color gradientStart = new Color(0.086f, 0.737f, 0.463f);
         [SerializeField] private Color gradientEnd = new Color(0.145f, 0.388f, 0.922f);
 
@@ -77,6 +77,16 @@ namespace Anatomia3D.UI
         private Label _classroomNameLabel;
         private Label _classroomCodeLabel;
         private Button _copyCodeButton;
+
+        // Hamburger drawer + section bar (mirrors StudentClassroomDetailController)
+        private Button _menuButton;
+        private Button _drawerCloseButton;
+        private Button _drawerBackButton;
+        private VisualElement _drawerScrim;
+        private VisualElement _drawerPanel;
+        private Label _drawerClassroomLabel;
+        private Label _sectionTitleLabel;
+        private ScrollView _screenScroll;
 
         // Archive
         private Button _archiveButton;
@@ -144,6 +154,9 @@ namespace Anatomia3D.UI
         {
             public string QuizId;
             public Button ToggleButton;
+            public VisualElement Card;
+            public Label StatusPill;
+            public Label FooterLabel;
             public bool Published;
         }
 
@@ -275,6 +288,7 @@ namespace Anatomia3D.UI
             if (!string.IsNullOrEmpty(_classroomName) || !string.IsNullOrEmpty(_classroomCode))
             {
                 if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
+                if (_drawerClassroomLabel != null) _drawerClassroomLabel.text = _classroomName;
                 if (_classroomCodeLabel != null) _classroomCodeLabel.text = _classroomCode;
             }
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
@@ -308,6 +322,10 @@ namespace Anatomia3D.UI
             if (_screenRoot == null) return;
 
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _drawerBackButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _menuButton?.UnregisterCallback<ClickEvent>(OnMenuClicked);
+            _drawerCloseButton?.UnregisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerScrim?.UnregisterCallback<ClickEvent>(OnMenuCloseClicked);
             _copyCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
 
@@ -352,6 +370,14 @@ namespace Anatomia3D.UI
             _copyCodeButton = _screenRoot.Q<Button>("copy-code-button");
 
             _archiveButton = _screenRoot.Q<Button>("archive-button");
+            _menuButton = _screenRoot.Q<Button>("menu-button");
+            _drawerCloseButton = _screenRoot.Q<Button>("drawer-close-button");
+            _drawerBackButton = _screenRoot.Q<Button>("drawer-back-button");
+            _drawerScrim = _screenRoot.Q<VisualElement>("drawer-scrim");
+            _drawerPanel = _screenRoot.Q<VisualElement>("drawer-panel");
+            _drawerClassroomLabel = _screenRoot.Q<Label>("drawer-classroom-label");
+            _sectionTitleLabel = _screenRoot.Q<Label>("section-title-label");
+            _screenScroll = _screenRoot.Q<ScrollView>("screen-scroll");
             _archivedBadgeLabel = _screenRoot.Q<Label>("archived-badge-label");
             _archiveDialogOverlay = _screenRoot.Q<VisualElement>("archive-dialog-overlay");
             _archiveDialogTitleLabel = _screenRoot.Q<Label>("archive-dialog-title-label");
@@ -422,6 +448,10 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _drawerBackButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _menuButton?.RegisterCallback<ClickEvent>(OnMenuClicked);
+            _drawerCloseButton?.RegisterCallback<ClickEvent>(OnMenuCloseClicked);
+            _drawerScrim?.RegisterCallback<ClickEvent>(OnMenuCloseClicked);
             _copyCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
             _copyClassroomCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
 
@@ -476,6 +506,7 @@ namespace Anatomia3D.UI
             _classroomCode = classroomCode ?? "";
 
             if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
+            if (_drawerClassroomLabel != null) _drawerClassroomLabel.text = _classroomName;
             if (_classroomCodeLabel != null) _classroomCodeLabel.text = _classroomCode;
             if (_studentsValueLabel != null) _studentsValueLabel.text = studentCount.ToString("N0");
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(avgScorePercent)}%";
@@ -677,6 +708,21 @@ namespace Anatomia3D.UI
             if (row == null) return;
             row.Published = published;
             row.ToggleButton?.EnableInClassList("toggle-on", published);
+            ApplyQuizCardState(row);
+        }
+
+        /// <summary>Syncs the quiz card's accent strip, status pill and footer text with its published flag.</summary>
+        private static void ApplyQuizCardState(QuizRow row)
+        {
+            if (row == null) return;
+            row.Card?.EnableInClassList("quiz-card-off", !row.Published);
+            if (row.StatusPill != null)
+            {
+                row.StatusPill.text = row.Published ? "Published" : "Not published";
+                row.StatusPill.EnableInClassList("quiz-status-pill-off", !row.Published);
+            }
+            if (row.FooterLabel != null)
+                row.FooterLabel.text = row.Published ? "Visible to students" : "Hidden from students";
         }
 
         // ---------------- Button handlers ----------------
@@ -702,30 +748,30 @@ namespace Anatomia3D.UI
 
         private void ShowStudentsTab()
         {
-            SetActiveTab(_studentsTabButton, _studentsPanel);
+            SetActiveTab(_studentsTabButton, _studentsPanel, "Students");
         }
 
         private void ShowQuizzesTab()
         {
-            SetActiveTab(_quizzesTabButton, _quizzesPanel);
+            SetActiveTab(_quizzesTabButton, _quizzesPanel, "Quizzes");
         }
 
         private void ShowAnalyticsTab()
         {
-            SetActiveTab(_analyticsTabButton, _analyticsPanel);
+            SetActiveTab(_analyticsTabButton, _analyticsPanel, "Analytics");
         }
 
         private void ShowAnnouncementsTab()
         {
-            SetActiveTab(_announcementsTabButton, _announcementsPanel);
+            SetActiveTab(_announcementsTabButton, _announcementsPanel, "Announcements");
         }
 
         private void ShowMaterialsTab()
         {
-            SetActiveTab(_materialsTabButton, _materialsPanel);
+            SetActiveTab(_materialsTabButton, _materialsPanel, "Materials");
         }
 
-        private void SetActiveTab(Button activeButton, VisualElement activePanel)
+        private void SetActiveTab(Button activeButton, VisualElement activePanel, string tabName)
         {
             _studentsTabButton?.RemoveFromClassList("tab-button-active");
             _quizzesTabButton?.RemoveFromClassList("tab-button-active");
@@ -740,6 +786,45 @@ namespace Anatomia3D.UI
             _announcementsPanel?.AddToClassList("hidden");
             _materialsPanel?.AddToClassList("hidden");
             activePanel?.RemoveFromClassList("hidden");
+
+            if (_sectionTitleLabel != null) _sectionTitleLabel.text = tabName;
+            SetDrawerOpen(false);
+            _screenScroll?.schedule.Execute(() =>
+            {
+                if (_screenScroll != null) _screenScroll.scrollOffset = Vector2.zero;
+            }).ExecuteLater(0);
+        }
+
+        // ---------------- Hamburger drawer ----------------
+
+        private void OnMenuClicked(ClickEvent evt) => SetDrawerOpen(true);
+        private void OnMenuCloseClicked(ClickEvent evt) => SetDrawerOpen(false);
+
+        private void SetDrawerOpen(bool open)
+        {
+            if (_drawerScrim == null || _drawerPanel == null) return;
+
+            if (open)
+            {
+                // Show first, then flip the "on" classes one frame later so the
+                // fade / slide transitions actually run.
+                _drawerScrim.RemoveFromClassList("hidden");
+                _drawerScrim.schedule.Execute(() =>
+                {
+                    _drawerScrim.AddToClassList("drawer-scrim-on");
+                    _drawerPanel.RemoveFromClassList("drawer-closed");
+                }).ExecuteLater(10);
+            }
+            else
+            {
+                _drawerScrim.RemoveFromClassList("drawer-scrim-on");
+                _drawerPanel.AddToClassList("drawer-closed");
+                // Remove the scrim after the fade so it stops swallowing taps.
+                _drawerScrim.schedule.Execute(() =>
+                {
+                    if (_drawerPanel.ClassListContains("drawer-closed")) _drawerScrim.AddToClassList("hidden");
+                }).ExecuteLater(260);
+            }
         }
 
         private void OnQuizToggleClicked(QuizRow row)
@@ -806,11 +891,12 @@ namespace Anatomia3D.UI
         {
             IsArchived = archived;
             _archivedBadgeLabel?.EnableInClassList("hidden", !archived);
-            if (_archiveButton != null) _archiveButton.text = archived ? "Locked" : "Lock";
+            if (_archiveButton != null) _archiveButton.text = archived ? "Unlock Classroom" : "Lock Classroom";
         }
 
         private void OnArchiveButtonClicked(ClickEvent evt)
         {
+            SetDrawerOpen(false);
             if (string.IsNullOrEmpty(_classroomId) || _archiveDialogOverlay == null) return;
 
             if (IsArchived)
@@ -1286,31 +1372,28 @@ namespace Anatomia3D.UI
         private VisualElement BuildMaterialCard(ClassroomMaterial material)
         {
             var card = new VisualElement();
-            card.AddToClassList("announcement-card");
+            card.AddToClassList("material-card");
 
+            // Header: file-type badge | title + meta | Open pill (same layout as the student Materials tab).
             var headerRow = new VisualElement();
-            headerRow.AddToClassList("announcement-header-row");
+            headerRow.AddToClassList("material-card-header-row");
+
+            string ext = FileSubmissionConfig.ExtensionOf(material.FileName);
+            var badge = new Label(string.IsNullOrEmpty(ext) ? "FILE" : ext.ToUpperInvariant());
+            badge.AddToClassList("material-type-badge");
+            headerRow.Add(badge);
+
+            var textColumn = new VisualElement();
+            textColumn.AddToClassList("material-card-text");
 
             var titleLabel = new Label(string.IsNullOrEmpty(material.Title) ? material.FileName : material.Title);
-            titleLabel.AddToClassList("announcement-title-label");
+            titleLabel.AddToClassList("material-title-label");
+            textColumn.Add(titleLabel);
 
-            var dateLabel = new Label(material.CreatedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy"));
-            dateLabel.AddToClassList("announcement-date-label");
-
-            headerRow.Add(titleLabel);
-            headerRow.Add(dateLabel);
-            card.Add(headerRow);
-
-            if (!string.IsNullOrEmpty(material.Description))
-            {
-                var descriptionLabel = new Label(material.Description);
-                descriptionLabel.AddToClassList("announcement-body-label");
-                card.Add(descriptionLabel);
-            }
-
-            var fileLabel = new Label($"{material.FileName}  \u2022  {FileSubmissionConfig.FormatSize(material.FileSize)}");
-            fileLabel.AddToClassList("material-file-meta");
-            card.Add(fileLabel);
+            var metaLabel = new Label($"{FileSubmissionConfig.FormatSize(material.FileSize)}  \u2022  {material.CreatedAt.ToDateTime().ToLocalTime():MMM d, yyyy}");
+            metaLabel.AddToClassList("material-meta-label");
+            textColumn.Add(metaLabel);
+            headerRow.Add(textColumn);
 
             var actions = new VisualElement();
             actions.AddToClassList("material-card-actions");
@@ -1321,14 +1404,22 @@ namespace Anatomia3D.UI
                 busy => { openButton.SetEnabled(!busy); openButton.text = busy ? "Opening..." : "Open"; },
                 error => SetMaterialStatus(error, true));
             actions.Add(openButton);
+            headerRow.Add(actions);
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(material.Description))
+            {
+                var descriptionLabel = new Label(material.Description);
+                descriptionLabel.AddToClassList("material-description-label");
+                card.Add(descriptionLabel);
+            }
 
             var deleteButton = new Button { text = "Delete" };
             deleteButton.AddToClassList("announcement-delete-button");
             deleteButton.AddToClassList("material-card-delete");
             deleteButton.clicked += () => OnDeleteMaterialClicked(material, deleteButton);
-            actions.Add(deleteButton);
+            card.Add(deleteButton);
 
-            card.Add(actions);
             return card;
         }
 
@@ -1458,23 +1549,48 @@ namespace Anatomia3D.UI
 
         private VisualElement BuildQuizRow(string quizId, string title, string category, bool published, bool isLast, bool canRetake)
         {
-            var row = new VisualElement();
-            row.AddToClassList("quiz-row");
-            if (isLast) row.AddToClassList("quiz-row-last");
+            var card = new VisualElement();
+            card.AddToClassList("quiz-card");
 
-            var textContainer = new VisualElement();
-            textContainer.AddToClassList("quiz-row-text");
+            // Header: subject tag on the left, published/not-published pill on the right.
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("quiz-card-header-row");
+
+            var subjectLabel = new Label(string.IsNullOrEmpty(category) ? "QUIZ" : category.ToUpperInvariant());
+            subjectLabel.AddToClassList("quiz-subject-tag");
+
+            var statusPill = new Label();
+            statusPill.AddToClassList("quiz-status-pill");
+
+            headerRow.Add(subjectLabel);
+            headerRow.Add(statusPill);
+            card.Add(headerRow);
 
             var titleLabel = new Label(title);
-            titleLabel.AddToClassList("quiz-row-title");
+            titleLabel.AddToClassList("quiz-card-title");
+            card.Add(titleLabel);
 
-            var subjectLabel = new Label(category);
-            subjectLabel.AddToClassList("quiz-row-subject");
+            // Footer: visibility hint on the left, Retake + publish toggle on the right.
+            var bottomRow = new VisualElement();
+            bottomRow.AddToClassList("quiz-card-bottom-row");
 
-            textContainer.Add(titleLabel);
-            textContainer.Add(subjectLabel);
+            var footerLabel = new Label();
+            footerLabel.AddToClassList("quiz-card-bottom-text");
+            bottomRow.Add(footerLabel);
 
-            var quizRow = new QuizRow { QuizId = quizId, Published = published };
+            var actions = new VisualElement();
+            actions.AddToClassList("quiz-card-actions");
+
+            var quizRow = new QuizRow { QuizId = quizId, Published = published, Card = card, StatusPill = statusPill, FooterLabel = footerLabel };
+
+            // Retake button: opens the "Create Retake Exam" dialog for this quiz. Not shown for
+            // file-submission quizzes or for retake copies (they can't be retaken again).
+            if (canRetake)
+            {
+                var retakeButton = new Button(() => OnRetakeClicked(quizId, title)) { text = "Retake" };
+                retakeButton.AddToClassList("quiz-retake-button");
+                actions.Add(retakeButton);
+            }
 
             var toggle = new Button(() => OnQuizToggleClicked(quizRow));
             toggle.AddToClassList("toggle-switch");
@@ -1486,31 +1602,13 @@ namespace Anatomia3D.UI
 
             quizRow.ToggleButton = toggle;
             _quizRows.Add(quizRow);
+            actions.Add(toggle);
 
-            row.Add(textContainer);
+            bottomRow.Add(actions);
+            card.Add(bottomRow);
 
-            // Retake button: opens the "Create Retake Exam" dialog for this quiz. Not shown for
-            // file-submission quizzes or for retake copies (they can't be retaken again).
-            if (canRetake)
-            {
-                var retakeButton = new Button(() => OnRetakeClicked(quizId, title)) { text = "Retake" };
-                retakeButton.AddToClassList("quiz-retake-button");
-                var rs = retakeButton.style;
-                rs.flexShrink = 0;
-                rs.marginRight = 24;
-                rs.paddingLeft = rs.paddingRight = 28;
-                rs.paddingTop = rs.paddingBottom = 14;
-                rs.fontSize = 28;
-                rs.unityFontStyleAndWeight = FontStyle.Bold;
-                rs.color = Color.white;
-                rs.backgroundColor = new Color(0.13f, 0.55f, 0.42f);
-                rs.borderTopWidth = rs.borderBottomWidth = rs.borderLeftWidth = rs.borderRightWidth = 0;
-                rs.borderTopLeftRadius = rs.borderTopRightRadius = rs.borderBottomLeftRadius = rs.borderBottomRightRadius = 20;
-                row.Add(retakeButton);
-            }
-
-            row.Add(toggle);
-            return row;
+            ApplyQuizCardState(quizRow);
+            return card;
         }
 
         private void OnRetakeClicked(string quizId, string quizTitle)
@@ -1542,6 +1640,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

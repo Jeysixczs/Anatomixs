@@ -3476,6 +3476,14 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            // minimalist theme: flat chrome, same as the student screens (see Theme/AnatomiaTheme.cs).
+            // Still sync the Overview/Questions tab "active" class, which RefreshQuizDetailTabGradient also owns.
+            if (!AnatomiaTheme.UseGradientChrome)
+            {
+                RefreshQuizDetailTabGradient();
+                return;
+            }
+
             if (_header != null)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

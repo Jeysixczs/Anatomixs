@@ -1,172 +1,107 @@
 /* =========================================================
-   Anatomia 3D - Admin Analytics & Reports (Unity 6 UI Toolkit)
+   Anatomia 3D - Admin Analytics & Reports (redesign, student-style)
    Reference canvas: 1080 x 1920 (portrait phone).
-
-   NOTE: USS has no linear-gradient. The selected tab pill and any
-   accent bars are flat colors here; if you want the header or a
-   button to match the green->blue gradient used elsewhere, apply a
-   Texture2D at runtime from AdminAnalyticsReportsController the
-   same way AdminDashboardController does it.
+   Layout mirrors Student Progress: fixed slim header | scroll: filters,
+   hero card, stat tiles, pill tabs, glass report cards.
+   Everything is scoped under .anatomia-theme.theme-analytics so it out-ranks
+   the shared Quiet Glass theme and affects no other screen.
+   Element names and the classes the controller builds at runtime
+   (performer-*, mistake-*, recommendation-*, score-trend-*, dropdown-field,
+   classroom-picker-dropdown, tab-button-active, hidden, compact) are unchanged.
    ========================================================= */
 
-/* ---------- Screen ---------- */
-
-.screen-root
+.anatomia-theme.theme-analytics.screen-root
 {
     width: 100%;
     height: 100%;
     flex-grow: 1;
-    background-color: rgb(243, 244, 248);
-    padding: 0;
-    margin: 0;
+    flex-direction: column;
     overflow: hidden;
     justify-content: flex-start;
     align-items: stretch;
 }
 
-/* ---------- Header ---------- */
+.hidden { display: none; }
 
-.header
+/* ---------- Header (fixed) ---------- */
+
+.anatomia-theme.theme-analytics .header
 {
-    width: 100%;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
     flex-shrink: 0;
-    background-color: rgb(243, 244, 248);
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(0, 0, 0, 0.06);
+    flex-direction: column;
+    padding: 84px 40px 12px 40px;
 }
 
-.header-top-row
-{
-    flex-direction: row;
-    align-items: center;
-}
+.anatomia-theme.theme-analytics .header-top-row { flex-direction: row; align-items: center; margin-bottom: 8px; }
 
-.back-button
+.anatomia-theme.theme-analytics .back-button
 {
     width: 88px;
     height: 88px;
+    min-width: 88px;
     border-radius: 44px;
-    background-color: white;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.06);
+    margin: 0 28px 0 0;
+    padding: 0;
     justify-content: center;
     align-items: center;
-    margin-right: 30px;
     flex-shrink: 0;
-    padding: 0;
 }
 
-.back-button:hover
+.theme-analytics .back-icon
 {
-    background-color: rgb(248, 249, 251);
-}
-
-.back-icon
-{
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: rgb(31, 36, 48);
 }
 
-.header-text
-{
-    flex-direction: column;
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-}
+.theme-analytics .header-text { flex-direction: column; justify-content: center; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-analytics .header-title { font-size: 50px; white-space: nowrap; }
+.anatomia-theme.theme-analytics .header-subtitle { font-size: 26px; margin-top: 2px; white-space: nowrap; }
 
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    white-space: normal;
-}
+.theme-analytics .header-actions { flex-direction: row; flex-shrink: 0; margin-left: 16px; }
 
-.header-actions
-{
-    flex-direction: row;
-    flex-shrink: 0;
-}
-
-.export-button
+/* PDF export: soft accent pill */
+.anatomia-theme.theme-analytics .export-button
 {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    background-color: white;
-    border-width: 1px;
-    border-color: rgb(224, 226, 232);
-    border-radius: 18px;
-    padding: 12px 16px;
+    height: 84px;
     margin: 0;
-    margin-left: 14px;
+    padding: 0 32px;
+    border-width: 0;
+    border-radius: 42px;
+    background-color: var(--accent-soft);
 }
 
-.export-button:hover
+.anatomia-theme.theme-analytics .export-button:hover { background-color: rgba(91, 76, 219, 0.2); }
+.anatomia-theme.theme-analytics .export-button:active { background-color: rgba(91, 76, 219, 0.28); }
+
+.theme-analytics .export-icon
 {
-    background-color: rgb(248, 249, 251);
+    width: 36px;
+    height: 36px;
+    margin-right: 12px;
+    background-image: url("project://database/Assets/UI/Icons/pdf-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
 }
 
-.export-icon
-{
-    font-size: 24px;
-    margin-right: 10px;
-    -unity-text-align: middle-center;
-}
+.anatomia-theme.theme-analytics .export-label { font-size: 28px; -unity-font-style: bold; color: var(--accent); }
 
-.export-label
-{
-    font-size: 24px;
-    -unity-font-style: bold;
-    color: rgb(90, 95, 112);
-}
+/* ---------- Scroll ---------- */
 
-/* ---------- ScrollView ---------- */
-
-.screen-scroll
+.theme-analytics .screen-scroll { flex-grow: 1; flex-shrink: 1; min-height: 0; width: 100%; -unity-overflow-scrolling: touch; }
+.theme-analytics .screen-scroll .unity-scroller--vertical { width: 0; display: none; }
+.theme-analytics .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport { flex-grow: 1; min-height: 0; height: 100%; }
+.theme-analytics .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
 {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-
-.screen-scroll .unity-scroller--vertical
-{
-    width: 0;
-    display: none;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
-{
-    padding: 0;
-    margin: 0;
-    flex-grow: 1;
-    height: 100%;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
-{
-    padding: 0;
-    margin: 0;
-    translate: none;
-    transform-origin: center;
     position: relative;
-    top: 0;
-    left: 0;
     justify-content: flex-start;
     align-items: stretch;
     flex-grow: 0;
@@ -174,76 +109,73 @@
     min-height: 100%;
 }
 
-/* ---------- Content Wrapper ---------- */
-
-.content-wrapper
+.anatomia-theme.theme-analytics .content-wrapper
 {
-    width: 100%;
     flex-direction: column;
-    padding: 28px 32px 60px 32px;
-    max-width: 100%;
-    margin: 0;
-    justify-content: flex-start;
-    align-items: stretch;
     flex-shrink: 0;
+    padding: 16px 40px 100px 40px;
 }
 
-/* ---------- Filters row: classroom picker + quiz export picker, side by side ---------- */
+.anatomia-theme.theme-analytics .section-title { font-size: 36px; -unity-font-style: bold; color: var(--ink); margin: 0 0 4px 0; }
+.anatomia-theme.theme-analytics .section-subtitle { font-size: 26px; color: var(--ink-3); margin: 0 0 28px 0; white-space: normal; }
 
-.filters-row
+/* ---------- Filters: two glass pills ---------- */
+
+.anatomia-theme.theme-analytics .filters-row
 {
     flex-direction: row;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
 }
 
-/* Classroom picker - built at runtime by
-   AdminAnalyticsReportsController.BuildClassroomPicker() and inserted at the
-   start of #filters-row (there's no element for it in this .uxml). Styled to
-   match the .dropdown-field look from AdminQuizManagement (flat field,
-   tinted native arrow, blue focus ring) rather than the pill/icon-circle
-   language used elsewhere in this header. */
-.dropdown-field
+.theme-analytics .dropdown-field
 {
-    font-size: 32px;
-    color: rgb(31, 36, 48);
-    margin: 0;
-    min-height: 68px;
+    font-size: 28px;
+    color: var(--ink);
+    margin: 0 16px 12px 0;
+    min-width: 300px;
+    max-width: 520px;
+    min-height: 0;
+    align-self: flex-start;
     justify-content: center;
 }
 
-.dropdown-field > .unity-base-popup-field__input
+/* Closed field: solid white pill. Border width is constant (2px) and only its colour
+   changes, so hover / open never shifts the layout. */
+.theme-analytics .dropdown-field > .unity-base-popup-field__input
 {
-    background-color: rgb(240, 241, 245);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.06);
-    border-radius: 21px;
-    padding: 16px 18px 16px 20px;
+    min-height: 96px;
+    background-color: var(--surface-solid);
+    border-width: 2px;
+    border-color: var(--line-strong);
+    border-radius: 48px;
+    padding: 0 26px 0 34px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     transition-property: background-color, border-color;
-    transition-duration: 0.12s;
+    transition-duration: 0.15s;
 }
 
-.dropdown-field > .unity-base-popup-field__input:hover
+.theme-analytics .dropdown-field > .unity-base-popup-field__input:hover
 {
-    background-color: rgb(233, 235, 241);
-    border-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--surface-solid);
+    border-color: var(--ink-4);
 }
 
-.dropdown-field:focus > .unity-base-popup-field__input
+.theme-analytics .dropdown-field:focus > .unity-base-popup-field__input,
+.theme-analytics .dropdown-field > .unity-base-popup-field__input:active
 {
-    background-color: rgb(255, 255, 255);
-    border-color: rgb(37, 99, 235);
-    border-width: 2px;
-    padding: 15px 17px 15px 19px;
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
 }
 
-.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text
+.theme-analytics .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text
 {
-    color: rgb(31, 36, 48);
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--ink);
     -unity-text-overflow-position: end;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -253,851 +185,483 @@
     flex-shrink: 1;
 }
 
-.dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
+/* Chevron sits in a soft accent disc so it reads as a control, not decoration. */
+.theme-analytics .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
 {
-    -unity-background-image-tint-color: rgb(120, 123, 140);
+    -unity-background-image-tint-color: var(--accent);
     flex-shrink: 0;
-    margin-left: 10px;
-    width: 20px;
-    height: 20px;
-}
-
-/* Modifier: sizing/placement specific to sitting in #filters-row next to
-   the quiz export picker. Overrides the base .dropdown-field's gray-field
-   look with a white pill so the two pills read as a matched pair. */
-.classroom-picker-dropdown
-{
-    min-width: 260px;
-    max-width: 420px;
-    margin-right: 24px;
-    margin-bottom: 12px;
-    align-self: flex-start;
-    min-height: 0;
-    font-size: 29px;
-}
-
-.classroom-picker-dropdown > .unity-base-popup-field__input
-{
-    background-color: white;
-    border-color: rgba(0, 0, 0, 0.06);
+    width: 52px;
+    height: 52px;
+    margin: 0 0 0 16px;
     border-radius: 26px;
-    padding: 18px 24px;
+    background-color: var(--accent-soft);
+    background-size: 26px 26px;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-.classroom-picker-dropdown > .unity-base-popup-field__input:hover
+.theme-analytics .dropdown-field.unity-disabled > .unity-base-popup-field__input { opacity: 0.5; }
+
+/* ---------- Dropdown choices popup ----------
+   Unity attaches the choices list to panel.visualTree, OUTSIDE .anatomia-theme, so the
+   --tokens above do not resolve here: literal colours only, and the selectors are
+   unscoped on purpose. AdminAnalyticsReportsController copies this sheet onto the
+   panel root while the screen is active (and removes it again on disable). */
+
+.unity-base-dropdown__container-outer
 {
-    background-color: rgb(248, 249, 251);
-    border-color: rgba(0, 0, 0, 0.06);
+    background-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgba(22, 24, 38, 0.14);
+    border-radius: 32px;
+    padding: 12px;
+    margin-top: 10px;
+    min-width: 420px;
+    max-height: 784px;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
-.classroom-picker-dropdown:focus > .unity-base-popup-field__input
-{
-    background-color: white;
-    padding: 17px 23px;
-}
-
-.classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__text
-{
-    font-size: 29px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-.classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__arrow
-{
-    -unity-background-image-tint-color: rgb(150, 155, 168);
-}
-
-/* ---------- Quiz export picker ---------- */
-
-/* Sits in #filters-row where the date filter button used to live - styled as
-   the same white pill (see .classroom-picker-dropdown above) so the two
-   pickers read as a matched pair. Pick a quiz here and its scores are folded
-   into the next Excel/PDF export - see AdminAnalyticsReportsController. */
-.quiz-export-picker
-{
-    min-width: 260px;
-    max-width: 420px;
-    margin-bottom: 12px;
-    align-self: flex-start;
-    min-height: 0;
-}
-
-.quiz-export-picker > .unity-base-popup-field__input
-{
-    background-color: white;
-    border-color: rgba(0, 0, 0, 0.06);
-    border-radius: 26px;
-    padding: 18px 24px;
-}
-
-.quiz-export-picker > .unity-base-popup-field__input:hover
-{
-    background-color: rgb(248, 249, 251);
-    border-color: rgba(0, 0, 0, 0.06);
-}
-
-.quiz-export-picker:focus > .unity-base-popup-field__input
-{
-    background-color: white;
-    padding: 17px 23px;
-}
-
-/* ---------- Overview stat cards (2x2 grid) ---------- */
-
-.stats-grid
-{
-    width: 100%;
-    flex-direction: column;
-    margin-bottom: 34px;
-}
-
-.stats-grid-row
-{
-    flex-direction: row;
-    margin-bottom: 21px;
-}
-
-.overview-card
+.unity-base-dropdown__container-outer .unity-scroll-view
 {
     flex-grow: 1;
-    flex-basis: 0;
-    background-color: white;
-    border-radius: 32px;
-    padding: 34px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    flex-shrink: 1;
+    flex-direction: row;
 }
 
-.overview-card-left
+.unity-base-dropdown__container-outer .unity-scroll-view__content-viewport,
+.unity-base-dropdown__container-outer .unity-scroll-view__content-viewport--vertical-horizontal
 {
-    margin-right: 10px;
+    max-height: 760px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
 }
 
-.overview-card-right
+.unity-base-dropdown__container-outer .unity-scroller--vertical
 {
-    margin-left: 10px;
+    width: 10px;
+    margin-left: auto;
+    margin-right: 0;
+    align-self: stretch;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
-.overview-card-header
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__drag-container { padding: 0; margin: 0; border-width: 0; }
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__tracker { width: 100%; right: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__dragger { width: 6px; left: 2px; border-width: 0; border-radius: 3px; background-color: rgba(91, 76, 219, 0.28); }
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-base-slider__dragger:hover { background-color: rgba(91, 76, 219, 0.5); }
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-scroller__low-button,
+.unity-base-dropdown__container-outer .unity-scroller--vertical .unity-scroller__high-button { display: none; }
+
+/* Fixed row height so "8 rows then scroll" is exact. */
+.unity-base-dropdown__item
 {
+    height: 92px;
+    margin: 2px 0;
+    padding: 0 28px;
+    border-radius: 24px;
     flex-direction: row;
     align-items: center;
-    margin-bottom: 24px;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 0.1s;
 }
 
-.overview-icon-circle
-{
-    width: 53px;
-    height: 53px;
-    border-radius: 26px;
-    justify-content: center;
-    align-items: center;
-    margin-right: 14px;
-    flex-shrink: 0;
-}
+.unity-base-dropdown__item:hover { background-color: rgb(244, 245, 250); }
+.unity-base-dropdown__item:active { background-color: rgba(91, 76, 219, 0.16); }
 
-.overview-icon-blue
-{
-    background-color: rgb(219, 234, 254);
-}
+.unity-base-dropdown__item--selected { background-color: rgba(91, 76, 219, 0.11); }
 
-.overview-icon-green
+.unity-base-dropdown__label
 {
-    background-color: rgb(209, 250, 229);
-}
-
-.overview-icon-purple
-{
-    background-color: rgb(237, 220, 253);
-}
-
-.overview-icon-orange
-{
-    background-color: rgb(254, 235, 200);
-}
-
-.overview-icon
-{
-    font-size: 24px;
-    -unity-text-align: middle-center;
-}
-
-.overview-card-title
-{
-    font-size: 25px;
-    color: rgb(90, 95, 112);
-    white-space: normal;
+    margin: 0;
+    font-size: 30px;
+    color: rgb(22, 24, 38);
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-grow: 1;
     flex-shrink: 1;
 }
 
-.overview-card-value
+.unity-base-dropdown__item--selected .unity-base-dropdown__label
 {
-    font-size: 53px;
+    color: rgb(76, 62, 199);
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    margin-bottom: 10px;
 }
 
-.overview-card-delta
+.unity-base-dropdown__checkmark
 {
-    font-size: 23px;
-    color: rgb(5, 150, 105);
+    -unity-background-image-tint-color: rgb(91, 76, 219);
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
 }
 
-.overview-card-delta-negative
+/* ---------- Hero: total students (solid accent card) ---------- */
+
+.anatomia-theme.theme-analytics .stats-grid { flex-direction: column; margin: 12px 0 0 0; }
+
+.anatomia-theme.theme-analytics .overview-hero
 {
-    color: rgb(220, 38, 38);
+    flex-direction: column;
+    padding: 40px;
+    margin-bottom: 24px;
+    border-radius: 40px;
+    background-color: var(--accent);
+    border-width: 0;
 }
 
-/* ---------- Segmented tab control ---------- */
+.anatomia-theme.theme-analytics .overview-hero:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-analytics .overview-hero:active { background-color: var(--accent-press); }
 
-.tabs-row
+.anatomia-theme.theme-analytics .hero-caption { font-size: 22px; -unity-font-style: bold; letter-spacing: 3px; color: rgba(255,255,255,0.7); }
+
+.theme-analytics .hero-row { flex-direction: row; justify-content: space-between; align-items: flex-end; margin: 6px 0 14px 0; }
+
+.anatomia-theme.theme-analytics .hero-value { font-size: 96px; -unity-font-style: bold; color: white; letter-spacing: -2px; }
+
+.anatomia-theme.theme-analytics .hero-pill
 {
-    flex-direction: row;
-    background-color: rgb(233, 235, 240);
-    border-radius: 24px;
-    padding: 8px;
-    margin-bottom: 32px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: white;
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 8px 26px;
+    margin-bottom: 16px;
 }
 
-.tab-button
+.anatomia-theme.theme-analytics .hero-footnote { font-size: 26px; color: rgba(255,255,255,0.8); }
+
+/* ---------- Stat tiles: three equal columns ---------- */
+
+.theme-analytics .stats-grid-row { flex-direction: row; margin-bottom: 8px; }
+
+.anatomia-theme.theme-analytics .overview-card
 {
     flex-grow: 1;
     flex-basis: 0;
-    background-color: transparent;
-    border-width: 0;
-    border-radius: 22px;
-    padding: 16px 10px;
-    margin: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px;
+    border-radius: 30px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.theme-analytics .overview-card-first { margin-right: 8px; }
+.theme-analytics .overview-card-mid { margin-left: 8px; margin-right: 8px; }
+.theme-analytics .overview-card-last { margin-left: 8px; }
+
+.theme-analytics .overview-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 24px;
+    background-color: var(--accent-soft);
     justify-content: center;
     align-items: center;
-    font-size: 24px;
-    height: 68px;
+    margin-bottom: 22px;
+    flex-shrink: 0;
 }
 
-.tab-button-label
+.theme-analytics .overview-icon
 {
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(120, 123, 140);
-    -unity-text-align: middle-center;
+    width: 40px;
+    height: 40px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-.tab-button-active
+.theme-analytics .icon-target { background-image: url("project://database/Assets/UI/Icons/target-iconss.png"); }
+.theme-analytics .icon-participated { background-image: url("project://database/Assets/UI/Icons/trophy-black-icon.png"); }
+.theme-analytics .icon-completion { background-image: url("project://database/Assets/UI/Icons/check-icon.png"); }
+
+.anatomia-theme.theme-analytics .overview-card-value { font-size: 44px; -unity-font-style: bold; color: var(--ink); letter-spacing: -0.5px; margin: 0; }
+.anatomia-theme.theme-analytics .overview-card-title { font-size: 22px; color: var(--ink-3); white-space: nowrap; margin: 0; }
+
+/* ---------- Tabs: 3 equal pills ---------- */
+
+.anatomia-theme.theme-analytics .tabs-row
 {
-    background-color: white;
+    flex-direction: row;
+    margin: 24px 0 28px 0;
+    padding: 0;
+    background-color: rgba(0,0,0,0);
+    border-radius: 0;
 }
 
-.tab-button-active .tab-button-label
+.anatomia-theme.theme-analytics .tab-button
 {
-    color: rgb(31, 36, 48);
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 84px;
+    margin: 0 6px;
+    padding: 0 8px;
+    border-radius: 42px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    justify-content: center;
+    align-items: center;
 }
+
+.anatomia-theme.theme-analytics .tab-button:hover { background-color: var(--surface-hover); }
+
+.anatomia-theme.theme-analytics .tab-button-label { font-size: 28px; -unity-font-style: bold; color: var(--ink-2); -unity-text-align: middle-center; }
+
+.anatomia-theme.theme-analytics .tab-button-active,
+.anatomia-theme.theme-analytics .tab-button-active:hover
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-analytics .tab-button-active .tab-button-label { color: white; }
+
+.theme-analytics .tab-panel { width: 100%; flex-direction: column; }
 
 /* ---------- Shared report card ---------- */
 
-.report-card
+.anatomia-theme.theme-analytics .report-card
 {
     width: 100%;
-    background-color: white;
-    border-radius: 34px;
-    padding: 39px;
-    margin-bottom: 26px;
+    padding: 40px;
+    margin-bottom: 24px;
+    border-radius: 36px;
+    background-color: var(--surface);
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
 }
 
-.report-card-title
-{
-    font-size: 34px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
+/* ---------- Performance tab: Score trend ---------- */
 
-.report-card-subtitle
-{
-    font-size: 25px;
-    color: rgb(150, 155, 168);
-    margin-top: 6px;
-    margin-bottom: 29px;
-    white-space: normal;
-}
+.theme-analytics .score-trend-list { width: 100%; flex-direction: column; }
+.theme-analytics .score-trend-row { width: 100%; margin-bottom: 26px; }
+.theme-analytics .score-trend-row-last { margin-bottom: 0; }
+.theme-analytics .score-trend-top-row { flex-direction: row; justify-content: space-between; margin-bottom: 12px; }
 
-.tab-panel
-{
-    width: 100%;
-    flex-direction: column;
-}
+.anatomia-theme.theme-analytics .score-trend-name-label { font-size: 26px; color: var(--ink-2); flex-shrink: 1; flex-grow: 1; white-space: normal; margin-right: 14px; }
+.anatomia-theme.theme-analytics .score-trend-value-label { font-size: 28px; -unity-font-style: bold; color: var(--accent); flex-shrink: 0; }
 
-/* ---------- Students tab: Top Performers ---------- */
+.theme-analytics .score-trend-bar-track { width: 100%; height: 18px; background-color: var(--track); border-radius: 9px; overflow: hidden; }
+.theme-analytics .score-trend-bar-fill { height: 100%; background-color: var(--accent); border-radius: 9px; }
 
-.top-performers-list
-{
-    width: 100%;
-    flex-direction: column;
-}
+/* ---------- Students tab: Top performers ---------- */
 
-.performer-row
+.theme-analytics .top-performers-list { width: 100%; flex-direction: column; }
+
+.theme-analytics .performer-row
 {
     flex-direction: row;
     align-items: center;
     width: 100%;
-    padding-top: 18px;
-    padding-bottom: 18px;
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(0, 0, 0, 0.06);
+    padding: 22px 24px;
+    margin-bottom: 12px;
+    border-radius: 28px;
+    background-color: var(--sunken);
 }
 
-.performer-row-last
-{
-    border-bottom-width: 0;
-    padding-bottom: 0;
-}
+.theme-analytics .performer-row-last { margin-bottom: 0; }
 
-.performer-rank-badge
+.theme-analytics .performer-rank-badge
 {
-    width: 63px;
-    height: 63px;
+    width: 64px;
+    height: 64px;
     border-radius: 32px;
     justify-content: center;
     align-items: center;
-    margin-right: 24px;
+    margin-right: 20px;
     flex-shrink: 0;
+    background-color: var(--track);
 }
 
-.performer-rank-gold
-{
-    background-color: rgb(254, 243, 199);
-}
+.theme-analytics .performer-rank-gold { background-color: var(--warn-soft); }
+.theme-analytics .performer-rank-silver { background-color: var(--track); }
+.theme-analytics .performer-rank-bronze { background-color: rgba(194, 100, 40, 0.14); }
+.theme-analytics .performer-rank-default { background-color: var(--accent-soft); }
 
-.performer-rank-silver
-{
-    background-color: rgb(229, 231, 235);
-}
+.theme-analytics .performer-rank-label { font-size: 28px; -unity-font-style: bold; color: var(--ink-2); }
+.theme-analytics .performer-rank-gold .performer-rank-label { color: var(--warn); }
+.theme-analytics .performer-rank-silver .performer-rank-label { color: var(--ink-2); }
+.theme-analytics .performer-rank-bronze .performer-rank-label { color: rgb(176, 90, 34); }
+.theme-analytics .performer-rank-default .performer-rank-label { color: var(--accent); }
 
-.performer-rank-bronze
-{
-    background-color: rgb(254, 215, 170);
-}
-
-.performer-rank-default
-{
-    background-color: rgb(219, 234, 254);
-}
-
-.performer-rank-label
-{
-    font-size: 26px;
-    -unity-font-style: bold;
-}
-
-.performer-rank-gold .performer-rank-label
-{
-    color: rgb(161, 98, 7);
-}
-
-.performer-rank-silver .performer-rank-label
-{
-    color: rgb(75, 85, 99);
-}
-
-.performer-rank-bronze .performer-rank-label
-{
-    color: rgb(194, 65, 12);
-}
-
-.performer-rank-default .performer-rank-label
-{
-    color: rgb(37, 99, 235);
-}
-
-.performer-avatar
+.theme-analytics .performer-avatar
 {
     width: 72px;
     height: 72px;
     border-radius: 36px;
-    background-color: rgb(219, 234, 254);
+    background-color: var(--accent);
     justify-content: center;
     align-items: center;
-    margin-right: 24px;
+    margin-right: 22px;
     flex-shrink: 0;
 }
 
-.performer-avatar-label
-{
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(37, 99, 235);
-}
+.theme-analytics .performer-avatar-label { font-size: 26px; -unity-font-style: bold; color: white; }
 
-.performer-info
+.theme-analytics .performer-info { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-analytics .performer-name-label { font-size: 30px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-analytics .performer-quizzes-label { font-size: 23px; color: var(--ink-3); margin-top: 2px; }
+
+.theme-analytics .performer-stats { flex-direction: column; align-items: flex-end; flex-shrink: 0; margin-left: 16px; }
+.anatomia-theme.theme-analytics .performer-points-label { font-size: 32px; -unity-font-style: bold; color: var(--accent); }
+.anatomia-theme.theme-analytics .performer-level-label { font-size: 22px; color: var(--ink-3); margin-top: 2px; }
+
+/* ---------- Students tab: Student activity (2x2 tiles) ---------- */
+
+.theme-analytics .student-activity-list { width: 100%; flex-direction: column; }
+.theme-analytics .student-activity-row { flex-direction: row; margin-bottom: 16px; }
+.theme-analytics .student-activity-row-last { margin-bottom: 0; }
+
+.theme-analytics .activity-tile
 {
-    flex-direction: column;
     flex-grow: 1;
-    flex-shrink: 1;
+    flex-basis: 0;
     min-width: 0;
-}
-
-.performer-name-label
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    white-space: normal;
-}
-
-.performer-quizzes-label
-{
-    font-size: 24px;
-    color: rgb(150, 155, 168);
-    margin-top: 3px;
-}
-
-.performer-stats
-{
     flex-direction: column;
-    align-items: flex-end;
-    flex-shrink: 0;
-    margin-left: 16px;
+    padding: 28px;
+    border-radius: 28px;
+    background-color: var(--sunken);
 }
 
-.performer-points-label
-{
-    font-size: 29px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
+.theme-analytics .activity-tile-left { margin-right: 8px; }
+.theme-analytics .activity-tile-right { margin-left: 8px; }
+.theme-analytics .activity-tile-accent { background-color: var(--accent-soft); }
 
-.performer-level-label
-{
-    font-size: 23px;
-    color: rgb(150, 155, 168);
-    margin-top: 3px;
-}
+.anatomia-theme.theme-analytics .activity-caption { font-size: 21px; -unity-font-style: bold; letter-spacing: 2px; color: var(--ink-3); margin-bottom: 8px; }
+.anatomia-theme.theme-analytics .activity-tile-accent .activity-caption { color: var(--accent); }
+.anatomia-theme.theme-analytics .activity-value { font-size: 44px; -unity-font-style: bold; color: var(--ink); letter-spacing: -0.5px; }
 
-/* ---------- Students tab: Student Activity ---------- */
+/* ---------- Mistakes tab ---------- */
 
-.student-activity-list
-{
-    width: 100%;
-    flex-direction: column;
-}
+.theme-analytics .common-mistakes-list { width: 100%; flex-direction: column; }
 
-.student-activity-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 21px;
-    padding-bottom: 21px;
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(0, 0, 0, 0.06);
-}
-
-.student-activity-row-last
-{
-    border-bottom-width: 0;
-    padding-bottom: 0;
-}
-
-.student-activity-label
-{
-    font-size: 28px;
-    color: rgb(90, 95, 112);
-}
-
-.student-activity-value
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-/* ---------- Mistakes tab: Common Incorrect Answers ---------- */
-
-.common-mistakes-list
-{
-    width: 100%;
-    flex-direction: column;
-}
-
-.mistake-row
+.theme-analytics .mistake-row
 {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background-color: rgb(254, 242, 242);
-    border-left-width: 5px;
-    border-left-color: rgb(220, 38, 38);
-    border-radius: 18px;
-    padding: 18px 20px;
-    margin-bottom: 18px;
+    background-color: var(--sunken);
+    border-radius: 28px;
+    padding: 24px 26px;
+    margin-bottom: 12px;
 }
 
-.mistake-info
-{
-    flex-direction: column;
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-    margin-right: 18px;
-}
+.theme-analytics .mistake-info { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; margin-right: 18px; }
+.anatomia-theme.theme-analytics .mistake-question-label { font-size: 28px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.theme-analytics .mistake-meta-row { flex-direction: row; align-items: center; margin-top: 8px; }
+.anatomia-theme.theme-analytics .mistake-category-label { font-size: 23px; color: var(--ink-3); }
 
-.mistake-question-label
-{
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    white-space: normal;
-}
-
-.mistake-meta-row
-{
-    flex-direction: row;
-    align-items: center;
-    margin-top: 6px;
-}
-
-.mistake-category-label
-{
-    font-size: 23px;
-    color: rgb(150, 155, 168);
-}
-
-.mistake-type-label
+.anatomia-theme.theme-analytics .mistake-type-label
 {
     font-size: 20px;
-    color: rgb(220, 38, 38);
-    background-color: rgb(254, 226, 226);
-    border-radius: 10px;
-    padding: 3px 12px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border-radius: 100px;
+    padding: 4px 16px;
     margin-left: 12px;
-    -unity-font-style: bold;
 }
 
-.mistake-count-col
+.theme-analytics .mistake-count-col
 {
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     flex-shrink: 0;
+    min-width: 96px;
+    padding: 10px 20px;
+    border-radius: 22px;
+    background-color: var(--danger-soft);
 }
 
-.mistake-count-value
-{
-    font-size: 32px;
-    -unity-font-style: bold;
-    color: rgb(220, 38, 38);
-}
+.anatomia-theme.theme-analytics .mistake-count-value { font-size: 34px; -unity-font-style: bold; color: var(--danger); }
+.anatomia-theme.theme-analytics .mistake-count-label { font-size: 20px; color: var(--danger); }
 
-.mistake-count-label
-{
-    font-size: 20px;
-    color: rgb(190, 100, 100);
-}
+/* Recommendations */
 
-/* ---------- Mistakes tab: Recommendations ---------- */
+.theme-analytics .recommendations-list { width: 100%; flex-direction: column; }
 
-.recommendations-list
-{
-    width: 100%;
-    flex-direction: column;
-}
-
-.recommendation-item
+.theme-analytics .recommendation-item
 {
     flex-direction: row;
     align-items: flex-start;
     width: 100%;
-    background-color: rgb(219, 234, 254);
-    border-radius: 24px;
+    background-color: var(--accent-soft);
+    border-radius: 28px;
     padding: 26px;
+    margin-bottom: 12px;
 }
 
-.recommendation-icon-circle
+.theme-analytics .recommendation-icon-circle
 {
-    width: 53px;
-    height: 53px;
-    border-radius: 26px;
-    background-color: rgb(37, 99, 235);
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+    background-color: var(--accent);
     justify-content: center;
     align-items: center;
-    margin-right: 21px;
+    margin-right: 22px;
     flex-shrink: 0;
 }
 
-.recommendation-icon
-{
-    font-size: 24px;
-    -unity-text-align: middle-center;
-}
-
-.recommendation-text-col
-{
-    flex-direction: column;
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-}
-
-.recommendation-title-label
-{
-    font-size: 28px;
-    -unity-font-style: bold;
-    color: rgb(30, 64, 175);
-    white-space: normal;
-}
-
-.recommendation-description-label
-{
-    font-size: 24px;
-    color: rgb(59, 90, 168);
-    margin-top: 6px;
-    white-space: normal;
-}
-
-/* ---------- Performance tab: Score Trend ---------- */
-
-.score-trend-list
-{
-    width: 100%;
-    flex-direction: column;
-}
-
-.score-trend-row
-{
-    width: 100%;
-    margin-bottom: 24px;
-}
-
-.score-trend-row-last
-{
-    margin-bottom: 0;
-}
-
-.score-trend-top-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-.score-trend-name-label
-{
-    font-size: 26px;
-    color: rgb(31, 36, 48);
-    flex-shrink: 1;
-    flex-grow: 1;
-    white-space: normal;
-    margin-right: 14px;
-}
-
-.score-trend-value-label
-{
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-    flex-shrink: 0;
-}
-
-.score-trend-bar-track
-{
-    width: 100%;
-    height: 16px;
-    background-color: rgb(240, 241, 245);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.score-trend-bar-fill
-{
-    height: 100%;
-    background-color: rgb(37, 99, 235);
-    border-radius: 8px;
-}
-
-.unity-base-field{
-    max-width: 500px;
-    margin-left: 24px;
-    margin-right: 24px;
-    max-height: 100%;
-    min-height:100%;
-    min-width: 260px;
-
-}
-
-.unity-base-field__input{
-    border-bottom-color: #00000000;
-    border-top-color: #00000000;
-    border-left-color: #00000000;
-    border-right-color: #00000000;
-}
-/* ---------- Utility ---------- */
-
-.hidden
-{
-    display: none;
-}
+.theme-analytics .recommendation-icon { font-size: 26px; -unity-text-align: middle-center; }
+.theme-analytics .recommendation-text-col { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-analytics .recommendation-title-label { font-size: 28px; -unity-font-style: bold; color: var(--accent-press); white-space: normal; }
+.anatomia-theme.theme-analytics .recommendation-description-label { font-size: 24px; color: var(--ink-2); margin-top: 6px; white-space: normal; }
 
 /* =========================================================
-   Compact Layout (toggled by C# based on panel width)
+   Compact (narrow phones) - toggled by the controller
    ========================================================= */
 
-.compact .header
-{
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 70px;
-    padding-bottom: 40px;
-}
+.anatomia-theme.theme-analytics.compact .header { padding: 72px 32px 8px 32px; }
+.anatomia-theme.theme-analytics.compact .back-button { width: 76px; height: 76px; min-width: 76px; border-radius: 38px; margin-right: 22px; }
+.anatomia-theme.theme-analytics.compact .header-title { font-size: 40px; }
+.anatomia-theme.theme-analytics.compact .header-subtitle { font-size: 22px; }
+.anatomia-theme.theme-analytics.compact .export-button { height: 72px; padding: 0 24px; border-radius: 36px; }
+.anatomia-theme.theme-analytics.compact .export-label { font-size: 24px; }
+.anatomia-theme.theme-analytics.compact .content-wrapper { padding: 12px 28px 90px 28px; }
+.anatomia-theme.theme-analytics.compact .dropdown-field { min-width: 220px; max-width: 360px; margin-right: 12px; }
+.anatomia-theme.theme-analytics.compact .dropdown-field > .unity-base-popup-field__input { min-height: 80px; border-radius: 40px; padding: 0 20px 0 26px; }
+.anatomia-theme.theme-analytics.compact .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text { font-size: 23px; }
+.anatomia-theme.theme-analytics.compact .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow { width: 44px; height: 44px; border-radius: 22px; background-size: 22px 22px; margin-left: 12px; }
+.anatomia-theme.theme-analytics.compact .overview-hero { padding: 30px; border-radius: 32px; }
+.anatomia-theme.theme-analytics.compact .hero-value { font-size: 76px; }
+.anatomia-theme.theme-analytics.compact .overview-card { padding: 20px; }
+.anatomia-theme.theme-analytics.compact .overview-icon-box { width: 62px; height: 62px; border-radius: 20px; margin-bottom: 16px; }
+.anatomia-theme.theme-analytics.compact .overview-card-value { font-size: 36px; }
+.anatomia-theme.theme-analytics.compact .overview-card-title { font-size: 19px; }
+.anatomia-theme.theme-analytics.compact .tab-button { height: 72px; }
+.anatomia-theme.theme-analytics.compact .tab-button-label { font-size: 24px; }
+.anatomia-theme.theme-analytics.compact .report-card { padding: 28px; border-radius: 28px; }
+.anatomia-theme.theme-analytics.compact .performer-name-label { font-size: 26px; }
+.anatomia-theme.theme-analytics.compact .performer-avatar { width: 60px; height: 60px; margin-right: 16px; }
+.anatomia-theme.theme-analytics.compact .activity-value { font-size: 36px; }
+.anatomia-theme.theme-analytics.compact .mistake-question-label { font-size: 25px; }
+.anatomia-theme.theme-analytics.compact .mistake-type-label { font-size: 18px; padding: 3px 12px; }
 
-.compact .header-title
+/* Close icon inside the student stats modal (built in AdminStudentStatsModal.cs) */
+.stats-modal-close-icon
 {
-    font-size: 36px;
-}
-
-.compact .export-label
-{
-    display: none;
-}
-
-.compact .export-button
-{
-    padding: 16px;
-}
-
-.compact .export-icon
-{
-    margin-right: 0;
-}
-
-.compact .dropdown-field
-{
-    font-size: 27px;
-    min-height: 58px;
-}
-
-.compact .dropdown-field > .unity-base-popup-field__input
-{
-    padding: 12px 14px 12px 16px;
-}
-
-.compact .dropdown-field:focus > .unity-base-popup-field__input
-{
-    padding: 11px 13px 11px 15px;
-}
-
-.compact .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow
-{
-    width: 16px;
-    height: 16px;
-    margin-left: 8px;
-}
-
-.compact .classroom-picker-dropdown
-{
-    min-width: 180px;
-    max-width: 260px;
-    margin-right: 16px;
-    margin-bottom: 10px;
-    font-size: 21px;
-}
-
-.compact .classroom-picker-dropdown > .unity-base-popup-field__input
-{
-    padding: 12px 16px;
-}
-
-.compact .classroom-picker-dropdown:focus > .unity-base-popup-field__input
-{
-    padding: 11px 15px;
-}
-
-.compact .classroom-picker-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__text
-{
-    font-size: 21px;
-}
-
-.compact .quiz-export-picker
-{
-    min-width: 180px;
-    max-width: 260px;
-    margin-bottom: 10px;
-    font-size: 21px;
-}
-
-.compact .quiz-export-picker > .unity-base-popup-field__input
-{
-    padding: 12px 16px;
-}
-
-.compact .quiz-export-picker:focus > .unity-base-popup-field__input
-{
-    padding: 11px 15px;
-}
-
-.compact .quiz-export-picker > .unity-base-popup-field__input > .unity-base-popup-field__text
-{
-    font-size: 21px;
-}
-
-.compact .content-wrapper
-{
-    padding: 22px 22px 48px 22px;
-}
-
-.compact .stats-grid-row
-{
-    margin-bottom: 16px;
-}
-
-.compact .overview-card
-{
-    padding: 26px;
-}
-
-.compact .overview-card-value
-{
-    font-size: 43px;
-}
-
-.compact .overview-card-title
-{
-    font-size: 21px;
-}
-
-.compact .overview-card-delta
-{
-    font-size: 20px;
-}
-
-.compact .tab-button-label
-{
-    font-size: 23px;
-}
-
-.compact .report-card
-{
-    padding: 29px;
-}
-
-.compact .report-card-title
-{
-    font-size: 29px;
-}
-
-.compact .performer-name-label
-{
-    font-size: 26px;
-}
-
-.compact .mistake-question-label
-{
-    font-size: 25px;
-}
-
-.compact .mistake-type-label
-{
-    font-size: 18px;
-    padding: 2px 10px;
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/UI/Icons/close-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(31, 36, 48);
 }

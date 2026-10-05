@@ -1419,6 +1419,7 @@ namespace Anatomia3D.UI
         private void ApplyHeaderGradient()
         {
             if (_header == null) return;
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat header, same as the student screens (see Theme/AnatomiaTheme.cs)
 
             if (_headerGradientTexture != null)
             {

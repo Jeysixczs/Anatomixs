@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminClassroomCreated/AdminClassroomCreated.uss?fileID=7433441132597879392&amp;guid=b46e043b2793f9d44a999c57f0affb35&amp;type=3#AdminClassroomCreated"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-admin-created screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="checkmark-circle" class="checkmark-circle">
@@ -14,7 +15,7 @@
                         <ui:Label name="classroom-code-label" text="C29V3SC5" class="code-display-text"/>
                     </ui:VisualElement>
                     <ui:Button name="copy-code-button" class="copy-code-button">
-                        <ui:VisualElement name="copy-code-icon" class="copy-code-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/copy-icon.png?fileID=2800000&amp;guid=efea9607a1058144f9b78865cdeecaca&amp;type=3#copy-icon&quot;); height: 34px; width: 33px; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0);"/>
+                        <ui:VisualElement name="copy-code-icon" class="copy-code-icon"/>
                         <ui:Label name="copy-code-label" text="Copy Code" class="copy-code-label"/>
                     </ui:Button>
                     <ui:VisualElement name="code-card-divider" class="code-card-divider"/>

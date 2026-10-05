@@ -676,7 +676,8 @@ namespace Anatomia3D.UI.Quiz
             {
                 var box = new VisualElement();
                 box.AddToClassList("checkbox-outer");
-                var check = new Label("\u2713");
+                // check-icon.png is applied by .checkbox-check in QuizScreen.uss
+                var check = new VisualElement { pickingMode = PickingMode.Ignore };
                 check.AddToClassList("checkbox-check");
                 box.Add(check);
                 row.Add(box);
@@ -757,8 +758,15 @@ namespace Anatomia3D.UI.Quiz
         /// it never restarts the quiz.</summary>
         private void BuildImageBased(QuizService.QuestionRecord q)
         {
-            var viewButton = new Button(() => OnViewOnModelClicked(q)) { text = "🦴  View on 3D Model" };
+            var viewButton = new Button(() => OnViewOnModelClicked(q));
             viewButton.AddToClassList("view-model-button");
+            // bone-icon.png is applied by .view-model-icon in QuizScreen.uss
+            var viewIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+            viewIcon.AddToClassList("view-model-icon");
+            viewButton.Add(viewIcon);
+            var viewLabel = new Label("View on 3D Model") { pickingMode = PickingMode.Ignore };
+            viewLabel.AddToClassList("view-model-label");
+            viewButton.Add(viewLabel);
             _answerContainer.Add(viewButton);
 
             var helper = new Label("Tap above to see the highlighted structure, then type its name below.");

@@ -1,128 +1,139 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminAnalyticsReports/AdminAnalyticsReports.uss?fileID=7433441132597879392&amp;guid=f982bf7d701eb514882762c85b6badfa&amp;type=3#AdminAnalyticsReports"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
-        <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
-                <ui:VisualElement name="header" class="header">
-                    <ui:VisualElement name="header-top-row" class="header-top-row">
-                        <ui:Button name="back-button" class="back-button">
-                            <ui:VisualElement name="back-icon" class="back-icon"/>
-                        </ui:Button>
-                        <ui:VisualElement name="header-text" class="header-text">
-                            <ui:Label text="Analytics &amp; Reports" class="header-title"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement name="header-actions" class="header-actions">
-                            <ui:Button name="export-pdf-button" class="export-button" style="height: 91px; width: 288px;">
-                                <ui:Label text="" class="export-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/pdf-icon.png?fileID=2800000&amp;guid=316076fbd2fbd5043beadb458cdfac9d&amp;type=3#pdf-icon&quot;); height: 55px; width: 54px;"/>
-                                <ui:Label text="PDF" class="export-label" style="height: 70px; width: 100px; font-size: 40px;"/>
-                            </ui:Button>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-analytics screen-root">
+
+        <!-- Fixed slim header (same pattern as Student Progress) -->
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-top-row" class="header-top-row">
+                <ui:Button name="back-button" class="back-button">
+                    <ui:VisualElement name="back-icon" class="back-icon"/>
+                </ui:Button>
+                <ui:VisualElement name="header-text" class="header-text">
+                    <ui:Label text="Analytics" class="header-title"/>
+                    <ui:Label text="Class performance and reports" class="header-subtitle"/>
                 </ui:VisualElement>
+                <ui:VisualElement name="header-actions" class="header-actions">
+                    <ui:Button name="export-pdf-button" class="export-button">
+                        <ui:VisualElement class="export-icon" picking-mode="Ignore"/>
+                        <ui:Label text="PDF" class="export-label" picking-mode="Ignore"/>
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+
+                <!-- Classroom picker is inserted at index 0 by the controller -->
                 <ui:VisualElement name="filters-row" class="filters-row">
                     <ui:DropdownField name="quiz-export-picker" class="dropdown-field quiz-export-picker"/>
                 </ui:VisualElement>
+
+                <!-- Hero: total students (tappable, opens the student list) -->
                 <ui:VisualElement name="stats-grid" class="stats-grid">
-                    <ui:VisualElement name="stats-row-1" class="stats-grid-row">
-                        <ui:VisualElement name="active-users-card" class="overview-card overview-card-left">
-                            <ui:VisualElement class="overview-card-header">
-                                <ui:VisualElement class="overview-icon-circle overview-icon-blue" style="height: 77px; width: 77px; background-color: rgb(241, 243, 247);">
-                                    <ui:Label text="" class="overview-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 55px; width: 47px; -unity-background-image-tint-color: rgb(0, 0, 0);"/>
-                                </ui:VisualElement>
-                                <ui:Label text="Total Students" class="overview-card-title"/>
-                            </ui:VisualElement>
-                            <ui:Label name="active-users-value-label" text="0" class="overview-card-value"/>
+                    <ui:VisualElement name="active-users-card" class="overview-hero">
+                        <ui:Label text="TOTAL STUDENTS" class="hero-caption"/>
+                        <ui:VisualElement class="hero-row">
+                            <ui:Label name="active-users-value-label" text="0" class="hero-value"/>
+                            <ui:Label text="View list" class="hero-pill"/>
                         </ui:VisualElement>
-                        <ui:VisualElement name="avg-score-card" class="overview-card overview-card-right">
-                            <ui:VisualElement class="overview-card-header">
-                                <ui:VisualElement class="overview-icon-circle overview-icon-green" style="width: 77px; height: 77px; background-color: rgb(241, 243, 247);">
-                                    <ui:Label text="" class="overview-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/target-iconss.png?fileID=2800000&amp;guid=6a89be03f5b863346b3f6b8ad74c290e&amp;type=3#target-iconss&quot;); height: 62px; width: 62px;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="Avg Score" class="overview-card-title"/>
+                        <ui:Label text="Across the selected classroom" class="hero-footnote"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement name="stats-row-1" class="stats-grid-row">
+                        <ui:VisualElement name="avg-score-card" class="overview-card overview-card-first">
+                            <ui:VisualElement class="overview-icon-box">
+                                <ui:VisualElement class="overview-icon icon-target"/>
                             </ui:VisualElement>
                             <ui:Label name="avg-score-value-label" text="0%" class="overview-card-value"/>
+                            <ui:Label text="Avg. score" class="overview-card-title"/>
                         </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="stats-row-2" class="stats-grid-row">
-                        <ui:VisualElement name="quizzes-done-card" class="overview-card overview-card-left">
-                            <ui:VisualElement class="overview-card-header">
-                                <ui:VisualElement class="overview-icon-circle overview-icon-purple" style="height: 77px; width: 77px; background-color: rgb(241, 243, 247);">
-                                    <ui:Label text="" class="overview-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/trophy-big-icon.png?fileID=2800000&amp;guid=9292264cfd43ce04cae89dad977f9b71&amp;type=3#trophy-big-icon&quot;); -unity-background-image-tint-color: rgb(0, 0, 0); height: 46px; width: 41px;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="Participated" class="overview-card-title"/>
+                        <ui:VisualElement name="quizzes-done-card" class="overview-card overview-card-mid">
+                            <ui:VisualElement class="overview-icon-box">
+                                <ui:VisualElement class="overview-icon icon-participated"/>
                             </ui:VisualElement>
                             <ui:Label name="quizzes-done-value-label" text="0" class="overview-card-value"/>
+                            <ui:Label text="Participated" class="overview-card-title"/>
                         </ui:VisualElement>
-                        <ui:VisualElement name="completion-card" class="overview-card overview-card-right">
-                            <ui:VisualElement class="overview-card-header">
-                                <ui:VisualElement class="overview-icon-circle overview-icon-orange" style="width: 77px; height: 77px; background-color: rgb(241, 243, 247);">
-                                    <ui:Label text="" class="overview-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/check-icon.png?fileID=2800000&amp;guid=06723f7d3e12a85439ab9da9bbcf3a33&amp;type=3#check-icon&quot;); height: 48px; width: 47px;"/>
-                                </ui:VisualElement>
-                                <ui:Label text="Completion" class="overview-card-title"/>
+                        <ui:VisualElement name="completion-card" class="overview-card overview-card-last">
+                            <ui:VisualElement class="overview-icon-box">
+                                <ui:VisualElement class="overview-icon icon-completion"/>
                             </ui:VisualElement>
                             <ui:Label name="completion-value-label" text="0%" class="overview-card-value"/>
+                            <ui:Label text="Completion" class="overview-card-title"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
+                <!-- Tabs: 3 equal pills -->
                 <ui:VisualElement name="tabs-row" class="tabs-row">
                     <ui:Button name="performance-tab-button" class="tab-button">
-                        <ui:Label text="Performance" class="tab-button-label"/>
+                        <ui:Label text="Performance" class="tab-button-label" picking-mode="Ignore"/>
                     </ui:Button>
                     <ui:Button name="students-tab-button" class="tab-button">
-                        <ui:Label text="Students" class="tab-button-label"/>
+                        <ui:Label text="Students" class="tab-button-label" picking-mode="Ignore"/>
                     </ui:Button>
                     <ui:Button name="mistakes-tab-button" class="tab-button">
-                        <ui:Label text="Mistakes" class="tab-button-label"/>
+                        <ui:Label text="Mistakes" class="tab-button-label" picking-mode="Ignore"/>
                     </ui:Button>
                 </ui:VisualElement>
+
                 <ui:VisualElement name="performance-panel" class="tab-panel hidden">
                     <ui:VisualElement name="score-trend-card" class="report-card">
-                        <ui:Label text="Score Trend" class="report-card-title"/>
-                        <ui:Label text="Average quiz score over recent attempts" class="report-card-subtitle"/>
+                        <ui:Label text="Score trend" class="section-title"/>
+                        <ui:Label text="Average quiz score over recent attempts" class="section-subtitle"/>
                         <ui:VisualElement name="score-trend-list" class="score-trend-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
                 <ui:VisualElement name="students-panel" class="tab-panel">
                     <ui:VisualElement name="top-performers-card" class="report-card">
-                        <ui:Label text="Top Performers" class="report-card-title"/>
-                        <ui:Label text="Highest scorers on the selected quiz" class="report-card-subtitle"/>
+                        <ui:Label text="Top performers" class="section-title"/>
+                        <ui:Label text="Highest scorers on the selected quiz" class="section-subtitle"/>
                         <ui:VisualElement name="top-performers-list" class="top-performers-list"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="student-activity-card" class="report-card">
-                        <ui:Label text="Student Activity" class="report-card-title"/>
-                        <ui:Label text="Overview of student engagement" class="report-card-subtitle"/>
+                        <ui:Label text="Student activity" class="section-title"/>
+                        <ui:Label text="Overview of student engagement" class="section-subtitle"/>
                         <ui:VisualElement name="student-activity-list" class="student-activity-list">
                             <ui:VisualElement class="student-activity-row">
-                                <ui:Label text="Total Students" class="student-activity-label"/>
-                                <ui:Label name="total-students-value-label" text="0" class="student-activity-value"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="student-activity-row">
-                                <ui:Label text="Active Students" class="student-activity-label"/>
-                                <ui:Label name="active-this-month-value-label" text="0" class="student-activity-value"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="student-activity-row">
-                                <ui:Label text="Average Level" class="student-activity-label"/>
-                                <ui:Label name="average-level-value-label" text="0" class="student-activity-value"/>
+                                <ui:VisualElement class="activity-tile activity-tile-left">
+                                    <ui:Label text="TOTAL STUDENTS" class="activity-caption"/>
+                                    <ui:Label name="total-students-value-label" text="0" class="activity-value"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="activity-tile activity-tile-right activity-tile-accent">
+                                    <ui:Label text="ACTIVE STUDENTS" class="activity-caption"/>
+                                    <ui:Label name="active-this-month-value-label" text="0" class="activity-value"/>
+                                </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:VisualElement class="student-activity-row student-activity-row-last">
-                                <ui:Label text="Average Points" class="student-activity-label"/>
-                                <ui:Label name="average-points-value-label" text="0" class="student-activity-value"/>
+                                <ui:VisualElement class="activity-tile activity-tile-left">
+                                    <ui:Label text="AVERAGE LEVEL" class="activity-caption"/>
+                                    <ui:Label name="average-level-value-label" text="0" class="activity-value"/>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="activity-tile activity-tile-right">
+                                    <ui:Label text="AVERAGE POINTS" class="activity-caption"/>
+                                    <ui:Label name="average-points-value-label" text="0" class="activity-value"/>
+                                </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
                 <ui:VisualElement name="mistakes-panel" class="tab-panel hidden">
                     <ui:VisualElement name="common-mistakes-card" class="report-card">
-                        <ui:Label text="Common Incorrect Answers" class="report-card-title"/>
-                        <ui:Label text="Questions with highest error rates on the selected quiz" class="report-card-subtitle"/>
+                        <ui:Label text="Common incorrect answers" class="section-title"/>
+                        <ui:Label text="Questions with the highest error rates on the selected quiz" class="section-subtitle"/>
                         <ui:VisualElement name="common-mistakes-list" class="common-mistakes-list"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="recommendations-card" class="report-card">
-                        <ui:Label text="Recommendations" class="report-card-title"/>
-                        <ui:Label text="Areas that need improvement" class="report-card-subtitle"/>
+                        <ui:Label text="Recommendations" class="section-title"/>
+                        <ui:Label text="Areas that need improvement" class="section-subtitle"/>
                         <ui:VisualElement name="recommendations-list" class="recommendations-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

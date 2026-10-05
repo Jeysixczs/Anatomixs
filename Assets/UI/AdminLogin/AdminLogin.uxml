@@ -1,50 +1,62 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaAuth.uss?fileID=7433441132597879392&amp;guid=7b1848b4e2e9bc34fbd3c5e0e140870d&amp;type=3#AnatomiaAuth"/>
     <Style src="project://database/Assets/UI/AdminLogin/AdminLogin.uss?fileID=7433441132597879392&amp;guid=44e0350b50f34f64993663515ae5925d&amp;type=3#AdminLogin"/>
-    <ui:VisualElement name="screen-root" class="screen-root fit-screen">
+    <ui:VisualElement name="screen-root" class="anatomia-theme auth-root theme-admin-auth screen-root fit-screen">
+        <ui:VisualElement picking-mode="Ignore" class="auth-top-gradient"/>
         <ui:VisualElement name="screen-container" class="screen-container">
             <ui:VisualElement name="scroll-view" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                    <ui:VisualElement name="logo-circle" class="logo-circle">
-                        <ui:VisualElement name="logo-icon" class="logo-icon icon-shield" style="background-image: url(&quot;project://database/Assets/UI/Icons/shield-icon.png?fileID=2800000&amp;guid=567fc6a50cdaf8440b5c049c17b1aeb8&amp;type=3#shield-icon&quot;); height: 191px; width: 166px;"/>
-                    </ui:VisualElement>
-                    <ui:Label name="app-title" text="Teacher Access" class="app-title"/>
-                    <ui:Label name="app-subtitle" text="Secure login required" class="app-subtitle"/>
-                    <ui:VisualElement name="login-card" class="login-card">
-                        <ui:Label text="Admin Email" class="field-label"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-email" style="background-image: url(&quot;project://database/Assets/UI/Icons/email-white.png?fileID=2800000&amp;guid=2d18eaa7247e99d47b6d34e00e6b7219&amp;type=3#email-white&quot;); -unity-background-image-tint-color: rgb(255, 255, 255);"/>
-                            <ui:TextField name="admin-email-field" placeholder-text="Enter your email" hide-placeholder-on-focus="true" class="input-field"/>
-                        </ui:VisualElement>
-                        <ui:Label name="email-error" text="Please enter a valid admin email" class="field-error hidden"/>
-                        <ui:Label text="Password" class="field-label field-label-spaced"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-lock" style="background-image: url(&quot;project://database/Assets/UI/Icons/lock-white.png?fileID=2800000&amp;guid=769e71b3805e9434bb7c983827f13efa&amp;type=3#lock-white&quot;); -unity-background-image-tint-color: rgb(255, 255, 255); height: 53px; width: 46px;"/>
-                            <ui:TextField name="password-field" password="true" placeholder-text="Enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
-                            <ui:Button name="toggle-password-button" class="input-icon-button icon-eye" style="height: 47px; width: 55px;"/>
-                        </ui:VisualElement>
-                        <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
-                        <ui:Button name="forgot-password-button" text="Forgot Password?" class="forgot-password-link"/>
-                        <ui:Button name="secure-login-button" text="Secure Login" class="secure-login-button"/>
-                        <ui:VisualElement class="divider-row">
-                            <ui:VisualElement class="divider-line"/>
-                            <ui:Label text="Or continue with" class="divider-text"/>
-                            <ui:VisualElement class="divider-line"/>
-                        </ui:VisualElement>
-                        <ui:Button name="google-signin-button" class="google-button">
-                            <ui:VisualElement class="icon-google"/>
-                            <ui:Label text="Sign in with Google" class="google-button-text"/>
-                        </ui:Button>
-                        <ui:VisualElement name="encryption-row" class="encryption-row">
-                            <ui:VisualElement class="encryption-dot"/>
-                            <ui:Label text="Secured with enterprise-grade encryption" class="encryption-text"/>
+                    <ui:VisualElement class="auth-hero">
+                        <ui:VisualElement class="auth-hero-inner">
+                            <ui:VisualElement class="auth-brand">
+                                <ui:VisualElement name="logo-circle" class="logo-circle">
+                                    <ui:VisualElement name="logo-icon" picking-mode="Ignore" class="logo-icon icon-shield"/>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Label text="TEACHER ACCESS" class="admin-chip"/>
+                            <ui:Label name="app-title" text="Welcome&#10;" class="auth-headline"/>
+                            <ui:Label name="app-subtitle" text="Sign in to manage your classrooms, quizzes and student progress." class="app-subtitle"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="create-account-row" class="create-account-row">
-                        <ui:Label text="Don&apos;t have an admin account?" class="create-account-text"/>
-                        <ui:Button name="navigate-to-create-account-button" text="Create Account" class="create-account-link"/>
+                    <ui:VisualElement class="auth-card-wrap">
+                        <ui:VisualElement name="login-card" class="auth-card">
+                            <ui:Label text="Teacher email" class="field-label"/>
+                            <ui:VisualElement class="input-container">
+                                <ui:TextField name="admin-email-field" placeholder-text="Enter your email" hide-placeholder-on-focus="true" class="input-field"/>
+                            </ui:VisualElement>
+                            <ui:Label name="email-error" text="Please enter a valid admin email" class="field-error hidden"/>
+                            <ui:VisualElement class="field-label-row">
+                                <ui:Label text="Password" class="field-label"/>
+                                <ui:Button name="forgot-password-button" text="Forgot password?" class="forgot-password-link"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="input-container">
+                                <ui:TextField name="password-field" password="true" placeholder-text="Enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
+                                <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
+                            </ui:VisualElement>
+                            <ui:Label name="password-error" text="Password is required" class="field-error hidden"/>
+                            <ui:Button name="secure-login-button" text="Sign in" class="sign-in-button secure-login-button"/>
+                            <ui:VisualElement class="divider-row">
+                                <ui:VisualElement class="divider-line"/>
+                                <ui:Label text="Or" class="divider-text"/>
+                                <ui:VisualElement class="divider-line"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="social-row">
+                                <ui:Button name="google-signin-button" class="google-button">
+                                    <ui:VisualElement picking-mode="Ignore" class="icon-google"/>
+                                    <ui:Label text="Sign in with Google" picking-mode="Ignore" class="google-button-text"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                            <ui:Label name="status-label" text="" class="status-label hidden"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Button name="back-to-student-login-button" text="← Back to Student Login" class="back-to-student-link"/>
-                    <ui:Label name="status-label" text="" class="status-label hidden"/>
+                    <ui:VisualElement name="create-account-row" class="auth-foot">
+                        <ui:VisualElement class="auth-foot-row">
+                            <ui:Label text="Don&apos;t have an admin account?" class="auth-foot-text"/>
+                            <ui:Button name="navigate-to-create-account-button" text="Create account" class="auth-foot-link"/>
+                        </ui:VisualElement>
+                        <ui:Button name="back-to-student-login-button" text="Back to student login" class="back-to-student-link"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

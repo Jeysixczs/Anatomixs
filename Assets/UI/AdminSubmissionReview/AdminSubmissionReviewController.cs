@@ -64,6 +64,14 @@ namespace Anatomia3D.UI
         private VisualElement _classroomSection;
         private VisualElement _classroomChips;
         private VisualElement _filterRow;
+        private Button _filterButton;
+        private VisualElement _filterBadge;
+        private Label _filterPillLabel;
+        private TextField _searchField;
+        private Button _searchClearButton;
+        private Button _filterClearButton;
+        private VisualElement _filterPopover;
+        private VisualElement _filterMenu;
         private VisualElement _list;
         private VisualElement _emptyState;
         private Label _emptyLabel;
@@ -149,6 +157,7 @@ namespace Anatomia3D.UI
 
         private readonly List<StudentEntry> _entries = new List<StudentEntry>();
         private StatusFilter _filter = StatusFilter.All;
+        private string _searchQuery = string.Empty;
 
         // Bumped on every (re)load so a slow response for a classroom the teacher
         // has already switched away from can't overwrite the current one.
@@ -217,6 +226,15 @@ namespace Anatomia3D.UI
             _classroomSection = _root.Q<VisualElement>("sr-classroom-section");
             _classroomChips = _root.Q<VisualElement>("sr-classroom-chips");
             _filterRow = _root.Q<VisualElement>("sr-filter-row");
+            _filterButton = _root.Q<Button>("sr-filter-button");
+            _filterBadge = _root.Q<VisualElement>("sr-filter-badge");
+            _filterPillLabel = _root.Q<Label>("sr-filter-pill-label");
+            _searchField = _root.Q<TextField>("sr-search-field");
+            _searchClearButton = _root.Q<Button>("sr-search-clear");
+            _searchField?.EnableLongPressPaste();
+            _filterClearButton = _root.Q<Button>("sr-filter-clear");
+            _filterPopover = _root.Q<VisualElement>("sr-filter-popover");
+            _filterMenu = _root.Q<VisualElement>("sr-filter-menu");
             _list = _root.Q<VisualElement>("sr-list");
             _emptyState = _root.Q<VisualElement>("sr-empty-state");
             _emptyLabel = _root.Q<Label>("sr-empty-label");
@@ -262,6 +280,11 @@ namespace Anatomia3D.UI
         private void WireCallbacks()
         {
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
+            _filterButton?.RegisterCallback<ClickEvent>(OnFilterButtonClicked);
+            _searchField?.RegisterCallback<ChangeEvent<string>>(OnSearchChanged);
+            _searchClearButton?.RegisterCallback<ClickEvent>(OnSearchClearClicked);
+            _filterClearButton?.RegisterCallback<ClickEvent>(OnFilterClearClicked);
+            _filterPopover?.RegisterCallback<PointerDownEvent>(OnFilterBackdropPointerDown);
             _reviewCloseButton?.RegisterCallback<ClickEvent>(OnReviewCloseClicked);
             _reviewCancelButton?.RegisterCallback<ClickEvent>(OnReviewCloseClicked);
             _reviewSaveButton?.RegisterCallback<ClickEvent>(OnReviewSaveClicked);
@@ -283,6 +306,11 @@ namespace Anatomia3D.UI
         private void UnregisterCallbacks()
         {
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
+            _filterButton?.UnregisterCallback<ClickEvent>(OnFilterButtonClicked);
+            _searchField?.UnregisterCallback<ChangeEvent<string>>(OnSearchChanged);
+            _searchClearButton?.UnregisterCallback<ClickEvent>(OnSearchClearClicked);
+            _filterClearButton?.UnregisterCallback<ClickEvent>(OnFilterClearClicked);
+            _filterPopover?.UnregisterCallback<PointerDownEvent>(OnFilterBackdropPointerDown);
             _reviewCloseButton?.UnregisterCallback<ClickEvent>(OnReviewCloseClicked);
             _reviewCancelButton?.UnregisterCallback<ClickEvent>(OnReviewCloseClicked);
             _reviewSaveButton?.UnregisterCallback<ClickEvent>(OnReviewSaveClicked);
@@ -358,6 +386,7 @@ namespace Anatomia3D.UI
             _submissions.Clear();
             _entries.Clear();
             _filter = StatusFilter.All;
+            ResetSearch();
             _loadToken++;
 
             if (_titleLabel != null) _titleLabel.text = string.IsNullOrEmpty(quizTitle) ? "Submissions" : quizTitle;
@@ -613,6 +642,13 @@ namespace Anatomia3D.UI
             }
         }
 
+        private bool MatchesSearch(StudentEntry entry)
+        {
+            if (string.IsNullOrEmpty(_searchQuery)) return true;
+            return entry.Name != null &&
+                   entry.Name.IndexOf(_searchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private bool MatchesFilter(StudentEntry entry)
         {
             switch (_filter)
@@ -692,8 +728,53 @@ namespace Anatomia3D.UI
 
                     _selectedClassroom = captured;
                     _filter = StatusFilter.All;
+                    ResetSearch();
                     LoadSelectedClassroom();
                 }));
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Status filter: one button showing the active filter + a popover menu
+        // ------------------------------------------------------------------
+
+        private bool IsFilterMenuOpen => _filterPopover != null && !_filterPopover.ClassListContains("hidden");
+
+        /// <summary>Counts follow the search box, so the numbers always match the list.</summary>
+        private int CountFor(StatusFilter filter)
+        {
+            var matches = _entries.Where(MatchesSearch);
+            switch (filter)
+            {
+                case StatusFilter.Passed: return matches.Count(e => e.Status == StudentStatus.Passed);
+                case StatusFilter.ToReview: return matches.Count(e => e.Status == StudentStatus.ToReview);
+                case StatusFilter.NotPassed: return matches.Count(e => e.Status == StudentStatus.NotPassed);
+                case StatusFilter.NotSubmitted: return matches.Count(e => e.Status == StudentStatus.NotSubmitted);
+                default: return matches.Count();
+            }
+        }
+
+        private static string LabelFor(StatusFilter filter)
+        {
+            switch (filter)
+            {
+                case StatusFilter.Passed: return "Passed";
+                case StatusFilter.ToReview: return "To review";
+                case StatusFilter.NotPassed: return "Not passed";
+                case StatusFilter.NotSubmitted: return "Not submitted";
+                default: return "All";
+            }
+        }
+
+        private static string DotClassFor(StatusFilter filter)
+        {
+            switch (filter)
+            {
+                case StatusFilter.Passed: return "sr-filter-item-dot--passed";
+                case StatusFilter.ToReview: return "sr-filter-item-dot--review";
+                case StatusFilter.NotPassed: return "sr-filter-item-dot--failed";
+                case StatusFilter.NotSubmitted: return "sr-filter-item-dot--missing";
+                default: return null;
             }
         }
 
@@ -701,27 +782,135 @@ namespace Anatomia3D.UI
         {
             if (_filterRow == null) return;
 
-            _filterRow.Clear();
             bool show = _selectedClassroom != null;
             _filterRow.EnableInClassList("hidden", !show);
-            if (!show) return;
+            if (!show)
+            {
+                CloseFilterMenu();
+                return;
+            }
 
-            AddFilterChip(StatusFilter.All, "All", _entries.Count);
-            AddFilterChip(StatusFilter.Passed, "Passed", _entries.Count(e => e.Status == StudentStatus.Passed));
-            AddFilterChip(StatusFilter.ToReview, "To review", _entries.Count(e => e.Status == StudentStatus.ToReview));
-            AddFilterChip(StatusFilter.NotPassed, "Not passed", _entries.Count(e => e.Status == StudentStatus.NotPassed));
-            if (_rosterLoaded)
-                AddFilterChip(StatusFilter.NotSubmitted, "Not submitted", _entries.Count(e => e.Status == StudentStatus.NotSubmitted));
+            // "Not submitted" can't be worked out without the class roster.
+            if (_filter == StatusFilter.NotSubmitted && !_rosterLoaded) _filter = StatusFilter.All;
+
+            bool active = _filter != StatusFilter.All;
+            _filterButton?.EnableInClassList("sr-filter-button--active", active);
+            _filterBadge?.EnableInClassList("hidden", !active);
+            _filterClearButton?.EnableInClassList("hidden", !active);
+            if (active && _filterPillLabel != null)
+                _filterPillLabel.text = $"{LabelFor(_filter)} ({CountFor(_filter)})";
+
+            if (IsFilterMenuOpen) BuildFilterMenu();
         }
 
-        private void AddFilterChip(StatusFilter filter, string label, int count)
+        private void BuildFilterMenu()
         {
-            _filterRow.Add(MakeChip($"{label} ({count})", _filter == filter, () =>
+            if (_filterMenu == null) return;
+
+            _filterMenu.Clear();
+            AddFilterMenuItem(StatusFilter.All);
+            AddFilterMenuItem(StatusFilter.ToReview);
+            AddFilterMenuItem(StatusFilter.Passed);
+            AddFilterMenuItem(StatusFilter.NotPassed);
+            if (_rosterLoaded) AddFilterMenuItem(StatusFilter.NotSubmitted);
+        }
+
+        private void AddFilterMenuItem(StatusFilter filter)
+        {
+            bool selected = _filter == filter;
+            var item = new Button(() => SelectFilter(filter));
+            item.AddToClassList("sr-filter-item");
+            if (selected) item.AddToClassList("sr-filter-item--active");
+
+            var dot = new VisualElement();
+            dot.AddToClassList("sr-filter-item-dot");
+            string dotClass = DotClassFor(filter);
+            if (dotClass != null) dot.AddToClassList(dotClass);
+            item.Add(dot);
+
+            var label = new Label(LabelFor(filter));
+            label.AddToClassList("sr-filter-item-label");
+            item.Add(label);
+
+            var count = new Label(CountFor(filter).ToString());
+            count.AddToClassList("sr-filter-item-count");
+            item.Add(count);
+
+            if (selected)
             {
-                _filter = filter;
-                RefreshFilters();
-                RefreshList();
-            }));
+                var check = new VisualElement();
+                check.AddToClassList("sr-filter-item-check");
+                item.Add(check);
+            }
+
+            _filterMenu.Add(item);
+        }
+
+        private void SelectFilter(StatusFilter filter)
+        {
+            _filter = filter;
+            CloseFilterMenu();
+            RefreshFilters();
+            RefreshList();
+        }
+
+        private void OpenFilterMenu()
+        {
+            if (_filterPopover == null || _filterMenu == null || _filterButton == null) return;
+
+            _searchField?.Blur();
+            BuildFilterMenu();
+            _filterPopover.RemoveFromClassList("hidden");
+
+            // Anchor the card under the filter button, right-aligned with it (the
+            // button sits at the right edge, so a left-aligned card would overflow).
+            const float menuWidth = 470f;
+            Rect anchor = _filterButton.worldBound;
+            Vector2 local = _filterPopover.WorldToLocal(new Vector2(anchor.xMax, anchor.yMax));
+            _filterMenu.style.width = menuWidth;
+            _filterMenu.style.left = Mathf.Max(32f, local.x - menuWidth);
+            _filterMenu.style.top = local.y + 10f;
+        }
+
+        private void CloseFilterMenu()
+        {
+            _filterPopover?.AddToClassList("hidden");
+        }
+
+        private void OnFilterButtonClicked(ClickEvent evt)
+        {
+            if (IsFilterMenuOpen) CloseFilterMenu();
+            else OpenFilterMenu();
+        }
+
+        private void OnFilterClearClicked(ClickEvent evt) => SelectFilter(StatusFilter.All);
+
+        private void OnSearchChanged(ChangeEvent<string> evt)
+        {
+            _searchQuery = (evt.newValue ?? string.Empty).Trim();
+            _searchClearButton?.EnableInClassList("hidden", string.IsNullOrEmpty(evt.newValue));
+            RefreshFilters();
+            RefreshList();
+        }
+
+        private void OnSearchClearClicked(ClickEvent evt)
+        {
+            ResetSearch();
+            RefreshFilters();
+            RefreshList();
+        }
+
+        private void ResetSearch()
+        {
+            _searchQuery = string.Empty;
+            _searchField?.SetValueWithoutNotify(string.Empty);
+            _searchClearButton?.AddToClassList("hidden");
+        }
+
+        private void OnFilterBackdropPointerDown(PointerDownEvent evt)
+        {
+            // Only a tap on the dimmed backdrop itself closes it - taps inside the card don't.
+            if (evt.target == _filterPopover) CloseFilterMenu();
         }
 
         private static Button MakeChip(string text, bool active, Action onClick)
@@ -752,7 +941,7 @@ namespace Anatomia3D.UI
             }
 
             var visible = _entries
-                .Where(MatchesFilter)
+                .Where(e => MatchesSearch(e) && MatchesFilter(e))
                 .OrderBy(e => (int)e.Status)
                 .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -770,6 +959,11 @@ namespace Anatomia3D.UI
 
         private string EmptyMessageForFilter()
         {
+            if (!string.IsNullOrEmpty(_searchQuery))
+                return _filter == StatusFilter.All
+                    ? $"No student matches \"{_searchQuery}\"."
+                    : $"No {LabelFor(_filter).ToLowerInvariant()} student matches \"{_searchQuery}\".";
+
             switch (_filter)
             {
                 case StatusFilter.Passed: return "No student has passed yet.";
@@ -1153,6 +1347,7 @@ namespace Anatomia3D.UI
         private void OnBackClicked(ClickEvent evt)
         {
             if (_isSaving) return;
+            if (IsFilterMenuOpen) { CloseFilterMenu(); return; }
             UIManager.Instance.ShowAdminQuizManagement();
         }
 
@@ -1212,6 +1407,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

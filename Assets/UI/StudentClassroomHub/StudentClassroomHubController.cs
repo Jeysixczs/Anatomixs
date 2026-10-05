@@ -646,9 +646,12 @@ namespace Anatomia3D.UI
             header.AddToClassList("hub-filter-sheet-header");
             var title = new Label("Filter Classrooms");
             title.AddToClassList("hub-filter-sheet-title");
-            var closeButton = new Button { text = "\u2715" };
+            var closeButton = new Button();
             closeButton.AddToClassList("hub-filter-close-button");
             closeButton.RegisterCallback<ClickEvent>(evt => CloseFilterModal());
+            var closeIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+            closeIcon.AddToClassList("hub-filter-close-icon");
+            closeButton.Add(closeIcon);
             header.Add(title);
             header.Add(closeButton);
             sheet.Add(header);

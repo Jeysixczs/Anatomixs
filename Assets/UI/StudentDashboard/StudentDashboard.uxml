@@ -107,12 +107,21 @@
         <ui:VisualElement name="recent-activity-view-all-overlay" class="modal-overlay hidden">
             <ui:VisualElement name="recent-activity-view-all-card" class="modal-card view-all-card">
                 <ui:VisualElement name="recent-activity-view-all-header" class="view-all-header">
-                    <ui:Label text="Recent Activity" class="view-all-title"/>
-                    <ui:Button name="recent-activity-view-all-close-button" text="✕" class="view-all-close-button"/>
+                    <ui:VisualElement class="view-all-title-block">
+                        <ui:Label text="Recent Activity" class="view-all-title"/>
+                        <ui:Label text="Your latest quizzes, badges and classrooms" class="view-all-subtitle"/>
+                    </ui:VisualElement>
+                    <ui:Button name="recent-activity-view-all-close-button" class="view-all-close-button">
+                        <ui:VisualElement picking-mode="Ignore" class="view-all-close-icon"/>
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:ScrollView name="recent-activity-view-all-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="view-all-scroll">
                     <ui:VisualElement name="recent-activity-view-all-no-results" class="view-all-no-results hidden">
-                        <ui:Label text="No recent activity yet" class="activity-time"/>
+                        <ui:VisualElement picking-mode="Ignore" class="view-all-empty-tile">
+                            <ui:VisualElement picking-mode="Ignore" class="view-all-empty-icon"/>
+                        </ui:VisualElement>
+                        <ui:Label text="No recent activity yet" class="view-all-empty-title"/>
+                        <ui:Label text="Take a quiz or earn a badge and it will show up here." class="view-all-empty-subtitle"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="recent-activity-view-all-list" class="recent-activity-list view-all-list"/>
                 </ui:ScrollView>
