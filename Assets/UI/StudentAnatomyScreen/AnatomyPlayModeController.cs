@@ -319,6 +319,14 @@ namespace Anatomia3D.Backend
             _currentQuestion = null;
             _uiWired = false;
 
+            // Answered tints are per-renderer and outlive Play Mode - wipe them so
+            // Explore Mode and the quiz's image-based "View on 3D Model" never inherit them.
+            if (_screen != null)
+            {
+                _screen.IsStructureAnswered = null;
+                _screen.RefreshAnsweredTints();
+            }
+
             StartCoroutineDeferredWire();
         }
 
@@ -628,8 +636,12 @@ namespace Anatomia3D.Backend
 
         private void ActivatePlayMode()
         {
+            // The answered color/tint is a normal Play Mode feature only - baseline
+            // pretest/posttest sessions never show it.
             if (_screen != null)
-                _screen.IsStructureAnswered = info => info != null && _completedKeys.Contains(info.boneName);
+                _screen.IsStructureAnswered = _isBaselineMode
+                    ? null
+                    : (System.Func<AnatomyScreenController.BoneInfo, bool>)(info => info != null && _completedKeys.Contains(info.boneName));
 
             _isPlayModeActive = true;
 
@@ -1802,6 +1814,15 @@ namespace Anatomia3D.Backend
         private void ApplyAnsweredTints()
         {
             if (_screen == null) return;
+
+            // Normal Play Mode only: no tint in baseline (pretest/posttest) or outside Play Mode.
+            if (_isBaselineMode || !_isPlayModeActive)
+            {
+                _screen.IsStructureAnswered = null;
+                _screen.RefreshAnsweredTints(); // clears every tint
+                return;
+            }
+
             _screen.AnsweredTint = answeredStructureColor;
             _screen.RefreshAnsweredTints();
         }
