@@ -1,7 +1,7 @@
 # Anatomia
 
 <p align="center">
-  <img src="screenshots/Anatomia-logo-removebg.png" width="240">
+  <img src="/Assets/Sprite/Anatomia-logo-removebg.png" width="240">
 
 </p>
 
