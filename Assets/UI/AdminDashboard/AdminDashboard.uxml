@@ -1,41 +1,48 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminDashboard/AdminDashboard.uss?fileID=7433441132597879392&amp;guid=52586ffcf29bb3141b7297cdb3317ab1&amp;type=3#AdminDashboard"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaLayout.uss?fileID=7433441132597879392&amp;guid=104bac896b87c0e4db3bd9b3134cf7a2&amp;type=3#AnatomiaLayout"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-admin screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
-                    <ui:Button name="profile-button" class="header-icon-circle">
-                        <ui:Label name="profile-initials-label" text="" class="header-icon-emoji profile-avatar-initials"/>
+                    <ui:Button name="profile-button" class="profile-avatar-button">
+                        <ui:Label name="profile-initials-label" text="" class="profile-avatar-initials"/>
                     </ui:Button>
-                    <ui:VisualElement name="header-text" class="header-text">
-                        <ui:Label text="Teacher Dashboard" class="header-title"/>
-                        <ui:Label name="header-subtitle-label" text="Welcome back, Teacher" class="header-subtitle"/>
-                    </ui:VisualElement>
                     <ui:Button name="logout-button" class="logout-button">
                         <ui:VisualElement class="logout-icon icon-logout"/>
                     </ui:Button>
                 </ui:VisualElement>
-                <ui:VisualElement name="header-stats-row" class="header-stats-row">
-                    <ui:VisualElement name="classrooms-stat-card" class="glass-stat-card glass-stat-card-left">
-                        <ui:Label name="classrooms-count-label" text="0" class="glass-stat-value"/>
-                        <ui:Label text="Classrooms" class="glass-stat-label"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="students-stat-card" class="glass-stat-card glass-stat-card-mid">
-                        <ui:Label name="students-count-label" text="0" class="glass-stat-value"/>
-                        <ui:Label text="Students" class="glass-stat-label"/>
-                    </ui:VisualElement>
+                <ui:VisualElement name="header-text" class="header-title-block">
+                    <ui:Label text="Teacher Dashboard" class="header-title"/>
+                    <ui:Label name="header-subtitle-label" text="Welcome back, Teacher" class="header-subtitle"/>
                 </ui:VisualElement>
-                <ui:Button name="create-classroom-button" class="create-classroom-header-button">
-                    <ui:Label text="+" class="create-classroom-plus"/>
-                    <ui:Label text="Create New Classroom" class="create-classroom-header-label"/>
-                </ui:Button>
             </ui:VisualElement>
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement class="bento-row bento-row-top">
+                    <ui:Button name="create-classroom-button" class="create-classroom-header-button bento-w3 bento-l">
+                        <ui:Label text="+" class="create-classroom-plus"/>
+                        <ui:Label text="Create New Classroom" class="create-classroom-header-label"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-stats-row" class="header-stats-row bento-w2 bento-r">
+                        <ui:VisualElement name="classrooms-stat-card" class="glass-stat-card glass-stat-card-left">
+                            <ui:Label name="classrooms-count-label" text="0" class="glass-stat-value"/>
+                            <ui:Label text="Classrooms" class="glass-stat-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="students-stat-card" class="glass-stat-card glass-stat-card-mid">
+                            <ui:Label name="students-count-label" text="0" class="glass-stat-value"/>
+                            <ui:Label text="Students" class="glass-stat-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:Label text="My Classrooms" class="section-title"/>
                 <ui:VisualElement name="classrooms-section" class="classrooms-section">
                     <ui:VisualElement name="classrooms-empty-state" class="classrooms-empty-state">
-                        <ui:Label text="" class="empty-state-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;); height: 132px; width: 143px; background-color: rgb(255, 255, 255); -unity-background-image-tint-color: rgb(123, 113, 113);"/>
+                        <ui:VisualElement class="empty-state-icon-box">
+                            <ui:VisualElement class="empty-state-icon empty-state-icon-students"/>
+                        </ui:VisualElement>
                         <ui:Label text="No classrooms yet" class="empty-state-text"/>
+                        <ui:Label text="Create your first classroom to invite students." class="empty-state-subtext"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="classrooms-list" class="classrooms-list hidden"/>
                     <ui:Button name="classrooms-view-all-button" text="View All Classrooms" class="view-all-button hidden"/>
@@ -75,7 +82,9 @@
             <ui:VisualElement name="classrooms-view-all-card" class="modal-card view-all-card">
                 <ui:VisualElement name="view-all-header" class="view-all-header">
                     <ui:Label text="All Classrooms" class="view-all-title"/>
-                    <ui:Button name="classrooms-view-all-close-button" text="✕" class="view-all-close-button"/>
+                    <ui:Button name="classrooms-view-all-close-button" class="view-all-close-button">
+                        <ui:VisualElement picking-mode="Ignore" class="view-all-close-icon"/>
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement name="view-all-search-row" class="view-all-search-row">
                     <ui:VisualElement name="view-all-search-field-wrapper" class="view-all-search-field-wrapper">
@@ -95,10 +104,12 @@
             <ui:VisualElement name="recent-activity-view-all-card" class="modal-card view-all-card">
                 <ui:VisualElement name="recent-activity-view-all-header" class="view-all-header">
                     <ui:Label text="Student Activity" class="view-all-title"/>
-                    <ui:Button name="recent-activity-view-all-close-button" text="✕" class="view-all-close-button"/>
+                    <ui:Button name="recent-activity-view-all-close-button" class="view-all-close-button">
+                        <ui:VisualElement picking-mode="Ignore" class="view-all-close-icon"/>
+                    </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement name="recent-activity-view-all-search-row" class="view-all-search-row">
-                    <ui:VisualElement name="recent-activity-view-all-search-field-wrapper" class="view-all-search-field-wrapper">
+                    <ui:VisualElement name="recent-activity-view-all-search-field-wrapper" class="view-all-search-field-wrapper" style="border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px;">
                         <ui:Label text="" class="view-all-search-icon icon-search"/>
                         <ui:TextField name="recent-activity-view-all-search-field" placeholder-text="Search student activity" class="view-all-search-field"/>
                     </ui:VisualElement>

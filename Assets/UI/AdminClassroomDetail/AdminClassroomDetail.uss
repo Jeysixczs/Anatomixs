@@ -1,11 +1,10 @@
 /* =========================================================
    Anatomia 3D - Admin Classroom Detail (Unity 6 UI Toolkit)
-   Reference canvas: 1080 x 1920 (portrait phone).
-
-   NOTE: USS has no linear-gradient support, so the header
-   gradient is generated at runtime from
-   AdminClassroomDetailController.ApplyHeaderGradient(). The
-   colors below are flat fallbacks.
+   Re-laid out to match StudentClassroomDetail: slim fixed header,
+   one-card stats strip, section bar, and a right-hand hamburger drawer
+   instead of the five-button tab switcher.
+   Loaded BEFORE Theme/AnatomiaTheme.uss (second <Style> in the UXML), which
+   supplies the design tokens, ambient background and card surfaces.
    ========================================================= */
 
 /* ---------- Screen ---------- */
@@ -21,60 +20,52 @@
     align-items: stretch;
 }
 
-/* ---------- Header ---------- */
-
-.header
+.content-wrapper
 {
     width: 100%;
-    border-bottom-left-radius: 66px;
-    border-bottom-right-radius: 66px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
+    flex-direction: column;
+}
+
+/* ---------- Header (fixed, slim) ---------- */
+
+.anatomia-theme.theme-admin-classroom .header
+{
     flex-shrink: 0;
     flex-direction: column;
-    background-color: rgb(16, 185, 129); /* fallback, overridden by gradient texture */
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 84px;
+    padding-bottom: 12px;
 }
 
 .header-top-row
 {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
-.back-button
+.anatomia-theme.theme-admin-classroom .back-button
 {
     width: 88px;
     height: 88px;
-    border-radius: 46px;
-    background-color: transparent;
-    border-width: 0;
+    min-width: 88px;
+    border-radius: 44px;
+    margin: 0 28px 0 0;
+    padding: 0;
     justify-content: center;
     align-items: center;
-    margin-right: 30px;
     flex-shrink: 0;
 }
 
 .back-icon
 {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background-image: url("project://database/Assets/UI/Icons/back-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
-}
-
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-    flex-shrink: 1;
 }
 
 .header-title-block
@@ -82,42 +73,462 @@
     flex-direction: column;
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .header-title
+{
+    font-size: 44px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anatomia-theme.theme-admin-classroom .header-subtitle
+{
+    font-size: 26px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .archived-badge
 {
     align-self: flex-start;
-    margin-top: 10px;
-    padding: 8px 20px;
-    border-radius: 20px;
-    background-color: rgba(255, 255, 255, 0.22);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.4);
-    font-size: 24px;
+    margin-top: 8px;
+    padding: 4px 18px;
+    border-radius: 18px;
+    background-color: var(--warn-soft);
+    font-size: 22px;
     -unity-font-style: bold;
-    color: white;
+    color: var(--warn);
 }
 
-.archive-button
+/* ---------- Classroom code chip (sits between title row and stats) ---------- */
+
+.code-chip
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 10px 12px 10px 28px;
+    border-radius: 28px;
+    background-color: var(--accent-faint);
+    border-width: 1px;
+    border-color: var(--accent-soft);
+}
+
+.code-chip-text
+{
+    flex-direction: row;
+    align-items: baseline;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.code-chip-caption
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    margin-right: 18px;
+}
+
+.code-chip-value
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    letter-spacing: 3px;
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-classroom .copy-code-icon-button
+{
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: var(--accent);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .copy-code-icon-button:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin-classroom .copy-code-icon-button:active { background-color: var(--accent-press); }
+
+.copy-code-icon
+{
+    width: 34px;
+    height: 34px;
+    background-image: url("project://database/Assets/UI/Icons/copy-white.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ---------- Stats strip: one card, three equal cells ---------- */
+
+.stats-strip
+{
+    flex-direction: row;
+    align-items: stretch;
+    border-radius: 32px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.stat-cell
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 8px;
+}
+
+.stat-cell-border
+{
+    border-left-width: 1px;
+    border-left-color: var(--line);
+}
+
+.stat-cell-value
+{
+    font-size: 46px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+}
+
+.stat-cell-value-accent { color: var(--accent); }
+
+.stat-cell-label
+{
+    font-size: 22px;
+    color: var(--ink-3);
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.compact .stat-cell { padding: 16px 6px; }
+.compact .stat-cell-value { font-size: 36px; }
+.compact .stat-cell-label { font-size: 19px; }
+
+/* ---------- Hamburger button ---------- */
+
+.anatomia-theme.theme-admin-classroom .menu-button
+{
+    width: 88px;
+    height: 88px;
+    min-width: 88px;
+    border-radius: 44px;
+    margin: 0 0 0 20px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    background-color: var(--accent-soft);
+    border-width: 0;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.anatomia-theme.theme-admin-classroom .menu-button:hover { background-color: rgba(91, 76, 219, 0.2); }
+.anatomia-theme.theme-admin-classroom .menu-button:active { background-color: var(--accent); }
+.anatomia-theme.theme-admin-classroom .menu-button:active .menu-bar { background-color: white; }
+
+.menu-bars
+{
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    width: 38px;
+    height: 32px;
+}
+
+.menu-bar { height: 5px; border-radius: 3px; background-color: var(--accent); }
+.menu-bar-long { width: 38px; }
+.menu-bar-short { width: 24px; margin: 7px 0; }
+
+.close-icon
+{
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/UI/Icons/close-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-2);
+}
+
+/* ---------- Section bar ---------- */
+
+.section-bar
 {
     flex-shrink: 0;
-    height: 76px;
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-left: 16px;
-    border-radius: 24px;
-    background-color: rgba(255, 255, 255, 0.16);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.3);
-    font-size: 26px;
-    -unity-font-style: bold;
-    color: white;
+    flex-direction: column;
+    padding: 8px 40px 16px 40px;
 }
 
-.archive-button:hover
+.section-bar-title
 {
-    background-color: rgba(255, 255, 255, 0.26);
+    font-size: 54px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: -0.8px;
 }
+
+.section-bar-hint
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    margin-top: 2px;
+}
+
+/* ---------- Drawer ---------- */
+
+.drawer-scrim
+{
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(22, 24, 38, 0.5);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.drawer-scrim-on { opacity: 1; }
+
+.drawer-panel
+{
+    position: absolute;
+    top: 0; bottom: 0; right: 0;
+    width: 84%;
+    max-width: 760px;
+    padding: 88px 28px 36px 28px;
+    background-color: rgb(250, 250, 253);
+    border-top-left-radius: 52px;
+    border-bottom-left-radius: 52px;
+    flex-direction: column;
+    translate: 0 0;
+    transition-property: translate;
+    transition-duration: 0.26s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.drawer-closed { translate: 105% 0; }
+
+.drawer-profile
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 24px 20px 24px 24px;
+    margin-bottom: 8px;
+    border-radius: 36px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    flex-shrink: 0;
+}
+
+.drawer-profile-tile
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 30px;
+    background-color: var(--accent);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+}
+
+.drawer-profile-icon
+{
+    width: 48px;
+    height: 48px;
+    background-image: url("project://database/Assets/UI/Icons/classroom-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.drawer-profile-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+
+.drawer-classroom-label
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-instructor-label
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-close-button
+{
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+    margin: 0 0 0 12px;
+    padding: 0;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: var(--sunken);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-close-button:hover { background-color: var(--track); }
+.anatomia-theme.theme-admin-classroom .drawer-close-button:active { background-color: var(--line-strong); }
+
+.drawer-scroll { flex-grow: 1; flex-shrink: 1; padding: 0 4px; }
+
+.drawer-group-caption
+{
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    margin: 28px 0 12px 20px;
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-item
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    height: 108px;
+    margin: 0 0 6px 0;
+    padding: 0 20px 0 14px;
+    border-width: 0;
+    border-radius: 34px;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-item:hover { background-color: var(--sunken); }
+.anatomia-theme.theme-admin-classroom .drawer-item:active { background-color: var(--accent-soft); }
+
+.drawer-item-tile
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 24px;
+    background-color: var(--sunken);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.drawer-item-icon
+{
+    width: 38px;
+    height: 38px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-2);
+}
+
+.drawer-item-label { font-size: 33px; -unity-font-style: bold; color: var(--ink); white-space: nowrap; }
+
+.anatomia-theme.theme-admin-classroom .drawer-item.tab-button-active,
+.anatomia-theme.theme-admin-classroom .drawer-item.tab-button-active:hover
+{
+    background-color: var(--accent-soft);
+    border-width: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-item.tab-button-active .drawer-item-tile { background-color: var(--accent); }
+.anatomia-theme.theme-admin-classroom .drawer-item.tab-button-active .drawer-item-icon { -unity-background-image-tint-color: white; }
+.anatomia-theme.theme-admin-classroom .drawer-item.tab-button-active .drawer-item-label { color: var(--accent); }
+
+/* Footer actions */
+.drawer-footer { flex-shrink: 0; flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .drawer-footer-button
+{
+    flex-shrink: 0;
+    height: 96px;
+    margin: 12px 4px 0 4px;
+    border-width: 0;
+    border-radius: 34px;
+    background-color: var(--sunken);
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-classroom .drawer-footer-button:hover { background-color: var(--track); }
+
+/* Lock / Unlock classroom: warning tone, sits above "Back" */
+.anatomia-theme.theme-admin-classroom .archive-button
+{
+    flex-shrink: 0;
+    height: 96px;
+    margin: 12px 4px 0 4px;
+    padding: 0 30px;
+    border-width: 0;
+    border-radius: 34px;
+    background-color: var(--danger-soft);
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--danger);
+}
+
+.anatomia-theme.theme-admin-classroom .archive-button:hover { background-color: rgba(204, 64, 64, 0.16); }
+
+/* ---------- Tab content ---------- */
+
+.tab-panel { flex-direction: column; }
+
+.hidden { display: none; }
+
+.section-title-first { margin-top: 8px; }
+
+/* ---------- Body components (rows, forms, dialogs) - recoloured to theme tokens ---------- */
+
+/* =========================================================
+   Anatomia 3D - Admin Classroom Detail (Unity 6 UI Toolkit)
+   Reference canvas: 1080 x 1920 (portrait phone).
+
+   NOTE: USS has no linear-gradient support, so the header
+   gradient is generated at runtime from
+   AdminClassroomDetailController.ApplyHeaderGradient(). The
+   colors below are flat fallbacks.
+   ========================================================= */
+
+/* ---------- Screen ---------- */
+
+/* ---------- Header ---------- */
 
 /* ---------- Archive Confirmation Dialog ---------- */
 
@@ -149,7 +560,7 @@
 {
     font-size: 38px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     white-space: normal;
     margin-bottom: 18px;
 }
@@ -157,7 +568,7 @@
 .dialog-message
 {
     font-size: 29px;
-    color: rgb(90, 95, 110);
+    color: var(--ink-2);
     white-space: normal;
     margin-bottom: 42px;
 }
@@ -182,76 +593,69 @@
 
 .dialog-button-secondary
 {
-    background-color: rgb(238, 240, 245);
-    color: rgb(60, 65, 80);
+    background-color: var(--sunken);
+    color: var(--ink-2);
 }
 
 .dialog-button-secondary:hover
 {
-    background-color: rgb(224, 227, 235);
+    background-color: var(--track);
 }
 
 .dialog-button-danger
 {
-    background-color: rgb(220, 38, 38);
+    background-color: var(--danger);
     color: white;
 }
 
 .dialog-button-danger:hover
 {
-    background-color: rgb(185, 28, 28);
+    background-color: var(--danger);
+}
+
+.dialog-button-primary
+{
+    background-color: var(--accent);
+    color: white;
+}
+
+.dialog-button-primary:hover
+{
+    background-color: var(--accent-strong);
+}
+
+/* ---------- Edit classroom dialog ---------- */
+
+.edit-field-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--ink-2);
+    margin: 22px 0 8px 4px;
+}
+
+.edit-field-hint
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    white-space: normal;
+    margin: 12px 4px 0 4px;
+}
+
+.edit-dialog-error
+{
+    font-size: 26px;
+    color: var(--danger);
+    white-space: normal;
+    margin: 16px 4px 0 4px;
+}
+
+.edit-dialog-button-row
+{
+    margin-top: 36px;
 }
 
 /* ---------- Classroom Code Box ---------- */
-
-.classroom-code-box
-{
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.16);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.24);
-    border-radius: 32px;
-    padding: 26px 28px;
-}
-
-.classroom-code-text-block
-{
-    flex-direction: column;
-}
-
-.classroom-code-caption
-{
-    font-size: 28px;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 8px;
-}
-
-.classroom-code-value
-{
-    font-size: 43px;
-    -unity-font-style: bold;
-    color: white;
-    letter-spacing: 2px;
-}
-
-.copy-code-icon-button
-{
-    width: 92px;
-    height: 92px;
-    border-radius: 26px;
-    background-color: rgba(255, 255, 255, 0.14);
-    border-width: 0;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.copy-code-icon-button:hover
-{
-    background-color: rgba(255, 255, 255, 0.24);
-}
 
 .copy-code-icon
 {
@@ -295,160 +699,11 @@
     min-height: 100%;
 }
 
-.content-wrapper
-{
-    width: 100%;
-    flex-direction: column;
-    padding: 45px;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
 /* ---------- Stat Row ---------- */
-
-.stats-row
-{
-    flex-direction: row;
-    margin-bottom: 39px;
-}
-
-.stat-card
-{
-    flex-grow: 1;
-    flex-basis: 0;
-    background-color: white;
-    border-radius: 32px;
-    padding: 22px 16px;
-    align-items: center;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
-}
-
-.stat-card-spaced
-{
-    margin-right: 21px;
-}
-
-.stat-icon
-{
-    width: 43px;
-    height: 43px;
-    margin-bottom: 18px;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.icon-users-blue
-{
-    background-image: url("project://database/Assets/UI/Icons/users-icon.png");
-    -unity-background-image-tint-color: rgb(59, 130, 246);
-}
-
-.icon-trend-green
-{
-    background-image: url("project://database/Assets/UI/Icons/trend-up-icon.png");
-    -unity-background-image-tint-color: rgb(34, 197, 94);
-}
-
-.icon-ribbon-blue
-{
-    background-image: url("project://database/Assets/UI/Icons/ribbon-icon.png");
-    -unity-background-image-tint-color: rgb(59, 130, 246);
-}
-
-.stat-value
-{
-    font-size: 43px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-.stat-label
-{
-    font-size: 25px;
-    color: rgb(150, 155, 168);
-    margin-top: 6px;
-    -unity-text-align: middle-center;
-}
 
 /* ---------- Tab Switcher ---------- */
 
-.tab-switcher
-{
-    flex-direction: column;
-    background-color: rgb(228, 229, 235);
-    border-radius: 26px;
-    padding: 8px;
-    margin-bottom: 36px;
-}
-
-.tab-switcher-row
-{
-    flex-direction: row;
-}
-
-.tab-switcher-row-2
-{
-    margin-top: 8px;
-}
-
-.tab-button
-{
-    flex-grow: 1;
-    flex-basis: 0;
-    height: 85px;
-    background-color: transparent;
-    border-width: 0;
-    border-radius: 20px;
-    font-size: 24px;
-    -unity-font-style: bold;
-    color: rgb(110, 115, 128);
-}
-
-.tab-button-active
-{
-    background-color: white;
-    color: rgb(31, 36, 48);
-}
-
 /* ---------- Tab Panels / Cards ---------- */
-
-.tab-panel
-{
-    flex-direction: column;
-}
-
-.hidden
-{
-    display: none;
-}
-
-.panel-card
-{
-    background-color: white;
-    border-radius: 36px;
-    padding: 47px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
-    margin-bottom: 36px;
-}
-
-.panel-card-title
-{
-    font-size: 48px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-.panel-card-subtitle
-{
-    font-size: 38px;
-    color: rgb(150, 155, 168);
-    margin-top: 8px;
-    margin-bottom: 32px;
-    white-space: normal;
-}
 
 .panel-card-subtitle-tight
 {
@@ -477,27 +732,27 @@
 .icon-users-gray
 {
     background-image: url("project://database/Assets/UI/Icons/users-icon.png");
-    -unity-background-image-tint-color: rgb(190, 194, 204);
+    -unity-background-image-tint-color: var(--ink-4);
 }
 
 .icon-announce-gray
 {
     background-image: url("project://database/Assets/UI/Icons/announce-icon.png");
-    -unity-background-image-tint-color: rgb(190, 194, 204);
+    -unity-background-image-tint-color: var(--ink-4);
 }
 
 .empty-title
 {
     font-size: 42px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     margin-bottom: 12px;
 }
 
 .empty-subtitle
 {
     font-size: 32px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     -unity-text-align: middle-center;
     white-space: normal;
     margin-bottom: 39px;
@@ -514,7 +769,7 @@
     padding-right: 39px;
     background-color: white;
     border-width: 2px;
-    border-color: rgb(226, 227, 233);
+    border-color: var(--line-strong);
     border-radius: 26px;
 }
 
@@ -527,7 +782,7 @@
 {
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     margin-left: 18px;
 }
 
@@ -549,7 +804,7 @@
     align-items: center;
     padding: 20px 16px;
     border-bottom-width: 1px;
-    border-bottom-color: rgb(238, 239, 244);
+    border-bottom-color: var(--line);
 }
 
 .student-row-last
@@ -562,7 +817,7 @@
     width: 90px;
     height: 90px;
     border-radius: 45px;
-    background-color: rgb(219, 234, 254);
+    background-color: var(--accent-soft);
     justify-content: center;
     align-items: center;
     margin-right: 26px;
@@ -573,7 +828,7 @@
 {
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(37, 99, 235);
+    color: var(--accent);
 }
 
 .student-info
@@ -588,7 +843,7 @@
 {
     font-size: 33px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     flex-shrink: 1;
     min-width: 0;
     white-space: nowrap;
@@ -599,7 +854,7 @@
 .student-meta-label
 {
     font-size: 26px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     margin-top: 6px;
 }
 
@@ -607,7 +862,7 @@
 {
     font-size: 33px;
     -unity-font-style: bold;
-    color: rgb(37, 99, 235);
+    color: var(--accent);
     flex-shrink: 0;
 }
 
@@ -620,12 +875,12 @@
     margin: 0 0 0 26px;
     font-size: 26px;
     -unity-font-style: bold;
-    color: rgb(220, 38, 38);
+    color: var(--danger);
 }
 
 .student-remove-button:hover
 {
-    color: rgb(185, 28, 28);
+    color: var(--danger);
 }
 
 /* ---------- Quizzes: List (populated state, rows built in C#) ---------- */
@@ -643,7 +898,7 @@
     padding-top: 32px;
     padding-bottom: 32px;
     border-bottom-width: 1px;
-    border-bottom-color: rgb(238, 239, 244);
+    border-bottom-color: var(--line);
 }
 
 .quiz-row-last
@@ -664,14 +919,14 @@
 {
     font-size: 34px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     white-space: normal;
 }
 
 .quiz-row-subject
 {
     font-size: 28px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     margin-top: 6px;
 }
 
@@ -682,7 +937,7 @@
     width: 126px;
     height: 71px;
     border-radius: 36px;
-    background-color: rgb(214, 216, 224);
+    background-color: var(--track);
     border-width: 0;
     padding: 0;
     flex-shrink: 0;
@@ -696,7 +951,7 @@
 
 .toggle-on
 {
-    background-color: rgb(34, 197, 94);
+    background-color: var(--accent);
 }
 
 .toggle-knob
@@ -725,7 +980,7 @@
     padding-top: 24px;
     padding-bottom: 24px;
     border-bottom-width: 1px;
-    border-bottom-color: rgb(238, 239, 244);
+    border-bottom-color: var(--line);
 }
 
 .overview-row-last
@@ -737,14 +992,14 @@
 .overview-label
 {
     font-size: 32px;
-    color: rgb(59, 130, 246);
+    color: var(--ink-2);
 }
 
 .overview-value
 {
     font-size: 36px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
 }
 
 /* ---------- Analytics: Top Performers ---------- */
@@ -775,7 +1030,7 @@
 .show-to-students-label
 {
     font-size: 24px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     margin-top: 10px;
     white-space: normal;
     -unity-text-align: middle-center;
@@ -792,7 +1047,7 @@
 .top-performers-empty-text
 {
     font-size: 38px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
 }
 
 .top-performers-list
@@ -808,7 +1063,7 @@
     padding: 18px 14px;
     border-radius: 24px;
     margin-bottom: 14px;
-    background-color: rgb(248, 249, 251);
+    background-color: var(--sunken);
 }
 
 .performer-row-gold
@@ -818,7 +1073,7 @@
 
 .performer-row-silver
 {
-    background-color: rgb(243, 244, 248);
+    background-color: var(--sunken);
 }
 
 .performer-row-bronze
@@ -865,7 +1120,7 @@
     width: 84px;
     height: 84px;
     border-radius: 42px;
-    background-color: rgb(219, 234, 254);
+    background-color: var(--accent-soft);
     justify-content: center;
     align-items: center;
     margin-right: 20px;
@@ -876,14 +1131,14 @@
 {
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(37, 99, 235);
+    color: var(--accent);
 }
 
 .performer-name-label
 {
     font-size: 38px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     flex-grow: 1;
 }
 
@@ -891,7 +1146,7 @@
 {
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(37, 99, 235);
+    color: var(--accent);
     flex-shrink: 0;
 }
 
@@ -901,7 +1156,7 @@
 {
     font-size: 28px;
     -unity-font-style: bold;
-    color: rgb(90, 95, 110);
+    color: var(--ink-2);
     margin-bottom: 14px;
 }
 
@@ -912,12 +1167,12 @@
 
 .announcement-input
 {
-    background-color: rgb(248, 249, 251);
+    background-color: var(--sunken);
     border-width: 1px;
-    border-color: rgb(226, 227, 233);
+    border-color: var(--line-strong);
     border-radius: 21px;
     font-size: 32px;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
 }
 
 /* Unity's built-in TextField draws its own inner input element - flatten it
@@ -929,7 +1184,7 @@
     border-width: 0;
     padding: 14px 16px;
     font-size: 32px;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
 }
 
 .announcement-textarea
@@ -952,7 +1207,7 @@
     padding-left: 45px;
     padding-right: 45px;
     margin-top: 39px;
-    background-color: rgb(34, 197, 94);
+    background-color: var(--accent);
     border-width: 0;
     border-radius: 24px;
     font-size: 34px;
@@ -962,14 +1217,14 @@
 
 .post-announcement-button:hover
 {
-    background-color: rgb(22, 163, 74);
+    background-color: var(--accent-strong);
 }
 
 .announcements-section-title
 {
     font-size: 34px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     margin-bottom: 24px;
 }
 
@@ -985,7 +1240,7 @@
     padding: 37px;
     margin-bottom: 24px;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--line);
 }
 
 .announcement-header-row
@@ -1000,7 +1255,7 @@
 {
     font-size: 42px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     flex-shrink: 1;
     flex-grow: 1;
     white-space: normal;
@@ -1010,14 +1265,14 @@
 .announcement-date-label
 {
     font-size: 28px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     flex-shrink: 0;
 }
 
 .announcement-body-label
 {
     font-size: 36px;
-    color: rgb(80, 85, 100);
+    color: var(--ink-2);
     white-space: normal;
     margin-bottom: 18px;
 }
@@ -1031,80 +1286,21 @@
     margin: 0;
     font-size: 26px;
     -unity-font-style: bold;
-    color: rgb(220, 38, 38);
+    color: var(--danger);
 }
 
 .announcement-delete-button:hover
 {
-    color: rgb(185, 28, 28);
+    color: var(--danger);
 }
 
 /* =========================================================
    Compact Layout (toggled by C# based on panel width)
    ========================================================= */
 
-.compact .header
-{
-    padding-left: 32px;
-    padding-right: 32px;
-    padding-top: 66px;
-    padding-bottom: 72px;
-}
-
-.compact .header-title
-{
-    font-size: 32px;
-}
-
-.compact .archive-button
-{
-    height: 64px;
-    padding-left: 22px;
-    padding-right: 22px;
-    font-size: 22px;
-}
-
 .compact .dialog-card
 {
     padding: 34px;
-}
-
-.compact .classroom-code-value
-{
-    font-size: 34px;
-}
-
-.compact .content-wrapper
-{
-    padding: 32px;
-}
-
-.compact .stat-card
-{
-    padding: 16px 10px;
-    border-radius: 24px;
-}
-
-.compact .stat-value
-{
-    font-size: 33px;
-}
-
-.compact .stat-label
-{
-    font-size: 21px;
-}
-
-.compact .tab-button
-{
-    height: 71px;
-    font-size: 18px;
-}
-
-.compact .panel-card
-{
-    padding: 34px;
-    border-radius: 26px;
 }
 
 .compact .empty-title
@@ -1180,11 +1376,11 @@
     margin-top: 32px;
     background-color: rgb(240, 253, 244);
     border-width: 2px;
-    border-color: rgb(34, 197, 94);
+    border-color: var(--accent);
     border-radius: 24px;
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(22, 163, 74);
+    color: var(--accent-strong);
 }
 
 .material-choose-button:hover
@@ -1199,9 +1395,9 @@
     justify-content: space-between;
     margin-top: 20px;
     padding: 24px;
-    background-color: rgb(248, 249, 251);
+    background-color: var(--sunken);
     border-width: 1px;
-    border-color: rgb(226, 227, 233);
+    border-color: var(--line-strong);
     border-radius: 21px;
 }
 
@@ -1216,14 +1412,14 @@
 {
     font-size: 30px;
     -unity-font-style: bold;
-    color: rgb(31, 36, 48);
+    color: var(--ink);
     white-space: normal;
 }
 
 .material-file-meta
 {
     font-size: 26px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     margin-top: 4px;
     white-space: normal;
 }
@@ -1231,7 +1427,7 @@
 .material-hint
 {
     font-size: 24px;
-    color: rgb(150, 155, 168);
+    color: var(--ink-3);
     margin-top: 18px;
     white-space: normal;
 }
@@ -1241,17 +1437,17 @@
     font-size: 28px;
     margin-top: 20px;
     white-space: normal;
-    color: rgb(90, 95, 110);
+    color: var(--ink-2);
 }
 
 .material-status-error
 {
-    color: rgb(220, 38, 38);
+    color: var(--danger);
 }
 
 .material-status-success
 {
-    color: rgb(22, 163, 74);
+    color: var(--accent-strong);
 }
 
 .material-card-actions
@@ -1270,7 +1466,7 @@
     margin: 0 40px 0 0;
     font-size: 32px;
     -unity-font-style: bold;
-    color: rgb(22, 163, 74);
+    color: var(--accent-strong);
     height: 96px;
 }
 
@@ -1283,3 +1479,564 @@
 {
     align-self: auto;
 }
+
+
+/* =========================================================
+   TAB CONTENT REDESIGN - Analytics / Quizzes / Announcements / Materials
+   Mirrors the student classroom detail: section titles, left-accent cards,
+   tonal pills, icon tiles, and rank-tinted leaderboard rows.
+   Scoped under .anatomia-theme.theme-admin-classroom so it out-ranks the rules above and the shared theme.
+   ========================================================= */
+
+/* ---- shared ---- */
+
+.anatomia-theme.theme-admin-classroom .section-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); margin: 8px 0 18px 4px; }
+.anatomia-theme.theme-admin-classroom .section-title-first { margin-top: 12px; }
+.anatomia-theme.theme-admin-classroom .section-subtitle { font-size: 26px; color: var(--ink-3); margin: -10px 0 22px 4px; white-space: normal; }
+.section-block { flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .panel-card { padding: 36px; border-radius: 32px; margin-bottom: 24px; }
+.anatomia-theme.theme-admin-classroom .panel-card-title { font-size: 36px; -unity-font-style: bold; color: var(--ink); }
+.anatomia-theme.theme-admin-classroom .panel-card-subtitle { font-size: 26px; color: var(--ink-3); margin-top: 4px; margin-bottom: 12px; white-space: normal; }
+.anatomia-theme.theme-admin-classroom .panel-card-subtitle-tight { margin-bottom: 0; }
+
+.anatomia-theme.theme-admin-classroom .empty-state { padding: 56px 40px; align-items: center; }
+.anatomia-theme.theme-admin-classroom .empty-icon { width: 72px; height: 72px; margin-bottom: 20px; -unity-background-image-tint-color: var(--ink-4); }
+.anatomia-theme.theme-admin-classroom .empty-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); }
+.anatomia-theme.theme-admin-classroom .empty-subtitle { font-size: 28px; max-width: 560px; color: var(--ink-3); white-space: normal; -unity-text-align: middle-center; margin-top: 8px; }
+
+/* ---- icon tiles (used by compose cards, metric tiles, trophy) ---- */
+
+.compose-header { flex-direction: row; align-items: center; margin-bottom: 28px; }
+.compose-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; }
+
+.compose-icon-box,
+.trophy-icon-box,
+.metric-icon-box
+{
+    width: 84px;
+    height: 84px;
+    min-width: 84px;
+    border-radius: 26px;
+    background-color: var(--accent-soft);
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+    flex-shrink: 0;
+}
+
+.compose-icon,
+.trophy-icon,
+.metric-icon
+{
+    width: 40px;
+    height: 40px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.icon-compose-announce { background-image: url("project://database/Assets/UI/Icons/bell-icon.png"); }
+.icon-compose-material { background-image: url("project://database/Assets/UI/Icons/open-book.png"); }
+.trophy-icon { background-image: url("project://database/Assets/UI/Icons/trophy-icon.png"); }
+.icon-metric-points { background-image: url("project://database/Assets/UI/Icons/total-points-icon.png"); }
+.icon-metric-quizzes { background-image: url("project://database/Assets/UI/Icons/check-icon.png"); }
+.icon-metric-score { background-image: url("project://database/Assets/UI/Icons/progress-icon.png"); }
+.icon-metric-students { background-image: url("project://database/Assets/UI/Icons/student-icon.png"); }
+
+/* ---- forms ---- */
+
+.anatomia-theme.theme-admin-classroom .announcement-field-label { font-size: 26px; -unity-font-style: bold; color: var(--ink-2); margin-bottom: 10px; }
+.anatomia-theme.theme-admin-classroom .announcement-field-label-spaced { margin-top: 24px; }
+
+.anatomia-theme.theme-admin-classroom .announcement-input > .unity-text-field__input,
+.anatomia-theme.theme-admin-classroom .announcement-input > .unity-base-text-field__input
+{
+    min-height: 92px;
+    padding: 0 28px;
+    font-size: 30px;
+    color: var(--ink);
+    background-color: var(--sunken);
+    border-width: 1px;
+    border-color: var(--line);
+    border-radius: 26px;
+}
+
+.anatomia-theme.theme-admin-classroom .announcement-input:focus > .unity-text-field__input,
+.anatomia-theme.theme-admin-classroom .announcement-input:focus > .unity-base-text-field__input
+{
+    border-color: var(--accent);
+    background-color: var(--surface-solid);
+}
+
+.anatomia-theme.theme-admin-classroom .announcement-textarea > .unity-text-field__input,
+.anatomia-theme.theme-admin-classroom .announcement-textarea > .unity-base-text-field__input
+{
+    min-height: 200px;
+    padding: 22px 28px;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-classroom .material-description-input > .unity-text-field__input,
+.anatomia-theme.theme-admin-classroom .material-description-input > .unity-base-text-field__input
+{
+    min-height: 150px;
+    padding: 22px 28px;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-classroom .post-announcement-button
+{
+    height: 100px;
+    margin-top: 32px;
+    border-width: 0;
+    border-radius: 50px;
+    background-color: var(--accent);
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.anatomia-theme.theme-admin-classroom .post-announcement-button:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin-classroom .post-announcement-button:active { background-color: var(--accent-press); }
+
+.anatomia-theme.theme-admin-classroom .material-choose-button
+{
+    height: 100px;
+    margin-top: 32px;
+    border-width: 2px;
+    border-color: var(--accent-soft);
+    border-radius: 50px;
+    background-color: var(--accent-faint);
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-classroom .material-choose-button:hover { background-color: var(--accent-soft); border-color: var(--accent); }
+
+.anatomia-theme.theme-admin-classroom .material-selected-file
+{
+    margin-top: 20px;
+    padding: 22px 24px;
+    border-radius: 24px;
+    background-color: var(--accent-faint);
+    border-width: 1px;
+    border-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-admin-classroom .material-file-name { font-size: 28px; -unity-font-style: bold; color: var(--ink); }
+.anatomia-theme.theme-admin-classroom .material-file-meta { font-size: 24px; color: var(--ink-3); margin-top: 4px; white-space: normal; }
+.anatomia-theme.theme-admin-classroom .material-hint { font-size: 24px; color: var(--ink-3); margin-top: 18px; white-space: normal; }
+.anatomia-theme.theme-admin-classroom .material-status-label { font-size: 26px; margin-top: 14px; white-space: normal; }
+.anatomia-theme.theme-admin-classroom .material-status-error { color: var(--danger); }
+.anatomia-theme.theme-admin-classroom .material-status-success { color: var(--success); }
+
+/* Quiet destructive text-button -> tonal red pill */
+.anatomia-theme.theme-admin-classroom .announcement-delete-button
+{
+    flex-shrink: 0;
+    height: 64px;
+    margin: 0;
+    padding: 0 28px;
+    border-width: 0;
+    border-radius: 32px;
+    background-color: var(--danger-soft);
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--danger);
+}
+
+.anatomia-theme.theme-admin-classroom .announcement-delete-button:hover { background-color: rgba(204, 64, 64, 0.18); }
+
+/* ---- toggle (accent when on) ---- */
+
+.anatomia-theme.theme-admin-classroom .toggle-switch { background-color: var(--track); }
+.anatomia-theme.theme-admin-classroom .toggle-on { background-color: var(--accent); }
+
+/* ---- QUIZZES: left-accent card = tag + status pill / title / actions ---- */
+
+.anatomia-theme.theme-admin-classroom .quizzes-list { flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .quiz-card
+{
+    flex-direction: column;
+    padding: 34px 34px 30px 38px;
+    border-radius: 30px;
+    margin-bottom: 20px;
+    border-left-width: 8px;
+    border-left-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-classroom .quiz-card-off { border-left-color: var(--ink-4); }
+
+.anatomia-theme.theme-admin-classroom .quiz-card-header-row { flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+.anatomia-theme.theme-admin-classroom .quiz-subject-tag
+{
+    flex-shrink: 1;
+    min-width: 0;
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    letter-spacing: 1.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anatomia-theme.theme-admin-classroom .quiz-card-off .quiz-subject-tag { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-classroom .quiz-status-pill
+{
+    flex-shrink: 0;
+    margin-left: 16px;
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--success);
+    background-color: var(--success-soft);
+}
+
+.anatomia-theme.theme-admin-classroom .quiz-status-pill-off { color: var(--ink-3); background-color: var(--sunken); }
+
+.anatomia-theme.theme-admin-classroom .quiz-card-title { font-size: 38px; -unity-font-style: bold; color: var(--ink); white-space: normal; margin-bottom: 4px; }
+
+.anatomia-theme.theme-admin-classroom .quiz-card-bottom-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding-top: 24px;
+    border-top-width: 1px;
+    border-top-color: var(--line);
+}
+
+.anatomia-theme.theme-admin-classroom .quiz-card-bottom-text { font-size: 26px; color: var(--ink-3); flex-shrink: 1; margin-right: 16px; }
+.quiz-card-actions { flex-direction: row; align-items: center; flex-shrink: 0; }
+
+.anatomia-theme.theme-admin-classroom .quiz-retake-button
+{
+    flex-shrink: 0;
+    height: 72px;
+    margin: 0 24px 0 0;
+    padding: 0 30px;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: var(--accent-soft);
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-classroom .quiz-retake-button:hover { background-color: var(--accent); color: white; }
+
+/* ---- ANALYTICS: metric tiles ---- */
+
+.metric-grid { flex-direction: row; flex-wrap: wrap; justify-content: space-between; margin-bottom: 4px; }
+
+.anatomia-theme.theme-admin-classroom .metric-tile
+{
+    width: 48.5%;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 30px;
+    margin-bottom: 20px;
+    border-radius: 30px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.anatomia-theme.theme-admin-classroom .metric-icon-box { width: 72px; height: 72px; min-width: 72px; border-radius: 22px; margin: 0 0 22px 0; }
+.anatomia-theme.theme-admin-classroom .metric-icon { width: 34px; height: 34px; }
+.anatomia-theme.theme-admin-classroom .metric-value { font-size: 54px; -unity-font-style: bold; color: var(--ink); letter-spacing: -0.8px; }
+.anatomia-theme.theme-admin-classroom .metric-label { font-size: 24px; color: var(--ink-3); margin-top: 2px; white-space: normal; }
+
+/* leaderboard header + "show to students" setting row */
+
+.anatomia-theme.theme-admin-classroom .top-performers-header-row { flex-direction: row; align-items: center; justify-content: flex-start; margin-bottom: 24px; }
+.anatomia-theme.theme-admin-classroom .top-performers-text-block { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; margin-right: 0; }
+
+.setting-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px;
+    margin-bottom: 24px;
+    border-radius: 26px;
+    background-color: var(--sunken);
+}
+
+.setting-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; margin-right: 20px; }
+.setting-title { font-size: 30px; -unity-font-style: bold; color: var(--ink); }
+.setting-hint { font-size: 23px; color: var(--ink-3); margin-top: 2px; white-space: normal; }
+
+.anatomia-theme.theme-admin-classroom .top-performers-empty-state { align-items: center; padding: 28px 0; }
+.anatomia-theme.theme-admin-classroom .top-performers-empty-text { font-size: 28px; color: var(--ink-3); }
+.anatomia-theme.theme-admin-classroom .top-performers-list { flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .performer-row
+{
+    flex-direction: row;
+    align-items: center;
+    padding: 22px 26px 22px 18px;
+    margin-bottom: 12px;
+    border-radius: 28px;
+    background-color: var(--sunken);
+}
+
+.anatomia-theme.theme-admin-classroom .performer-row-gold { background-color: rgb(254, 247, 214); }
+.anatomia-theme.theme-admin-classroom .performer-row-silver { background-color: rgb(238, 241, 246); }
+.anatomia-theme.theme-admin-classroom .performer-row-bronze { background-color: rgb(252, 238, 224); }
+
+.anatomia-theme.theme-admin-classroom .performer-rank-badge
+{
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    margin-right: 14px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-gold { background-color: rgb(234, 179, 8); }
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-silver { background-color: rgb(148, 163, 184); }
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-bronze { background-color: rgb(205, 127, 50); }
+
+.anatomia-theme.theme-admin-classroom .performer-rank-label { font-size: 30px; -unity-font-style: bold; color: var(--ink-3); }
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-gold .performer-rank-label,
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-silver .performer-rank-label,
+.anatomia-theme.theme-admin-classroom .performer-rank-badge-bronze .performer-rank-label { color: white; }
+
+.anatomia-theme.theme-admin-classroom .performer-avatar
+{
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    margin-right: 22px;
+    background-color: var(--surface-solid);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .performer-avatar-label { font-size: 28px; -unity-font-style: bold; color: var(--accent); }
+.anatomia-theme.theme-admin-classroom .performer-name-label { flex-grow: 1; flex-shrink: 1; min-width: 0; font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.anatomia-theme.theme-admin-classroom .performer-points-label { flex-shrink: 0; margin-left: 16px; font-size: 34px; -unity-font-style: bold; color: var(--accent); }
+.anatomia-theme.theme-admin-classroom .performer-row-gold .performer-points-label { color: rgb(161, 98, 7); }
+.anatomia-theme.theme-admin-classroom .performer-row-silver .performer-points-label { color: rgb(75, 85, 99); }
+.anatomia-theme.theme-admin-classroom .performer-row-bronze .performer-points-label { color: rgb(194, 65, 12); }
+
+/* ---- ANNOUNCEMENTS: left-accent card, date pill, delete ---- */
+
+.anatomia-theme.theme-admin-classroom .announcements-list { flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .announcement-card
+{
+    flex-direction: column;
+    padding: 32px 32px 28px 36px;
+    border-radius: 28px;
+    margin-bottom: 18px;
+    border-left-width: 8px;
+    border-left-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-classroom .announcement-header-row { flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.anatomia-theme.theme-admin-classroom .announcement-title-label { flex-grow: 1; flex-shrink: 1; min-width: 0; font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+
+.anatomia-theme.theme-admin-classroom .announcement-date-label
+{
+    flex-shrink: 0;
+    margin-left: 16px;
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 22px;
+    color: var(--ink-3);
+    background-color: var(--sunken);
+}
+
+.anatomia-theme.theme-admin-classroom .announcement-body-label { font-size: 30px; color: var(--ink-2); white-space: normal; }
+
+.anatomia-theme.theme-admin-classroom .announcement-card .announcement-delete-button
+{
+    align-self: flex-end;
+    margin-top: 22px;
+}
+
+/* ---- MATERIALS: type badge | title + meta | Open ---- */
+
+.anatomia-theme.theme-admin-classroom .materials-list { flex-direction: column; }
+
+.anatomia-theme.theme-admin-classroom .material-card
+{
+    flex-direction: column;
+    padding: 32px;
+    border-radius: 30px;
+    margin-bottom: 18px;
+}
+
+.anatomia-theme.theme-admin-classroom .material-card-header-row { flex-direction: row; align-items: center; }
+
+.anatomia-theme.theme-admin-classroom .material-type-badge
+{
+    width: 92px;
+    min-width: 92px;
+    height: 92px;
+    margin-right: 24px;
+    border-radius: 26px;
+    background-color: var(--accent-soft);
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-admin-classroom .material-card-text { flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.anatomia-theme.theme-admin-classroom .material-title-label { font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-admin-classroom .material-meta-label { font-size: 24px; color: var(--ink-3); margin-top: 4px; white-space: normal; }
+
+.anatomia-theme.theme-admin-classroom .material-description-label
+{
+    font-size: 28px;
+    color: var(--ink-2);
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top-width: 1px;
+    border-top-color: var(--line);
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-classroom .material-card-actions { flex-direction: row; align-items: center; flex-shrink: 0; margin-left: 20px; }
+
+.anatomia-theme.theme-admin-classroom .material-open-button
+{
+    height: 72px;
+    min-width: 132px;
+    margin: 0;
+    padding: 0 34px;
+    flex-shrink: 0;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+.anatomia-theme.theme-admin-classroom .material-open-button:hover { background-color: var(--accent); color: white; }
+.anatomia-theme.theme-admin-classroom .material-open-button:active { background-color: var(--accent-strong); color: white; }
+
+.anatomia-theme.theme-admin-classroom .material-card .material-card-delete { align-self: flex-end; margin-top: 22px; }
+
+/* ---- compact ---- */
+
+.compact .metric-value { font-size: 44px; }
+.compact .metric-tile { padding: 24px; }
+.compact .quiz-card-title { font-size: 32px; }
+.compact .material-title-label,
+.compact .announcement-title-label { font-size: 30px; }
+.compact .material-type-badge { width: 72px; min-width: 72px; height: 72px; font-size: 20px; }
+
+/* Icons for the Allow Retake modal (built in AdminRetakeExamModal.cs). Size and tint are set from code. */
+.rt-icon
+{
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.rt-icon-close { background-image: url("project://database/Assets/UI/Icons/close-icon.png"); }
+.rt-icon-reset { background-image: url("project://database/Assets/UI/Icons/reset-icon.png"); }
+.rt-icon-check { background-image: url("project://database/Assets/UI/Icons/check-icon.png"); }
+.rt-icon-attempt { background-image: url("project://database/Assets/UI/Icons/attempt-icon.png"); }
+.rt-icon-deadline { background-image: url("project://database/Assets/UI/Icons/deadline-icon.png"); }
+
+
+/* ---------- Overview tab ---------- */
+
+.overview-info-card { padding-top: 12px; padding-bottom: 12px; }
+
+.overview-info-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line);
+}
+
+.overview-info-row-last { border-bottom-width: 0; }
+
+.overview-info-label { font-size: 30px; color: var(--ink-3); flex-shrink: 0; margin-right: 24px; }
+
+.overview-info-value
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-text-align: middle-right;
+}
+
+.overview-status-pill
+{
+    padding: 8px 26px;
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+.overview-status-pill-locked
+{
+    background-color: var(--danger-soft);
+    color: var(--danger);
+}
+
+.overview-section-header
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.overview-section-title { flex-grow: 1; flex-shrink: 1; }
+
+.overview-see-all-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 8px 0 8px 16px;
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.overview-empty-card { align-items: center; padding-top: 40px; padding-bottom: 40px; }
+
+.overview-material-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line);
+}
+
+.overview-material-row-last { border-bottom-width: 0; }
+.overview-material-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; margin-right: 20px; }
+.overview-material-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.overview-material-meta { font-size: 26px; color: var(--ink-3); margin-top: 4px; }

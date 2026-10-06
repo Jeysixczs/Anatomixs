@@ -887,8 +887,8 @@ public class AnatomyScreenController : MonoBehaviour
             if (skeletonRoot != null)
             {
                 _boneTransformsByName.TryGetValue(info.boneName, out Transform boneTransform);
-                if (boneTransform == null)
-                    Debug.LogWarning($"AnatomyScreenController: no bone Transform named '{info.boneName}' found under skeletonRoot.");
+                //if (boneTransform == null)
+                    //Debug.LogWarning($"AnatomyScreenController: no bone Transform named '{info.boneName}' found under skeletonRoot.");
                 info.worldBone = boneTransform;
                 if (boneTransform != null)
                 {
@@ -899,7 +899,7 @@ public class AnatomyScreenController : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("[AnatomyScreenController] skeletonRoot is not assigned in the Inspector - no bone colliders will be created, so mesh-tap selection can't work.");
+                //Debug.LogWarning("[AnatomyScreenController] skeletonRoot is not assigned in the Inspector - no bone colliders will be created, so mesh-tap selection can't work.");
             }
         }
 
@@ -1130,7 +1130,7 @@ public class AnatomyScreenController : MonoBehaviour
         AnatomySystemConfig config = anatomySystems.Find(c => c != null && c.system == _currentSystem);
         if (config == null)
         {
-            Debug.LogWarning($"[AnatomyScreenController] No 'Anatomy Systems' entry configured for '{_currentSystem}' - leaving skeletonRoot/boneDatabaseJson as currently assigned in the Inspector.");
+            //Debug.LogWarning($"[AnatomyScreenController] No 'Anatomy Systems' entry configured for '{_currentSystem}' - leaving skeletonRoot/boneDatabaseJson as currently assigned in the Inspector.");
         }
         else
         {
@@ -1180,8 +1180,8 @@ public class AnatomyScreenController : MonoBehaviour
             var match = anatomySystems.Find(c => c != null && c.system == system);
             if (match == null || match.modelRoot == null)
             {
-                Debug.LogWarning($"[AnatomyScreenController] Combined systems included '{system}' but no " +
-                                  "'Anatomy Systems' entry with a Model Root is configured for it - skipping it.");
+                //Debug.LogWarning($"[AnatomyScreenController] Combined systems included '{system}' but no " +
+                                  //"'Anatomy Systems' entry with a Model Root is configured for it - skipping it.");
                 continue;
             }
             configs.Add(match);
@@ -1195,8 +1195,8 @@ public class AnatomyScreenController : MonoBehaviour
 
         if (configs.Count == 0)
         {
-            Debug.LogError("[AnatomyScreenController] Combined systems mode was requested but none of the listed " +
-                            "systems are configured - nothing will be shown.");
+            //Debug.LogError("[AnatomyScreenController] Combined systems mode was requested but none of the listed " +
+                            //"systems are configured - nothing will be shown.");
             return;
         }
 
@@ -1211,8 +1211,8 @@ public class AnatomyScreenController : MonoBehaviour
         var combinedSubtitle = _root?.Q<Label>("AppSubtitle");
         if (combinedSubtitle != null) combinedSubtitle.text = "ALL SYSTEMS";
 
-        Debug.Log($"[AnatomyScreenController] ResolveCombinedSystems: {configs.Count} model(s) active simultaneously " +
-                  $"(anchor '{anchor.system}').");
+        //Debug.Log($"[AnatomyScreenController] ResolveCombinedSystems: {configs.Count} model(s) active simultaneously " +
+                  //$"(anchor '{anchor.system}').");
     }
 
     // Loads the database JSON for every active root - just the one in the
@@ -1223,9 +1223,7 @@ public class AnatomyScreenController : MonoBehaviour
     {
         if (_combinedSystems.Count == 0)
         {
-            if (boneDatabaseJson == null)
-                Debug.LogWarning("[AnatomyScreenController] boneDatabaseJson is not assigned - the Info Panel will show fallback text for every bone.");
-            else
+            if (boneDatabaseJson != null)
                 _boneDatabaseService.Load(boneDatabaseJson.text);
             return;
         }
@@ -1236,8 +1234,8 @@ public class AnatomyScreenController : MonoBehaviour
             var config = anatomySystems.Find(c => c != null && c.system == _combinedSystems[i]);
             if (config == null || config.databaseJson == null)
             {
-                Debug.LogWarning($"[AnatomyScreenController] No Database Json configured for combined system " +
-                                  $"'{_combinedSystems[i]}' - its structures will show fallback info text.");
+                //Debug.LogWarning($"[AnatomyScreenController] No Database Json configured for combined system " +
+                                  //$"'{_combinedSystems[i]}' - its structures will show fallback info text.");
                 continue;
             }
 
@@ -1247,8 +1245,8 @@ public class AnatomyScreenController : MonoBehaviour
             loadedAny = true;
         }
 
-        if (!loadedAny)
-            Debug.LogWarning("[AnatomyScreenController] No databases could be loaded for the combined systems - the Info Panel will show fallback text for every structure.");
+        //if (!loadedAny)
+            //Debug.LogWarning("[AnatomyScreenController] No databases could be loaded for the combined systems - the Info Panel will show fallback text for every structure.");
     }
 
     // Clears every piece of runtime state that belongs to whichever
@@ -1298,7 +1296,7 @@ public class AnatomyScreenController : MonoBehaviour
 
         if (_activeRoots.Count == 0)
         {
-            Debug.LogWarning("[AnatomyScreenController] No active model root - no bones to populate.");
+            //Debug.LogWarning("[AnatomyScreenController] No active model root - no bones to populate.");
             return;
         }
 
@@ -1336,12 +1334,12 @@ public class AnatomyScreenController : MonoBehaviour
 
             if (_boneTransformsByName.ContainsKey(rawName))
             {
-                Debug.LogWarning($"[AnatomyScreenController] Duplicate bone GameObject name '{rawName}' under skeletonRoot - keeping the first one found.");
+                //Debug.LogWarning($"[AnatomyScreenController] Duplicate bone GameObject name '{rawName}' under skeletonRoot - keeping the first one found.");
                 continue;
             }
 
-            if (!found)
-                Debug.LogWarning($"[AnatomyScreenController] No BoneDatabase.json entry matches bone GameObject '{rawName}' - it will show fallback info.");
+            //if (!found)
+                //Debug.LogWarning($"[AnatomyScreenController] No BoneDatabase.json entry matches bone GameObject '{rawName}' - it will show fallback info.");
 
             _boneTransformsByName[rawName] = t;
             _boneTransformSet.Add(t);
@@ -1355,7 +1353,7 @@ public class AnatomyScreenController : MonoBehaviour
         }
 
 
-        Debug.Log($"[AnatomyScreenController] PopulateBoneDataFromSkeleton: found {boneData.Count} bone(s) under skeletonRoot.");
+        //Debug.Log($"[AnatomyScreenController] PopulateBoneDataFromSkeleton: found {boneData.Count} bone(s) under skeletonRoot.");
 
         // The database and the model are populated from two different
         // sources (JSON keys vs. GameObject names under skeletonRoot), so a
@@ -1382,18 +1380,18 @@ public class AnatomyScreenController : MonoBehaviour
         {
             foreach (var key in _structureFilter)
             {
-                bool matched = false;
+                //bool matched = false;
                 foreach (var info in boneData)
                 {
                     if (BoneDatabaseService.NormalizeKey(info.boneName) != key) continue;
-                    matched = true;
+                    //matched = true;
                     break;
                 }
 
-                if (!matched)
-                    Debug.LogWarning($"[AnatomyScreenController] Filtered structure '{key}' has no matching GameObject under " +
-                                      $"'{skeletonRoot.name}' - it will not be shown or selectable. Check the StructureKey spelling " +
-                                      "against the model's GameObject names.");
+                //if (!matched)
+                    //Debug.LogWarning($"[AnatomyScreenController] Filtered structure '{key}' has no matching GameObject under " +
+                                      //$"'{skeletonRoot.name}' - it will not be shown or selectable. Check the StructureKey spelling " +
+                                      //"against the model's GameObject names.");
             }
 
             return;
@@ -1409,11 +1407,11 @@ public class AnatomyScreenController : MonoBehaviour
             if (!matchedNormalizedKeys.Contains(BoneDatabaseService.NormalizeKey(entry.boneId)))
             {
                 unmatchedCount++;
-                Debug.LogWarning($"[AnatomyScreenController] BoneDatabase.json entry '{entry.boneId}' has no matching GameObject under skeletonRoot - it will never be selectable in this system's model.");
+                //Debug.LogWarning($"[AnatomyScreenController] BoneDatabase.json entry '{entry.boneId}' has no matching GameObject under skeletonRoot - it will never be selectable in this system's model.");
             }
         }
-        if (unmatchedCount > 0)
-            Debug.LogWarning($"[AnatomyScreenController] {unmatchedCount} BoneDatabase.json entrie(s) had no matching GameObject in the model (database has {_boneDatabaseService.Count} entries, model matched {boneData.Count}).");
+        //if (unmatchedCount > 0)
+            //Debug.LogWarning($"[AnatomyScreenController] {unmatchedCount} BoneDatabase.json entrie(s) had no matching GameObject in the model (database has {_boneDatabaseService.Count} entries, model matched {boneData.Count}).");
 
     }
 
@@ -1503,7 +1501,7 @@ public class AnatomyScreenController : MonoBehaviour
             // reassigning an existing mapping.
             if (_infoByCollider.TryGetValue(collider, out var existingInfo) && existingInfo != info)
             {
-                Debug.LogError($"[AnatomyScreenController] EnsureBoneCollider: collider on '{go.name}' is already registered to bone '{existingInfo.boneName}' - refusing to reassign it to '{info.boneName}'. This indicates two BoneInfo entries resolved to the same GameObject; check for overlapping/duplicate bone hierarchy.");
+                //Debug.LogError($"[AnatomyScreenController] EnsureBoneCollider: collider on '{go.name}' is already registered to bone '{existingInfo.boneName}' - refusing to reassign it to '{info.boneName}'. This indicates two BoneInfo entries resolved to the same GameObject; check for overlapping/duplicate bone hierarchy.");
                 continue;
             }
 
@@ -1519,13 +1517,13 @@ public class AnatomyScreenController : MonoBehaviour
             // leaving it to look like a script bug.
             if ((boneRaycastLayerMask.value & (1 << go.layer)) == 0)
             {
-                Debug.LogWarning($"[AnatomyScreenController] '{go.name}' is on layer '{LayerMask.LayerToName(go.layer)}' (index {go.layer}), which is NOT included in boneRaycastLayerMask (value {boneRaycastLayerMask.value}) - tapping this bone will never register. Add '{LayerMask.LayerToName(go.layer)}' to the Bone Raycast Layer Mask field on AnatomyScreenController in the Inspector.");
+                //Debug.LogWarning($"[AnatomyScreenController] '{go.name}' is on layer '{LayerMask.LayerToName(go.layer)}' (index {go.layer}), which is NOT included in boneRaycastLayerMask (value {boneRaycastLayerMask.value}) - tapping this bone will never register. Add '{LayerMask.LayerToName(go.layer)}' to the Bone Raycast Layer Mask field on AnatomyScreenController in the Inspector.");
             }
         }
 
         if (registered == 0)
         {
-            Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no collider registered for '{info.boneName}' - every mesh piece under it either belongs to another bone or had no sharedMesh. Mesh-tap selection won't work for this bone; hotspot-button selection is unaffected.");
+            //Debug.Log($"[AnatomyScreenController] EnsureBoneCollider: no collider registered for '{info.boneName}' - every mesh piece under it either belongs to another bone or had no sharedMesh. Mesh-tap selection won't work for this bone; hotspot-button selection is unaffected.");
         }
     }
 
@@ -1680,7 +1678,7 @@ public class AnatomyScreenController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[AnatomyScreenController] DisplayBoneInfo: no BoneDatabase.json entry for exact key '{rawBoneName}'.");
+            //Debug.LogWarning($"[AnatomyScreenController] DisplayBoneInfo: no BoneDatabase.json entry for exact key '{rawBoneName}'.");
             SetTitleText(rawBoneName);
             _descriptionLabel.text = BoneInfoNotAvailableText;
         }
@@ -1746,7 +1744,7 @@ public class AnatomyScreenController : MonoBehaviour
     //                 -> hide/isolation -> audio/TTS clip
     private void SelectStructure(BoneInfo info, BoneSelectionSource source)
     {
-        Debug.Log($"[AnatomyScreenController] SelectStructure ({source}): '{info.boneName}'");
+        //Debug.Log($"[AnatomyScreenController] SelectStructure ({source}): '{info.boneName}'");
 
         StopAudio();
 
@@ -1792,11 +1790,11 @@ public class AnatomyScreenController : MonoBehaviour
         Transform outlineTarget = selectedGameObject != null ? selectedGameObject.transform : info.worldBone;
         if (boneOutlineController != null)
         {
-            Debug.Log("[AnatomyScreenController] SelectStructure: " +
-                      $"selectedGameObject='{(selectedGameObject != null ? selectedGameObject.name : "<none>")}', " +
-                      $"info.worldBone='{(info.worldBone != null ? info.worldBone.name : "<none>")}' -> " +
-                      $"Final GameObject receiving the outline='{(outlineTarget != null ? outlineTarget.name : "<none>")}' " +
-                      $"(HierarchyPath='{GetHierarchyPath(outlineTarget)}').");
+            //Debug.Log("[AnatomyScreenController] SelectStructure: " +
+                      //$"selectedGameObject='{(selectedGameObject != null ? selectedGameObject.name : "<none>")}', " +
+                      //$"info.worldBone='{(info.worldBone != null ? info.worldBone.name : "<none>")}' -> " +
+                      //$"Final GameObject receiving the outline='{(outlineTarget != null ? outlineTarget.name : "<none>")}' " +
+                      //$"(HierarchyPath='{GetHierarchyPath(outlineTarget)}').");
             boneOutlineController.SetSelectedBone(outlineTarget);
         }
 
@@ -1854,11 +1852,11 @@ public class AnatomyScreenController : MonoBehaviour
     // clears a selection.
     private void TryPickBoneAt(Vector2 localPos)
     {
-        Debug.Log($"[AnatomyScreenController] TryPickBoneAt: tap at local {localPos}");
+        //Debug.Log($"[AnatomyScreenController] TryPickBoneAt: tap at local {localPos}");
 
         if (modelCamera == null || _bodyArea == null)
         {
-            Debug.Log("[AnatomyScreenController] TryPickBoneAt: aborted - modelCamera or _bodyArea is null.");
+            //Debug.Log("[AnatomyScreenController] TryPickBoneAt: aborted - modelCamera or _bodyArea is null.");
             return;
         }
 
@@ -1866,7 +1864,7 @@ public class AnatomyScreenController : MonoBehaviour
         float areaHeight = _bodyArea.resolvedStyle.height;
         if (float.IsNaN(areaWidth) || float.IsNaN(areaHeight) || areaWidth <= 0f || areaHeight <= 0f)
         {
-            Debug.Log($"[AnatomyScreenController] TryPickBoneAt: aborted - BodyArea not laid out yet (width={areaWidth}, height={areaHeight}).");
+            //Debug.Log($"[AnatomyScreenController] TryPickBoneAt: aborted - BodyArea not laid out yet (width={areaWidth}, height={areaHeight}).");
             return;
         }
 
@@ -1874,7 +1872,7 @@ public class AnatomyScreenController : MonoBehaviour
         float v = 1f - (localPos.y / areaHeight); // UI Toolkit Y is top-down; viewport Y is bottom-up
 
         Ray ray = modelCamera.ViewportPointToRay(new Vector3(u, v, 0f));
-        Debug.Log($"[AnatomyScreenController] TryPickBoneAt: viewport=({u:F3},{v:F3}) ray origin={ray.origin} dir={ray.direction} layerMask={boneRaycastLayerMask.value}");
+        //Debug.Log($"[AnatomyScreenController] TryPickBoneAt: viewport=({u:F3},{v:F3}) ray origin={ray.origin} dir={ray.direction} layerMask={boneRaycastLayerMask.value}");
 
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, boneRaycastLayerMask))
         {
@@ -1893,29 +1891,29 @@ public class AnatomyScreenController : MonoBehaviour
                     meshName = hitMeshFilter.sharedMesh.name;
             }
 
-            Debug.Log("[AnatomyScreenController] TryPickBoneAt: " +
-                      $"Clicked GameObject='{hitGameObject.name}', " +
-                      $"Hit Collider GameObject='{hit.collider.gameObject.name}', " +
-                      $"Renderer GameObject='{(hitRenderer != null ? hitRenderer.gameObject.name : "<none>")}', " +
-                      $"Mesh='{meshName}', " +
-                      $"HierarchyPath='{GetHierarchyPath(hitGameObject.transform)}' " +
-                      $"at {hit.point}.");
+            //Debug.Log("[AnatomyScreenController] TryPickBoneAt: " +
+                      //$"Clicked GameObject='{hitGameObject.name}', " +
+                      //$"Hit Collider GameObject='{hit.collider.gameObject.name}', " +
+                      //$"Renderer GameObject='{(hitRenderer != null ? hitRenderer.gameObject.name : "<none>")}', " +
+                      //$"Mesh='{meshName}', " +
+                      //$"HierarchyPath='{GetHierarchyPath(hitGameObject.transform)}' " +
+                      //$"at {hit.point}.");
 
             if (_infoByCollider.TryGetValue(hit.collider, out var info))
             {
-                Debug.Log($"[AnatomyScreenController] TryPickBoneAt: resolved collider -> bone '{info.boneName}' " +
-                          $"(worldBone='{(info.worldBone != null ? info.worldBone.name : "<null>")}') - " +
-                          $"Final GameObject receiving the outline='{(info.worldBone != null ? info.worldBone.name : "<none>")}'.");
+                //Debug.Log($"[AnatomyScreenController] TryPickBoneAt: resolved collider -> bone '{info.boneName}' " +
+                          //$"(worldBone='{(info.worldBone != null ? info.worldBone.name : "<null>")}') - " +
+                          //$"Final GameObject receiving the outline='{(info.worldBone != null ? info.worldBone.name : "<none>")}'.");
                 OnBoneColliderClicked(info, hitGameObject);
             }
             else
             {
-                Debug.Log($"[AnatomyScreenController] TryPickBoneAt: hit collider is NOT registered in _infoByCollider - it isn't one of the boneData meshes, or EnsureBoneCollider never ran for it.");
+                //Debug.Log($"[AnatomyScreenController] TryPickBoneAt: hit collider is NOT registered in _infoByCollider - it isn't one of the boneData meshes, or EnsureBoneCollider never ran for it.");
             }
         }
         else
         {
-            Debug.Log("[AnatomyScreenController] TryPickBoneAt: ray hit nothing (missed the model entirely, or matched no collider on boneRaycastLayerMask).");
+            //Debug.Log("[AnatomyScreenController] TryPickBoneAt: ray hit nothing (missed the model entirely, or matched no collider on boneRaycastLayerMask).");
         }
     }
 
@@ -2340,16 +2338,16 @@ public class AnatomyScreenController : MonoBehaviour
 
     private void OnBodyAreaPointerDown(PointerDownEvent evt)
     {
-        Debug.Log($"[AnatomyScreenController] OnBodyAreaPointerDown: target={evt.target}, pointerId={evt.pointerId}, position={evt.position}");
+        //Debug.Log($"[AnatomyScreenController] OnBodyAreaPointerDown: target={evt.target}, pointerId={evt.pointerId}, position={evt.position}");
 
         if (evt.target is Button)
         {
-            Debug.Log("[AnatomyScreenController] OnBodyAreaPointerDown: aborted - target is a Button (bone hotspot press).");
+            //Debug.Log("[AnatomyScreenController] OnBodyAreaPointerDown: aborted - target is a Button (bone hotspot press).");
             return;
         }
         if (modelCamera == null)
         {
-            Debug.Log("[AnatomyScreenController] OnBodyAreaPointerDown: aborted - modelCamera is null.");
+            //Debug.Log("[AnatomyScreenController] OnBodyAreaPointerDown: aborted - modelCamera is null.");
             return;
         }
 
@@ -2405,7 +2403,7 @@ public class AnatomyScreenController : MonoBehaviour
 
         bool wasSingleFingerTap = _activePointers.Count == 1 && _singleFingerMightBeTap;
         Vector2 tapPos = _singleFingerDownPos;
-        Debug.Log($"[AnatomyScreenController] OnBodyAreaPointerUp: activePointers={_activePointers.Count}, mightBeTap={_singleFingerMightBeTap}, wasSingleFingerTap={wasSingleFingerTap}");
+        //Debug.Log($"[AnatomyScreenController] OnBodyAreaPointerUp: activePointers={_activePointers.Count}, mightBeTap={_singleFingerMightBeTap}, wasSingleFingerTap={wasSingleFingerTap}");
 
         _activePointers.Remove(evt.pointerId);
         _bodyArea.ReleasePointer(evt.pointerId);
@@ -2599,7 +2597,7 @@ public class AnatomyScreenController : MonoBehaviour
             fitDistance * selectedBoneZoomDistance,
             selectedBoneMinZoomDistance,
             selectedBoneMaxZoomDistance);
-        Debug.Log($"[Focus] selectedBoneZoomDistance={selectedBoneZoomDistance}, fitDistance={fitDistance:F3}, raw={fitDistance * selectedBoneZoomDistance:F3}, clamped={desiredDistance:F3} (min={selectedBoneMinZoomDistance}, max={selectedBoneMaxZoomDistance})");
+        //Debug.Log($"[Focus] selectedBoneZoomDistance={selectedBoneZoomDistance}, fitDistance={fitDistance:F3}, raw={fitDistance * selectedBoneZoomDistance:F3}, clamped={desiredDistance:F3} (min={selectedBoneMinZoomDistance}, max={selectedBoneMaxZoomDistance})");
 
         // pivot = _orbitPivot + _panOffset (see ApplyOrbitCamera), so to
         // make the *effective* pivot equal the bone's center, the pan
@@ -2640,7 +2638,7 @@ public class AnatomyScreenController : MonoBehaviour
         {
             if (r.bounds.size.sqrMagnitude < 0.0001f)
             {
-                Debug.Log($"[AnatomyScreenController] skipping degenerate bounds: {r.name} center={r.bounds.center}");
+                //Debug.Log($"[AnatomyScreenController] skipping degenerate bounds: {r.name} center={r.bounds.center}");
                 continue;
             }
             candidates.Add(r);
@@ -2648,7 +2646,7 @@ public class AnatomyScreenController : MonoBehaviour
 
         if (candidates.Count == 0)
         {
-            Debug.LogWarning($"[AnatomyScreenController] ComputeSkeletonBounds: no renderers with real geometry found under '{skeletonRoot.name}' - falling back to a 1x1x1 box at {skeletonRoot.position}.");
+            //Debug.LogWarning($"[AnatomyScreenController] ComputeSkeletonBounds: no renderers with real geometry found under '{skeletonRoot.name}' - falling back to a 1x1x1 box at {skeletonRoot.position}.");
             return new Bounds(skeletonRoot.position, Vector3.one);
         }
 
@@ -2691,7 +2689,7 @@ public class AnatomyScreenController : MonoBehaviour
             var r = candidates[i];
             if (distances[i] > threshold)
             {
-                Debug.LogWarning($"[AnatomyScreenController] ComputeSkeletonBounds: rejecting outlier bone '{r.name}' - center={r.bounds.center}, distance={distances[i]:F2} from median {medianCenter} (threshold {threshold:F2}). This bone's Transform is very likely broken/mispositioned - check it in the model root hierarchy.");
+                //Debug.LogWarning($"[AnatomyScreenController] ComputeSkeletonBounds: rejecting outlier bone '{r.name}' - center={r.bounds.center}, distance={distances[i]:F2} from median {medianCenter} (threshold {threshold:F2}). This bone's Transform is very likely broken/mispositioned - check it in the model root hierarchy.");
                 continue;
             }
 
@@ -2706,9 +2704,9 @@ public class AnatomyScreenController : MonoBehaviour
             }
         }
 
-        Debug.Log($"[AnatomyScreenController] ComputeSkeletonBounds for '{skeletonRoot.name}': " +
-                  $"center={bounds.center}, size={bounds.size}, extentsMagnitude={bounds.extents.magnitude:F2}, " +
-                  $"renderers={candidates.Count}");
+        //Debug.Log($"[AnatomyScreenController] ComputeSkeletonBounds for '{skeletonRoot.name}': " +
+                  //$"center={bounds.center}, size={bounds.size}, extentsMagnitude={bounds.extents.magnitude:F2}, " +
+                  //$"renderers={candidates.Count}");
 
         return bounds;
     }
@@ -2878,7 +2876,7 @@ public class AnatomyScreenController : MonoBehaviour
             // search) but this bone has no counterpart under skeletonRoot -
             // there's nothing to select/highlight or focus the camera on,
             // so just show what info is available.
-            Debug.LogWarning($"[AnatomyScreenController] OnSearchResultSelected: '{info.boneName}' has no resolved worldBone - showing Info Panel without camera focus/highlight.");
+            //Debug.LogWarning($"[AnatomyScreenController] OnSearchResultSelected: '{info.boneName}' has no resolved worldBone - showing Info Panel without camera focus/highlight.");
             ShowBoneInfoByName(info.boneName);
         }
     }
@@ -3245,7 +3243,7 @@ public class AnatomyScreenController : MonoBehaviour
         var config = anatomySystems.Find(c => c != null && c.system == system);
         if (config == null || config.modelRoot == null || config.databaseJson == null)
         {
-            Debug.LogWarning($"[AnatomyScreenController] GetSelectableStructureKeys: no usable 'Anatomy Systems' entry for '{system}' - returning an empty set.");
+            //Debug.LogWarning($"[AnatomyScreenController] GetSelectableStructureKeys: no usable 'Anatomy Systems' entry for '{system}' - returning an empty set.");
             return result;
         }
 
@@ -3411,8 +3409,8 @@ public class AnatomyScreenController : MonoBehaviour
             }
         }
 
-        Debug.Log($"[AnatomyScreenController] ApplyStructureFilterVisibility: showing {boneData.Count} filtered structure(s) " +
-                  $"across {_activeRoots.Count} active model(s), hid {_filterHiddenRenderers.Count} other renderer(s).");
+        //Debug.Log($"[AnatomyScreenController] ApplyStructureFilterVisibility: showing {boneData.Count} filtered structure(s) " +
+                  //$"across {_activeRoots.Count} active model(s), hid {_filterHiddenRenderers.Count} other renderer(s).");
     }
 
     public void SetIsolateAnsweredActive(bool active, System.Func<BoneInfo, bool> isAnswered)

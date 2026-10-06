@@ -25,6 +25,10 @@ namespace Anatomia3D.UI
     [RequireComponent(typeof(UIDocument))]
     public class AdminCreateAccountController : MonoBehaviour
     {
+        [Header("Legacy dark theme")]
+        [Tooltip("These screens now use the light Anatomia auth theme. Turn this on only to paint the old purple gradients over it.")]
+        [SerializeField] private bool applyRuntimeGradients = false;
+
         [Header("Gradient colors (matches AdminLogin: purple -> pink)")]
         [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f);
         [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);
@@ -103,7 +107,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminCreateAccountController] OnEnable called");
+            //Debug.Log("[AdminCreateAccountController] OnEnable called");
 
             if (_document == null)
             {
@@ -128,7 +132,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminCreateAccountController] Root is null!");
+                //Debug.LogError("[AdminCreateAccountController] Root is null!");
                 return;
             }
 
@@ -202,7 +206,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminCreateAccountController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminCreateAccountController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -235,7 +239,7 @@ namespace Anatomia3D.UI
 
             _statusLabel = _screenRoot.Q<Label>("status-label");
 
-            Debug.Log($"[AdminCreateAccountController] Found create button: {_createAccountButton != null}, back link: {_backToAdminLoginButton != null}");
+            //Debug.Log($"[AdminCreateAccountController] Found create button: {_createAccountButton != null}, back link: {_backToAdminLoginButton != null}");
         }
 
         private void WireCallbacks()
@@ -436,20 +440,20 @@ namespace Anatomia3D.UI
 
         private void OnBackToAdminLoginClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminCreateAccountController] Navigating back to admin login");
+            //Debug.Log("[AdminCreateAccountController] Navigating back to admin login");
             UIManager.Instance.ShowAdminLogin();
         }
 
         private void OnGoogleSignupClicked(ClickEvent evt)
         {
             SetStatus("Connecting to Google...");
-            Debug.Log("[AdminCreateAccountController] Google signup tapped.");
+            //Debug.Log("[AdminCreateAccountController] Google signup tapped.");
 
             // Full-screen loading overlay until LoginWithGoogle calls back (it always does,
             // including on cancel/error); the timeout is only a safety net for a hung request.
             _loadingOverlay?.ShowWithTimeout("Connecting to Google...", GoogleRequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[AdminCreateAccountController] Timed out waiting for Google sign-in - closing the overlay.");
+                //Debug.LogWarning("[AdminCreateAccountController] Timed out waiting for Google sign-in - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _googleSignupButton.SetEnabled(true);
             }, GoogleSlowHint);
@@ -461,7 +465,7 @@ namespace Anatomia3D.UI
 
                 if (success)
                 {
-                    Debug.Log("[AdminCreateAccountController] Google account signed up/in successfully");
+                    //Debug.Log("[AdminCreateAccountController] Google account signed up/in successfully");
                     SetStatus("Signed in with Google! Redirecting...");
                     // Keep the overlay up through the 1s redirect delay (same as the email flow).
                     _loadingOverlay?.Show("Signed in with Google! Redirecting...");
@@ -470,7 +474,7 @@ namespace Anatomia3D.UI
                 else
                 {
                     _loadingOverlay?.Hide();
-                    Debug.LogWarning($"[AdminCreateAccountController] Google signup failed: {errorMessage}");
+                    //Debug.LogWarning($"[AdminCreateAccountController] Google signup failed: {errorMessage}");
                     SetStatus(errorMessage ?? "Google sign-in failed. Please try again.");
                 }
             });
@@ -529,7 +533,7 @@ namespace Anatomia3D.UI
 
                 case EmailDomainDnsChecker.Result.Unknown:
                     // Couldn't verify (offline/timeout) - don't block a real user; Firebase decides.
-                    Debug.LogWarning("[CreateAccount] Domain lookup inconclusive - continuing with sign-up.");
+                    //Debug.LogWarning("[CreateAccount] Domain lookup inconclusive - continuing with sign-up.");
                     break;
             }
 
@@ -543,7 +547,7 @@ namespace Anatomia3D.UI
 
             _loadingOverlay?.ShowWithTimeout("Creating account...", RequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[AdminCreateAccountController] Timed out waiting for the server - closing the overlay.");
+                //Debug.LogWarning("[AdminCreateAccountController] Timed out waiting for the server - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again. If your account was created, try signing in.");
                 _createAccountButton.SetEnabled(true);
             });
@@ -557,7 +561,7 @@ namespace Anatomia3D.UI
                 {
                     if (success)
                     {
-                        Debug.Log("[CreateAccountController] Account created successfully");
+                        //Debug.Log("[CreateAccountController] Account created successfully");
                         SetStatus("Account created successfully! Redirecting...");
                         _loadingOverlay.Show("Account created successfully! Redirecting...");
                         Invoke(nameof(RedirectToAdminLogin), 1.5f);
@@ -567,7 +571,7 @@ namespace Anatomia3D.UI
                         // Dismiss the overlay on failure too - it covers the whole screen and
                         // blocks every tap while it is showing.
                         _loadingOverlay?.Hide();
-                        Debug.LogWarning($"[AdminCreateAccountController] Account creation failed: {errorMessage}");
+                        //Debug.LogWarning($"[AdminCreateAccountController] Account creation failed: {errorMessage}");
                         SetStatus($"Account creation failed: {errorMessage}");
                         _createAccountButton.SetEnabled(true);
                     }
@@ -622,6 +626,8 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!applyRuntimeGradients) return;
+
             if (_screenRoot != null)
             {
                 if (_backgroundGradientTexture != null) Destroy(_backgroundGradientTexture);

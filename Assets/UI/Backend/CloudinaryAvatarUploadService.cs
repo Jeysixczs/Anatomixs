@@ -56,6 +56,11 @@ namespace Anatomia3D.Backend
                  "blank if your preset doesn't use one.")]
         [SerializeField] private string assetFolder = "avatars";
 
+        [Tooltip("Cloudinary 'Asset folder' for gamification badge images that teachers upload " +
+                 "(e.g. 'badges/{teacherUid}_{timestamp}'). Uses the same unsigned upload preset " +
+                 "as avatars, so that preset must allow this folder (or not restrict folders).")]
+        [SerializeField] private string badgeAssetFolder = "badges";
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -75,34 +80,66 @@ namespace Anatomia3D.Backend
         {
             if (imageBytes == null || imageBytes.Length == 0)
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No image bytes provided - skipping upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No image bytes provided - skipping upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(uploadPreset))
             {
-                Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
+                //Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(studentUid))
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No studentUid - skipping upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No studentUid - skipping upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
-            StartCoroutine(UploadRoutine(imageBytes, studentUid, onComplete));
+            StartCoroutine(UploadRoutine(imageBytes, studentUid, assetFolder, $"{studentUid}_avatar.jpg", "image/jpeg", true, onComplete));
         }
 
-        private IEnumerator UploadRoutine(byte[] imageBytes, string studentUid, Action<bool, string> onComplete)
+        /// <summary>Uploads a badge image (PNG recommended - keeps transparency) for a
+        /// teacher's gamification badge. onComplete fires exactly once with
+        /// (true, secure_url) on success or (false, null) on failure. The caller
+        /// stores secure_url on the badge (AdminGamificationService writes it to
+        /// Firestore as the badge's iconUrl when settings are saved). Unlike avatars,
+        /// nothing is cached on disk.</summary>
+        public void UploadBadgeIcon(byte[] imageBytes, string ownerUid, Action<bool, string> onComplete)
+        {
+            if (imageBytes == null || imageBytes.Length == 0)
+            {
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No badge image bytes provided - skipping upload.");
+                onComplete?.Invoke(false, null);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(uploadPreset))
+            {
+                //Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
+                onComplete?.Invoke(false, null);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(ownerUid))
+            {
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No ownerUid - skipping badge upload.");
+                onComplete?.Invoke(false, null);
+                return;
+            }
+
+            StartCoroutine(UploadRoutine(imageBytes, ownerUid, badgeAssetFolder, $"{ownerUid}_badge.png", "image/png", false, onComplete));
+        }
+
+        private IEnumerator UploadRoutine(byte[] imageBytes, string studentUid, string folder, string fileName, string mimeType, bool cacheLocally, Action<bool, string> onComplete)
         {
             string url = $"https://api.cloudinary.com/v1_1/{cloudName}/image/upload";
 
             var form = new WWWForm();
-            form.AddBinaryData("file", imageBytes, $"{studentUid}_avatar.jpg", "image/jpeg");
+            form.AddBinaryData("file", imageBytes, fileName, mimeType);
             form.AddField("upload_preset", uploadPreset);
 
             // IMPORTANT: Cloudinary permanently ignores "overwrite" on UNSIGNED
@@ -136,9 +173,9 @@ namespace Anatomia3D.Backend
             // harmless: nothing in the app reads it once Firestore's avatarUrl
             // has moved on to the new one.
             string uniqueSuffix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            string publicId = string.IsNullOrEmpty(assetFolder)
+            string publicId = string.IsNullOrEmpty(folder)
                 ? $"{studentUid}_{uniqueSuffix}"
-                : $"{assetFolder}/{studentUid}_{uniqueSuffix}";
+                : $"{folder}/{studentUid}_{uniqueSuffix}";
             form.AddField("public_id", publicId);
 
             using (var request = UnityWebRequest.Post(url, form))
@@ -147,8 +184,8 @@ namespace Anatomia3D.Backend
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload failed for '{studentUid}': " +
-                                      $"{request.error} ({request.downloadHandler?.text})");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload failed for '{studentUid}': " +
+                                      //$"{request.error} ({request.downloadHandler?.text})");
                     onComplete?.Invoke(false, null);
                     yield break;
                 }
@@ -156,7 +193,7 @@ namespace Anatomia3D.Backend
                 string secureUrl = ExtractSecureUrl(request.downloadHandler.text);
                 if (string.IsNullOrEmpty(secureUrl))
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload succeeded but no secure_url in response: {request.downloadHandler.text}");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload succeeded but no secure_url in response: {request.downloadHandler.text}");
                     onComplete?.Invoke(false, null);
                     yield break;
                 }
@@ -168,7 +205,7 @@ namespace Anatomia3D.Backend
                 // upload (and therefore the eventual Firestore avatarUrl write)
                 // has actually succeeded, so the local cache never gets ahead of
                 // what's really saved.
-                SaveAvatarLocally(imageBytes, studentUid);
+                if (cacheLocally) SaveAvatarLocally(imageBytes, studentUid);
 
                 // Belt-and-braces: with a unique public_id per upload (above) this
                 // should never happen again, but if it ever does, "existing":true
@@ -177,8 +214,8 @@ namespace Anatomia3D.Backend
                 // with a stale photo.
                 if (ResponseIndicatesExistingAsset(request.downloadHandler.text))
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Cloudinary reported 'existing: true' for '{studentUid}' - " +
-                                      "the returned secure_url may point at a pre-existing asset instead of this upload.");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Cloudinary reported 'existing: true' for '{studentUid}' - " +
+                                      //"the returned secure_url may point at a pre-existing asset instead of this upload.");
                 }
 
                 onComplete?.Invoke(true, secureUrl);
@@ -197,9 +234,9 @@ namespace Anatomia3D.Backend
                     return url;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not parse Cloudinary response: {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not parse Cloudinary response: {e.Message}");
             }
 
             return null;
@@ -244,9 +281,9 @@ namespace Anatomia3D.Backend
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 File.WriteAllBytes(path, imageBytes);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not cache avatar locally for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not cache avatar locally for '{uid}': {e.Message}");
             }
         }
 
@@ -268,9 +305,9 @@ namespace Anatomia3D.Backend
                 imageBytes = File.ReadAllBytes(path);
                 return imageBytes != null && imageBytes.Length > 0;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not read cached avatar for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not read cached avatar for '{uid}': {e.Message}");
                 imageBytes = null;
                 return false;
             }
@@ -290,9 +327,9 @@ namespace Anatomia3D.Backend
                 string path = GetLocalAvatarPath(uid);
                 if (File.Exists(path)) File.Delete(path);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not delete cached avatar for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not delete cached avatar for '{uid}': {e.Message}");
             }
         }
     }

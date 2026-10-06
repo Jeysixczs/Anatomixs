@@ -1,65 +1,75 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
-    <Style src="project://database/Assets/UI/StudentLogin/StudentLogin.uss?fileID=7433441132597879392&amp;guid=e188d20bee8fcba44a3b70d245d72c03&amp;type=3#StudentLogin"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaAuth.uss?fileID=7433441132597879392&amp;guid=7b1848b4e2e9bc34fbd3c5e0e140870d&amp;type=3#AnatomiaAuth"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme auth-root theme-create-account screen-root">
+        <ui:VisualElement picking-mode="Ignore" class="auth-top-gradient"/>
         <ui:VisualElement name="screen-container" class="screen-container">
-            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="scroll-view">
+            <ui:ScrollView name="scroll-view" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" class="scroll-view">
                 <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                    <ui:VisualElement name="logo-circle" class="logo-circle" style="background-image: url(&quot;project://database/Assets/Sprite/Anatomia-logo.png?fileID=2800000&amp;guid=31a97ab8e70a6184f9b8d05c71d9233b&amp;type=3#Anatomia-logo&quot;);"/>
-                    <ui:Label text="Anatomia 3D" class="app-title"/>
-                    <ui:Label text="Create your student account" class="app-subtitle"/>
-                    <ui:VisualElement name="create-account-card" class="create-account-card">
-                        <ui:Label text="First Name" class="field-label"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-user" style="background-image: url(&quot;project://database/Assets/UI/Icons/user-icon.png?fileID=2800000&amp;guid=55a2369fdf4771848b76ae9f9077db8e&amp;type=3#user-icon&quot;);"/>
-                            <ui:TextField name="firstname-field" placeholder="John" class="input-field"/>
+                    <ui:VisualElement class="auth-hero">
+                        <ui:VisualElement class="auth-hero-inner">
+                            <ui:VisualElement class="auth-brand"/>
+                            <ui:Label text="Create account" class="auth-headline"/>
+                            <ui:Label text="Sign up and start learning anatomy in 3D today." class="app-subtitle"/>
                         </ui:VisualElement>
-                        <ui:Label name="firstname-error" class="field-error hidden"/>
-                        <ui:Label text="Last Name" class="field-label field-label-spaced"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-user" style="background-image: url(&quot;project://database/Assets/UI/Icons/user-icon.png?fileID=2800000&amp;guid=55a2369fdf4771848b76ae9f9077db8e&amp;type=3#user-icon&quot;);"/>
-                            <ui:TextField name="lastname-field" placeholder="Doe" class="input-field"/>
-                        </ui:VisualElement>
-                        <ui:Label name="lastname-error" class="field-error hidden"/>
-                        <ui:Label text="Email Address" class="field-label field-label-spaced"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-email"/>
-                            <ui:TextField name="email-field" placeholder="student@example.com" class="input-field"/>
-                        </ui:VisualElement>
-                        <ui:Label name="email-error" class="field-error hidden"/>
-                        <ui:Label text="Password" class="field-label field-label-spaced"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-lock"/>
-                            <ui:TextField name="password-field" is-password-field="true" placeholder="Enter password" class="input-field input-field-with-right-icon"/>
-                            <ui:Button name="toggle-password-button" class="input-icon-button">
-                                <ui:VisualElement class="input-icon icon-eye"/>
-                            </ui:Button>
-                        </ui:VisualElement>
-                        <ui:Label name="password-error" class="field-error hidden"/>
-                        <ui:Label text="Confirm Password" class="field-label field-label-spaced"/>
-                        <ui:VisualElement class="input-container">
-                            <ui:VisualElement class="input-icon icon-lock"/>
-                            <ui:TextField name="confirm-password-field" is-password-field="true" placeholder="Confirm password" class="input-field input-field-with-right-icon"/>
-                            <ui:Button name="toggle-confirm-password-button" class="input-icon-button">
-                                <ui:VisualElement class="input-icon icon-eye"/>
-                            </ui:Button>
-                        </ui:VisualElement>
-                        <ui:Label name="confirm-password-error" class="field-error hidden"/>
-                        <ui:Button name="create-account-button" text="Create Account" class="create-account-button"/>
-                        <ui:VisualElement class="divider-row">
-                            <ui:VisualElement class="divider-line"/>
-                            <ui:Label text="OR" class="divider-text"/>
-                            <ui:VisualElement class="divider-line"/>
-                        </ui:VisualElement>
-                        <ui:Button name="google-signup-button" class="google-button">
-                            <ui:VisualElement class="icon-google"/>
-                            <ui:Label text="Continue with Google" class="google-button-text"/>
-                        </ui:Button>
                     </ui:VisualElement>
-                    <ui:VisualElement class="bottom-links">
-                        <ui:Label text="Already have an account?" class="bottom-link-text"/>
-                        <ui:Button name="back-to-login-button" text="Sign In" class="bottom-link-button"/>
+                    <ui:VisualElement class="auth-card-wrap">
+                        <ui:VisualElement name="create-account-card" class="auth-card">
+                            <ui:VisualElement class="field-row">
+                                <ui:VisualElement class="field-col">
+                                    <ui:Label text="First name" class="field-label"/>
+                                    <ui:VisualElement class="input-container">
+                                        <ui:TextField name="firstname-field" placeholder-text="John" hide-placeholder-on-focus="true" class="input-field input-field-plain"/>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement class="field-col field-col-gap">
+                                    <ui:Label text="Last name" class="field-label"/>
+                                    <ui:VisualElement class="input-container">
+                                        <ui:TextField name="lastname-field" placeholder-text="Doe" hide-placeholder-on-focus="true" class="input-field input-field-plain"/>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Label name="firstname-error" class="field-error hidden"/>
+                            <ui:Label name="lastname-error" class="field-error hidden"/>
+                            <ui:Label text="Email" class="field-label field-label-spaced"/>
+                            <ui:VisualElement class="input-container">
+                                <ui:TextField name="email-field" placeholder-text="Enter your email" hide-placeholder-on-focus="true" class="input-field"/>
+                            </ui:VisualElement>
+                            <ui:Label name="email-error" class="field-error hidden"/>
+                            <ui:Label text="Password" class="field-label field-label-spaced"/>
+                            <ui:VisualElement class="input-container">
+                                <ui:TextField name="password-field" password="true" placeholder-text="Create a password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
+                                <ui:Button name="toggle-password-button" class="input-icon-button icon-eye"/>
+                            </ui:VisualElement>
+                            <ui:Label text="Use 8+ characters with upper and lower case letters and a number." class="field-hint"/>
+                            <ui:Label name="password-error" class="field-error hidden"/>
+                            <ui:Label text="Confirm password" class="field-label field-label-spaced"/>
+                            <ui:VisualElement class="input-container">
+                                <ui:TextField name="confirm-password-field" password="true" placeholder-text="Re-enter your password" hide-placeholder-on-focus="true" class="input-field input-field-with-right-icon"/>
+                                <ui:Button name="toggle-confirm-password-button" class="input-icon-button icon-eye"/>
+                            </ui:VisualElement>
+                            <ui:Label name="confirm-password-error" class="field-error hidden"/>
+                            <ui:Button name="create-account-button" text="Create account" class="create-account-button"/>
+                            <ui:VisualElement class="divider-row">
+                                <ui:VisualElement class="divider-line"/>
+                                <ui:Label text="Or" class="divider-text"/>
+                                <ui:VisualElement class="divider-line"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="social-row">
+                                <ui:Button name="google-signup-button" class="google-button">
+                                    <ui:VisualElement picking-mode="Ignore" class="icon-google"/>
+                                    <ui:Label text="Continue with Google" picking-mode="Ignore" class="google-button-text"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                            <ui:Label name="status-label" class="status-label hidden"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label name="status-label" class="status-label hidden"/>
+                    <ui:VisualElement class="auth-foot">
+                        <ui:VisualElement class="auth-foot-row">
+                            <ui:Label text="Already have an account?" class="auth-foot-text"/>
+                            <ui:Button name="back-to-login-button" text="Sign in" class="auth-foot-link"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:ScrollView>
         </ui:VisualElement>

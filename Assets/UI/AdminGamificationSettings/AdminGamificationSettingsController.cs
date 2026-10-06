@@ -16,7 +16,9 @@ namespace Anatomia3D.UI
     ///  - Points Configuration: Easy/Medium/Hard question point values, kept
     ///    in sync with the Preview card as the fields change
     ///  - Badges: renders the current badge list, "Add Badge" opens a modal
-    ///    with name/points/icon-emoji fields and a click-to-pick icon grid;
+    ///    with name/points fields, a click-to-pick preset icon grid (project icon
+    ///    PNGs, no emoji) and an optional "Choose Image" upload to Cloudinary -
+    ///    the resulting URL is stored on the badge and saved to Firestore (iconUrl);
     ///    each row has a delete (trash) button. Badges only apply to the
     ///    classroom(s) the signed-in admin/teacher owns.
     ///  - Level Progression: read-only. Levels are global and fixed across
@@ -50,14 +52,18 @@ namespace Anatomia3D.UI
             public string BadgeId;
             public string Name;
             public int PointsRequired;
-            public string IconEmoji;
+            /// <summary>Preset icon key (see BadgeIcons.PresetKeys). Used when IconUrl is empty.</summary>
+            public string IconKey;
+            /// <summary>Cloudinary secure_url of a teacher-uploaded image. Wins over IconKey when set.</summary>
+            public string IconUrl;
 
-            public BadgeData(string name, int pointsRequired, string iconEmoji, string badgeId = "")
+            public BadgeData(string name, int pointsRequired, string iconKey, string iconUrl = "", string badgeId = "")
             {
                 BadgeId = badgeId;
                 Name = name;
                 PointsRequired = pointsRequired;
-                IconEmoji = iconEmoji;
+                IconKey = iconKey;
+                IconUrl = iconUrl;
             }
         }
 
@@ -87,21 +93,8 @@ namespace Anatomia3D.UI
         [Header("Compact breakpoint (px, reference is 1080x1920)")]
         [SerializeField] private int compactWidthThreshold = 900;
 
-        private static readonly string[] IconChoices =
-        {
-            "\U0001F3C6", // 🏆 trophy
-            "\U0001F31F", // 🌟 star
-            "\u2B50",     // ⭐ star2
-            "\U0001F396", // 🎖️ medal
-            "\U0001F3C5", // 🏅 medal2
-            "\U0001F451", // 👑 crown
-            "\U0001F48E", // 💎 diamond
-            "\U0001F3AF", // 🎯 target
-            "\U0001F680", // 🚀 rocket
-            "\U0001F525", // 🔥 fire
-            "\U0001F44D", // 👍 thumbs up
-            "\U0001F9E0", // 🧠 brain
-        };
+        // Preset icon keys shared with the student screens (Backend/BadgeIcons.cs).
+        private static string[] IconChoices => BadgeIcons.PresetKeys;
 
         private UIDocument _document;
         private VisualElement _root;
@@ -164,12 +157,20 @@ namespace Anatomia3D.UI
         private string _selectedBadgeIcon;
         private readonly List<VisualElement> _badgeIconGridItems = new List<VisualElement>();
 
+        // Optional custom badge image (picked from the gallery, uploaded to Cloudinary on "Add Badge")
+        private VisualElement _badgeCustomPreview;
+        private Button _badgeUploadButton;
+        private Button _badgeRemoveImageButton;
+        private byte[] _pendingBadgeImageBytes;
+        private Texture2D _pendingBadgeTexture;
+        private bool _isUploadingBadge;
+
         private readonly List<BadgeData> _currentBadges = new List<BadgeData>
         {
-            new BadgeData("Beginner", 100, "\U0001F31F"),
-            new BadgeData("Quiz Master", 500, "\U0001F3C6"),
-            new BadgeData("Anatomist", 1000, "\U0001F9E0"),
-            new BadgeData("Expert", 2000, "\U0001F451"),
+            new BadgeData("Beginner", 100, "medal"),
+            new BadgeData("Quiz Master", 500, "trophy"),
+            new BadgeData("Anatomist", 1000, "brain"),
+            new BadgeData("Expert", 2000, "shield"),
         };
 
         /// <summary>Snapshot of _currentBadges as of the last load/save, used by
@@ -211,7 +212,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminGamificationSettingsController] OnEnable called");
+            //Debug.Log("[AdminGamificationSettingsController] OnEnable called");
 
             if (_document == null)
             {
@@ -236,7 +237,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminGamificationSettingsController] Root is null!");
+                //Debug.LogError("[AdminGamificationSettingsController] Root is null!");
                 return;
             }
 
@@ -293,8 +294,8 @@ namespace Anatomia3D.UI
         {
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - " +
-                    "showing built-in defaults only.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - " +
+                    //"showing built-in defaults only.");
                 return;
             }
 
@@ -304,7 +305,7 @@ namespace Anatomia3D.UI
 
                 SetPointsConfiguration(settings.EasyPoints, settings.MediumPoints, settings.HardPoints);
 
-                var badges = settings.Badges.ConvertAll(b => new BadgeData(b.Name, b.PointsRequired, b.IconEmoji, b.BadgeId));
+                var badges = settings.Badges.ConvertAll(b => new BadgeData(b.Name, b.PointsRequired, b.IconKey, b.IconUrl, b.BadgeId));
                 SetBadges(badges);
 
                 var levels = settings.Levels.ConvertAll(l => new LevelData(l.LevelNumber, l.Title, l.PointsRequired));
@@ -321,6 +322,7 @@ namespace Anatomia3D.UI
             if (_addBadgeButtonGradientTexture != null) { Destroy(_addBadgeButtonGradientTexture); _addBadgeButtonGradientTexture = null; }
             if (_badgeModalSubmitGradientTexture != null) { Destroy(_badgeModalSubmitGradientTexture); _badgeModalSubmitGradientTexture = null; }
             if (_previewGradientTexture != null) { Destroy(_previewGradientTexture); _previewGradientTexture = null; }
+            ClearPendingBadgeImage();
         }
 
         private void UnregisterCallbacks()
@@ -344,6 +346,8 @@ namespace Anatomia3D.UI
             _addBadgeCloseButton?.UnregisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeCancelButton?.UnregisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeSubmitButton?.UnregisterCallback<ClickEvent>(OnAddBadgeSubmitClicked);
+            _badgeUploadButton?.UnregisterCallback<ClickEvent>(OnChooseBadgeImageClicked);
+            _badgeRemoveImageButton?.UnregisterCallback<ClickEvent>(OnRemoveBadgeImageClicked);
 
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -354,7 +358,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminGamificationSettingsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -397,10 +401,13 @@ namespace Anatomia3D.UI
             _badgePointsError = _screenRoot.Q<Label>("badge-points-error");
             _badgeIconGrid = _screenRoot.Q<VisualElement>("badge-icon-grid");
             _addBadgeStatusLabel = _screenRoot.Q<Label>("add-badge-status-label");
+            _badgeCustomPreview = _screenRoot.Q<VisualElement>("badge-custom-preview");
+            _badgeUploadButton = _screenRoot.Q<Button>("badge-upload-image-button");
+            _badgeRemoveImageButton = _screenRoot.Q<Button>("badge-remove-image-button");
 
             BuildBadgeIconGrid();
 
-            Debug.Log($"[AdminGamificationSettingsController] Found badges list: {_badgesList != null}, levels list: {_levelsList != null}");
+            //Debug.Log($"[AdminGamificationSettingsController] Found badges list: {_badgesList != null}, levels list: {_levelsList != null}");
         }
 
         private void WireCallbacks()
@@ -424,6 +431,8 @@ namespace Anatomia3D.UI
             _addBadgeCloseButton?.RegisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeCancelButton?.RegisterCallback<ClickEvent>(OnAddBadgeCancelClicked);
             _addBadgeSubmitButton?.RegisterCallback<ClickEvent>(OnAddBadgeSubmitClicked);
+            _badgeUploadButton?.RegisterCallback<ClickEvent>(OnChooseBadgeImageClicked);
+            _badgeRemoveImageButton?.RegisterCallback<ClickEvent>(OnRemoveBadgeImageClicked);
 
             if (_screenRoot != null)
             {
@@ -568,9 +577,7 @@ namespace Anatomia3D.UI
 
             var iconCircle = new VisualElement();
             iconCircle.AddToClassList("item-icon-circle");
-            var iconLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
-            iconLabel.AddToClassList("item-icon-emoji");
-            iconCircle.Add(iconLabel);
+            iconCircle.Add(BadgeIconView.Create(badge.IconKey, badge.IconUrl, 44));
 
             var textCol = new VisualElement();
             textCol.AddToClassList("item-text-col");
@@ -581,9 +588,11 @@ namespace Anatomia3D.UI
             textCol.Add(nameLabel);
             textCol.Add(subtitleLabel);
 
-            var deleteButton = new Button(() => OnDeleteBadgeClicked(badge)) { text = "\U0001F5D1" };
+            var deleteButton = new Button(() => OnDeleteBadgeClicked(badge));
             deleteButton.AddToClassList("item-delete-button");
-            deleteButton.Q<Label>()?.AddToClassList("item-delete-icon");
+            var deleteArt = new VisualElement { pickingMode = PickingMode.Ignore };
+            deleteArt.AddToClassList("item-delete-art");
+            deleteButton.Add(deleteArt);
 
             row.Add(iconCircle);
             row.Add(textCol);
@@ -594,7 +603,7 @@ namespace Anatomia3D.UI
 
         private void OnDeleteBadgeClicked(BadgeData badge)
         {
-            Debug.Log($"[AdminGamificationSettingsController] Deleting badge '{badge.Name}'.");
+            //Debug.Log($"[AdminGamificationSettingsController] Deleting badge '{badge.Name}'.");
             _currentBadges.Remove(badge);
             RefreshBadgesUI();
             RefreshPreview();
@@ -657,9 +666,7 @@ namespace Anatomia3D.UI
                 var item = new Button(() => OnBadgeIconPicked(capturedIcon));
                 item.AddToClassList("icon-grid-item");
 
-                var emojiLabel = new Label(icon);
-                emojiLabel.AddToClassList("icon-grid-item-emoji");
-                item.Add(emojiLabel);
+                item.Add(BadgeIconView.Create(icon, null, 52));
 
                 _badgeIconGrid.Add(item);
                 _badgeIconGridItems.Add(item);
@@ -670,6 +677,8 @@ namespace Anatomia3D.UI
 
         private void OnBadgeIconPicked(string icon)
         {
+            // Picking a preset replaces any custom image chosen earlier.
+            ClearPendingBadgeImage();
             _selectedBadgeIcon = icon;
 
             for (int i = 0; i < _badgeIconGridItems.Count; i++)
@@ -695,13 +704,20 @@ namespace Anatomia3D.UI
 
         private void CloseAddBadgeModal()
         {
+            ClearPendingBadgeImage();
             _addBadgeModalOverlay?.AddToClassList("hidden");
         }
 
-        private void OnAddBadgeCancelClicked(ClickEvent evt) => CloseAddBadgeModal();
+        private void OnAddBadgeCancelClicked(ClickEvent evt)
+        {
+            if (_isUploadingBadge) return; // let the upload finish first
+            CloseAddBadgeModal();
+        }
 
         private void OnAddBadgeSubmitClicked(ClickEvent evt)
         {
+            if (_isUploadingBadge) return;
+
             string name = _badgeNameField?.value?.Trim();
 
             if (string.IsNullOrEmpty(name))
@@ -719,14 +735,118 @@ namespace Anatomia3D.UI
 
             string icon = string.IsNullOrEmpty(_selectedBadgeIcon) ? IconChoices[0] : _selectedBadgeIcon;
 
-            _currentBadges.Add(new BadgeData(name, points, icon));
+            // Preset icon -> nothing to upload.
+            if (_pendingBadgeImageBytes == null)
+            {
+                AddBadgeAndClose(name, points, icon, string.Empty);
+                return;
+            }
+
+            // Custom image -> upload to Cloudinary first, then keep the returned link on the badge.
+            // The link itself is written to Firestore (badges.{id}.iconUrl) by Save Changes,
+            // like every other badge edit on this screen.
+            var uploader = CloudinaryAvatarUploadService.Instance;
+            string ownerUid = AdminAuthService.Instance?.CurrentAdmin?.Uid;
+            if (uploader == null || string.IsNullOrEmpty(ownerUid))
+            {
+                SetStatus(_addBadgeStatusLabel, "Image upload isn't available right now. Pick a preset icon or try again later.");
+                return;
+            }
+
+            _isUploadingBadge = true;
+            _addBadgeSubmitButton?.SetEnabled(false);
+            SetStatus(_addBadgeStatusLabel, "Uploading image...");
+
+            uploader.UploadBadgeIcon(_pendingBadgeImageBytes, ownerUid, (ok, url) =>
+            {
+                _isUploadingBadge = false;
+                _addBadgeSubmitButton?.SetEnabled(true);
+
+                if (!ok || string.IsNullOrEmpty(url))
+                {
+                    SetStatus(_addBadgeStatusLabel, "Could not upload the image. Check your connection and try again.");
+                    return;
+                }
+
+                AddBadgeAndClose(name, points, icon, url);
+            });
+        }
+
+        private void AddBadgeAndClose(string name, int points, string iconKey, string iconUrl)
+        {
+            _currentBadges.Add(new BadgeData(name, points, iconKey, iconUrl));
             RefreshBadgesUI();
             RefreshPreview();
-
-            // TODO: replace with your real persistence call, e.g.:
-            // AdminGamificationService.Instance.CreateBadge(name, points, icon, OnCreateBadgeResult);
-
             CloseAddBadgeModal();
+        }
+
+        // ---------------- Custom badge image ----------------
+        //
+        // Same NativeGallery picker the Edit Profile screens use for avatars. The
+        // image is downscaled to 512px max and kept as PNG so transparency survives.
+        // It is only uploaded when the teacher taps "Add Badge" (see above), so
+        // picking and then cancelling never leaves an orphan in Cloudinary.
+        // NativeGallery's picker doesn't open in the Unity Editor - test on a device.
+
+        private void OnChooseBadgeImageClicked(ClickEvent evt)
+        {
+            if (_isUploadingBadge || NativeGallery.IsMediaPickerBusy()) return;
+
+            NativeGallery.GetImageFromGallery(path =>
+            {
+                if (string.IsNullOrEmpty(path)) return; // teacher cancelled the picker
+
+                Texture2D picked = NativeGallery.LoadImageAtPath(path, maxSize: 512, markTextureNonReadable: false);
+                if (picked == null)
+                {
+                    //Debug.LogWarning($"[AdminGamificationSettingsController] Could not load image at '{path}'.");
+                    SetStatus(_addBadgeStatusLabel, "Could not load that image. Please try a different one.");
+                    return;
+                }
+
+                SetPendingBadgeImage(picked);
+            }, "Select a badge image", "image/*");
+        }
+
+        private void SetPendingBadgeImage(Texture2D texture)
+        {
+            ClearPendingBadgeImage();
+
+            _pendingBadgeTexture = texture; // this controller owns it now - destroyed in ClearPendingBadgeImage
+            _pendingBadgeImageBytes = texture.EncodeToPNG();
+
+            if (_badgeCustomPreview != null)
+            {
+                _badgeCustomPreview.style.backgroundImage = new StyleBackground(Background.FromTexture2D(texture));
+                _badgeCustomPreview.AddToClassList("badge-custom-preview-active");
+            }
+
+            _badgeRemoveImageButton?.RemoveFromClassList("hidden");
+
+            // No preset counts as selected while a custom image is chosen.
+            foreach (var item in _badgeIconGridItems) item.RemoveFromClassList("icon-grid-item-selected");
+
+            SetStatus(_addBadgeStatusLabel, string.Empty);
+        }
+
+        private void ClearPendingBadgeImage()
+        {
+            if (_badgeCustomPreview != null)
+            {
+                _badgeCustomPreview.style.backgroundImage = StyleKeyword.Null;
+                _badgeCustomPreview.RemoveFromClassList("badge-custom-preview-active");
+            }
+
+            _badgeRemoveImageButton?.AddToClassList("hidden");
+
+            if (_pendingBadgeTexture != null) { Destroy(_pendingBadgeTexture); _pendingBadgeTexture = null; }
+            _pendingBadgeImageBytes = null;
+        }
+
+        private void OnRemoveBadgeImageClicked(ClickEvent evt)
+        {
+            if (_isUploadingBadge) return;
+            OnBadgeIconPicked(string.IsNullOrEmpty(_selectedBadgeIcon) ? IconChoices[0] : _selectedBadgeIcon);
         }
 
         // ---------------- Button handlers ----------------
@@ -744,7 +864,7 @@ namespace Anatomia3D.UI
 
         private void NavigateBackToDashboard()
         {
-            Debug.Log("[AdminGamificationSettingsController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminGamificationSettingsController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
@@ -790,11 +910,11 @@ namespace Anatomia3D.UI
 
         private void OnSaveChangesClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminGamificationSettingsController] Save Changes tapped.");
+            //Debug.Log("[AdminGamificationSettingsController] Save Changes tapped.");
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - can't save.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - can't save.");
                 return;
             }
 
@@ -804,7 +924,7 @@ namespace Anatomia3D.UI
 
             if (!easyValid || !mediumValid || !hardValid)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] Save blocked - one or more points fields are invalid.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] Save blocked - one or more points fields are invalid.");
                 return;
             }
 
@@ -812,7 +932,8 @@ namespace Anatomia3D.UI
             {
                 BadgeId = b.BadgeId,
                 Name = b.Name,
-                IconEmoji = b.IconEmoji,
+                IconKey = b.IconKey,
+                IconUrl = b.IconUrl,
                 PointsRequired = b.PointsRequired
             });
 
@@ -842,11 +963,11 @@ namespace Anatomia3D.UI
         {
             if (success)
             {
-                Debug.Log("[AdminGamificationSettingsController] Gamification settings saved.");
+                //Debug.Log("[AdminGamificationSettingsController] Gamification settings saved.");
             }
             else
             {
-                Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
+                //Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
             }
         }
 
@@ -901,6 +1022,8 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
+
             if (_header != null)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

@@ -24,16 +24,19 @@ namespace Anatomia3D.UI
     /// </summary>
     public static class AdminStudentStatsModal
     {
-        private static readonly Color Ink = new Color(0.13f, 0.15f, 0.14f);
-        private static readonly Color Muted = new Color(0.45f, 0.49f, 0.48f);
-        private static readonly Color Line = new Color(0.89f, 0.91f, 0.90f);
-        private static readonly Color Surface = new Color(0.96f, 0.97f, 0.97f);
-        private static readonly Color Accent = new Color(0.13f, 0.55f, 0.42f);
-        private static readonly Color AccentSoft = new Color(0.90f, 0.96f, 0.93f);
-        private static readonly Color Danger = new Color(0.80f, 0.20f, 0.25f);
-        private static readonly Color DangerSoft = new Color(0.99f, 0.92f, 0.93f);
-        private static readonly Color Amber = new Color(0.72f, 0.45f, 0.05f);
-        private static readonly Color AmberSoft = new Color(1.00f, 0.95f, 0.85f);
+        // Palette = Theme/AnatomiaTheme.uss tokens (flattened onto white, since the card is opaque).
+        private static readonly Color Ink = new Color(22f / 255f, 24f / 255f, 38f / 255f);          // --ink
+        private static readonly Color Muted = new Color(139f / 255f, 145f / 255f, 163f / 255f);     // --ink-3
+        private static readonly Color Line = new Color(0.925f, 0.926f, 0.936f);                      // --line
+        private static readonly Color Surface = new Color(0.957f, 0.958f, 0.966f);                   // --sunken
+        private static readonly Color Accent = new Color(91f / 255f, 76f / 255f, 219f / 255f);      // --accent
+        private static readonly Color AccentSoft = new Color(0.929f, 0.918f, 0.988f);                // --accent-soft
+        private static readonly Color Success = new Color(28f / 255f, 135f / 255f, 94f / 255f);     // --success
+        private static readonly Color SuccessSoft = new Color(0.898f, 0.957f, 0.935f);               // --success-soft
+        private static readonly Color Danger = new Color(204f / 255f, 64f / 255f, 64f / 255f);      // --danger
+        private static readonly Color DangerSoft = new Color(0.985f, 0.925f, 0.925f);                // --danger-soft
+        private static readonly Color Amber = new Color(190f / 255f, 126f / 255f, 24f / 255f);      // --warn
+        private static readonly Color AmberSoft = new Color(0.985f, 0.942f, 0.885f);                 // --warn-soft
 
         /// <param name="host">Element to overlay the dialog on (the screen root).</param>
         /// <param name="classroomId">Selected classroom (used for the per-quiz scores).</param>
@@ -54,7 +57,7 @@ namespace Anatomia3D.UI
             var overlay = new VisualElement { name = "student-stats-overlay" };
             overlay.style.position = Position.Absolute;
             overlay.style.left = overlay.style.top = overlay.style.right = overlay.style.bottom = 0;
-            overlay.style.backgroundColor = new Color(0.05f, 0.08f, 0.07f, 0.6f);
+            overlay.style.backgroundColor = new Color(22f / 255f, 24f / 255f, 38f / 255f, 0.55f);
             overlay.style.justifyContent = Justify.Center;
             overlay.style.alignItems = Align.Center;
 
@@ -75,7 +78,7 @@ namespace Anatomia3D.UI
             header.style.flexDirection = FlexDirection.Row;
             header.style.alignItems = Align.Center;
             header.style.flexShrink = 0;
-            header.style.backgroundColor = Accent;
+            header.style.backgroundColor = Color.white; // flat header, no colour slab (student style)
             Padding(header, 32, 36);
 
             var backButton = new Button { text = "\u2190" };
@@ -84,8 +87,8 @@ namespace Anatomia3D.UI
             backButton.style.flexShrink = 0;
             backButton.style.fontSize = 36;
             backButton.style.unityFontStyleAndWeight = FontStyle.Bold;
-            backButton.style.color = Color.white;
-            backButton.style.backgroundColor = new Color(1, 1, 1, 0.20f);
+            backButton.style.color = Ink;
+            backButton.style.backgroundColor = Surface;
             backButton.style.marginRight = 24;
             backButton.style.display = DisplayStyle.None;
             Radius(backButton, 36);
@@ -94,21 +97,24 @@ namespace Anatomia3D.UI
             var titles = new VisualElement();
             titles.style.flexGrow = 1;
             titles.style.flexShrink = 1;
-            var titleLabel = MakeLabel("Students", 42, FontStyle.Bold, Color.white);
-            var subtitleLabel = MakeLabel("", 26, FontStyle.Normal, new Color(1, 1, 1, 0.85f), 4, 0);
+            var titleLabel = MakeLabel("Students", 42, FontStyle.Bold, Ink);
+            var subtitleLabel = MakeLabel("", 26, FontStyle.Normal, Muted, 4, 0);
             titles.Add(titleLabel);
             titles.Add(subtitleLabel);
             header.Add(titles);
 
-            var closeButton = new Button(Close) { text = "\u2715" };
+            var closeButton = new Button(Close);
             ResetButton(closeButton);
             closeButton.style.width = closeButton.style.height = 72;
             closeButton.style.flexShrink = 0;
-            closeButton.style.fontSize = 32;
-            closeButton.style.unityFontStyleAndWeight = FontStyle.Bold;
-            closeButton.style.color = Color.white;
-            closeButton.style.backgroundColor = new Color(1, 1, 1, 0.20f);
+            closeButton.style.backgroundColor = Surface;
+            closeButton.style.justifyContent = Justify.Center;
+            closeButton.style.alignItems = Align.Center;
             Radius(closeButton, 36);
+            // close-icon.png is applied by the .stats-modal-close-icon rule in AdminAnalyticsReports.uss
+            var closeIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+            closeIcon.AddToClassList("stats-modal-close-icon");
+            closeButton.Add(closeIcon);
             header.Add(closeButton);
 
             card.Add(header);
@@ -120,6 +126,7 @@ namespace Anatomia3D.UI
             scroll.contentContainer.style.paddingLeft = scroll.contentContainer.style.paddingRight = 36;
             scroll.contentContainer.style.paddingTop = 32;
             scroll.contentContainer.style.paddingBottom = 32;
+            StyleScrollbar(scroll);
             card.Add(scroll);
 
             host.Add(overlay);
@@ -314,7 +321,7 @@ namespace Anatomia3D.UI
             completionCard.style.marginBottom = 8;
             completionCard.Add(MakeProgressRow("Completed", $"{attempted}/{total}  \u2022  {Mathf.RoundToInt(completionPct)}%",
                 completionPct, Accent));
-            var passRow = MakeProgressRow("Passed", $"{passed}/{total}  \u2022  {Mathf.RoundToInt(passPct)}%", passPct, Amber);
+            var passRow = MakeProgressRow("Passed", $"{passed}/{total}  \u2022  {Mathf.RoundToInt(passPct)}%", passPct, Success);
             passRow.style.marginTop = 20;
             completionCard.Add(passRow);
             scroll.Add(completionCard);
@@ -480,12 +487,63 @@ namespace Anatomia3D.UI
         private static (Color bg, Color fg) ScoreColors(float percent, bool hasScore)
         {
             if (!hasScore) return (Surface, Muted);
-            if (percent >= 75f) return (AccentSoft, Accent);
+            if (percent >= 75f) return (SuccessSoft, Success);
             if (percent >= 50f) return (AmberSoft, Amber);
             return (DangerSoft, Danger);
         }
 
         // ---------------- style helpers ----------------
+
+        /// <summary>Slim, rounded, accent-tinted vertical scrollbar (replaces Unity's default
+        /// grey bar with arrow buttons). Horizontal bar is hidden.</summary>
+        private static void StyleScrollbar(ScrollView scroll)
+        {
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+
+            var scroller = scroll.verticalScroller;
+            scroller.style.width = 12;
+            scroller.style.marginTop = scroller.style.marginBottom = 8;
+            scroller.style.marginRight = 6;
+            scroller.style.backgroundColor = Color.clear;
+            scroller.style.borderLeftWidth = scroller.style.borderRightWidth =
+                scroller.style.borderTopWidth = scroller.style.borderBottomWidth = 0;
+
+            scroller.lowButton.style.display = DisplayStyle.None;
+            scroller.highButton.style.display = DisplayStyle.None;
+
+            var slider = scroller.slider;
+            slider.style.marginTop = slider.style.marginBottom = slider.style.marginLeft = slider.style.marginRight = 0;
+            slider.style.backgroundColor = Color.clear;
+            slider.style.borderLeftWidth = slider.style.borderRightWidth =
+                slider.style.borderTopWidth = slider.style.borderBottomWidth = 0;
+
+            var tracker = slider.Q(className: "unity-base-slider__tracker");
+            if (tracker != null)
+            {
+                tracker.style.backgroundColor = Surface;
+                tracker.style.borderLeftWidth = tracker.style.borderRightWidth =
+                    tracker.style.borderTopWidth = tracker.style.borderBottomWidth = 0;
+                Radius(tracker, 6);
+            }
+
+            var dragger = slider.Q(className: "unity-base-slider__dragger");
+            if (dragger != null)
+            {
+                dragger.style.width = 12;
+                dragger.style.minHeight = 56;
+                dragger.style.backgroundColor = new Color(Accent.r, Accent.g, Accent.b, 0.45f);
+                dragger.style.borderLeftWidth = dragger.style.borderRightWidth =
+                    dragger.style.borderTopWidth = dragger.style.borderBottomWidth = 0;
+                Radius(dragger, 6);
+                dragger.RegisterCallback<PointerEnterEvent>(_ => dragger.style.backgroundColor = Accent);
+                dragger.RegisterCallback<PointerLeaveEvent>(_ => dragger.style.backgroundColor = new Color(Accent.r, Accent.g, Accent.b, 0.45f));
+            }
+
+            var draggerBorder = slider.Q(className: "unity-base-slider__dragger-border");
+            if (draggerBorder != null) draggerBorder.style.display = DisplayStyle.None;
+        }
+
 
         private static Label MakeLabel(string text, int size, FontStyle style, Color color, float top = 0, float bottom = 0)
         {

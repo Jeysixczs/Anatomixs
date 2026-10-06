@@ -1,562 +1,135 @@
 /* =========================================================
-   Anatomia 3D - Quiz Screen
-   Reference canvas: 1080 x 1920 (portrait)
-   Scale With Screen Size, match = 0.5
-   All sizes scaled 1.5x from the base design for larger elements.
-   Gradients are painted at runtime onto elements carrying
-   the "gradient-target" class (see QuizScreenController.cs)
+   Anatomia 3D - Quiz Screen v2 "Focus"
+   Reference canvas: 1080 x 1920 (portrait).
+   Loaded BEFORE AnatomiaTheme.uss, so every rule is scoped under
+   .anatomia-theme.theme-quiz.quiz-root to out-rank the theme's shared quiz rules.
+
+   LAYOUT
+     header : close button + timer / points pills, then "Question X of Y"
+              and a thick progress bar - all flat on the ambient background
+     card   : type chip + quiz name, big question text, scrolling answers
+     action : Previous (outlined, 1/3) + Next / Submit (accent, 2/3),
+              pinned to the bottom so the button never jumps around
+   Element names and every class the controller creates at runtime
+   (option-row, radio-*, checkbox-*, helper-text, answer-text-field,
+   view-model-button ...) are unchanged.
    ========================================================= */
 
-.quiz-root {
+.anatomia-theme.theme-quiz.quiz-root
+{
     flex-grow: 1;
     flex-shrink: 1;
     height: 100%;
     flex-direction: column;
     overflow: hidden;
-    background-color: rgb(234, 240, 241);
 }
 
 /* ---------------- HEADER ---------------- */
-
-.header {
-    /* background painted at runtime via generated gradient texture */
-    padding: 60px 48px 42px 48px;
-    border-bottom-left-radius: 48px;
-    border-bottom-right-radius: 48px;
-}
-
-.header-top-row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 42px;
-}
-
-.icon-button {
-    width: 66px;
-    height: 66px;
-    border-radius: 34px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0;
-    color: rgb(255, 255, 255);
-    font-size: 30px;
-    -unity-text-align: middle-center;
-    padding: 0;
-}
-
-.icon-button:hover {
-    background-color: rgba(255, 255, 255, 0.28);
-}
-
-.badges-row {
-    flex-direction: row;
-}
-
-.pill {
-    flex-direction: row;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.22);
-    border-radius: 40px;
-    padding: 18px 34px;
-    margin-left: 22px;
-    min-height: 80px;
-}
-
-/* Icon slot. This is a VisualElement (not a text glyph) so any PNG from
-   Assets/UI/Icons can be dropped in - either by swapping the background-image
-   in the modifier classes below, or from the Inspector via the
-   timerIcon / pointsIcon fields on StudentQuizGameplayController, which
-   override whatever is set here. */
-.pill-icon {
-    width: 44px;
-    height: 44px;
-    margin-right: 14px;
-    flex-shrink: 0;
-    -unity-background-scale-mode: scale-to-fit;
-    -unity-background-image-tint-color: rgb(255, 255, 255);
-}
-
-.pill-icon--timer {
-    background-image: url("project://database/Assets/UI/Icons/time-limit.png");
-}
-
-.pill-icon--points {
-    background-image: url("project://database/Assets/UI/Icons/trophy-white-icon.png");
-}
-
-.pill-label {
-    font-size: 34px;
-    color: rgb(255, 255, 255);
-    -unity-font-style: bold;
-}
-
-/* Applied by the controller once the countdown drops under a minute. */
-.pill--danger {
-    background-color: rgba(220, 38, 38, 0.85);
-}
-
-.compact .pill {
-    border-radius: 32px;
-    padding: 12px 24px;
-    margin-left: 14px;
-    min-height: 60px;
-}
-
-.compact .pill-icon {
-    width: 32px;
-    height: 32px;
-    margin-right: 10px;
-}
-
-.compact .pill-label {
-    font-size: 26px;
-}
-
-.progress-track {
-    height: 9px;
-    background-color: rgba(255, 255, 255, 0.35);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.progress-fill {
-    height: 9px;
-    width: 16%;
-    background-color: rgb(17, 24, 39);
-    border-radius: 6px;
-}
-
-.question-counter {
-    font-size: 24px;
-    color: rgba(255, 255, 255, 0.92);
-}
-
-/* ---------------- CARD ---------------- */
-
-.body-scroll {
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-height: 0;
-    margin-top: 0;
-    overflow: hidden;
-}
-
-.body-scroll > .unity-scroll-view__content-viewport {
-    overflow: hidden;
-}
-
-/* Unity's ScrollView stretches #unity-content-container to fill the viewport
-   by default, which - with only one short child (.card) - visually centers
-   it with dead gray space above and below, and reports a scrollable range
-   even though nothing actually needs to scroll. Forcing the container back
-   to its natural content height and top alignment fixes both: the card sits
-   directly under the header with no gap, and the view genuinely can't be
-   dragged until the question content is tall enough to overflow. */
-.body-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
-    flex-grow: 1;
-    height: 100%;
-}
-
-.body-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
-    flex-grow: 0;
-    height: auto;
-    min-height: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-}
-
-.card {
-    background-color: rgb(255, 255, 255);
-    margin: 24px 36px 36px 36px;
-    padding: 42px 36px;
-    border-radius: 36px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.04);
-}
-
-.card-top-row {
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.type-label {
-    font-size: 22px;
-    -unity-font-style: bold;
-    color: rgb(59, 130, 246);
-    letter-spacing: 1.5px;
-}
-
-.quiz-label {
-    font-size: 22px;
-    color: rgb(148, 163, 184);
-}
-
-.question-text {
-    font-size: 36px;
-    -unity-font-style: bold;
-    color: rgb(17, 24, 39);
-    white-space: normal;
-    margin-bottom: 36px;
-}
-
-.answer-container {
-    flex-grow: 1;
-}
-
-.helper-text {
-    font-size: 22px;
-    color: rgb(107, 114, 128);
-    margin-bottom: 18px;
-}
-
-/* ---------------- OPTION ROWS (Multiple Choice / True-False) ---------------- */
-
-.option-row {
-    flex-direction: row;
-    align-items: center;
-    background-color: rgb(255, 255, 255);
-    border-width: 3px;
-    border-color: rgb(229, 231, 235);
-    border-radius: 22px;
-    padding: 28px 30px;
-    margin-bottom: 20px;
-}
-
-.option-row:hover {
-    border-color: rgb(191, 219, 254);
-}
-
-.option-row--selected {
-    border-color: rgb(59, 130, 246);
-    background-color: rgb(239, 246, 255);
-}
-
-.radio-outer {
-    width: 30px;
-    height: 30px;
-    border-radius: 16px;
-    border-width: 3px;
-    border-color: rgb(203, 213, 225);
-    align-items: center;
-    justify-content: center;
-    margin-right: 24px;
-}
-
-.option-row--selected .radio-outer {
-    border-color: rgb(59, 130, 246);
-}
-
-.radio-inner {
-    width: 15px;
-    height: 15px;
-    border-radius: 8px;
-    background-color: rgb(17, 24, 39);
-    display: none;
-}
-
-.option-row--selected .radio-inner {
-    display: flex;
-}
-
-.option-label {
-    font-size: 28px;
-    color: rgb(30, 41, 59);
-}
-
-/* ---------------- CHECKBOX ROWS (Multiple Identification) ---------------- */
-
-.checkbox-outer {
-    width: 33px;
-    height: 33px;
-    border-radius: 10px;
-    border-width: 3px;
-    border-color: rgb(203, 213, 225);
-    background-color: rgb(255, 255, 255);
-    align-items: center;
-    justify-content: center;
-    margin-right: 24px;
-}
-
-.option-row--selected .checkbox-outer {
-    background-color: rgb(17, 24, 39);
-    border-color: rgb(17, 24, 39);
-}
-
-.checkbox-check {
-    color: rgb(255, 255, 255);
-    font-size: 22px;
-    -unity-font-style: bold;
-    display: none;
-}
-
-.option-row--selected .checkbox-check {
-    display: flex;
-}
-
-/* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
-
-.answer-text-field {
-    margin-bottom: 20px;
-}
-
-.answer-text-field > .unity-text-field__input {
-    background-color: rgb(243, 244, 246);
-    border-width: 2px;
-    border-color: rgb(229, 231, 235);
-    border-radius: 18px;
-    padding: 24px 28px;
-    font-size: 26px;
-    color: rgb(17, 24, 39);
-}
-
-.answer-text-field > .unity-text-field__input:focus {
-    border-color: rgb(59, 130, 246);
-}
-
-/* ---------------- IMAGE BASED ---------------- */
-
-.image-frame {
-    background-color: rgb(255, 255, 255);
-    border-width: 2px;
-    border-color: rgb(229, 231, 235);
-    border-radius: 22px;
-    align-items: center;
-    justify-content: center;
-    height: 390px;
-    margin-bottom: 30px;
-    overflow: hidden;
-}
-
-.quiz-image {
+.anatomia-theme.theme-quiz.quiz-root .header
+{
     width: 100%;
-    height: 100%;
-    -unity-background-scale-mode: scale-to-fit;
+    max-width: 860px;
+    align-self: center;
+    padding: 84px 48px 26px 48px;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
 }
+.anatomia-theme.theme-quiz.quiz-root .header-top-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 40px; }
 
-.arrow-marker {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    -unity-background-scale-mode: scale-to-fit;
-}
-
-/* ---------------- ACTION BUTTON ---------------- */
-
-.action-button {
-    /* background painted at runtime via generated gradient texture */
-    margin: 12px 36px 42px 36px;
-    height: 96px;
-    border-radius: 24px;
-    border-width: 0;
-    color: rgb(255, 255, 255);
-    font-size: 28px;
-    -unity-font-style: bold;
-}
-
-.action-button--disabled {
-    opacity: 0.55;
-}
-
-/* ---------------- COMPACT BREAKPOINT (narrow / small devices) ---------------- */
-
-.compact .question-text {
-    font-size: 30px;
-}
-
-.compact .option-row {
-    padding: 20px 24px;
-}
-
-.compact .card {
-    padding: 30px 28px;
-    margin: 16px 24px 24px 24px;
-}
-
-.compact .action-button {
+.anatomia-theme.theme-quiz.quiz-root .icon-button
+{
+    width: 84px;
     height: 84px;
-    margin: 8px 24px 30px 24px;
-}
-/* =========================================================
-   Anatomia 3D - Quiz Screen
-   Reference canvas: 1080 x 1920 (portrait)
-   Scale With Screen Size, match = 0.5
-   All sizes scaled 1.5x from the base design for larger elements.
-   Gradients are painted at runtime onto elements carrying
-   the "gradient-target" class (see QuizScreenController.cs)
-   ========================================================= */
-
-.quiz-root {
-    flex-grow: 1;
-    flex-shrink: 1;
-    height: 100%;
-    flex-direction: column;
-    overflow: hidden;
-    background-color: rgb(234, 240, 241);
-}
-
-/* ---------------- HEADER ---------------- */
-
-.header {
-    /* background painted at runtime via generated gradient texture */
-    padding: 60px 48px 42px 48px;
-    border-bottom-left-radius: 48px;
-    border-bottom-right-radius: 48px;
-}
-
-.header-top-row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 42px;
-}
-
-.icon-button {
-    width: 66px;
-    height: 66px;
-    border-radius: 34px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0;
-    color: rgb(255, 255, 255);
-    font-size: 30px;
-    -unity-text-align: middle-center;
+    border-radius: 42px;
+    font-size: 32px;
     padding: 0;
+    -unity-text-align: middle-center;
+    justify-content: center;
+    align-items: center;
 }
 
-.icon-button:hover {
-    background-color: rgba(255, 255, 255, 0.28);
+.anatomia-theme.theme-quiz.quiz-root .icon-button-glyph
+{
+    width: 34px;
+    height: 34px;
+    background-image: url("project://database/Assets/UI/Icons/close-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink);
 }
 
-.badges-row {
-    flex-direction: row;
-}
-
-.pill {
+.anatomia-theme.theme-quiz.quiz-root .badges-row { flex-direction: row; }
+.anatomia-theme.theme-quiz.quiz-root .pill
+{
     flex-direction: row;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.22);
-    border-radius: 40px;
-    padding: 18px 34px;
-    margin-left: 22px;
-    min-height: 80px;
+    min-height: 84px;
+    margin-left: 16px;
+    padding: 0 30px 0 24px;
+    border-radius: 42px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
 }
-
-/* Icon slot. This is a VisualElement (not a text glyph) so any PNG from
-   Assets/UI/Icons can be dropped in - either by swapping the background-image
-   in the modifier classes below, or from the Inspector via the
-   timerIcon / pointsIcon fields on StudentQuizGameplayController, which
-   override whatever is set here. */
-.pill-icon {
-    width: 44px;
-    height: 44px;
-    margin-right: 14px;
+.anatomia-theme.theme-quiz.quiz-root .pill-icon
+{
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
     flex-shrink: 0;
     -unity-background-scale-mode: scale-to-fit;
-    -unity-background-image-tint-color: rgb(255, 255, 255);
+    -unity-background-image-tint-color: var(--ink-2);
 }
-
-.pill-icon--timer {
-    background-image: url("project://database/Assets/UI/Icons/time-limit.png");
-}
-
-.pill-icon--points {
+.anatomia-theme.theme-quiz.quiz-root .pill-icon--timer { background-image: url("project://database/Assets/UI/Icons/time-limit.png"); }
+.anatomia-theme.theme-quiz.quiz-root .pill-icon--points
+{
     background-image: url("project://database/Assets/UI/Icons/trophy-white-icon.png");
+    -unity-background-image-tint-color: var(--accent);
 }
-
-.pill-label {
-    font-size: 34px;
-    color: rgb(255, 255, 255);
-    -unity-font-style: bold;
-}
+.anatomia-theme.theme-quiz.quiz-root .pill-label { margin: 0; font-size: 31px; -unity-font-style: bold; color: var(--ink); }
 
 /* Applied by the controller once the countdown drops under a minute. */
-.pill--danger {
-    background-color: rgba(220, 38, 38, 0.85);
-}
+.anatomia-theme.theme-quiz.quiz-root .pill--danger { background-color: var(--danger-soft); border-color: var(--danger); }
+.anatomia-theme.theme-quiz.quiz-root .pill--danger .pill-label { color: var(--danger); }
+.anatomia-theme.theme-quiz.quiz-root .pill--danger .pill-icon--timer { -unity-background-image-tint-color: var(--danger); }
 
-.compact .pill {
-    border-radius: 32px;
-    padding: 12px 24px;
-    margin-left: 14px;
-    min-height: 60px;
-}
+.anatomia-theme.theme-quiz.quiz-root .question-counter { margin: 0 0 16px 4px; font-size: 27px; -unity-font-style: bold; color: var(--ink-2); letter-spacing: 0.3px; }
 
-.compact .pill-icon {
-    width: 32px;
-    height: 32px;
-    margin-right: 10px;
-}
-
-.compact .pill-label {
-    font-size: 26px;
-}
-
-.progress-track {
-    height: 9px;
-    background-color: rgba(255, 255, 255, 0.35);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.progress-fill {
-    height: 9px;
-    width: 16%;
-    background-color: rgb(17, 24, 39);
-    border-radius: 6px;
-}
-
-.question-counter {
-    font-size: 24px;
-    color: rgba(255, 255, 255, 0.92);
-}
+.anatomia-theme.theme-quiz.quiz-root .progress-track { height: 14px; margin: 0; border-radius: 7px; overflow: hidden; background-color: var(--track); }
+.anatomia-theme.theme-quiz.quiz-root .progress-fill { height: 14px; width: 16%; border-radius: 7px; background-color: var(--accent); }
 
 /* ---------------- CARD ---------------- */
-
-.card-wrapper {
+.anatomia-theme.theme-quiz.quiz-root .card-wrapper
+{
+    width: 100%;
+    max-width: 860px;
+    align-self: center;
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 0;
-    padding: 24px 36px 36px 36px;
+    padding: 18px 40px 24px 40px;
 }
-
-.card {
-    flex-grow: 1;
+/* The card hugs its content and shrinks when it can't fit; only the answer
+   list scrolls, so the question text stays fixed. */
+.anatomia-theme.theme-quiz.quiz-root .card
+{
+    flex-grow: 0;
     flex-shrink: 1;
     min-height: 0;
     flex-direction: column;
-    background-color: rgb(255, 255, 255);
-    padding: 42px 36px;
-    border-radius: 36px;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.04);
+    padding: 44px 38px 30px 38px;
+    border-radius: 48px;
     overflow: hidden;
 }
 
-/* Only the answer options scroll - the card itself (question text, type
-   label, etc.) stays fixed in place under the header. This ScrollView is
-   sized by min-height:0 + flex-grow:1 so it fills whatever room is left in
-   the card after the question text, and only becomes draggable once the
-   options genuinely overflow that space (touch-scroll-type=Clamped). */
-.answer-scroll {
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-height: 0;
-}
-
-.answer-scroll > .unity-scroll-view__content-viewport {
-    overflow: hidden;
-}
-
-/* Same fix as before: stop Unity's ScrollView from stretching/centering its
-   internal content-container - let it hug the answer rows and top-align them. */
-.answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport {
-    flex-grow: 1;
-    height: 100%;
-}
-
-.answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {
+.anatomia-theme.theme-quiz.quiz-root .answer-scroll { flex-grow: 1; flex-shrink: 1; min-height: 0; }
+.anatomia-theme.theme-quiz.quiz-root .answer-scroll > .unity-scroll-view__content-viewport { overflow: hidden; }
+.anatomia-theme.theme-quiz.quiz-root .answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport { flex-grow: 1; height: 100%; }
+.anatomia-theme.theme-quiz.quiz-root .answer-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+{
     flex-grow: 0;
     height: auto;
     min-height: 0;
@@ -564,227 +137,220 @@
     align-items: stretch;
 }
 
-.card-top-row {
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.type-label {
-    font-size: 22px;
+.anatomia-theme.theme-quiz.quiz-root .card-top-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.anatomia-theme.theme-quiz.quiz-root .type-label
+{
+    margin: 0;
+    padding: 9px 24px;
+    border-radius: 100px;
+    font-size: 21px;
     -unity-font-style: bold;
-    color: rgb(59, 130, 246);
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background-color: var(--accent-soft);
 }
+.anatomia-theme.theme-quiz.quiz-root .quiz-label { margin: 0 0 0 16px; font-size: 23px; color: var(--ink-3); -unity-text-align: middle-right; white-space: normal; flex-shrink: 1; }
 
-.quiz-label {
-    font-size: 22px;
-    color: rgb(148, 163, 184);
-}
-
-.question-text {
-    font-size: 36px;
+.anatomia-theme.theme-quiz.quiz-root .question-text
+{
+    margin: 0 0 38px 0;
+    font-size: 42px;
     -unity-font-style: bold;
-    color: rgb(17, 24, 39);
+    letter-spacing: -0.5px;
+    color: var(--ink);
     white-space: normal;
-    margin-bottom: 36px;
 }
 
-.answer-container {
-    flex-grow: 1;
-}
-
-.helper-text {
-    font-size: 22px;
-    color: rgb(107, 114, 128);
-    margin-bottom: 18px;
-}
+.anatomia-theme.theme-quiz.quiz-root .answer-container { flex-grow: 1; }
+.anatomia-theme.theme-quiz.quiz-root .helper-text { margin: 0 0 20px 4px; font-size: 24px; color: var(--ink-3); white-space: normal; }
 
 /* ---------------- OPTION ROWS (Multiple Choice / True-False) ---------------- */
-
-.option-row {
+.anatomia-theme.theme-quiz.quiz-root .option-row
+{
     flex-direction: row;
     align-items: center;
-    background-color: rgb(255, 255, 255);
+    margin-bottom: 18px;
+    padding: 30px 32px;
+    border-width: 2px;
+    border-radius: 30px;
+    background-color: var(--surface-solid);
+    border-color: var(--line-strong);
+}
+.anatomia-theme.theme-quiz.quiz-root .option-row:hover { border-color: var(--ink-4); }
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected { border-width: 3px; padding: 29px 31px; border-color: var(--accent); background-color: var(--accent-faint); }
+
+.anatomia-theme.theme-quiz.quiz-root .radio-outer
+{
+    width: 44px;
+    height: 44px;
+    margin-right: 26px;
+    flex-shrink: 0;
     border-width: 3px;
-    border-color: rgb(229, 231, 235);
     border-radius: 22px;
-    padding: 28px 30px;
-    margin-bottom: 20px;
-}
-
-.option-row:hover {
-    border-color: rgb(191, 219, 254);
-}
-
-.option-row--selected {
-    border-color: rgb(59, 130, 246);
-    background-color: rgb(239, 246, 255);
-}
-
-.radio-outer {
-    width: 30px;
-    height: 30px;
-    border-radius: 16px;
-    border-width: 3px;
-    border-color: rgb(203, 213, 225);
+    border-color: var(--ink-4);
     align-items: center;
     justify-content: center;
-    margin-right: 24px;
 }
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected .radio-outer { border-color: var(--accent); }
+.anatomia-theme.theme-quiz.quiz-root .radio-inner { width: 22px; height: 22px; border-radius: 11px; background-color: var(--accent); display: none; }
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected .radio-inner { display: flex; }
 
-.option-row--selected .radio-outer {
-    border-color: rgb(59, 130, 246);
-}
-
-.radio-inner {
-    width: 15px;
-    height: 15px;
-    border-radius: 8px;
-    background-color: rgb(17, 24, 39);
-    display: none;
-}
-
-.option-row--selected .radio-inner {
-    display: flex;
-}
-
-.option-label {
-    font-size: 28px;
-    color: rgb(30, 41, 59);
-}
-
-/* ---------------- CHECKBOX ROWS (Multiple Identification) ---------------- */
-
-.checkbox-outer {
-    width: 33px;
-    height: 33px;
-    border-radius: 10px;
+.anatomia-theme.theme-quiz.quiz-root .checkbox-outer
+{
+    width: 44px;
+    height: 44px;
+    margin-right: 26px;
+    flex-shrink: 0;
     border-width: 3px;
-    border-color: rgb(203, 213, 225);
-    background-color: rgb(255, 255, 255);
+    border-radius: 14px;
+    border-color: var(--ink-4);
+    background-color: var(--surface-solid);
     align-items: center;
     justify-content: center;
-    margin-right: 24px;
 }
-
-.option-row--selected .checkbox-outer {
-    background-color: rgb(17, 24, 39);
-    border-color: rgb(17, 24, 39);
-}
-
-.checkbox-check {
-    color: rgb(255, 255, 255);
-    font-size: 22px;
-    -unity-font-style: bold;
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected .checkbox-outer { background-color: var(--accent); border-color: var(--accent); }
+.anatomia-theme.theme-quiz.quiz-root .checkbox-check
+{
+    width: 26px;
+    height: 26px;
+    margin: 0;
     display: none;
+    background-image: url("project://database/Assets/UI/Icons/check-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
 }
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected .checkbox-check { display: flex; }
 
-.option-row--selected .checkbox-check {
-    display: flex;
-}
+.anatomia-theme.theme-quiz.quiz-root .option-label { margin: 0; flex-shrink: 1; font-size: 32px; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-quiz.quiz-root .option-row--selected .option-label { -unity-font-style: bold; }
 
 /* ---------------- TEXT INPUTS (Identification / Enumeration / Image Based) ---------------- */
-
-.answer-text-field {
-    margin-bottom: 20px;
-}
-
-.answer-text-field > .unity-text-field__input {
-    background-color: rgb(243, 244, 246);
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field { margin: 0 0 18px 0; }
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > .unity-text-field__input,
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > #unity-text-input
+{
+    min-height: 104px;
+    padding: 0 32px;
     border-width: 2px;
-    border-color: rgb(229, 231, 235);
-    border-radius: 18px;
-    padding: 24px 28px;
-    font-size: 26px;
-    color: rgb(17, 24, 39);
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 30px;
+    background-color: var(--sunken);
+    color: var(--ink);
+    font-size: 32px;
+    -unity-text-align: middle-left;
 }
-
-.answer-text-field > .unity-text-field__input:focus {
-    border-color: rgb(59, 130, 246);
-}
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > .unity-text-field__input:hover,
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > #unity-text-input:hover { background-color: var(--track); }
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > .unity-text-field__input:focus,
+.anatomia-theme.theme-quiz.quiz-root .answer-text-field > #unity-text-input:focus { border-color: var(--accent); background-color: var(--surface-solid); }
 
 /* ---------------- IMAGE BASED ---------------- */
-
-.image-frame {
-    background-color: rgb(255, 255, 255);
-    border-width: 2px;
-    border-color: rgb(229, 231, 235);
-    border-radius: 22px;
+.anatomia-theme.theme-quiz.quiz-root .image-frame
+{
+    height: 420px;
+    margin-bottom: 24px;
     align-items: center;
     justify-content: center;
-    height: 390px;
-    margin-bottom: 30px;
     overflow: hidden;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 30px;
+    background-color: var(--sunken);
 }
+.anatomia-theme.theme-quiz.quiz-root .quiz-image { width: 100%; height: 100%; -unity-background-scale-mode: scale-to-fit; }
+.anatomia-theme.theme-quiz.quiz-root .arrow-marker { position: absolute; width: 60px; height: 60px; -unity-background-scale-mode: scale-to-fit; }
 
-.quiz-image {
-    width: 100%;
-    height: 100%;
-    -unity-background-scale-mode: scale-to-fit;
-}
-
-.arrow-marker {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    -unity-background-scale-mode: scale-to-fit;
-}
-
-/* ---------------- ACTION BUTTON ---------------- */
-
-.action-row {
-    flex-direction: row;
-    margin: 12px 36px 42px 36px;
-}
-
-.action-button {
-    /* background painted at runtime via generated gradient texture */
-    flex-grow: 1;
-    flex-basis: 0;
-    height: 96px;
-    border-radius: 24px;
+.anatomia-theme.theme-quiz.quiz-root .view-model-button
+{
+    height: 92px;
+    margin: 0 0 22px 0;
+    padding: 0 32px;
     border-width: 0;
-    color: rgb(255, 255, 255);
+    border-radius: 46px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
     font-size: 28px;
     -unity-font-style: bold;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
-
-.action-button--disabled {
-    opacity: 0.55;
+.anatomia-theme.theme-quiz.quiz-root .view-model-button:hover { background-color: var(--accent); color: white; }
+.anatomia-theme.theme-quiz.quiz-root .view-model-icon
+{
+    width: 38px;
+    height: 38px;
+    margin-right: 16px;
+    background-image: url("project://database/Assets/UI/Icons/bone-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
 }
+.anatomia-theme.theme-quiz.quiz-root .view-model-button:hover .view-model-icon { -unity-background-image-tint-color: white; }
+.anatomia-theme.theme-quiz.quiz-root .view-model-label { margin: 0; padding: 0; font-size: 28px; -unity-font-style: bold; }
 
-.prev-button {
+/* ---------------- ACTION ROW ---------------- */
+.anatomia-theme.theme-quiz.quiz-root .action-row
+{
+    width: 100%;
+    max-width: 860px;
+    align-self: center;
+    flex-direction: row;
+    margin: 0;
+    padding: 6px 40px 56px 40px;
+}
+.anatomia-theme.theme-quiz.quiz-root .action-button
+{
+    flex-grow: 2;
+    flex-basis: 0;
+    height: 112px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 56px;
+    color: white;
+    font-size: 32px;
+    -unity-font-style: bold;
+}
+.anatomia-theme.theme-quiz.quiz-root .action-button--disabled { opacity: 1; }
+.anatomia-theme.theme-quiz.quiz-root .prev-button
+{
     flex-grow: 1;
     flex-basis: 0;
-    height: 96px;
-    margin: 0 18px 0 0;
-    border-radius: 24px;
-    border-width: 2px;
-    border-color: rgb(203, 213, 225);
-    background-color: rgb(255, 255, 255);
-    color: rgb(30, 41, 59);
-    font-size: 28px;
+    height: 112px;
+    margin: 0 16px 0 0;
+    border-radius: 56px;
+    font-size: 30px;
     -unity-font-style: bold;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
-
-.prev-button:hover {
-    background-color: rgb(243, 244, 246);
+.anatomia-theme.theme-quiz.quiz-root .prev-button.hidden { display: none; }
+.anatomia-theme.theme-quiz.quiz-root .prev-button-icon
+{
+    width: 30px;
+    height: 30px;
+    margin-right: 14px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink);
 }
-
-.prev-button.hidden {
-    display: none;
-}
+.anatomia-theme.theme-quiz.quiz-root .prev-button:hover .prev-button-icon { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-quiz.quiz-root .prev-button-label { margin: 0; padding: 0; font-size: 30px; -unity-font-style: bold; }
 
 /* ---------------- UTILITY ---------------- */
+.anatomia-theme.theme-quiz.quiz-root .hidden { display: none; }
+.hidden { display: none; }
 
-.hidden {
-    display: none;
-}
-
-/* ---------------- BLOCKED OVERLAY (deadline passed / attempts used up) ---------------- */
-
-.blocked-overlay {
+/* ---------------- OVERLAYS ---------------- */
+.anatomia-theme.theme-quiz.quiz-root .blocked-overlay,
+.anatomia-theme.theme-quiz.quiz-root .loading-overlay
+{
     position: absolute;
     top: 0;
     left: 0;
@@ -792,215 +358,124 @@
     bottom: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(15, 18, 28, 0.72);
+    padding: 52px;
     justify-content: center;
     align-items: center;
-    padding: 52px;
+    background-color: rgba(15, 18, 28, 0.6);
 }
+.anatomia-theme.theme-quiz.quiz-root .blocked-overlay.hidden,
+.anatomia-theme.theme-quiz.quiz-root .loading-overlay.hidden { display: none; }
 
-.blocked-card {
-    background-color: rgb(255, 255, 255);
-    border-radius: 32px;
-    padding: 54px 42px;
+.anatomia-theme.theme-quiz.quiz-root .blocked-card
+{
+    width: 100%;
+    max-width: 760px;
+    padding: 56px 44px 44px 44px;
     align-items: center;
-    max-width: 720px;
+    border-radius: 48px;
 }
-
-.blocked-icon {
-    font-size: 64px;
-    margin-bottom: 24px;
-    -unity-text-align: middle-center;
+.anatomia-theme.theme-quiz.quiz-root .blocked-icon
+{
+    width: 84px;
+    height: 84px;
+    margin: 0 0 24px 0;
+    align-self: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
-
-.blocked-message {
-    font-size: 32px;
-    color: rgb(31, 36, 48);
-    -unity-text-align: middle-center;
-    white-space: normal;
-    margin-bottom: 36px;
+.anatomia-theme.theme-quiz.quiz-root .blocked-icon-lock
+{
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    -unity-background-image-tint-color: var(--danger);
 }
-
-.blocked-back-button {
-    background-color: rgb(31, 36, 48);
+.anatomia-theme.theme-quiz.quiz-root .blocked-icon-exit
+{
+    background-image: url("project://database/Assets/UI/Icons/exit-logo-black.png");
+    -unity-background-image-tint-color: var(--accent);
+}
+.anatomia-theme.theme-quiz.quiz-root .blocked-message { margin: 0 0 40px 0; font-size: 32px; color: var(--ink-2); -unity-text-align: middle-center; white-space: normal; }
+.anatomia-theme.theme-quiz.quiz-root .blocked-back-button
+{
+    width: 100%;
+    height: 104px;
     margin: 0;
     padding: 0 48px;
-    height: 90px;
-    border-radius: 24px;
     border-width: 0;
-    color: rgb(255, 255, 255);
-    font-size: 28px;
-    -unity-font-style: bold;
-}
-
-/* ---------------- LOADING OVERLAY (submitting quiz attempt) ----------------
-   Shown while SubmitQuizAttempt() is in flight. Submission can take a while
-   on a weak/flaky connection, so this blocks input and gives the student
-   ongoing feedback instead of leaving the screen looking frozen. The spinner
-   itself is a ring (transparent-ish bottom border) rotated continuously from
-   StudentQuizGameplayController via schedule.Execute, since USS keyframe
-   animation isn't supported by UI Toolkit. */
-
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(15, 18, 28, 0.72);
-    justify-content: center;
-    align-items: center;
-    padding: 52px;
-}
-
-.loading-card {
-    background-color: rgb(255, 255, 255);
-    border-radius: 32px;
-    padding: 54px 48px;
-    align-items: center;
-    max-width: 620px;
-}
-
-.loading-spinner {
-    width: 64px;
-    height: 64px;
-    border-width: 6px;
-    border-radius: 32px;
-    border-top-color: rgb(47, 111, 237);
-    border-left-color: rgb(47, 111, 237);
-    border-right-color: rgb(47, 111, 237);
-    border-bottom-color: rgba(47, 111, 237, 0.15);
-    margin-bottom: 28px;
-}
-
-.loading-message {
+    border-radius: 52px;
+    background-color: var(--accent);
+    color: white;
     font-size: 30px;
-    color: rgb(31, 36, 48);
-    -unity-text-align: middle-center;
-    -unity-font-style: bold;
-    white-space: normal;
-}
-
-.loading-submessage {
-    font-size: 22px;
-    color: rgb(107, 114, 128);
-    -unity-text-align: middle-center;
-    white-space: normal;
-    margin-top: 12px;
-}
-
-.loading-submessage.hidden {
-    display: none;
-}
-
-/* ---------------- COMPACT BREAKPOINT (narrow / small devices) ---------------- */
-
-.compact .question-text {
-    font-size: 30px;
-}
-
-.compact .option-row {
-    padding: 20px 24px;
-}
-
-.compact .card-wrapper {
-    padding: 16px 24px 24px 24px;
-}
-
-.compact .card {
-    padding: 30px 28px;
-}
-
-.compact .action-row {
-    margin: 8px 24px 30px 24px;
-}
-
-.compact .action-button,
-.compact .prev-button {
-    height: 84px;
-}
-
-/* ---------------- IMAGE BASED (View on 3D Model button) ---------------- */
-
-.view-model-button {
-    height: 78px;
-    margin: 0 0 20px 0;
-    border-radius: 22px;
-    border-width: 0;
-    background-color: rgb(59, 130, 246);
-    color: rgb(255, 255, 255);
-    font-size: 24px;
     -unity-font-style: bold;
 }
+.anatomia-theme.theme-quiz.quiz-root .blocked-back-button:hover { background-color: var(--accent-strong); }
 
-.view-model-button:hover {
-    background-color: rgb(37, 99, 235);
-}
-
-.compact .view-model-button {
-    height: 66px;
-    font-size: 22px;
-}
-
-/* ---------------- EXIT CONFIRM OVERLAY (close-button tap mid-quiz) ---------------- */
-
-.exit-confirm-title {
-    font-size: 36px;
-    -unity-font-style: bold;
-    color: rgb(17, 24, 39);
-    -unity-text-align: middle-center;
-    margin-bottom: 12px;
-}
-
-.exit-confirm-button-row {
-    flex-direction: row;
-    width: 100%;
-}
-
-.exit-cancel-button {
+.anatomia-theme.theme-quiz.quiz-root .exit-confirm-title { margin: 0 0 14px 0; font-size: 42px; -unity-font-style: bold; letter-spacing: -0.5px; color: var(--ink); -unity-text-align: middle-center; }
+.anatomia-theme.theme-quiz.quiz-root .exit-confirm-button-row { flex-direction: row; width: 100%; }
+.anatomia-theme.theme-quiz.quiz-root .exit-cancel-button,
+.anatomia-theme.theme-quiz.quiz-root .exit-submit-button
+{
     flex-grow: 1;
     flex-basis: 0;
-    margin: 0 8px 0 0;
+    height: 104px;
     padding: 0 24px;
-    height: 90px;
-    border-radius: 24px;
-    border-width: 2px;
-    border-color: rgb(229, 231, 235);
-    background-color: rgb(255, 255, 255);
-    color: rgb(31, 36, 48);
-    font-size: 28px;
+    border-radius: 52px;
+    font-size: 29px;
     -unity-font-style: bold;
 }
+.anatomia-theme.theme-quiz.quiz-root .exit-cancel-button { margin: 0 8px 0 0; }
+.anatomia-theme.theme-quiz.quiz-root .exit-submit-button { margin: 0 0 0 8px; }
 
-.exit-cancel-button:hover {
-    background-color: rgb(243, 244, 246);
+.anatomia-theme.theme-quiz.quiz-root .loading-card { max-width: 640px; padding: 56px 52px; align-items: center; border-radius: 48px; }
+.anatomia-theme.theme-quiz.quiz-root .loading-spinner
+{
+    width: 72px;
+    height: 72px;
+    margin-bottom: 30px;
+    border-width: 7px;
+    border-radius: 36px;
+    border-top-color: var(--accent);
+    border-left-color: var(--accent);
+    border-right-color: var(--accent);
+    border-bottom-color: var(--accent-soft);
 }
+.anatomia-theme.theme-quiz.quiz-root .loading-message { margin: 0; font-size: 31px; -unity-font-style: bold; color: var(--ink); -unity-text-align: middle-center; white-space: normal; }
+.anatomia-theme.theme-quiz.quiz-root .loading-submessage { margin: 12px 0 0 0; font-size: 23px; color: var(--ink-3); -unity-text-align: middle-center; white-space: normal; }
+.anatomia-theme.theme-quiz.quiz-root .loading-submessage.hidden { display: none; }
 
-.exit-submit-button {
-    flex-grow: 1;
-    flex-basis: 0;
-    margin: 0 0 0 8px;
-    padding: 0 24px;
-    height: 90px;
-    border-radius: 24px;
-    border-width: 0;
-    background-color: rgb(59, 130, 246);
-    color: rgb(255, 255, 255);
-    font-size: 28px;
-    -unity-font-style: bold;
-}
-
-.exit-submit-button:hover {
-    background-color: rgb(37, 99, 235);
-}
-
-.compact .exit-confirm-title {
-    font-size: 30px;
-}
-
-.compact .exit-cancel-button,
-.compact .exit-submit-button {
-    height: 78px;
-    font-size: 24px;
-}
+/* =========================================================
+   COMPACT (toggled by the controller on narrow panels)
+   ========================================================= */
+.anatomia-theme.theme-quiz.quiz-root.compact .header { padding: 64px 28px 20px 28px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .header-top-row { margin-bottom: 28px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .icon-button { width: 68px; height: 68px; border-radius: 34px; font-size: 26px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .icon-button-glyph { width: 28px; height: 28px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .pill { min-height: 68px; margin-left: 10px; padding: 0 22px 0 18px; border-radius: 34px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .pill-icon { width: 30px; height: 30px; margin-right: 8px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .pill-label { font-size: 25px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .question-counter { font-size: 23px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .card-wrapper { padding: 12px 24px 16px 24px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .card { padding: 30px 26px 22px 26px; border-radius: 38px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .card-top-row { margin-bottom: 22px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .type-label { font-size: 18px; padding: 7px 18px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .question-text { font-size: 33px; margin-bottom: 28px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .option-row { padding: 22px 24px; border-radius: 26px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .option-row--selected { padding: 21px 23px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .radio-outer,
+.anatomia-theme.theme-quiz.quiz-root.compact .checkbox-outer { width: 36px; height: 36px; margin-right: 20px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .radio-outer { border-radius: 18px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .radio-inner { width: 18px; height: 18px; border-radius: 9px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .option-label { font-size: 27px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .answer-text-field > .unity-text-field__input,
+.anatomia-theme.theme-quiz.quiz-root.compact .answer-text-field > #unity-text-input { min-height: 88px; font-size: 28px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .image-frame { height: 320px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .view-model-button { height: 78px; font-size: 24px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .action-row { padding: 4px 24px 36px 24px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .action-button,
+.anatomia-theme.theme-quiz.quiz-root.compact .prev-button { height: 94px; border-radius: 47px; font-size: 27px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .prev-button-label { font-size: 27px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .prev-button-icon { width: 26px; height: 26px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .blocked-icon { width: 72px; height: 72px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .exit-confirm-title { font-size: 34px; }
+.anatomia-theme.theme-quiz.quiz-root.compact .exit-cancel-button,
+.anatomia-theme.theme-quiz.quiz-root.compact .exit-submit-button { height: 88px; font-size: 25px; }

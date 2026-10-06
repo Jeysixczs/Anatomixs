@@ -122,7 +122,7 @@ namespace Anatomia3D.UI
 
                 if (req.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[EmailDomainDnsChecker] {type} lookup for '{domain}' failed: {req.error}");
+                    //Debug.LogWarning($"[EmailDomainDnsChecker] {type} lookup for '{domain}' failed: {req.error}");
                     onDone(null);
                     yield break;
                 }
@@ -131,9 +131,9 @@ namespace Anatomia3D.UI
                 {
                     onDone(JsonUtility.FromJson<DnsResponse>(req.downloadHandler.text));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogWarning($"[EmailDomainDnsChecker] Could not parse DNS response: {e.Message}");
+                    //Debug.LogWarning($"[EmailDomainDnsChecker] Could not parse DNS response: {e.Message}");
                     onDone(null);
                 }
             }

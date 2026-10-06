@@ -360,9 +360,9 @@ namespace Anatomia3D.UI.Animation
 
             public void Begin()
             {
-                if (DebugLog)
-                    Debug.Log($"[UIAnimation] start '{_element.name}' in={_spec.IsIn} fade={_spec.Fade} slide={_spec.Slide} scale={_spec.Scale} " +
-                              $"dur={_spec.Duration} delay={_spec.Delay} attached={_element.panel != null}");
+                //if (DebugLog)
+                    //Debug.Log($"[UIAnimation] start '{_element.name}' in={_spec.IsIn} fade={_spec.Fade} slide={_spec.Slide} scale={_spec.Scale} " +
+                              //$"dur={_spec.Duration} delay={_spec.Delay} attached={_element.panel != null}");
 
                 if (_spec.IsIn)
                 {
@@ -464,7 +464,7 @@ namespace Anatomia3D.UI.Animation
                 }
                 // else: stays faded/scaled until the next animation or Cancel.
 
-                if (DebugLog) Debug.Log($"[UIAnimation] finish '{_element.name}' completed={invokeCallback}");
+                //if (DebugLog) Debug.Log($"[UIAnimation] finish '{_element.name}' completed={invokeCallback}");
 
                 if (invokeCallback) _spec.OnComplete?.Invoke();
             }

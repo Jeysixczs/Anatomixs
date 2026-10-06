@@ -1,1057 +1,142 @@
 /* =========================================================
-   Anatomia 3D - Administrator Login (Unity 6 UI Toolkit)
-   Reference canvas: 1080 x 1920 (portrait phone).
-   All px values below are sized against that 1080-wide canvas
-   (Panel Settings should reference 1080x1920 in "Scale With
-   Screen Size" mode so this scales correctly to other devices).
+   Anatomia 3D - Admin auth overlay (Login / Forgot Password / Create Account)
+   Reference canvas: 1080 x 1920.
 
-   NOTE: USS has no linear-gradient support, so the dark purple
-   screen background, the shield logo circle and the "Secure
-   Login" button gradients are all applied at runtime from
-   AdminLoginController.ApplyGradients() (see BuildGradientTexture).
-   The colors below are flat fallbacks so the screen still looks
-   correct in the UI Builder preview before the controller runs.
+   These three screens now use the SAME light "Soft Gradient" system as the
+   student auth screens: AnatomiaTheme.uss + AnatomiaAuth.uss are loaded first,
+   and this file only adds what is admin-specific:
+
+     - shield badge (logo-circle) and the "TEACHER ..." chip
+     - muted security note / restricted-area footer
+     - "Back to student login" link
+
+   Load order in every admin auth UXML: AnatomiaTheme -> AnatomiaAuth -> this file.
+   Equal-specificity rules here win because this file loads last.
+   AdminForgotPassword.uss and AdminCreateAccount.uss are no longer referenced.
    ========================================================= */
 
-/* ---------- Full Screen ---------- */
-
-.screen-root
+/* ---------- Shield badge (replaces the old purple gradient circle) ---------- */
+.anatomia-theme.auth-root .auth-brand
 {
-    width: 100%;
-    height: 100%;
-
-    flex-grow: 1;
-
-    justify-content: center;
-    align-items: center;
-
-    background-color: rgb(24, 12, 39); /* deep purple/black fallback, overridden by gradient texture */
+    margin-bottom: 34px;
 }
 
-/* ---------- Center Container ---------- */
-
-.screen-container
+.anatomia-theme.auth-root .auth-brand .logo-circle
 {
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding-left: 80px;
-    padding-right: 80px;
-    padding-top: 100px;
-    padding-bottom: 100px;
-}
-
-/* ---------- Scroll View ---------- */
-
-.scroll-view
-{
-    width: 100%;
-    height: 100%;
-    flex-grow: 1;
-}
-
-.scroll-view > #unity-content-container
-{
-    /* min-height (not height) is the trick: when the content is shorter
-       than the viewport, this forces the container to fill it so
-       justify-content can center the content-wrapper inside. When the
-       content is taller than the viewport, min-height is simply
-       satisfied by the content itself, so it lays out from the top and
-       scrolls normally instead of being clipped/centered off-screen. */
-    min-height: 100%;
-    width: 100%;
-
+    width: 132px;
+    height: 132px;
+    margin: 0;
+    border-radius: 66px;
+    border-width: 2px;
+    border-color: rgba(43, 109, 255, 0.18);
+    background-color: var(--accent-soft);
+    background-image: none;
     justify-content: center;
     align-items: center;
 }
 
-.scroll-view > .unity-scroller--vertical,
-.scroll-view > #unity-scroller
+.anatomia-theme.auth-root .logo-icon
 {
-    width: 0;
-    opacity: 0;
+    width: 62px;
+    height: 62px;
 }
 
-.scroll-view > .unity-scroller--vertical > .unity-tracker,
-.scroll-view > .unity-scroller--vertical > .unity-dragger,
-.scroll-view > #unity-scroller > #unity-tracker,
-.scroll-view > #unity-scroller > #unity-dragger
-{
-    display: none;
-    opacity: 0;
-    width: 0;
-}
-
-/* ---------- Main Column ---------- */
-
-.content-wrapper
-{
-    width: 100%;
-    max-width: 900px;
-    flex-grow: 1;
-    justify-content: center;
-    align-items: stretch;
-    align-self: center;
-    flex-direction: column;
-}
-
-/* ---------- Fit-to-screen (login screens: no scrolling) ----------
-   The screen root carries .fit-screen. Content is centered by flex and scaled
-   down in code (FitToScreen.cs) if it doesn't fit, so it never scrolls.
-   Scoped with .fit-screen so screens that share this file and still use a
-   ScrollView (e.g. create account) are not affected. */
-
-.fit-screen .scroll-view
-{
-    justify-content: center;
-    align-items: center;
-}
-
-.fit-screen .content-wrapper
-{
-    flex-grow: 0;
-    flex-shrink: 0;
-}
-
-/* ---------- Logo ---------- */
-
-.logo-circle
-{
-    width: 220px;
-    height: 220px;
-
-    align-self: center;
-
-    border-radius: 110px;
-
-    background-color: rgb(180, 45, 200); /* fallback, gradient applied at runtime */
-
-    justify-content: center;
-    align-items: center;
-
-    margin-bottom: 30px;
-}
-
-.logo-icon
-{
-    width: 84px;
-    height: 84px;
-}
-
-.icon-shield
+.anatomia-theme.auth-root .icon-shield
 {
     background-image: url("project://database/Assets/UI/Icons/shield-icon.png");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
+    -unity-background-image-tint-color: var(--accent);
 }
 
-/* ---------- Title ---------- */
-
-.app-title
-{
-    font-size: 56px;
-    -unity-font-style: bold;
-    color: rgb(255,255,255);
-    -unity-text-align: middle-center;
-
-    margin-bottom: 10px;
-}
-
-.app-subtitle
-{
-    font-size: 34px;
-    color: rgb(196,182,214);
-    -unity-text-align: middle-center;
-
-    margin-bottom: 60px;
-}
-
-/* ---------- Card ---------- */
-
-.login-card,
-.reset-card
-{
-    width: 100%;
-
-    background-color: rgba(255,255,255,0.06);
-
-    border-width: 2px;
-    border-color: rgba(255,255,255,0.12);
-
-    border-radius: 44px;
-
-    padding-left: 55px;
-    padding-right: 55px;
-    padding-top: 55px;
-    padding-bottom: 45px;
-
-    margin-bottom: 45px;
-}
-
-/* ---------- Labels ---------- */
-
-.field-label
-{
-    font-size: 32px;
-    -unity-font-style: bold;
-    color: rgb(230,225,240);
-
-    margin-bottom: 14px;
-}
-
-.field-label-spaced
-{
-    margin-top: 34px;
-}
-
-.field-error
-{
-    font-size: 26px;
-    color: rgb(255,120,170);
-
-    margin-top: 10px;
-    white-space: normal;
-}
-
-.success-message
-{
-    font-size: 24px;
-    color: rgb(140,230,180);
-
-    margin-top: 10px;
-    margin-bottom: 10px;
-
-    -unity-text-align: middle-center;
-    white-space: normal;
-}
-
-.hidden
-{
-    display: none;
-}
-
-/* ---------- Input Container ---------- */
-
-.input-container
-{
-    width: 100%;
-
-    height: 118px;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    background-color: rgba(255,255,255,0.05);
-
-    border-radius: 28px;
-
-    border-width: 2px;
-    border-color: rgba(255,255,255,0.14);
-
-    padding-left: 30px;
-    padding-right: 20px;
-
-    overflow: hidden;
-}
-
-.input-container-focused
-{
-    border-color: rgb(200,60,210);
-    border-width: 2px;
-}
-
-/* ---------- Icons ---------- */
-
-.input-icon
-{
-    width: 44px;
-    height: 44px;
-
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    -unity-background-image-tint-color: rgb(180,168,204);
-}
-
-.icon-email
-{
-    background-image: url("project://database/Assets/UI/Icons/email-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.icon-lock
-{
-    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    height: 44px;
-    width: 44px;
-}
-
-.icon-eye
-{
-    background-image: url("project://database/Assets/UI/Icons/eye-on-white.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 44px;
-    height: 44px;
-    -unity-background-image-tint-color: white;
-}
-
-.icon-eye-off
-{
-    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 44px;
-    height: 44px;
-    -unity-background-image-tint-color: white;
-}
-
-/* Two-class selector so the "off" image always wins over .icon-eye,
-   no matter which rule comes first in this file. */
-.icon-eye.icon-eye-off
-{
-    background-image: url("project://database/Assets/UI/Icons/eye-off-white.png");
-}
-
-/* ---------- TextField ---------- */
-
-.input-field
-{
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-
-    font-size: 34px;
-
-    color: rgb(240,236,248);
-
-    background-color: transparent;
-
-    border-width: 0;
-}
-
-.input-field > #unity-text-input
-{
-    background-color: transparent;
-    border-width: 0;
-    color: rgb(240,236,248);
-
-    /* Keep long text scrolling inside the field instead of stretching the row. */
-    flex-shrink: 1;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.input-field-with-right-icon
-{
-    margin-right: 10px;
-}
-
-/* ---------- Eye Button ---------- */
-
-.input-icon-button
-{
-    width: 68px;
-    height: 68px;
-
-    background-color: transparent;
-
-    border-width: 0;
-
-    justify-content: center;
-    align-items: center;
-
-    flex-shrink: 0;
-}
-
-/* ---------- Secure Login Button ---------- */
-
-.secure-login-button,
-.send-reset-link-button
-{
-    width: 100%;
-    height: 118px;
-
-    margin-top: 48px;
-
-    background-color: rgb(160,45,210); /* fallback, gradient applied at runtime */
-
-    color: white;
-
-    border-radius: 28px;
-
-    border-width: 0;
-
-    font-size: 36px;
-    -unity-font-style: bold;
-}
-
-.secure-login-button:hover,
-.send-reset-link-button:hover
-{
-    opacity: 0.92;
-}
-
-/* ---------- Encryption Row ---------- */
-
-.encryption-row
-{
-    flex-direction: row;
-
-    justify-content: center;
-    align-items: center;
-
-    margin-top: 28px;
-}
-
-.encryption-dot
-{
-    width: 20px;
-    height: 20px;
-
-    border-radius: 10px;
-
-    border-width: 2px;
-    border-color: rgb(150,220,190);
-
-    margin-right: 14px;
-}
-
-.encryption-text
-{
-    font-size: 24px;
-
-    color: rgb(180,196,192);
-}
-
-/* ---------- Forgot Password ---------- */
-
-.forgot-password-link
-{
-    align-self: flex-end;
-
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(216,150,240);
-
-    font-size: 26px;
-
-    margin-top: 16px;
-    margin-bottom: 24px;
-
-    -unity-font-style: bold;
-}
-
-.forgot-password-link:hover
-{
-    opacity: 0.8;
-}
-
-/* ---------- Divider ---------- */
-
-.divider-row
-{
-    flex-direction: row;
-
-    align-items: center;
-
-    margin-top: 48px;
-    margin-bottom: 48px;
-}
-
-.divider-line
-{
-    flex-grow: 1;
-
-    height: 2px;
-
-    background-color: rgba(255,255,255,0.14);
-}
-
-.divider-text
-{
-    font-size: 28px;
-
-    color: rgb(180,168,204);
-
-    margin-left: 24px;
-    margin-right: 24px;
-}
-
-/* ---------- Google Sign-In Button ---------- */
-
-.google-button
-{
-    width: 100%;
-    height: 118px;
-
-    flex-direction: row;
-
-    justify-content: center;
-    align-items: center;
-
-    background-color: rgba(255,255,255,0.06);
-
-    border-width: 2px;
-    border-color: rgba(255,255,255,0.16);
-
-    border-radius: 28px;
-}
-
-.google-button:hover
-{
-    background-color: rgba(255,255,255,0.1);
-}
-
-.icon-google
-{
-    width: 44px;
-    height: 44px;
-
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    background-image: url("project://database/Assets/UI/Icons/google-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.google-button-text
-{
-    font-size: 34px;
-    -unity-font-style: bold;
-
-    color: rgb(240,236,248);
-}
-
-/* ---------- Create Account ---------- */
-
-.create-account-row
-{
-    flex-direction: row;
-
-    justify-content: center;
-    align-items: center;
-
-    margin-bottom: 32px;
-}
-
-.create-account-text
-{
-    font-size: 28px;
-
-    color: rgb(180,168,204);
-
-    margin-right: 10px;
-}
-
-.create-account-link
-{
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(216,150,240);
-
-    font-size: 28px;
-
-    -unity-font-style: bold;
-}
-
-.create-account-link:hover
-{
-    opacity: 0.8;
-}
-
-/* ---------- Back to Student Login ---------- */
-
-.back-to-student-link,
-.back-to-admin-link
+/* Smaller badge on the long Create Account form */
+.anatomia-theme.auth-root .auth-brand-small { margin-bottom: 26px; }
+.anatomia-theme.auth-root .auth-brand-small .logo-circle { width: 104px; height: 104px; border-radius: 52px; }
+.anatomia-theme.auth-root .auth-brand-small .logo-icon { width: 48px; height: 48px; }
+
+/* ---------- Role chip ---------- */
+.anatomia-theme.auth-root .admin-chip
 {
     align-self: center;
-
-    background-color: transparent;
-
-    border-width: 0;
-
-    color: rgb(200,120,235);
-
-    font-size: 28px;
-
+    margin: 0 0 22px 0;
+    padding: 9px 28px;
+    border-radius: 30px;
+    background-color: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 21px;
     -unity-font-style: bold;
-
-    margin-top: 6px;
+    letter-spacing: 3px;
 }
 
-.back-to-student-link:hover,
-.back-to-admin-link:hover
+/* ---------- Security note (Login) ---------- */
+.anatomia-theme.auth-root .encryption-row
 {
-    opacity: 0.8;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
 }
 
-/* ---------- Status ---------- */
-
-.status-label
+.anatomia-theme.auth-root .encryption-dot
 {
-    margin-top: 28px;
-
-    font-size: 28px;
-
-    color: rgb(255,140,190);
-
-    -unity-text-align: middle-center;
+    width: 14px;
+    height: 14px;
+    margin-right: 14px;
+    border-radius: 7px;
+    background-color: var(--success);
 }
 
-/* ---------- Footer Warning ---------- */
+.anatomia-theme.auth-root .encryption-text
+{
+    font-size: 22px;
+    color: var(--ink-3);
+}
 
-.footer-warning-label
+/* ---------- Footer links ---------- */
+.anatomia-theme.auth-root .back-to-student-link
+{
+    align-self: center;
+    margin: 24px 0 0 0;
+    padding: 10px 28px;
+    border-width: 0;
+    border-radius: 28px;
+    font-size: 24px;
+    -unity-font-style: normal;
+    color: var(--ink-3);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .back-to-student-link:hover { color: var(--accent); background-color: rgba(0, 0, 0, 0); }
+
+.anatomia-theme.auth-root .footer-warning-label
 {
     width: 100%;
     max-width: 720px;
-
     align-self: center;
-
-    margin-top: 50px;
-
+    margin: 36px 0 0 0;
     font-size: 22px;
-
-    color: rgb(140,128,158);
-
+    color: var(--ink-3);
     -unity-text-align: middle-center;
-    justify-content: flex-start;
-
     white-space: normal;
 }
 
-/* =========================================================
-   COMPACT MODE
-   ========================================================= */
-
-.compact .content-wrapper
-{
-    max-width: 760px;
-}
-
-.compact .screen-container
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 60px;
-    padding-bottom: 60px;
-}
-
-.compact .logo-circle
-{
-    width: 170px;
-    height: 170px;
-
-    border-radius: 85px;
-}
-
-.compact .logo-icon
-{
-    width: 66px;
-    height: 66px;
-}
-
-.compact .app-title
-{
-    font-size: 46px;
-}
-
-.compact .app-subtitle
-{
-    font-size: 26px;
-}
-
-.compact .login-card,
-.compact .reset-card
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 40px;
-    padding-bottom: 36px;
-}
-
-.compact .field-label
-{
-    font-size: 28px;
-}
-
-.compact .success-message
-{
-    font-size: 20px;
-}
-
-.compact .input-container
-{
-    height: 100px;
-}
-
-.compact .input-field
-{
-    font-size: 28px;
-}
-
-.compact .input-field > #unity-text-input
-{
-    font-size: 28px;
-}
-
-.compact .secure-login-button,
-.compact .send-reset-link-button
-{
-    height: 105px;
-    font-size: 30px;
-}
-
-.compact .encryption-text
-{
-    font-size: 22px;
-}
-
-.compact .back-to-student-link,
-.compact .back-to-admin-link
-{
-    font-size: 24px;
-}
-
-.compact .footer-warning-label
-{
-    font-size: 20px;
-}
-
-.compact .forgot-password-link
-{
-    font-size: 22px;
-}
-
-.compact .divider-row
-{
-    margin-top: 28px;
-    margin-bottom: 28px;
-}
-
-.compact .divider-text
-{
-    font-size: 20px;
-}
-
-.compact .google-button
-{
-    height: 92px;
-}
-
-.compact .icon-google
-{
-    width: 32px;
-    height: 32px;
-}
-
-.compact .google-button-text
-{
-    font-size: 26px;
-}
-
-.compact .create-account-text,
-.compact .create-account-link
-{
-    font-size: 22px;
-}
-
-/* =========================================================
-   LANDSCAPE / SHORT-HEIGHT MODE
-   Triggered by the controller when the panel's resolved height
-   gets short (typically after rotating a phone to landscape).
-   Compact narrows things down; landscape shortens them up.
-   Both classes can be active at the same time.
-   ========================================================= */
-
-.landscape .screen-container
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 30px;
-    padding-bottom: 30px;
-}
-
-.landscape .logo-circle
-{
-    width: 90px;
-    height: 90px;
-
-    border-radius: 46px;
-
-    margin-bottom: 10px;
-}
-
-.landscape .logo-icon
-{
-    width: 42px;
-    height: 42px;
-}
-
-.landscape .app-title
-{
-    font-size: 34px;
-
-    margin-bottom: 4px;
-}
-
-.landscape .app-subtitle
-{
-    font-size: 24px;
-
-    margin-bottom: 20px;
-}
-
-.landscape .login-card,
-.landscape .reset-card
-{
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 30px;
-    padding-bottom: 26px;
-
-    margin-bottom: 20px;
-}
-
-.landscape .field-label
-{
-    font-size: 26px;
-
-    margin-bottom: 8px;
-}
-
-.landscape .success-message
-{
-    font-size: 20px;
-    margin-top: 6px;
-    margin-bottom: 6px;
-}
-
-.landscape .field-label-spaced
-{
-    margin-top: 16px;
-}
-
-.landscape .input-container
-{
-    height: 84px;
-}
-
-.landscape .input-field,
-.landscape .input-field > #unity-text-input
-{
-    font-size: 26px;
-}
-
-.landscape .secure-login-button,
-.landscape .send-reset-link-button,
-.landscape .google-button
-{
-    height: 84px;
-
-    margin-top: 24px;
-}
-
-.landscape .divider-row
-{
-    margin-top: 24px;
-    margin-bottom: 24px;
-}
-
-.landscape .encryption-row
-{
-    margin-top: 16px;
-}
-
-.landscape .forgot-password-link
-{
-    margin-top: 8px;
-    margin-bottom: 12px;
-}
-
-.landscape .create-account-row
-{
-    margin-bottom: 16px;
-}
-
-.landscape .footer-warning-label
-{
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-/* =========================================================
-   ULTRA-COMPACT MODE
-   Very narrow panels only (small phones in portrait, split
-   screen / multi-window, folded foldables). Stacks on top of
-   .compact - both classes are active together in this state.
-   ========================================================= */
-
-.ultra-compact .screen-container
-{
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 40px;
-    padding-bottom: 40px;
-}
-
-.ultra-compact .logo-circle
-{
-    width: 120px;
-    height: 120px;
-
-    border-radius: 60px;
-
-    margin-bottom: 16px;
-}
-
-.ultra-compact .logo-icon
-{
-    width: 50px;
-    height: 50px;
-}
-
-.ultra-compact .app-title
-{
-    font-size: 38px;
-}
-
-.ultra-compact .app-subtitle
-{
-    font-size: 26px;
-
-    margin-bottom: 30px;
-}
-
-.ultra-compact .login-card,
-.ultra-compact .reset-card
-{
-    padding-left: 26px;
-    padding-right: 26px;
-    padding-top: 30px;
-    padding-bottom: 26px;
-
-    margin-bottom: 30px;
-}
-
-.ultra-compact .field-label
-{
-    font-size: 24px;
-
-    margin-bottom: 8px;
-}
-
-.ultra-compact .field-label-spaced
-{
-    margin-top: 20px;
-}
-
-.ultra-compact .field-error
-{
-    font-size: 20px;
-}
-
-.ultra-compact .success-message
-{
-    font-size: 18px;
-    margin-top: 6px;
-    margin-bottom: 6px;
-}
-
-.ultra-compact .input-container
-{
-    height: 84px;
-
-    padding-left: 20px;
-    padding-right: 14px;
-}
-
-.ultra-compact .input-icon
-{
-    width: 34px;
-    height: 34px;
-
-    margin-right: 12px;
-}
-
-.ultra-compact .input-field,
-.ultra-compact .input-field > #unity-text-input
-{
-    font-size: 24px;
-}
-
-.ultra-compact .secure-login-button,
-.ultra-compact .send-reset-link-button
-{
-    height: 90px;
-
-    margin-top: 30px;
-
-    font-size: 28px;
-}
-
-.ultra-compact .google-button
-{
-    height: 84px;
-}
-
-.ultra-compact .google-button-text
-{
-    font-size: 24px;
-}
-
-.ultra-compact .divider-row
-{
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
-
-.ultra-compact .divider-text
-{
-    font-size: 22px;
-}
-
-.ultra-compact .encryption-text
-{
-    font-size: 18px;
-}
-
-.ultra-compact .back-to-student-link,
-.ultra-compact .back-to-admin-link
-{
-    font-size: 24px;
-}
-
-.ultra-compact .footer-warning-label
-{
-    font-size: 18px;
-}
-
-.ultra-compact .create-account-text,
-.ultra-compact .create-account-link
-{
-    font-size: 20px;
-}
-
-.ultra-compact .status-label
-{
-    font-size: 22px;
-}
+/* ---------- Responsive (classes toggled by the controllers) ---------- */
+.anatomia-theme.auth-root.compact .auth-brand { margin-bottom: 26px; }
+.anatomia-theme.auth-root.compact .auth-brand .logo-circle { width: 108px; height: 108px; border-radius: 54px; }
+.anatomia-theme.auth-root.compact .auth-brand-small .logo-circle { width: 88px; height: 88px; border-radius: 44px; }
+.anatomia-theme.auth-root.compact .logo-icon { width: 50px; height: 50px; }
+.anatomia-theme.auth-root.compact .auth-brand-small .logo-icon { width: 40px; height: 40px; }
+.anatomia-theme.auth-root.compact .admin-chip { font-size: 19px; margin-bottom: 16px; }
+.anatomia-theme.auth-root.compact .encryption-row { margin-top: 30px; }
+.anatomia-theme.auth-root.compact .back-to-student-link { font-size: 22px; }
+.anatomia-theme.auth-root.compact .footer-warning-label { margin-top: 26px; font-size: 20px; }
+
+.anatomia-theme.auth-root.landscape .auth-brand,
+.anatomia-theme.auth-root.landscape .admin-chip { display: none; }
+.anatomia-theme.auth-root.landscape .footer-warning-label { margin-top: 12px; font-size: 18px; }
+.anatomia-theme.auth-root.landscape .encryption-row { margin-top: 14px; }
+.anatomia-theme.auth-root.landscape .back-to-student-link { margin-top: 6px; }
+
+.anatomia-theme.auth-root.ultra-compact .admin-chip { letter-spacing: 2px; padding: 8px 22px; }
+.anatomia-theme.auth-root.ultra-compact .encryption-text { font-size: 19px; }
+.anatomia-theme.auth-root.ultra-compact .footer-warning-label { font-size: 18px; }

@@ -1,0 +1,513 @@
+/* =========================================================
+   Anatomia 3D - Auth screens v5 "Soft Gradient"
+   Student Login / Create Account / Forgot Password
+   Reference canvas: 1080 x 1920. Load AFTER AnatomiaTheme.uss.
+
+   LAYOUT
+     top gradient   : lavender-blue wash that fades into the page (auth-top-gradient.png)
+     brand          : logo + name, centred
+     illustration   : optional 3D tile (Forgot Password)
+     headline       : centred, bold, with a muted subtitle
+     fields         : fully rounded pills, thin blue-grey outline, accent ring on focus
+     actions        : full-width solid pill, "Or" divider, round social buttons
+     foot           : centred switch link
+
+   COLOURS
+     The auth screens re-declare the accent tokens below (bright blue) so the
+     reference look stays local to these three screens. Delete the token block
+     under ".anatomia-theme.auth-root" to fall back to the app-wide purple accent.
+   Primary buttons do NOT set background-color so the theme's
+   accent / hover / pressed colours keep working.
+   ========================================================= */
+
+/* ---------- Local tokens ---------- */
+.anatomia-theme.auth-root
+{
+    --accent: rgb(43, 109, 255);
+    --accent-strong: rgb(30, 94, 236);
+    --accent-press: rgb(22, 78, 208);
+    --accent-soft: rgba(43, 109, 255, 0.12);
+    --accent-faint: rgba(43, 109, 255, 0.06);
+
+    --auth-border: rgb(184, 194, 224);
+    --auth-border-hover: rgb(150, 164, 206);
+    --auth-field-fill: rgba(255, 255, 255, 0.55);
+    --auth-ink-soft: rgb(88, 95, 118);
+}
+
+/* ---------- Skeleton ---------- */
+.anatomia-theme.auth-root { width: 100%; height: 100%; flex-grow: 1; flex-direction: column; }
+
+/* Page colour + gradient wash replace the ambient-bg image on these screens */
+.anatomia-theme.auth-root.screen-root
+{
+    background-color: rgb(242, 245, 251);
+    background-image: none;
+}
+
+.anatomia-theme.auth-root .auth-top-gradient
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 820px;
+    background-image: url("project://database/Assets/UI/Theme/auth-top-gradient.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.anatomia-theme.auth-root .screen-container
+{
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+/* scroll-view: plain VisualElement on Login (FitToScreen centres + scales the
+   content), real ScrollView on Create Account / Forgot Password. */
+.anatomia-theme.auth-root .scroll-view
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.anatomia-theme.auth-root .scroll-view #unity-content-and-vertical-scroll-container,
+.anatomia-theme.auth-root .scroll-view #unity-content-viewport { flex-grow: 1; }
+.anatomia-theme.auth-root .scroll-view #unity-content-container
+{
+    min-height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* Content keeps its natural height (FitToScreen needs that) and is centred. */
+.anatomia-theme.auth-root .content-wrapper
+{
+    width: 100%;
+    max-width: 880px;
+    padding: 96px 56px 64px 56px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    align-self: center;
+}
+
+/* ---------- Slim overlay scrollbar ---------- */
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical
+{
+    position: absolute;
+    right: 5px;
+    top: 10px;
+    bottom: 10px;
+    width: 10px;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller__low-button,
+.anatomia-theme.auth-root .scroll-view .unity-scroller__high-button,
+.anatomia-theme.auth-root .scroll-view #unity-dragger-border { display: none; }
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-tracker
+{
+    width: 10px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-dragger
+{
+    width: 10px;
+    min-height: 90px;
+    margin: 0;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: var(--accent-soft);
+}
+.anatomia-theme.auth-root .scroll-view .unity-scroller--vertical #unity-dragger:hover { background-color: var(--accent); }
+
+/* ---------- Header block (centred) ---------- */
+.anatomia-theme.auth-root .auth-hero
+{
+    width: 100%;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+.anatomia-theme.auth-root .auth-hero-inner { width: 100%; align-self: stretch; align-items: center; }
+
+.anatomia-theme.auth-root .auth-brand
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 64px;
+}
+
+.anatomia-theme.auth-root .logo-circle
+{
+    width: 84px;
+    height: 84px;
+    margin: 0 20px 0 0;
+    flex-shrink: 0;
+    border-radius: 24px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Icons/Anatomia-logo.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.auth-root .app-title
+{
+    margin: 0;
+    font-size: 64px;
+    -unity-font-style: normal;
+    letter-spacing: -1px;
+    color: var(--ink);
+}
+
+/* 3D illustration tile (Forgot Password) */
+.anatomia-theme.auth-root .auth-illus
+{
+    width: 300px;
+    height: 300px;
+    margin: -8px 0 20px 0;
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.anatomia-theme.auth-root .illus-lock { background-image: url("project://database/Assets/UI/Theme/auth-illus-lock.png"); }
+
+.anatomia-theme.auth-root .auth-headline
+{
+    margin: 0 0 14px 0;
+    font-size: 58px;
+    -unity-font-style: bold;
+    letter-spacing: -1px;
+    color: var(--ink);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.anatomia-theme.auth-root .app-subtitle
+{
+    margin: 0;
+    max-width: 780px;
+    font-size: 30px;
+    color: var(--auth-ink-soft);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* ---------- Form block (no card chrome) ---------- */
+.anatomia-theme.auth-root .auth-card-wrap { width: 100%; padding: 0; margin-top: 56px; }
+.anatomia-theme.auth-root .auth-card
+{
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+/* ---------- Foot (switch link) ---------- */
+.anatomia-theme.auth-root .auth-foot
+{
+    flex-grow: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 52px 0 0 0;
+}
+.anatomia-theme.auth-root .auth-foot-row { flex-direction: row; align-items: center; justify-content: center; }
+.anatomia-theme.auth-root .auth-foot-text { margin: 0 10px 0 0; font-size: 28px; color: var(--ink); }
+.anatomia-theme.auth-root .auth-foot-link
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 28px;
+    -unity-font-style: normal;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .auth-foot-link:hover { color: var(--accent-strong); }
+
+.anatomia-theme.auth-root .admin-login-link
+{
+    align-self: center;
+    margin: 24px 0 0 0;
+    padding: 10px 28px;
+    border-width: 0;
+    border-radius: 28px;
+    font-size: 24px;
+    -unity-font-style: normal;
+    color: var(--ink-3);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .admin-login-link:hover { color: var(--accent); background-color: rgba(0, 0, 0, 0); }
+
+/* ---------- Labels, hints, errors ---------- */
+.anatomia-theme.auth-root .field-label { margin: 0 0 14px 12px; font-size: 29px; -unity-font-style: normal; color: var(--ink); }
+.anatomia-theme.auth-root .field-label-spaced { margin-top: 34px; }
+.anatomia-theme.auth-root .field-label-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 34px;
+    margin-bottom: 14px;
+}
+.anatomia-theme.auth-root .field-label-row .field-label { margin: 0 0 0 12px; }
+.anatomia-theme.auth-root .field-hint { margin: 14px 0 0 20px; font-size: 22px; color: var(--auth-ink-soft); white-space: normal; }
+.anatomia-theme.auth-root .field-error { margin: 12px 0 0 20px; font-size: 24px; -unity-font-style: bold; color: var(--danger); white-space: normal; }
+
+.anatomia-theme.auth-root .field-row { flex-direction: row; }
+.anatomia-theme.auth-root .field-col { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.anatomia-theme.auth-root .field-col-gap { margin-left: 20px; }
+
+/* ---------- Inputs (pill, outlined) ---------- */
+.anatomia-theme.auth-root .input-container
+{
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    align-items: center;
+    overflow: visible;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .input-field
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 31px;
+    color: var(--ink);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .input-field > #unity-text-input
+{
+    height: 116px;
+    min-width: 0;
+    padding-left: 46px;
+    padding-right: 36px;
+    overflow: hidden;
+    border-width: 2px;
+    border-color: var(--auth-border);
+    border-radius: 58px;
+    background-color: var(--auth-field-fill);
+    color: var(--ink);
+    font-size: 31px;
+    -unity-text-align: middle-left;
+    transition-property: border-color, background-color;
+    transition-duration: 0.15s;
+}
+.anatomia-theme.auth-root .input-field > #unity-text-input:hover { border-color: var(--auth-border-hover); }
+.anatomia-theme.auth-root .input-field > #unity-text-input:focus { border-color: var(--accent); background-color: var(--surface-solid); }
+.anatomia-theme.auth-root .input-field > #unity-text-input.unity-base-text-field__input--placeholder { color: var(--auth-ink-soft); -unity-font-style: normal; }
+.anatomia-theme.auth-root .input-field > #unity-text-input:focus.unity-base-text-field__input--placeholder { color: var(--ink-4); }
+.anatomia-theme.auth-root .input-field-plain > #unity-text-input { padding-left: 38px; padding-right: 24px; }
+.anatomia-theme.auth-root .input-field-with-right-icon > #unity-text-input { padding-right: 112px; }
+
+/* Leading field icons are not part of this design */
+.anatomia-theme.auth-root .input-icon { display: none; }
+
+.anatomia-theme.auth-root .input-icon-button
+{
+    position: absolute;
+    right: 20px;
+    top: 22px;
+    width: 72px;
+    height: 72px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: rgba(0, 0, 0, 0);
+    background-size: 42px 42px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--auth-ink-soft);
+}
+.anatomia-theme.auth-root .input-icon-button:hover { background-color: var(--accent-soft); }
+.anatomia-theme.auth-root .icon-eye { background-image: url("project://database/Assets/UI/Icons/eye.png"); }
+.anatomia-theme.auth-root .icon-eye.icon-eye-off { background-image: url("project://database/Assets/UI/Icons/eye-off.png"); }
+
+/* ---------- Buttons ---------- */
+.anatomia-theme.auth-root .sign-in-button,
+.anatomia-theme.auth-root .create-account-button
+{
+    width: 100%;
+    height: 116px;
+    margin: 52px 0 0 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 58px;
+    font-size: 33px;
+    -unity-font-style: normal;
+    letter-spacing: 0.3px;
+    color: white;
+}
+
+.anatomia-theme.auth-root .forgot-password-link
+{
+    margin: 0 12px 0 0;
+    padding: 0;
+    border-width: 0;
+    font-size: 25px;
+    -unity-font-style: normal;
+    color: var(--accent);
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.auth-root .forgot-password-link:hover { color: var(--accent-strong); }
+
+/* Round social buttons (icon only) */
+.anatomia-theme.auth-root .social-row { flex-direction: row; justify-content: center; align-items: center; }
+
+.anatomia-theme.auth-root .biometric-button,
+.anatomia-theme.auth-root .google-button
+{
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    margin: 0 14px;
+    padding: 0;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    border-width: 2px;
+    border-color: var(--auth-border);
+    border-radius: 60px;
+    background-color: var(--auth-field-fill);
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+.anatomia-theme.auth-root .biometric-button:hover,
+.anatomia-theme.auth-root .google-button:hover { background-color: var(--surface-solid); border-color: var(--accent); }
+.anatomia-theme.auth-root .biometric-button:active,
+.anatomia-theme.auth-root .google-button:active { background-color: var(--accent-soft); }
+
+/* Text stays in the tree (controllers still set it) but the circles show only the icon */
+.anatomia-theme.auth-root .biometric-button-text,
+.anatomia-theme.auth-root .google-button-text { display: none; }
+
+.anatomia-theme.auth-root .icon-google,
+.anatomia-theme.auth-root .icon-fingerprint,
+.anatomia-theme.auth-root #biometric-icon
+{
+    width: 52px;
+    height: 52px;
+    margin: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.anatomia-theme.auth-root .icon-google { background-image: url("project://database/Assets/UI/Icons/google-icon.png"); -unity-background-image-tint-color: rgb(255, 255, 255); }
+.anatomia-theme.auth-root .icon-fingerprint,
+.anatomia-theme.auth-root #biometric-icon { background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png"); -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.auth-root #biometric-icon.icon-lock { background-image: url("project://database/Assets/UI/Icons/lock-icon.png"); }
+
+.anatomia-theme.auth-root .divider-row { flex-direction: row; align-items: center; margin: 48px 6px 40px 6px; }
+.anatomia-theme.auth-root .divider-line { flex-grow: 1; height: 1px; background-color: var(--auth-border); }
+.anatomia-theme.auth-root .divider-text { margin: 0 28px; font-size: 26px; color: var(--ink); }
+
+/* ---------- Status ---------- */
+.anatomia-theme.auth-root .status-label { margin-top: 26px; font-size: 26px; color: var(--danger); -unity-text-align: middle-center; white-space: normal; }
+.anatomia-theme.auth-root .success-message
+{
+    margin-top: 30px;
+    padding: 24px 30px;
+    border-radius: 36px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--success);
+    background-color: var(--success-soft);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+/* =========================================================
+   Responsive (classes toggled by the controllers)
+   ========================================================= */
+.anatomia-theme.auth-root.compact .auth-top-gradient { height: 700px; }
+.anatomia-theme.auth-root.compact .content-wrapper { padding: 72px 40px 48px 40px; }
+.anatomia-theme.auth-root.compact .auth-brand { margin-bottom: 48px; }
+.anatomia-theme.auth-root.compact .logo-circle { width: 70px; height: 70px; border-radius: 20px; margin-right: 16px; }
+.anatomia-theme.auth-root.compact .app-title { font-size: 54px; }
+.anatomia-theme.auth-root.compact .auth-illus { width: 240px; height: 240px; margin-bottom: 12px; }
+.anatomia-theme.auth-root.compact .auth-headline { font-size: 50px; }
+.anatomia-theme.auth-root.compact .app-subtitle { font-size: 27px; }
+.anatomia-theme.auth-root.compact .auth-card-wrap { margin-top: 44px; }
+.anatomia-theme.auth-root.compact .field-label { font-size: 26px; margin-bottom: 10px; }
+.anatomia-theme.auth-root.compact .forgot-password-link { font-size: 23px; }
+.anatomia-theme.auth-root.compact .field-label-spaced,
+.anatomia-theme.auth-root.compact .field-label-row { margin-top: 24px; }
+.anatomia-theme.auth-root.compact .input-field > #unity-text-input { height: 100px; border-radius: 50px; padding-left: 38px; font-size: 28px; }
+.anatomia-theme.auth-root.compact .input-field-plain > #unity-text-input { padding-left: 30px; }
+.anatomia-theme.auth-root.compact .input-icon-button { top: 18px; width: 64px; height: 64px; border-radius: 32px; }
+.anatomia-theme.auth-root.compact .sign-in-button,
+.anatomia-theme.auth-root.compact .create-account-button { height: 100px; margin-top: 40px; font-size: 30px; border-radius: 50px; }
+.anatomia-theme.auth-root.compact .biometric-button,
+.anatomia-theme.auth-root.compact .google-button { width: 104px; height: 104px; min-width: 104px; border-radius: 52px; margin: 0 11px; }
+.anatomia-theme.auth-root.compact .divider-row { margin: 36px 6px 30px 6px; }
+.anatomia-theme.auth-root.compact .auth-foot { padding-top: 40px; }
+.anatomia-theme.auth-root.compact .auth-foot-text,
+.anatomia-theme.auth-root.compact .auth-foot-link { font-size: 26px; }
+
+.anatomia-theme.auth-root.landscape .auth-top-gradient { height: 260px; }
+.anatomia-theme.auth-root.landscape .content-wrapper { padding: 20px 28px 20px 28px; }
+.anatomia-theme.auth-root.landscape .auth-brand { margin-bottom: 12px; }
+.anatomia-theme.auth-root.landscape .logo-circle { width: 44px; height: 44px; border-radius: 14px; margin-right: 12px; }
+.anatomia-theme.auth-root.landscape .app-title { font-size: 34px; }
+.anatomia-theme.auth-root.landscape .auth-illus { display: none; }
+.anatomia-theme.auth-root.landscape .auth-headline { font-size: 36px; margin-bottom: 2px; }
+.anatomia-theme.auth-root.landscape .app-subtitle { font-size: 21px; }
+.anatomia-theme.auth-root.landscape .auth-card-wrap { margin-top: 16px; }
+.anatomia-theme.auth-root.landscape .field-label { margin-bottom: 6px; font-size: 21px; }
+.anatomia-theme.auth-root.landscape .field-label-spaced,
+.anatomia-theme.auth-root.landscape .field-label-row { margin-top: 10px; }
+.anatomia-theme.auth-root.landscape .input-field > #unity-text-input { height: 68px; border-radius: 34px; font-size: 24px; }
+.anatomia-theme.auth-root.landscape .input-icon-button { top: 8px; width: 52px; height: 52px; border-radius: 26px; }
+.anatomia-theme.auth-root.landscape .sign-in-button,
+.anatomia-theme.auth-root.landscape .create-account-button { height: 72px; margin-top: 16px; border-radius: 36px; font-size: 26px; }
+.anatomia-theme.auth-root.landscape .biometric-button,
+.anatomia-theme.auth-root.landscape .google-button { width: 68px; height: 68px; min-width: 68px; border-radius: 34px; margin: 0 8px; }
+.anatomia-theme.auth-root.landscape .icon-google,
+.anatomia-theme.auth-root.landscape .icon-fingerprint,
+.anatomia-theme.auth-root.landscape #biometric-icon { width: 32px; height: 32px; }
+.anatomia-theme.auth-root.landscape .divider-row { margin: 12px 6px 10px 6px; }
+.anatomia-theme.auth-root.landscape .auth-foot { padding-top: 12px; }
+.anatomia-theme.auth-root.landscape .admin-login-link { margin-top: 6px; }
+
+.anatomia-theme.auth-root.ultra-compact .content-wrapper { padding-left: 24px; padding-right: 24px; }
+.anatomia-theme.auth-root.ultra-compact .app-title { font-size: 46px; }
+.anatomia-theme.auth-root.ultra-compact .auth-headline { font-size: 42px; }
+.anatomia-theme.auth-root.ultra-compact .input-field > #unity-text-input { font-size: 25px; }
+.anatomia-theme.auth-root.ultra-compact .field-col-gap { margin-left: 12px; }
+
+/* ---------- Visibility helper (LAST so it wins ties) ---------- */
+.anatomia-theme.auth-root .hidden { display: none; }
+.hidden { display: none; }

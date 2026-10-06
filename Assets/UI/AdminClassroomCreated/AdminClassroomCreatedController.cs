@@ -63,7 +63,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminClassroomCreatedController] OnEnable called");
+            //Debug.Log("[AdminClassroomCreatedController] OnEnable called");
 
             if (_document == null)
             {
@@ -86,7 +86,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminClassroomCreatedController] Root is null!");
+                //Debug.LogError("[AdminClassroomCreatedController] Root is null!");
                 return;
             }
 
@@ -126,7 +126,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminClassroomCreatedController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminClassroomCreatedController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -139,7 +139,7 @@ namespace Anatomia3D.UI
             _studentsValueLabel = _screenRoot.Q<Label>("students-value-label");
             _goToDashboardButton = _screenRoot.Q<Button>("go-to-dashboard-button");
 
-            Debug.Log($"[AdminClassroomCreatedController] Found code label: {_classroomCodeLabel != null}, go to dashboard: {_goToDashboardButton != null}");
+            //Debug.Log($"[AdminClassroomCreatedController] Found code label: {_classroomCodeLabel != null}, go to dashboard: {_goToDashboardButton != null}");
         }
 
         private void WireCallbacks()
@@ -175,7 +175,7 @@ namespace Anatomia3D.UI
             if (_classroomCodeLabel == null) return;
 
             GUIUtility.systemCopyBuffer = _classroomCodeLabel.text;
-            Debug.Log($"[AdminClassroomCreatedController] Copied classroom code: {_classroomCodeLabel.text}");
+            //Debug.Log($"[AdminClassroomCreatedController] Copied classroom code: {_classroomCodeLabel.text}");
 
             if (_copyCodeLabel != null)
             {
@@ -210,6 +210,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_screenRoot != null)
             {
                 if (_backgroundGradientTexture != null) Destroy(_backgroundGradientTexture);

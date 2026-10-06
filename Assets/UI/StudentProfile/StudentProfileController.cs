@@ -75,7 +75,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentProfileController] OnEnable called");
+            //Debug.Log("[StudentProfileController] OnEnable called");
 
             if (_document == null)
             {
@@ -100,7 +100,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentProfileController] Root is null!");
+                //Debug.LogError("[StudentProfileController] Root is null!");
                 return;
             }
 
@@ -175,7 +175,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentProfileController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentProfileController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -206,7 +206,7 @@ namespace Anatomia3D.UI
             _logoutBackground = _screenRoot.Q<VisualElement>("logout-background");
 
 
-            Debug.Log($"[StudentProfileController] Found back button: {_backButton != null}, logout: {_logoutButton != null}");
+            //Debug.Log($"[StudentProfileController] Found back button: {_backButton != null}, logout: {_logoutButton != null}");
         }
 
         private void WireCallbacks()
@@ -236,7 +236,7 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
             if (student == null)
             {
-                Debug.LogWarning("[StudentProfileController] No student signed in - leaving profile fields as-is.");
+                //Debug.LogWarning("[StudentProfileController] No student signed in - leaving profile fields as-is.");
                 return;
             }
 
@@ -264,7 +264,8 @@ namespace Anatomia3D.UI
         {
             if (_studentNameLabel != null) _studentNameLabel.text = studentName;
             if (_studentEmailLabel != null) _studentEmailLabel.text = email;
-            if (_levelBadgeLabel != null) _levelBadgeLabel.text = $"Level {level} \u2022 {totalPoints:N0} pts";
+            // The badge under the name shows the account role; level and points live in the stat cards below.
+            if (_levelBadgeLabel != null) _levelBadgeLabel.text = "Student";
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_levelValueLabel != null) _levelValueLabel.text = level.ToString();
@@ -366,7 +367,7 @@ namespace Anatomia3D.UI
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[StudentProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    //Debug.LogWarning($"[StudentProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
 
                     // Explicit fallback, not just "leave whatever's showing" - covers
                     // access-denied/expired-URL/deleted-asset cases (not just being
@@ -456,13 +457,13 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentProfileController] Navigating back to dashboard");
+            //Debug.Log("[StudentProfileController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
         private void OnEditProfileClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentProfileController] Edit Profile tapped.");
+            //Debug.Log("[StudentProfileController] Edit Profile tapped.");
 
             UIManager.Instance.ShowStudentEditProfile(_studentNameLabel?.text, _studentEmailLabel?.text);
         }
@@ -470,7 +471,7 @@ namespace Anatomia3D.UI
         private void OnNotificationsClicked(ClickEvent evt)
         {
             // TODO: navigate to Notification settings.
-            Debug.Log("[StudentProfileController] Notifications tapped.");
+            //Debug.Log("[StudentProfileController] Notifications tapped.");
 
             UIManager.Instance.ShowStudentNotifications(UIManager.Instance.ShowStudentProfile);
         }
@@ -483,7 +484,7 @@ namespace Anatomia3D.UI
 
         private void OnLogoutClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentProfileController] Log Out tapped.");
+            //Debug.Log("[StudentProfileController] Log Out tapped.");
             PlayerSessionManager.Instance?.LogoutStudent();
             UIManager.Instance.ShowStudentLogin();
         }
@@ -503,6 +504,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

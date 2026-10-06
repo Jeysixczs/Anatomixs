@@ -57,6 +57,9 @@ namespace Anatomia3D.UI
         private Label _nextLevelLabel;
         private Label _nextLevelTitleLabel;
         private VisualElement _progressFill;
+        private Label _levelCaptionLabel;
+        private VisualElement _nextLevelBlock;
+        private VisualElement _levelProgressTrack;
         private Label _pointsToNextLabel;
 
         // Level roadmap (all configured levels + points required)
@@ -73,6 +76,8 @@ namespace Anatomia3D.UI
         private Button _performanceTabButton;
         private VisualElement _weeklyActivityPanel;
         private VisualElement _performancePanel;
+        private Button _roadmapTabButton;
+        private VisualElement _roadmapPanel;
 
         // Weekly chart bars (Mon..Sun)
         private readonly VisualElement[] _chartBars = new VisualElement[7];
@@ -116,7 +121,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentProgressController] OnEnable called");
+            //Debug.Log("[StudentProgressController] OnEnable called");
 
             if (_document == null)
             {
@@ -141,7 +146,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentProgressController] Root is null!");
+                //Debug.LogError("[StudentProgressController] Root is null!");
                 return;
             }
 
@@ -240,6 +245,7 @@ namespace Anatomia3D.UI
             _backButton?.UnregisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.UnregisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.UnregisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _roadmapTabButton?.UnregisterCallback<ClickEvent>(OnRoadmapTabClicked);
             _baselineTakePosttestButton?.UnregisterCallback<ClickEvent>(OnTakePosttestClicked);
             _screenRoot.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
         }
@@ -250,7 +256,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentProgressController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentProgressController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -262,6 +268,9 @@ namespace Anatomia3D.UI
             _nextLevelLabel = _screenRoot.Q<Label>("next-level-label");
             _nextLevelTitleLabel = _screenRoot.Q<Label>("next-level-title-label");
             _progressFill = _screenRoot.Q<VisualElement>("progress-fill");
+            _levelCaptionLabel = _screenRoot.Q<Label>("level-caption-label");
+            _nextLevelBlock = _screenRoot.Q<VisualElement>("next-level-block");
+            _levelProgressTrack = _screenRoot.Q<VisualElement>("level-progress-track");
             _pointsToNextLabel = _screenRoot.Q<Label>("points-to-next-label");
 
             _levelRoadmapList = _screenRoot.Q<VisualElement>("level-roadmap-list");
@@ -275,6 +284,8 @@ namespace Anatomia3D.UI
             _performanceTabButton = _screenRoot.Q<Button>("performance-tab-button");
             _weeklyActivityPanel = _screenRoot.Q<VisualElement>("weekly-activity-panel");
             _performancePanel = _screenRoot.Q<VisualElement>("performance-panel");
+            _roadmapTabButton = _screenRoot.Q<Button>("roadmap-tab-button");
+            _roadmapPanel = _screenRoot.Q<VisualElement>("roadmap-panel");
 
             for (int i = 0; i < BarNames.Length; i++)
             {
@@ -310,7 +321,7 @@ namespace Anatomia3D.UI
             _categoryMuscularCount?.AddToClassList("hidden");
             _categoryCardiovascularCount?.AddToClassList("hidden");
 
-            Debug.Log($"[StudentProgressController] Found back button: {_backButton != null}, tabs: {_weeklyTabButton != null}/{_performanceTabButton != null}");
+            //Debug.Log($"[StudentProgressController] Found back button: {_backButton != null}, tabs: {_weeklyTabButton != null}/{_performanceTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -318,6 +329,7 @@ namespace Anatomia3D.UI
             _backButton?.RegisterCallback<ClickEvent>(OnBackClicked);
             _weeklyTabButton?.RegisterCallback<ClickEvent>(OnWeeklyTabClicked);
             _performanceTabButton?.RegisterCallback<ClickEvent>(OnPerformanceTabClicked);
+            _roadmapTabButton?.RegisterCallback<ClickEvent>(OnRoadmapTabClicked);
             _baselineTakePosttestButton?.RegisterCallback<ClickEvent>(OnTakePosttestClicked);
 
             if (_screenRoot != null)
@@ -343,15 +355,15 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance?.CurrentStudent;
             if (student == null)
             {
-                Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
-                    "leaving the Level Progress card and roadmap with placeholder data.");
+                //Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
+                    //"leaving the Level Progress card and roadmap with placeholder data.");
                 return;
             }
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
-                    "can't compute level progress or build the roadmap.");
+                //Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
+                    //"can't compute level progress or build the roadmap.");
                 return;
             }
 
@@ -364,18 +376,37 @@ namespace Anatomia3D.UI
                 if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {progress.nextLevel}";
                 if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = progress.nextTitle;
                 if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(progress.progress01) * 100f, LengthUnit.Percent);
-                if (_pointsToNextLabel != null)
+                if (_pointsToNextLabel != null && progress.pointsToNext > 0)
                 {
-                    _pointsToNextLabel.text = progress.pointsToNext > 0
-                        ? $"{progress.pointsToNext} points to next level"
-                        : "You're at the top level!";
+                    _pointsToNextLabel.text = $"{progress.pointsToNext} points to next level";
                 }
+
+                // ComputeLevelProgress reports nextLevel == level once there's no higher level.
+                ApplyMaxLevelState(progress.nextLevel == progress.level && progress.pointsToNext <= 0);
 
                 if (_quizzesValueLabel != null) _quizzesValueLabel.text = student.QuizzesCompleted.ToString();
                 if (_pointsValueLabel != null) _pointsValueLabel.text = student.TotalPoints.ToString();
 
                 BuildLevelRoadmap(settings.Levels, progress.level, student.TotalPoints);
             });
+        }
+
+        /// <summary>At the top level there's no "next up" to show, so the hero card drops the
+        /// right-hand Next Up block and the progress bar, switches the caption to MAX LEVEL
+        /// and shows a congratulatory line instead. Any other level restores the normal
+        /// layout (this can be called repeatedly as points change).</summary>
+        private void ApplyMaxLevelState(bool isMaxLevel)
+        {
+            var shown = isMaxLevel ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_nextLevelBlock != null) _nextLevelBlock.style.display = shown;
+            if (_levelProgressTrack != null) _levelProgressTrack.style.display = shown;
+
+            if (_levelCaptionLabel != null) _levelCaptionLabel.text = isMaxLevel ? "MAX LEVEL" : "CURRENT LEVEL";
+
+            if (isMaxLevel && _pointsToNextLabel != null)
+            {
+                _pointsToNextLabel.text = "You've reached the top level - amazing work!";
+            }
         }
 
         /// <summary>Fills in the two stat-card values PopulateLevelProgress() above
@@ -393,8 +424,8 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
-                    "leaving avg score and badges as placeholders.");
+                //Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
+                    //"leaving avg score and badges as placeholders.");
                 return;
             }
 
@@ -404,6 +435,14 @@ namespace Anatomia3D.UI
 
                 if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{result.AvgScorePercent.ToString("0.##")}%";
                 if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
+            });
+
+            // The saved badgesEarned list can lag behind points (e.g. points edited by hand), so
+            // recount the way the Achievements screen does - by points as well - to keep both
+            // screens showing the same number.
+            BadgeProgress.FetchEarnedCount(count =>
+            {
+                if (count >= 0 && _badgesValueLabel != null) _badgesValueLabel.text = count.ToString();
             });
         }
 
@@ -489,19 +528,19 @@ namespace Anatomia3D.UI
             string studentId = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
             if (string.IsNullOrEmpty(studentId))
             {
-                Debug.LogWarning("[StudentProgressController] No signed-in student - leaving the Performance Panel as-is.");
+                //Debug.LogWarning("[StudentProgressController] No signed-in student - leaving the Performance Panel as-is.");
                 return;
             }
 
             if (AnatomyPlayModeLocalStorage.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AnatomyPlayModeLocalStorage.Instance is null - can't read Anatomy Play Mode progress.");
+                //Debug.LogWarning("[StudentProgressController] AnatomyPlayModeLocalStorage.Instance is null - can't read Anatomy Play Mode progress.");
                 return;
             }
 
             if (AnatomyScreenController.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AnatomyScreenController.Instance is null - can't determine actual structure totals per system.");
+                //Debug.LogWarning("[StudentProgressController] AnatomyScreenController.Instance is null - can't determine actual structure totals per system.");
                 return;
             }
 
@@ -516,17 +555,17 @@ namespace Anatomia3D.UI
             float muscularPercent = CalculatePerformanceBySystem(AnatomySystem.Muscular, completedKeys, out int muscularCompleted, out int muscularTotal);
             float cardioPercent = CalculatePerformanceBySystem(AnatomySystem.Cardiovascular, completedKeys, out int cardioCompleted, out int cardioTotal);
 
-            Debug.Log($"[StudentProgress] Completed Skeletal structures: {skeletalCompleted}");
-            Debug.Log($"[StudentProgress] Total Skeletal structures: {skeletalTotal}");
-            Debug.Log($"[StudentProgress] Skeletal progress: {skeletalPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Skeletal structures: {skeletalCompleted}");
+            //Debug.Log($"[StudentProgress] Total Skeletal structures: {skeletalTotal}");
+            //Debug.Log($"[StudentProgress] Skeletal progress: {skeletalPercent:0.00}%");
 
-            Debug.Log($"[StudentProgress] Completed Muscular structures: {muscularCompleted}");
-            Debug.Log($"[StudentProgress] Total Muscular structures: {muscularTotal}");
-            Debug.Log($"[StudentProgress] Muscular progress: {muscularPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Muscular structures: {muscularCompleted}");
+            //Debug.Log($"[StudentProgress] Total Muscular structures: {muscularTotal}");
+            //Debug.Log($"[StudentProgress] Muscular progress: {muscularPercent:0.00}%");
 
-            Debug.Log($"[StudentProgress] Completed Cardiovascular structures: {cardioCompleted}");
-            Debug.Log($"[StudentProgress] Total Cardiovascular structures: {cardioTotal}");
-            Debug.Log($"[StudentProgress] Cardiovascular progress: {cardioPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Cardiovascular structures: {cardioCompleted}");
+            //Debug.Log($"[StudentProgress] Total Cardiovascular structures: {cardioTotal}");
+            //Debug.Log($"[StudentProgress] Cardiovascular progress: {cardioPercent:0.00}%");
             // Totals/completed counts are logged for debugging only - never shown in
             // the UI itself (see the plan's section 16).
 
@@ -569,7 +608,7 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - leaving the Weekly Activity Panel as-is.");
+                //Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - leaving the Weekly Activity Panel as-is.");
                 return;
             }
 
@@ -588,9 +627,9 @@ namespace Anatomia3D.UI
                     AddPointsToWeek(weekly, anatomyPoints);
                 }
 
-                Debug.Log("[StudentProgress] Weekly points:\n" +
-                    $"Mon={weekly[0]}\nTue={weekly[1]}\nWed={weekly[2]}\nThu={weekly[3]}\n" +
-                    $"Fri={weekly[4]}\nSat={weekly[5]}\nSun={weekly[6]}");
+                //Debug.Log("[StudentProgress] Weekly points:\n" +
+                    //$"Mon={weekly[0]}\nTue={weekly[1]}\nWed={weekly[2]}\nThu={weekly[3]}\n" +
+                    //$"Fri={weekly[4]}\nSat={weekly[5]}\nSun={weekly[6]}");
 
                 SetWeeklyPoints(weekly);
             });
@@ -637,7 +676,7 @@ namespace Anatomia3D.UI
                 return parsed.Kind == DateTimeKind.Utc ? parsed : parsed.ToUniversalTime();
             }
 
-            Debug.LogWarning($"[StudentProgressController] Could not parse Play Mode timestamp '{isoUtc}' - using current time instead.");
+            //Debug.LogWarning($"[StudentProgressController] Could not parse Play Mode timestamp '{isoUtc}' - using current time instead.");
             return DateTime.UtcNow;
         }
 
@@ -826,6 +865,7 @@ namespace Anatomia3D.UI
             if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = nextLevelTitle;
             if (_progressFill != null) UIAnimationUtility.AnimateFill(_progressFill, levelProgress01);
             if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
+            ApplyMaxLevelState(nextLevel == currentLevel && pointsToNextLevel <= 0);
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent.ToString("0.##")}%";
@@ -873,7 +913,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentProgressController] Navigating back to dashboard");
+            //Debug.Log("[StudentProgressController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
@@ -881,22 +921,23 @@ namespace Anatomia3D.UI
 
         private void OnPerformanceTabClicked(ClickEvent evt) => ShowPerformanceTab();
 
-        private void ShowWeeklyTab()
-        {
-            _weeklyTabButton?.AddToClassList("tab-button-active");
-            _performanceTabButton?.RemoveFromClassList("tab-button-active");
+        private void OnRoadmapTabClicked(ClickEvent evt) => ShowRoadmapTab();
 
-            _weeklyActivityPanel?.RemoveFromClassList("hidden");
-            _performancePanel?.AddToClassList("hidden");
-        }
+        private void ShowWeeklyTab() => SetActiveTab(_weeklyTabButton, _weeklyActivityPanel);
+        private void ShowPerformanceTab() => SetActiveTab(_performanceTabButton, _performancePanel);
+        private void ShowRoadmapTab() => SetActiveTab(_roadmapTabButton, _roadmapPanel);
 
-        private void ShowPerformanceTab()
+        private void SetActiveTab(Button activeButton, VisualElement activePanel)
         {
-            _performanceTabButton?.AddToClassList("tab-button-active");
             _weeklyTabButton?.RemoveFromClassList("tab-button-active");
+            _performanceTabButton?.RemoveFromClassList("tab-button-active");
+            _roadmapTabButton?.RemoveFromClassList("tab-button-active");
+            activeButton?.AddToClassList("tab-button-active");
 
-            _performancePanel?.RemoveFromClassList("hidden");
             _weeklyActivityPanel?.AddToClassList("hidden");
+            _performancePanel?.AddToClassList("hidden");
+            _roadmapPanel?.AddToClassList("hidden");
+            activePanel?.RemoveFromClassList("hidden");
         }
 
         // ---------------- Responsive layout ----------------
@@ -914,6 +955,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

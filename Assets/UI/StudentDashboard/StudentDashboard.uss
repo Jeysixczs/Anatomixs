@@ -783,6 +783,17 @@
     background-color: rgb(248, 249, 251);
 }
 
+.view-all-close-icon
+{
+    width: 32px;
+    height: 32px;
+    background-image: url("project://database/Assets/UI/Icons/close-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: rgb(90, 95, 110);
+}
+
 .view-all-scroll
 {
     flex-grow: 1;
@@ -1083,6 +1094,12 @@
     height: 64px;
     border-radius: 32px;
     font-size: 24px;
+}
+
+.compact .view-all-close-icon
+{
+    width: 26px;
+    height: 26px;
 }
 
 .compact .view-all-list

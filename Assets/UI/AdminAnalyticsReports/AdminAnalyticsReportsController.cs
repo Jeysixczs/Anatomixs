@@ -197,6 +197,13 @@ namespace Anatomia3D.UI
         // button of their own.
         private DropdownField _quizExportPicker;
 
+        /// <summary>StyleSheets THIS controller copied onto the shared panel root so the
+        /// dropdown choices popup (which Unity attaches to panel.visualTree, outside this
+        /// screen) picks up the .unity-base-dropdown__* rules. Tracked so OnDisable can
+        /// remove exactly these and nothing leaks into other screens.</summary>
+        private readonly List<StyleSheet> _stylesheetsCopiedToPanelRoot = new List<StyleSheet>();
+        private VisualElement _panelRootWithCopiedStyles;
+
         private List<QuizService.QuizRecord> _classroomQuizzes = new List<QuizService.QuizRecord>();
         private string _selectedQuizExportId;
 
@@ -228,7 +235,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminAnalyticsReportsController] OnEnable called");
+            //Debug.Log("[AdminAnalyticsReportsController] OnEnable called");
 
             if (_document == null)
             {
@@ -251,7 +258,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminAnalyticsReportsController] Root is null!");
+                //Debug.LogError("[AdminAnalyticsReportsController] Root is null!");
                 return;
             }
 
@@ -259,6 +266,7 @@ namespace Anatomia3D.UI
 
             QueryElements();
             WireCallbacks();
+            PropagateStyleSheetsToPanelRoot();
             UpdateResponsiveLayout();
 
             _quizExportPicker?.SetEnabled(false);
@@ -276,6 +284,7 @@ namespace Anatomia3D.UI
         private void OnDisable()
         {
             UnregisterCallbacks();
+            RemoveCopiedStyleSheetsFromPanelRoot();
 
             // The screen's whole UXML tree gets re-instantiated on the next OnEnable
             // (QueryElements() re-queries "screen-root" from scratch), so the old
@@ -290,6 +299,74 @@ namespace Anatomia3D.UI
             // into a freshly re-instantiated tree.
             _classroomQuizzes.Clear();
             _selectedQuizExportId = null;
+        }
+
+        // ---------------- Dropdown popup styling ----------------
+
+        /// <summary>Dropdown choice popups attach to VisualElement.panel.visualTree, a SIBLING
+        /// of this screen under the shared UIDocument, so styles on the screen never reach
+        /// them. Same approach as AdminQuizManagementController: copy this screen's
+        /// stylesheets onto the panel root while the screen is active.</summary>
+        private void PropagateStyleSheetsToPanelRoot()
+        {
+            if (_screenRoot == null) return;
+
+            var panelRoot = _screenRoot.panel?.visualTree;
+            if (panelRoot == null)
+            {
+                _screenRoot.RegisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+                return;
+            }
+
+            CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        private void OnScreenRootAttachedToPanel(AttachToPanelEvent evt)
+        {
+            _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+            var panelRoot = _screenRoot.panel?.visualTree;
+            if (panelRoot != null) CopyAncestorStyleSheetsOnto(panelRoot);
+        }
+
+        /// <summary>The UXML &lt;Style&gt; tags attach to the TemplateContainer ABOVE screen-root,
+        /// so walk up from screen-root to the panel root collecting every sheet on the way.</summary>
+        private void CopyAncestorStyleSheetsOnto(VisualElement panelRoot)
+        {
+            var current = _screenRoot;
+            while (current != null && current != panelRoot)
+            {
+                for (int i = 0; i < current.styleSheets.count; i++)
+                {
+                    var sheet = current.styleSheets[i];
+                    if (sheet != null && !panelRoot.styleSheets.Contains(sheet))
+                    {
+                        panelRoot.styleSheets.Add(sheet);
+                        _stylesheetsCopiedToPanelRoot.Add(sheet);
+                    }
+                }
+                current = current.parent;
+            }
+            _panelRootWithCopiedStyles = panelRoot;
+        }
+
+        private void RemoveCopiedStyleSheetsFromPanelRoot()
+        {
+            _screenRoot?.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
+
+            if (_stylesheetsCopiedToPanelRoot.Count == 0) return;
+
+            var panelRoot = _panelRootWithCopiedStyles ?? _screenRoot?.panel?.visualTree;
+            if (panelRoot != null)
+            {
+                foreach (var sheet in _stylesheetsCopiedToPanelRoot)
+                {
+                    if (sheet != null && panelRoot.styleSheets.Contains(sheet))
+                        panelRoot.styleSheets.Remove(sheet);
+                }
+            }
+
+            _stylesheetsCopiedToPanelRoot.Clear();
+            _panelRootWithCopiedStyles = null;
         }
 
         private void UnregisterCallbacks()
@@ -314,7 +391,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminAnalyticsReportsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminAnalyticsReportsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -350,7 +427,7 @@ namespace Anatomia3D.UI
 
             _quizExportPicker = _screenRoot.Q<DropdownField>("quiz-export-picker");
 
-            Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
+            //Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -446,8 +523,8 @@ namespace Anatomia3D.UI
         {
             if (AdminClassroomService.Instance == null)
             {
-                Debug.LogWarning("[AdminAnalyticsReportsController] AdminClassroomService.Instance is null - " +
-                    "leaving placeholder data in place.");
+                //Debug.LogWarning("[AdminAnalyticsReportsController] AdminClassroomService.Instance is null - " +
+                    //"leaving placeholder data in place.");
                 return;
             }
 
@@ -458,7 +535,7 @@ namespace Anatomia3D.UI
 
                 if (_classrooms.Count == 0)
                 {
-                    Debug.Log("[AdminAnalyticsReportsController] No classrooms yet - showing placeholder data.");
+                    //Debug.Log("[AdminAnalyticsReportsController] No classrooms yet - showing placeholder data.");
                     return;
                 }
 
@@ -489,11 +566,11 @@ namespace Anatomia3D.UI
                 filtersRow.Insert(0, _classroomPicker);
             }
 
-            _classroomPicker.choices = _classrooms.Select(c => c.Name).ToList();
+            _classroomPicker.choices = _classrooms.Select(c => c.DisplayName).ToList();
 
             if (_classrooms.Count > 0)
             {
-                _classroomPicker.SetValueWithoutNotify(_classrooms[0].Name);
+                _classroomPicker.SetValueWithoutNotify(_classrooms[0].DisplayName);
             }
         }
 
@@ -906,7 +983,7 @@ namespace Anatomia3D.UI
 
             if (_currentClassroomStudents == null || _currentClassroomStudents.Count == 0)
             {
-                Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
+                //Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
             }
 
             AdminStudentStatsModal.Show(_screenRoot, _selectedClassroomId, _currentClassroomStudents, _classroomQuizzes);
@@ -1142,13 +1219,13 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminAnalyticsReportsController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminAnalyticsReportsController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
         private void OnExportPdfClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
+            //Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
             PrepareAndExport(AdminReportExportService.ExportPdf, "PDF");
         }
 
@@ -1171,7 +1248,7 @@ namespace Anatomia3D.UI
                 {
                    
                     _exportPdfButton?.SetEnabled(true);
-                    Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
+                    //Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
                     return;
                 }
 
@@ -1201,10 +1278,10 @@ namespace Anatomia3D.UI
               
                 _exportPdfButton?.SetEnabled(true);
 
-                if (success)
-                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} report exported successfully.");
-                else
-                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} export was cancelled or failed.");
+                //if (success)
+                    //Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} report exported successfully.");
+                //else
+                    //Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} export was cancelled or failed.");
 
                 // The hand-off is done either way (the OS now has its own copy on
                 // success; on cancel/failure there's nothing left to retry from this
@@ -1225,7 +1302,7 @@ namespace Anatomia3D.UI
             if (!string.IsNullOrEmpty(_selectedClassroomId))
             {
                 var match = _classrooms.FirstOrDefault(c => c.ClassroomId == _selectedClassroomId);
-                classroomName = match?.Name;
+                classroomName = match?.DisplayName;
             }
 
             string quizScoreTitle = null;

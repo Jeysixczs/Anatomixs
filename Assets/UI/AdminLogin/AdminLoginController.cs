@@ -27,6 +27,10 @@ namespace Anatomia3D.UI
     [RequireComponent(typeof(UIDocument))]
     public class AdminLoginController : MonoBehaviour
     {
+        [Header("Legacy dark theme")]
+        [Tooltip("These screens now use the light Anatomia auth theme. Turn this on only to paint the old purple gradients over it.")]
+        [SerializeField] private bool applyRuntimeGradients = false;
+
         [Header("Gradient colors (matches the mock: purple -> pink)")]
         [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f); // purple
         [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);   // pink
@@ -86,7 +90,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminLoginController] OnEnable called");
+            //Debug.Log("[AdminLoginController] OnEnable called");
 
             if (_document == null)
             {
@@ -111,7 +115,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminLoginController] Root is null!");
+                //Debug.LogError("[AdminLoginController] Root is null!");
                 return;
             }
 
@@ -185,7 +189,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminLoginController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminLoginController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -209,7 +213,7 @@ namespace Anatomia3D.UI
             _backToStudentLoginButton = _screenRoot.Q<Button>("back-to-student-login-button");
             _statusLabel = _screenRoot.Q<Label>("status-label");
 
-            Debug.Log($"[AdminLoginController] Found secure login button: {_secureLoginButton != null}, back link: {_backToStudentLoginButton != null}");
+            //Debug.Log($"[AdminLoginController] Found secure login button: {_secureLoginButton != null}, back link: {_backToStudentLoginButton != null}");
         }
 
         private void WireCallbacks()
@@ -254,26 +258,26 @@ namespace Anatomia3D.UI
 
         private void OnBackToStudentLoginClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminLoginController] Navigating back to student login");
+            //Debug.Log("[AdminLoginController] Navigating back to student login");
             UIManager.Instance.ShowStudentLogin();
         }
 
         private void OnForgotPasswordClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminLoginController] Forgot Password tapped.");
+            //Debug.Log("[AdminLoginController] Forgot Password tapped.");
             UIManager.Instance.ShowAdminForgotPassword();
         }
 
         private void OnGoogleSigninClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminLoginController] Google sign-in tapped.");
+            //Debug.Log("[AdminLoginController] Google sign-in tapped.");
             SetStatus("Signing in with Google...");
 
             // Full-screen loading overlay until LoginWithGoogle calls back (it always does,
             // including on cancel/error); the timeout is only a safety net for a hung request.
             _loadingOverlay?.ShowWithTimeout("Signing in with Google...", GoogleRequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[AdminLoginController] Timed out waiting for Google sign-in - closing the overlay.");
+                //Debug.LogWarning("[AdminLoginController] Timed out waiting for Google sign-in - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _googleSigninButton.SetEnabled(true);
             }, GoogleSlowHint);
@@ -286,13 +290,13 @@ namespace Anatomia3D.UI
 
                 if (success)
                 {
-                    Debug.Log("[AdminLoginController] Google admin login successful.");
+                    //Debug.Log("[AdminLoginController] Google admin login successful.");
                     SetStatus(string.Empty);
                     UIManager.Instance.ShowAdminDashboard();
                 }
                 else
                 {
-                    Debug.LogWarning($"[AdminLoginController] Google admin login failed: {errorMessage}");
+                    //Debug.LogWarning($"[AdminLoginController] Google admin login failed: {errorMessage}");
                     SetStatus(errorMessage);
                 }
             });
@@ -300,7 +304,7 @@ namespace Anatomia3D.UI
 
         private void OnCreateAccountClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminLoginController] Create Account tapped.");
+            //Debug.Log("[AdminLoginController] Create Account tapped.");
             UIManager.Instance.ShowAdminCreateAccount();
         }
 
@@ -339,7 +343,7 @@ namespace Anatomia3D.UI
             _secureLoginButton.SetEnabled(false);
             _loadingOverlay.ShowWithTimeout("Signing in...", RequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[AdminLoginController] Timed out waiting for the server - closing the overlay.");
+                //Debug.LogWarning("[AdminLoginController] Timed out waiting for the server - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _secureLoginButton.SetEnabled(true);
             });
@@ -354,13 +358,13 @@ namespace Anatomia3D.UI
 
                 if (success)
                 {
-                    Debug.Log("[AdminLoginController] Admin login successful.");
+                    //Debug.Log("[AdminLoginController] Admin login successful.");
                     SetStatus(string.Empty);
                     UIManager.Instance.ShowAdminDashboard();
                 }
                 else
                 {
-                    Debug.LogWarning($"[AdminLoginController] Admin login failed: {errorMessage}");
+                    //Debug.LogWarning($"[AdminLoginController] Admin login failed: {errorMessage}");
                     SetStatus("Login failed: " + errorMessage);
                     _secureLoginButton.SetEnabled(true);
                 }
@@ -411,6 +415,8 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!applyRuntimeGradients) return;
+
             if (_screenRoot != null)
             {
                 if (_backgroundGradientTexture != null) Destroy(_backgroundGradientTexture);

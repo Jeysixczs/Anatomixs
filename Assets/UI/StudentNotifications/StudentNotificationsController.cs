@@ -59,6 +59,11 @@ namespace Anatomia3D.UI
             /// TimeAgo since one student can belong to several classrooms.</summary>
             public string ClassroomName;
 
+            /// <summary>Where tapping this row should go (empty = nowhere).</summary>
+            public string ClassroomId;
+            public string TeacherName;
+            public ClassroomService.NotificationKind Kind;
+
             public NotificationEntry(string title, string message, string timeAgo, bool isRead, NotificationIcon icon, string classroomName = "", string id = null)
             {
                 Id = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString("N") : id;
@@ -139,7 +144,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentNotificationsController] OnEnable called");
+            //Debug.Log("[StudentNotificationsController] OnEnable called");
 
             if (_document == null)
             {
@@ -162,7 +167,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentNotificationsController] Root is null!");
+                //Debug.LogError("[StudentNotificationsController] Root is null!");
                 return;
             }
 
@@ -206,7 +211,7 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            Debug.LogWarning("[StudentNotificationsController] ClassroomService not ready or no student signed in - showing empty state.");
+            //Debug.LogWarning("[StudentNotificationsController] ClassroomService not ready or no student signed in - showing empty state.");
             SetNotifications(new List<NotificationEntry>());
         }
 
@@ -225,14 +230,31 @@ namespace Anatomia3D.UI
                 // see _locallyReadIds' doc comment.
                 bool isRead = r.IsRead || _locallyReadIds.Contains(r.AnnouncementId);
 
+                NotificationIcon icon;
+                switch (r.Kind)
+                {
+                    case ClassroomService.NotificationKind.QuizPublished:
+                    case ClassroomService.NotificationKind.FileSubmissionPublished:
+                        icon = NotificationIcon.Quiz; break;
+                    case ClassroomService.NotificationKind.Material:
+                        icon = NotificationIcon.System; break;
+                    default:
+                        icon = NotificationIcon.Classroom; break;
+                }
+
                 return new NotificationEntry(
                     string.IsNullOrEmpty(r.Title) ? "New announcement" : r.Title,
                     r.Body,
                     FormatTimeAgo(r.CreatedAt.ToDateTime()),
                     isRead,
-                    NotificationIcon.Classroom,
+                    icon,
                     r.ClassroomName,
-                    r.AnnouncementId);
+                    r.AnnouncementId)
+                {
+                    ClassroomId = r.ClassroomId,
+                    TeacherName = r.TeacherName,
+                    Kind = r.Kind
+                };
             });
 
             SetNotifications(entries);
@@ -253,7 +275,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentNotificationsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentNotificationsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -265,7 +287,7 @@ namespace Anatomia3D.UI
             _emptyState = _screenRoot.Q<VisualElement>("notifications-empty-state");
             _notificationsList = _screenRoot.Q<VisualElement>("notifications-list");
 
-            Debug.Log($"[StudentNotificationsController] Found list: {_notificationsList != null}");
+            //Debug.Log($"[StudentNotificationsController] Found list: {_notificationsList != null}");
         }
 
         private void WireCallbacks()
@@ -371,6 +393,14 @@ namespace Anatomia3D.UI
                     _rowsById.Remove(id);
                 }
             }
+
+            // USS has no :last-child, so flag the final row with a class instead
+            // (the theme drops its bottom divider).
+            for (int i = 0; i < _notifications.Count; i++)
+            {
+                if (_rowsById.TryGetValue(_notifications[i].Id, out var rowRefs))
+                    rowRefs.Row.EnableInClassList("notification-row-last", i == _notifications.Count - 1);
+            }
         }
 
         private NotificationRowRefs BuildNotificationRow(NotificationEntry entry)
@@ -434,14 +464,45 @@ namespace Anatomia3D.UI
             row.RegisterCallback<ClickEvent>(_ =>
             {
                 var current = refs.LastEntry;
-                if (current == null || current.IsRead) return;
-                current.IsRead = true;
-                _locallyReadIds.Add(current.Id);
-                RefreshNotificationsUI();
+                if (current == null) return;
+
+                if (!current.IsRead)
+                {
+                    current.IsRead = true;
+                    _locallyReadIds.Add(current.Id);
+                    RefreshNotificationsUI();
+                }
+
+                OpenNotificationTarget(current);
             });
 
             UpdateNotificationRow(refs, entry);
             return refs;
+        }
+
+        /// <summary>Deep-links a tapped notification to the relevant classroom tab:
+        /// quiz / file-submission -> Available Quizzes, material -> Materials,
+        /// announcement -> the classroom's Overview.</summary>
+        private void OpenNotificationTarget(NotificationEntry entry)
+        {
+            if (UIManager.Instance == null || string.IsNullOrEmpty(entry.ClassroomId)) return;
+
+            string name = entry.ClassroomName ?? "";
+            string teacher = entry.TeacherName ?? "";
+
+            switch (entry.Kind)
+            {
+                case ClassroomService.NotificationKind.QuizPublished:
+                case ClassroomService.NotificationKind.FileSubmissionPublished:
+                    UIManager.Instance.ShowStudentClassroomDetailOnQuizzesTab(entry.ClassroomId, name, teacher);
+                    break;
+                case ClassroomService.NotificationKind.Material:
+                    UIManager.Instance.ShowStudentClassroomDetailOnMaterialsTab(entry.ClassroomId, name, teacher);
+                    break;
+                default:
+                    UIManager.Instance.ShowStudentClassroomDetail(entry.ClassroomId, name, teacher);
+                    break;
+            }
         }
 
         /// <summary>Patches one already-built row's labels/classes to match entry,
@@ -485,7 +546,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentNotificationsController] Navigating back to previous screen");
+            //Debug.Log("[StudentNotificationsController] Navigating back to previous screen");
             UIManager.Instance.ReturnFromStudentNotifications();
         }
 
@@ -511,7 +572,7 @@ namespace Anatomia3D.UI
             {
                 if (!success)
                 {
-                    Debug.LogWarning("[StudentNotificationsController] Could not persist mark-all-read; will re-sync next time this screen opens.");
+                    //Debug.LogWarning("[StudentNotificationsController] Could not persist mark-all-read; will re-sync next time this screen opens.");
                 }
             });
         }
@@ -531,6 +592,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

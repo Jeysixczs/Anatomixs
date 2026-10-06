@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminCreateClassroom/AdminCreateClassroom.uss?fileID=7433441132597879392&amp;guid=b77a2e587dd9dac45b2ec98a16a9e487&amp;type=3#AdminCreateClassroom"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-admin-create screen-root">
         <ui:VisualElement name="header" class="header">
             <ui:VisualElement name="header-top-row" class="header-top-row">
                 <ui:Button name="back-button" class="back-button">
@@ -20,8 +21,12 @@
                     <ui:Label text="Classroom Code *" class="field-label"/>
                     <ui:TextField name="classroom-name-field" class="text-field"/>
                     <ui:Label name="classroom-name-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Classroom Name" class="field-label field-label-spaced"/>
+                    <ui:Label text="Classroom Name *" class="field-label field-label-spaced"/>
                     <ui:TextField name="classroom-description-field" multiline="true" class="text-field text-area"/>
+                    <ui:Label name="classroom-description-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Section *" class="field-label field-label-spaced"/>
+                    <ui:TextField name="classroom-section-field" class="text-field"/>
+                    <ui:Label name="classroom-section-error" text="" class="field-error hidden"/>
                     <ui:VisualElement name="info-box" class="info-box">
                         <ui:Label text="What happens next?" class="info-box-title"/>
                         <ui:VisualElement name="info-bullet-list" class="info-bullet-list">
@@ -45,7 +50,7 @@
                     </ui:VisualElement>
                     <ui:Label name="status-label" text="" class="status-label hidden"/>
                     <ui:Button name="create-classroom-button" class="create-classroom-button">
-                        <ui:VisualElement name="create-classroom-icon" class="create-classroom-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); height: 49px; width: 49px; background-color: rgba(255, 255, 255, 0);"/>
+                        <ui:VisualElement name="create-classroom-icon" class="create-classroom-icon"/>
                         <ui:Label text="Create Classroom" class="create-classroom-label"/>
                     </ui:Button>
                 </ui:VisualElement>

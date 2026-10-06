@@ -102,35 +102,35 @@ namespace Anatomia3D.UI
             var icon = new VisualElement { name = "offline-overlay-icon" };
             icon.AddToClassList("unity-image");
 
-            Debug.Log($"[OfflineOverlay] offlineIconTexture param is {(offlineIconTexture != null ? "SET (" + offlineIconTexture.name + ")" : "NULL")}");
+            //Debug.Log($"[OfflineOverlay] offlineIconTexture param is {(offlineIconTexture != null ? "SET (" + offlineIconTexture.name + ")" : "NULL")}");
 
             var iconTexture = offlineIconTexture;
             if (iconTexture == null)
             {
                 iconTexture = Resources.Load<Texture2D>(ResourcesIconPath);
-                Debug.Log($"[OfflineOverlay] Resources.Load(\"{ResourcesIconPath}\") returned {(iconTexture != null ? "a texture (" + iconTexture.width + "x" + iconTexture.height + ")" : "NULL - check the file is under a 'Resources' folder and the path/case match exactly")}");
+                //Debug.Log($"[OfflineOverlay] Resources.Load(\"{ResourcesIconPath}\") returned {(iconTexture != null ? "a texture (" + iconTexture.width + "x" + iconTexture.height + ")" : "NULL - check the file is under a 'Resources' folder and the path/case match exactly")}");
 
                 if (iconTexture == null)
                 {
                     // Diagnostic: list every texture Resources.Load can actually see,
                     // at increasingly broad folder scopes, to find where the asset really is.
                     var inIcons = Resources.LoadAll<Texture2D>("Icons");
-                    Debug.Log($"[OfflineOverlay] DIAGNOSTIC: Resources.LoadAll<Texture2D>(\"Icons\") found {inIcons.Length} texture(s): {string.Join(", ", System.Array.ConvertAll(inIcons, t => t.name))}");
+                    //Debug.Log($"[OfflineOverlay] DIAGNOSTIC: Resources.LoadAll<Texture2D>(\"Icons\") found {inIcons.Length} texture(s): {string.Join(", ", System.Array.ConvertAll(inIcons, t => t.name))}");
 
                     var everything = Resources.LoadAll<Texture2D>("");
-                    Debug.Log($"[OfflineOverlay] DIAGNOSTIC: Resources.LoadAll<Texture2D>(\"\") (ALL textures under ANY Resources folder) found {everything.Length} texture(s): {string.Join(", ", System.Array.ConvertAll(everything, t => t.name))}");
+                    //Debug.Log($"[OfflineOverlay] DIAGNOSTIC: Resources.LoadAll<Texture2D>(\"\") (ALL textures under ANY Resources folder) found {everything.Length} texture(s): {string.Join(", ", System.Array.ConvertAll(everything, t => t.name))}");
                 }
             }
 
             if (iconTexture != null)
             {
                 icon.style.backgroundImage = new StyleBackground(iconTexture);
-                Debug.Log("[OfflineOverlay] backgroundImage assigned successfully.");
+                //Debug.Log("[OfflineOverlay] backgroundImage assigned successfully.");
             }
             else
             {
-                Debug.LogWarning("[OfflineOverlay] No icon texture available - background image will be blank. " +
-                    "Either pass offlineIconTexture explicitly, or verify the PNG exists at Assets/Resources/" + ResourcesIconPath + ".png");
+                //Debug.LogWarning("[OfflineOverlay] No icon texture available - background image will be blank. " +
+                    //"Either pass offlineIconTexture explicitly, or verify the PNG exists at Assets/Resources/" + ResourcesIconPath + ".png");
             }
 
          //   icon.style.unityBackgroundScaleMode = new StyleEnum<ScaleMode>(ScaleMode.ScaleToFit);
@@ -141,8 +141,8 @@ namespace Anatomia3D.UI
 
             icon.RegisterCallback<GeometryChangedEvent>(evt =>
             {
-                Debug.Log($"[OfflineOverlay] icon element resolved size: {evt.newRect.width}x{evt.newRect.height}, " +
-                    $"resolved style.backgroundImage.value.texture is {(icon.resolvedStyle.backgroundImage.texture != null ? "non-null" : "NULL")}");
+                //Debug.Log($"[OfflineOverlay] icon element resolved size: {evt.newRect.width}x{evt.newRect.height}, " +
+                    //$"resolved style.backgroundImage.value.texture is {(icon.resolvedStyle.backgroundImage.texture != null ? "non-null" : "NULL")}");
             });
 
             var titleLabel = new Label("You're Offline");

@@ -46,7 +46,7 @@ public class BoneDatabaseService
 
         if (string.IsNullOrEmpty(json))
         {
-            Debug.LogWarning("[BoneDatabaseService] Load called with empty/null JSON text.");
+            //Debug.LogWarning("[BoneDatabaseService] Load called with empty/null JSON text.");
             return;
         }
 
@@ -55,15 +55,15 @@ public class BoneDatabaseService
         {
             parsed = MiniJson.Parse(json);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            Debug.LogError($"[BoneDatabaseService] Failed to parse BoneDatabase.json: {e.Message}");
+            //Debug.LogError($"[BoneDatabaseService] Failed to parse BoneDatabase.json: {e.Message}");
             return;
         }
 
         if (!(parsed is Dictionary<string, object> root))
         {
-            Debug.LogError("[BoneDatabaseService] BoneDatabase.json root is not a JSON object - expected {\"Bone Name\": { \"displayName\": ..., \"description\": ... }, ...}.");
+            //Debug.LogError("[BoneDatabaseService] BoneDatabase.json root is not a JSON object - expected {\"Bone Name\": { \"displayName\": ..., \"description\": ... }, ...}.");
             return;
         }
 
@@ -71,7 +71,7 @@ public class BoneDatabaseService
         {
             if (!(kvp.Value is Dictionary<string, object> fields))
             {
-                Debug.LogWarning($"[BoneDatabaseService] Skipping '{kvp.Key}' - its value is not a JSON object.");
+                //Debug.LogWarning($"[BoneDatabaseService] Skipping '{kvp.Key}' - its value is not a JSON object.");
                 continue;
             }
 
@@ -86,13 +86,11 @@ public class BoneDatabaseService
             string key = NormalizeKey(kvp.Key);
             if (string.IsNullOrEmpty(key)) continue;
 
-            if (_byNormalizedKey.ContainsKey(key))
-                Debug.LogWarning($"[BoneDatabaseService] Duplicate bone key after normalization ('{kvp.Key}' -> '{key}') - keeping the first entry seen.");
-            else
+            if (!_byNormalizedKey.ContainsKey(key))
                 _byNormalizedKey[key] = entry;
         }
 
-        Debug.Log($"[BoneDatabaseService] Loaded {_byNormalizedKey.Count} bone entries from BoneDatabase.json.");
+        //Debug.Log($"[BoneDatabaseService] Loaded {_byNormalizedKey.Count} bone entries from BoneDatabase.json.");
     }
 
     // Robustly resolves a clicked bone GameObject's raw name - which may

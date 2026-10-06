@@ -1,16 +1,25 @@
 /* =========================================================
-   Anatomia 3D - Student Achievements (Unity 6 UI Toolkit)
-   Reference canvas: 1080 x 1920 (portrait phone).
+   Anatomia 3D - Student Achievements v2 "Trophy Shelf"
+   Reference canvas: 1080 x 1920 (portrait).
+   Loaded BEFORE AnatomiaTheme.uss, so every rule is scoped under
+   .anatomia-theme.theme-achievements to out-rank the theme's shared rules.
+
+   LAYOUT
+     header : back button + title on the ambient background (no slab)
+     tiles  : Total points (solid accent) + Badges earned, side by side
+     list   : one rounded card per badge - icon tile, title, status and a
+              progress bar. Earned = gold icon + green bar + "Completed";
+              locked = muted card, lock icon, accent bar + count footer.
+   Badge cards are built at runtime by the controller; all of its class
+   names (badge-card, badge-icon-box, badge-icon-gold, progress-fill ...)
+   are styled below and unchanged.
    ========================================================= */
 
-/* ---------- Screen ---------- */
-
-.screen-root
+.anatomia-theme.theme-achievements
 {
     width: 100%;
     height: 100%;
     flex-grow: 1;
-    background-color: rgb(243, 244, 248);
     padding: 0;
     margin: 0;
     overflow: hidden;
@@ -18,157 +27,28 @@
     align-items: stretch;
 }
 
-/* ---------- Header (gradient applied at runtime via C#) ---------- */
-
-.header
-{
-    width: 100%;
-    border-bottom-left-radius: 60px;
-    border-bottom-right-radius: 60px;
-    padding-left: 50px;
-    padding-right: 50px;
-    padding-top: 100px;
-    padding-bottom: 50px;
-    flex-shrink: 0;
-    flex-direction: column;
-}
-
-.header-top-row
-{
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 36px;
-}
-
-.back-button
-{
-    width: 88px;
-    height: 88px;
-    border-radius: 44px;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 0px;
-    justify-content: center;
-    align-items: center;
-    margin-right: 30px;
-    flex-shrink: 0;
-}
-
-.back-icon
-{
-    width: 40px;
-    height: 40px;
-    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    -unity-background-image-tint-color: white;
-}
-
-.header-text
-{
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    min-width: 0;
-}
-
-.header-title
-{
-    font-size: 44px;
-    -unity-font-style: bold;
-    color: white;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-.header-subtitle
-{
-    font-size: 26px;
-    color: rgba(255, 255, 255, 0.85);
-    margin-top: 6px;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-/* ---------- Summary Card ---------- */
-
-.summary-card
-{
-    background-color: rgba(255, 255, 255, 0.16);
-    border-radius: 28px;
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 26px;
-    padding-bottom: 26px;
-    flex-direction: column;
-}
-
-.summary-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.summary-divider
-{
-    height: 1px;
-    background-color: rgba(255, 255, 255, 0.2);
-    margin-top: 2px;
-    margin-bottom: 2px;
-}
-
-.summary-label
-{
-    font-size: 26px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.summary-value
-{
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: white;
-}
-
 /* ---------- ScrollView ---------- */
-
-.screen-scroll
+.anatomia-theme.theme-achievements .screen-scroll
 {
     flex-grow: 1;
     width: 100%;
     height: 100%;
     padding: 0;
     margin: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
     -unity-overflow-scrolling: touch;
 }
-
-.screen-scroll .unity-scroller--vertical {
-    width: 0;
-    display: none;
-}
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
+.anatomia-theme.theme-achievements .screen-scroll .unity-scroller--vertical { width: 0; display: none; }
+.anatomia-theme.theme-achievements .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport
 {
     padding: 0;
     margin: 0;
     flex-grow: 1;
     height: 100%;
 }
-
-.screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
+.anatomia-theme.theme-achievements .screen-scroll > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container
 {
     padding: 0;
     margin: 0;
-    translate: none;
-    transform-origin: center;
-    position: relative;
-    top: 0;
-    left: 0;
     justify-content: flex-start;
     align-items: stretch;
     flex-grow: 0;
@@ -176,307 +56,184 @@
     min-height: 100%;
 }
 
-/* ---------- Content Wrapper ---------- */
-
-.content-wrapper
+/* ---------- Header ---------- */
+.anatomia-theme.theme-achievements .header
 {
     width: 100%;
+    max-width: 860px;
+    align-self: center;
+    flex-shrink: 0;
     flex-direction: column;
+    padding: 96px 48px 20px 48px;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+}
+.anatomia-theme.theme-achievements .header-top-row { flex-direction: row; align-items: center; margin-bottom: 44px; }
+.anatomia-theme.theme-achievements .back-button
+{
+    width: 88px;
+    height: 88px;
+    margin: 0 28px 0 0;
+    flex-shrink: 0;
+    border-radius: 44px;
+    justify-content: center;
+    align-items: center;
+}
+.anatomia-theme.theme-achievements .back-icon
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/back-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink);
+}
+.anatomia-theme.theme-achievements .header-text { flex-direction: column; justify-content: center; flex-grow: 1; min-width: 0; }
+.anatomia-theme.theme-achievements .header-title { margin: 0; font-size: 56px; -unity-font-style: bold; letter-spacing: -1.5px; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-achievements .header-subtitle { margin: 6px 0 0 0; font-size: 27px; color: var(--ink-3); white-space: normal; }
+
+/* ---------- Summary tiles ---------- */
+.anatomia-theme.theme-achievements .summary-card
+{
+    flex-direction: row;
     padding: 0;
-    max-width: 100%;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+.anatomia-theme.theme-achievements .summary-row
+{
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    padding: 36px 36px 34px 36px;
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 44px;
+    background-color: var(--surface);
+}
+.anatomia-theme.theme-achievements .summary-row-points { margin-right: 12px; border-width: 0; background-color: var(--accent); }
+.anatomia-theme.theme-achievements .summary-row-badges { margin-left: 12px; }
+.anatomia-theme.theme-achievements .summary-label { margin: 0 0 10px 0; font-size: 25px; -unity-font-style: bold; color: var(--ink-3); }
+.anatomia-theme.theme-achievements .summary-value { margin: 0; font-size: 64px; -unity-font-style: bold; letter-spacing: -2px; color: var(--ink); }
+.anatomia-theme.theme-achievements .summary-row-points .summary-label { color: rgba(255, 255, 255, 0.78); }
+.anatomia-theme.theme-achievements .summary-row-points .summary-value { color: white; }
+.anatomia-theme.theme-achievements .summary-divider { display: none; }
+
+/* ---------- Content ---------- */
+.anatomia-theme.theme-achievements .content-wrapper
+{
+    width: 100%;
+    max-width: 860px;
+    align-self: center;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 0 48px 80px 48px;
     margin: 0;
     justify-content: flex-start;
     align-items: stretch;
-    flex-shrink: 0;
 }
+.anatomia-theme.theme-achievements .section-title { margin: 44px 0 22px 6px; font-size: 32px; -unity-font-style: bold; letter-spacing: -0.3px; color: var(--ink); }
+.anatomia-theme.theme-achievements .badge-list { flex-direction: column; width: 100%; padding: 0; }
+.anatomia-theme.theme-achievements .badge-list-bottom-padded { padding-bottom: 40px; }
 
-/* ---------- Badge List / Cards ---------- */
-
-.badge-list
-{
-    flex-direction: column;
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 40px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.badge-list-bottom-padded
-{
-    padding-bottom: 60px;
-}
-
-.badge-card
+/* ---------- Badge cards ---------- */
+.anatomia-theme.theme-achievements .badge-card
 {
     flex-direction: row;
-    align-items: flex-start;
-    background-color: white;
-    border-radius: 30px;
-    padding: 30px;
-    margin-bottom: 30px;
+    align-items: center;
     width: 100%;
-    box-sizing: border-box;
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.05);
+    margin: 0 0 20px 0;
+    padding: 32px;
+    border-radius: 44px;
+    background-color: var(--surface-solid);
 }
+.anatomia-theme.theme-achievements .badge-card-locked { background-color: var(--sunken); border-color: rgba(0, 0, 0, 0); }
 
-.badge-card-locked
+.anatomia-theme.theme-achievements .badge-icon-box
 {
-    background-color: rgba(255, 255, 255, 0.6);
-}
-
-.badge-icon-box
-{
-    width: 96px;
-    height: 96px;
-    border-radius: 26px;
+    width: 120px;
+    height: 120px;
+    margin: 0 30px 0 0;
+    flex-shrink: 0;
     justify-content: center;
     align-items: center;
-    flex-shrink: 0;
-    margin-right: 28px;
+    border-radius: 40px;
 }
-
-.badge-icon-gold
+.anatomia-theme.theme-achievements .badge-icon-gold { background-color: var(--warn-soft); }
+.anatomia-theme.theme-achievements .badge-icon-locked { background-color: var(--track); }
+.anatomia-theme.theme-achievements .badge-icon-emoji { margin: 0; font-size: 58px; -unity-text-align: middle-center; }
+.anatomia-theme.theme-achievements .badge-lock-icon
 {
-    background-color: rgb(247, 148, 29);
+    width: 46px;
+    height: 46px;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-3);
 }
 
-.badge-icon-locked
-{
-    background-color: rgb(224, 226, 232);
-}
+.anatomia-theme.theme-achievements .badge-info { flex-grow: 1; flex-direction: column; min-width: 0; }
+.anatomia-theme.theme-achievements .badge-title { margin: 0; font-size: 36px; -unity-font-style: bold; letter-spacing: -0.4px; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-achievements .badge-title-locked { color: var(--ink-2); }
+.anatomia-theme.theme-achievements .badge-status { margin: 6px 0 0 0; font-size: 25px; white-space: normal; }
+.anatomia-theme.theme-achievements .badge-status-unlocked { color: var(--success); }
+.anatomia-theme.theme-achievements .badge-status-locked { color: var(--ink-3); }
 
-.badge-icon-emoji
-{
-    font-size: 44px;
-    -unity-text-align: middle-center;
-}
-
-.badge-lock-icon
-{
-    width: 36px;
-    height: 40px;
-    background-color: rgb(160, 165, 178);
-    border-radius: 6px;
-}
-
-.badge-info
+.anatomia-theme.theme-achievements .badge-progress-row { flex-direction: row; align-items: center; width: 100%; margin-top: 20px; }
+.anatomia-theme.theme-achievements .progress-track
 {
     flex-grow: 1;
-    flex-direction: column;
     min-width: 0;
-}
-
-.badge-title
-{
-    font-size: 34px;
-    -unity-font-style: bold;
-    color: rgb(31, 36, 48);
-}
-
-.badge-title-locked
-{
-    color: rgb(150, 155, 168);
-}
-
-.badge-status
-{
-    font-size: 24px;
-    margin-top: 4px;
-}
-
-.badge-status-unlocked
-{
-    color: rgb(120, 123, 140);
-}
-
-.badge-status-locked
-{
-    color: rgb(160, 165, 178);
-}
-
-.badge-progress-row
-{
-    flex-direction: row;
-    align-items: center;
-    margin-top: 18px;
-    width: 100%;
-}
-
-.progress-track
-{
-    flex-grow: 1;
-    height: 16px;
-    border-radius: 8px;
-    background-color: rgb(228, 229, 235);
+    height: 18px;
+    border-radius: 9px;
     position: relative;
     overflow: hidden;
-    min-width: 0;
+    background-color: var(--track);
 }
+.anatomia-theme.theme-achievements .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; height: 100%; border-radius: 9px; background-color: var(--accent); }
+.anatomia-theme.theme-achievements .progress-fill-complete { background-color: var(--success); }
+.anatomia-theme.theme-achievements .progress-fill-locked { background-color: var(--accent); }
+.anatomia-theme.theme-achievements .progress-label { margin: 0 0 0 20px; flex-shrink: 0; font-size: 26px; -unity-font-style: bold; -unity-text-align: middle-right; }
+.anatomia-theme.theme-achievements .progress-label-complete { color: var(--success); }
 
-.progress-fill
-{
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    border-radius: 8px;
-    height: 100%;
-}
-
-.progress-fill-complete
-{
-    background-color: rgb(247, 148, 29);
-}
-
-.progress-fill-locked
-{
-    background-color: rgb(75, 85, 99);
-}
-
-.progress-label
-{
-    font-size: 26px;
-    margin-left: 18px;
-    flex-shrink: 0;
-    -unity-text-align: middle-right;
-    -unity-font-style: bold;
-}
-
-.progress-label-complete
-{
-    color: rgb(22, 163, 74);
-}
-
-.badge-progress-footer-row
-{
-    flex-direction: row;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.progress-footer-label
-{
-    font-size: 22px;
-    color: rgb(150, 155, 168);
-}
-
-.progress-footer-label-right
-{
-    -unity-text-align: middle-right;
-}
-
-/* ---------- Special Achievements ---------- */
+.anatomia-theme.theme-achievements .badge-progress-footer-row { flex-direction: row; justify-content: space-between; margin-top: 12px; }
+.anatomia-theme.theme-achievements .progress-footer-label { margin: 0; font-size: 23px; color: var(--ink-3); }
+.anatomia-theme.theme-achievements .progress-footer-label-right { -unity-text-align: middle-right; -unity-font-style: bold; color: var(--ink-2); }
 
 /* =========================================================
-   Compact Layout (toggled by C# based on panel width)
+   COMPACT (toggled by the controller below 900 px width)
    ========================================================= */
-
-.compact .header
-{
-    padding-left: 34px;
-    padding-right: 34px;
-    padding-top: 70px;
-    padding-bottom: 40px;
-}
-
-.compact .header-top-row
-{
-    margin-bottom: 26px;
-}
-
-.compact .header-title
-{
-    font-size: 36px;
-}
-
-.compact .header-subtitle
-{
-    font-size: 22px;
-}
-
-.compact .back-button
-{
-    width: 68px;
-    height: 68px;
-    border-radius: 34px;
-    margin-right: 20px;
-}
-
-.compact .back-icon
-{
-    width: 32px;
-    height: 32px;
-}
-
-.compact .summary-card
-{
-    padding-left: 26px;
-    padding-right: 26px;
-    padding-top: 18px;
-    padding-bottom: 18px;
-}
-
-.compact .summary-label
-{
-    font-size: 22px;
-}
-
-.compact .summary-value
-{
-    font-size: 26px;
-}
-
-.compact .badge-list
-{
-    padding-left: 26px;
-    padding-right: 26px;
-    padding-top: 26px;
-}
-
-.compact .badge-card
-{
-    padding: 22px;
-    border-radius: 24px;
-    margin-bottom: 22px;
-}
-
-.compact .badge-icon-box
-{
-    width: 76px;
-    height: 76px;
-    border-radius: 20px;
-    margin-right: 20px;
-}
-
-.compact .badge-icon-emoji
-{
-    font-size: 34px;
-}
-
-.compact .badge-title
-{
-    font-size: 28px;
-}
-
-.compact .badge-status
-{
-    font-size: 20px;
-}
-
-.compact .progress-track
-{
-    height: 12px;
-}
-
-.compact .progress-label
-{
-    font-size: 20px;
-    margin-left: 14px;
-}
-
-.compact .progress-footer-label
-{
-    font-size: 18px;
-}
+.anatomia-theme.theme-achievements.compact .header { padding: 72px 28px 16px 28px; }
+.anatomia-theme.theme-achievements.compact .header-top-row { margin-bottom: 30px; }
+.anatomia-theme.theme-achievements.compact .back-button { width: 72px; height: 72px; border-radius: 36px; margin-right: 20px; }
+.anatomia-theme.theme-achievements.compact .back-icon { width: 32px; height: 32px; }
+.anatomia-theme.theme-achievements.compact .header-title { font-size: 44px; }
+.anatomia-theme.theme-achievements.compact .header-subtitle { font-size: 23px; }
+.anatomia-theme.theme-achievements.compact .summary-row { padding: 26px 26px 24px 26px; border-radius: 36px; }
+.anatomia-theme.theme-achievements.compact .summary-row-points { margin-right: 8px; }
+.anatomia-theme.theme-achievements.compact .summary-row-badges { margin-left: 8px; }
+.anatomia-theme.theme-achievements.compact .summary-label { font-size: 22px; margin-bottom: 6px; }
+.anatomia-theme.theme-achievements.compact .summary-value { font-size: 50px; }
+.anatomia-theme.theme-achievements.compact .content-wrapper { padding: 0 28px 60px 28px; }
+.anatomia-theme.theme-achievements.compact .section-title { margin: 34px 0 18px 4px; font-size: 28px; }
+.anatomia-theme.theme-achievements.compact .badge-card { padding: 24px; border-radius: 36px; margin-bottom: 16px; }
+.anatomia-theme.theme-achievements.compact .badge-icon-box { width: 92px; height: 92px; border-radius: 30px; margin-right: 22px; }
+.anatomia-theme.theme-achievements.compact .badge-icon-emoji { font-size: 44px; }
+.anatomia-theme.theme-achievements.compact .badge-lock-icon { width: 38px; height: 38px; }
+.anatomia-theme.theme-achievements.compact .badge-title { font-size: 30px; }
+.anatomia-theme.theme-achievements.compact .badge-status { font-size: 21px; }
+.anatomia-theme.theme-achievements.compact .badge-progress-row { margin-top: 14px; }
+.anatomia-theme.theme-achievements.compact .progress-track { height: 14px; border-radius: 7px; }
+.anatomia-theme.theme-achievements.compact .progress-fill { border-radius: 7px; }
+.anatomia-theme.theme-achievements.compact .progress-label { font-size: 22px; margin-left: 14px; }
+.anatomia-theme.theme-achievements.compact .progress-footer-label { font-size: 20px; }

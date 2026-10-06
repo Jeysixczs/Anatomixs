@@ -117,7 +117,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentEditProfileController] OnEnable called");
+            //Debug.Log("[StudentEditProfileController] OnEnable called");
 
             if (_document == null)
             {
@@ -140,7 +140,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentEditProfileController] Root is null!");
+                //Debug.LogError("[StudentEditProfileController] Root is null!");
                 return;
             }
 
@@ -224,7 +224,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentEditProfileController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentEditProfileController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -267,7 +267,7 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _saveChangesButton = _screenRoot.Q<Button>("save-changes-button");
 
-            Debug.Log($"[StudentEditProfileController] Found first/last name fields: {_firstNameField != null}/{_lastNameField != null}, save button: {_saveChangesButton != null}");
+            //Debug.Log($"[StudentEditProfileController] Found first/last name fields: {_firstNameField != null}/{_lastNameField != null}, save button: {_saveChangesButton != null}");
         }
 
         private void WireCallbacks()
@@ -308,7 +308,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentEditProfileController] Navigating back to profile");
+            //Debug.Log("[StudentEditProfileController] Navigating back to profile");
             UIManager.Instance.ShowStudentProfile();
         }
 
@@ -336,7 +336,7 @@ namespace Anatomia3D.UI
                 Texture2D picked = NativeGallery.LoadImageAtPath(path, maxSize: 1024, markTextureNonReadable: false);
                 if (picked == null)
                 {
-                    Debug.LogWarning($"[StudentEditProfileController] Could not load image at '{path}'.");
+                    //Debug.LogWarning($"[StudentEditProfileController] Could not load image at '{path}'.");
                     SetAvatarStatus("Could not load that photo. Please try a different one.");
                     return;
                 }
@@ -398,7 +398,7 @@ namespace Anatomia3D.UI
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[StudentEditProfileController] Could not load current avatar '{avatarUrl}': {request.error}");
+                    //Debug.LogWarning($"[StudentEditProfileController] Could not load current avatar '{avatarUrl}': {request.error}");
                     yield break; // leave whatever's already showing (local cache or initials fallback)
                 }
 
@@ -533,7 +533,7 @@ namespace Anatomia3D.UI
 
                 if (!success)
                 {
-                    Debug.LogError($"[StudentEditProfileController] Send verification email failed: {error}");
+                    //Debug.LogError($"[StudentEditProfileController] Send verification email failed: {error}");
                     SetVerifyEmailStatus(error ?? "Could not send verification email. Please try again.");
                     return;
                 }
@@ -725,7 +725,7 @@ namespace Anatomia3D.UI
             {
                 if (!success)
                 {
-                    Debug.LogError($"[StudentEditProfileController] Profile update failed: {error}");
+                    //Debug.LogError($"[StudentEditProfileController] Profile update failed: {error}");
                     HideLoadingOverlay();
                     SetStatus(error ?? "Failed to save changes. Please try again.");
                     _saveChangesButton.SetEnabled(true);
@@ -738,12 +738,12 @@ namespace Anatomia3D.UI
                     {
                         if (pwSuccess)
                         {
-                            Debug.Log("[StudentEditProfileController] Profile and password updated successfully.");
+                            //Debug.Log("[StudentEditProfileController] Profile and password updated successfully.");
                             FinalizeSave(emailChanged, email);
                         }
                         else
                         {
-                            Debug.LogError($"[StudentEditProfileController] Password change failed: {pwError}");
+                            //Debug.LogError($"[StudentEditProfileController] Password change failed: {pwError}");
                             HideLoadingOverlay();
                             SetStatus(pwError ?? "Failed to change password. Please try again.");
                             _saveChangesButton.SetEnabled(true);
@@ -752,7 +752,7 @@ namespace Anatomia3D.UI
                 }
                 else
                 {
-                    Debug.Log("[StudentEditProfileController] Profile updated successfully.");
+                    //Debug.Log("[StudentEditProfileController] Profile updated successfully.");
                     FinalizeSave(emailChanged, email);
                 }
             });
@@ -775,7 +775,7 @@ namespace Anatomia3D.UI
             string uid = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
             if (CloudinaryAvatarUploadService.Instance == null || string.IsNullOrEmpty(uid))
             {
-                Debug.LogWarning("[StudentEditProfileController] Avatar upload service unavailable - other changes were still saved.");
+                //Debug.LogWarning("[StudentEditProfileController] Avatar upload service unavailable - other changes were still saved.");
                 _pendingAvatarBytes = null;
                 OnSaveComplete(emailChanged, email);
                 return;
@@ -790,15 +790,15 @@ namespace Anatomia3D.UI
 
                 if (!uploadSuccess)
                 {
-                    Debug.LogWarning("[StudentEditProfileController] Photo upload failed - other changes were still saved.");
+                    //Debug.LogWarning("[StudentEditProfileController] Photo upload failed - other changes were still saved.");
                     OnSaveComplete(emailChanged, email);
                     return;
                 }
 
                 PlayerSessionManager.Instance.UpdateAvatarUrl(avatarUrl, (dbSuccess, dbError) =>
                 {
-                    if (!dbSuccess)
-                        Debug.LogWarning($"[StudentEditProfileController] Uploaded photo but could not save it to the profile: {dbError}");
+                    //if (!dbSuccess)
+                        //Debug.LogWarning($"[StudentEditProfileController] Uploaded photo but could not save it to the profile: {dbError}");
 
                     OnSaveComplete(emailChanged, email);
                 });
@@ -929,6 +929,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header != null)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);

@@ -68,7 +68,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AboutAnatomiaController] OnEnable called");
+            //Debug.Log("[AboutAnatomiaController] OnEnable called");
 
             if (_document == null)
             {
@@ -93,7 +93,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AboutAnatomiaController] Root is null!");
+                //Debug.LogError("[AboutAnatomiaController] Root is null!");
                 return;
             }
 
@@ -133,7 +133,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AboutAnatomiaController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AboutAnatomiaController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -147,7 +147,7 @@ namespace Anatomia3D.UI
 
             _developersList = _screenRoot.Q<VisualElement>("developers-list");
 
-            Debug.Log($"[AboutAnatomiaController] Found back button: {_backButton != null}, developers list: {_developersList != null}");
+            //Debug.Log($"[AboutAnatomiaController] Found back button: {_backButton != null}, developers list: {_developersList != null}");
         }
 
         private void WireCallbacks()

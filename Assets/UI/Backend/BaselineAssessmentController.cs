@@ -197,8 +197,8 @@ namespace Anatomia3D.Backend
                 return;
             }
 
-            Debug.Log($"[BaselineAssessmentController] PrepareCombinedSession: {systems.Count} model(s) shown together, " +
-                      $"restricted to {keys.Count} structure(s).");
+            //Debug.Log($"[BaselineAssessmentController] PrepareCombinedSession: {systems.Count} model(s) shown together, " +
+                      //$"restricted to {keys.Count} structure(s).");
             _screen.SetCombinedSystems(systems);
             _screen.SetStructureFilter(keys);
         }
@@ -234,8 +234,8 @@ namespace Anatomia3D.Backend
                 : (_cachedQuestions = LoadQuestions());
             if (questions == null || questions.Count == 0)
             {
-                Debug.LogError("[BaselineAssessmentController] No questions loaded from " +
-                                $"Resources/{QuestionsResourcePath}.json - cannot start {type}.");
+                //Debug.LogError("[BaselineAssessmentController] No questions loaded from " +
+                                //$"Resources/{QuestionsResourcePath}.json - cannot start {type}.");
                 return;
             }
 
@@ -248,10 +248,10 @@ namespace Anatomia3D.Backend
 
             if (_sessionQuestions.Count == 0)
             {
-                Debug.LogError("[BaselineAssessmentController] None of the questions in " +
-                                $"Resources/{QuestionsResourcePath}.json have a recognized " +
-                                "AnatomySystemKey (skeletal/muscular/cardiovascular) - cannot start " +
-                                $"{type}.");
+                //Debug.LogError("[BaselineAssessmentController] None of the questions in " +
+                                //$"Resources/{QuestionsResourcePath}.json have a recognized " +
+                                //"AnatomySystemKey (skeletal/muscular/cardiovascular) - cannot start " +
+                                //$"{type}.");
                 return;
             }
 
@@ -385,11 +385,11 @@ namespace Anatomia3D.Backend
         {
             if (_confirmPanel == null)
             {
-                Debug.LogWarning("[BaselineAssessmentController] OnFinishClicked: BaselineFinishConfirmPanel not wired - cannot show confirm dialog.");
+                //Debug.LogWarning("[BaselineAssessmentController] OnFinishClicked: BaselineFinishConfirmPanel not wired - cannot show confirm dialog.");
                 return;
             }
 
-            Debug.Log("[BaselineAssessmentController] Finish tapped - showing confirm dialog.");
+            //Debug.Log("[BaselineAssessmentController] Finish tapped - showing confirm dialog.");
             int answered = _answeredKeys.Count;
             int total = _sessionTotal;
             if (_confirmMessage != null)
@@ -409,7 +409,7 @@ namespace Anatomia3D.Backend
 
         private void OnConfirmFinishClicked()
         {
-            Debug.Log("[BaselineAssessmentController] Finish Now confirmed - calling FinishBaselineAssessmentEarly.");
+            //Debug.Log("[BaselineAssessmentController] Finish Now confirmed - calling FinishBaselineAssessmentEarly.");
             HideConfirmPanel();
 
             // FinishBaselineAssessmentEarly fires the same onCompleted callback a
@@ -464,7 +464,7 @@ namespace Anatomia3D.Backend
             var jsonAsset = Resources.Load<TextAsset>(QuestionsResourcePath);
             if (jsonAsset == null)
             {
-                Debug.LogError($"[BaselineAssessmentController] Could not find Resources/{QuestionsResourcePath}.json.");
+                //Debug.LogError($"[BaselineAssessmentController] Could not find Resources/{QuestionsResourcePath}.json.");
                 return null;
             }
 
@@ -474,7 +474,7 @@ namespace Anatomia3D.Backend
 
         private void OnAssessmentCompleted(BaselineAssessmentType type, int correctCount, int totalCount, int points)
         {
-            Debug.Log($"[BaselineAssessmentController] OnAssessmentCompleted({type}): {correctCount}/{totalCount}, {points} pts.");
+            //Debug.Log($"[BaselineAssessmentController] OnAssessmentCompleted({type}): {correctCount}/{totalCount}, {points} pts.");
 
             // Restore the screen chrome this class changed in BeginAssessment,
             // before this GameObject gets reused for Explore/Play Mode/Quiz -
@@ -527,8 +527,8 @@ namespace Anatomia3D.Backend
 
             if (BaselineAssessmentService.Instance == null)
             {
-                Debug.LogError("[BaselineAssessmentController] No BaselineAssessmentService in the scene - " +
-                                "result cannot be recorded. Navigating away without saving.");
+                //Debug.LogError("[BaselineAssessmentController] No BaselineAssessmentService in the scene - " +
+                                //"result cannot be recorded. Navigating away without saving.");
                 HideSavingOverlay();
                 NavigateAfterCompletion(type);
                 return;
@@ -536,7 +536,7 @@ namespace Anatomia3D.Backend
 
             BaselineAssessmentService.Instance.RecordAttempt(type, correctCount, totalCount, points, success =>
             {
-                Debug.Log($"[BaselineAssessmentController] RecordAttempt({type}) callback: success={success}. Navigating.");
+                //Debug.Log($"[BaselineAssessmentController] RecordAttempt({type}) callback: success={success}. Navigating.");
                 if (!success)
                 {
                     // Either Firebase failed, or (per RecordAttempt's one-shot rule)
@@ -544,8 +544,8 @@ namespace Anatomia3D.Backend
                     // student already finished the on-screen questions, so still
                     // move them forward rather than stranding them on the Anatomy
                     // Screen with no way out.
-                    Debug.LogWarning($"[BaselineAssessmentController] Failed to record {type} attempt " +
-                                      "(or it was already completed).");
+                    //Debug.LogWarning($"[BaselineAssessmentController] Failed to record {type} attempt " +
+                                      //"(or it was already completed).");
                 }
 
                 HideSavingOverlay();
@@ -556,7 +556,7 @@ namespace Anatomia3D.Backend
 
         private void NavigateAfterCompletion(BaselineAssessmentType type)
         {
-            Debug.Log($"[BaselineAssessmentController] NavigateAfterCompletion({type}).");
+            //Debug.Log($"[BaselineAssessmentController] NavigateAfterCompletion({type}).");
             if (type == BaselineAssessmentType.Pretest)
                 UIManager.Instance.ShowStudentDashboardSkipBaselineGate();
             else

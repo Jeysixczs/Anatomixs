@@ -1,59 +1,59 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/AboutAnatomia/AboutAnatomia.uss?fileID=7433441132597879392&amp;guid=ea4f4cc1f97c6744c81842c6a49b4d69&amp;type=3#AboutAnatomia"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <Style src="project://database/Assets/UI/AboutAnatomiaAdmin/AboutAnatomiaAdmin.uss?fileID=7433441132597879392&amp;guid=20ade411ebf748245b00d543268ea6e1&amp;type=3#AboutAnatomiaAdmin"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme about-root screen-root">
+        <ui:VisualElement name="about-topbar" class="about-topbar">
+            <ui:Button name="back-button" class="about-back">
+                <ui:VisualElement name="back-icon" picking-mode="Ignore" class="back-icon"/>
+            </ui:Button>
+            <ui:Label text="About" class="about-title"/>
+        </ui:VisualElement>
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <ui:VisualElement name="header" class="header">
-                <ui:VisualElement name="header-top-row" class="header-top-row">
-                    <ui:Button name="back-button" class="back-button">
-                        <ui:VisualElement name="back-icon" class="back-icon"/>
-                    </ui:Button>
-                    <ui:Label text="About" class="header-title"/>
+            <ui:VisualElement name="content-wrapper" class="about-page">
+                <ui:VisualElement name="app-identity-card" class="about-identity">
+                    <ui:VisualElement name="app-logo-circle" class="about-logo"/>
+                    <ui:Label name="app-name-label" text="ANATOMIA" class="about-app-name"/>
+                    <ui:Label name="app-full-title-label" text="A Gamified Mobile Application for Interactive Human Anatomy Learning" class="about-app-tagline"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="app-identity-card" class="app-identity-card">
-                    <ui:VisualElement name="app-logo-circle" class="app-logo-circle">
-                        <ui:Label text="" class="app-logo-emoji" style="background-image: url(&quot;project://database/Assets/Sprite/Anatomia-logo.png?fileID=2800000&amp;guid=31a97ab8e70a6184f9b8d05c71d9233b&amp;type=3#Anatomia-logo&quot;); height: 255px; width: 255px;"/>
-                    </ui:VisualElement>
-                    <ui:Label name="app-name-label" text="ANATOMIA" class="app-name"/>
-                    <ui:Label name="app-full-title-label" text="A Gamified Mobile Application for Interactive Human Anatomy Learning" class="app-full-title"/>
+                <ui:Label text="Description" class="about-section-title"/>
+                <ui:VisualElement name="description-card" class="about-card">
+                    <ui:Label name="description-text-label" text="ANATOMIA is a gamified mobile application that makes learning human anatomy interactive and engaging. Through 3D models, quizzes, points, and levels, it transforms traditional anatomy lessons into a fun and immersive learning experience for students, with tools that let teachers create classrooms and track progress." class="about-text"/>
                 </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                <ui:Label text="Description" class="section-title"/>
-                <ui:VisualElement name="description-card" class="info-card">
-                    <ui:Label name="description-text-label" text="ANATOMIA is a gamified mobile application that makes learning human anatomy interactive and engaging. Through 3D models, quizzes, points, and levels, it transforms traditional anatomy lessons into a fun and immersive learning experience for students, with tools that let teachers create classrooms and track progress." class="info-card-text"/>
-                </ui:VisualElement>
-                <ui:Label text="Developers" class="section-title section-title-spaced"/>
-                <ui:VisualElement name="developers-card" class="menu-card">
+                <ui:Label text="Developers" class="about-section-title about-section-spaced"/>
+                <ui:VisualElement name="developers-card" class="about-card about-card-list">
                     <ui:VisualElement name="developers-list" class="developers-list"/>
                 </ui:VisualElement>
-                <ui:Label text="Attributions" class="section-title section-title-spaced"/>
-                <ui:VisualElement name="attribution-card" class="info-card">
-                    <ui:Label name="attribution-text-label" text="3D anatomical models are based on &quot;BodyParts3D&quot; by The Database Center for Life Science (CC BY-SA 2.1 Japan) and &quot;Z-Anatomy - The Libre 3D Atlas of Anatomy&quot; (CC BY-SA 4.0), used and adapted under the Creative Commons Attribution-ShareAlike 4.0 International License. Anatomical definitions are adapted from Wikipedia (CC BY-SA 3.0). Derivative works remain licensed under the same terms." class="info-card-text"/>
-                    <ui:Label name="attribution-link-label" text="creativecommons.org/licenses/by-sa/4.0" class="attribution-link"/>
+                <ui:Label text="Attributions" class="about-section-title about-section-spaced"/>
+                <ui:VisualElement name="attribution-card" class="about-card">
+                    <ui:Label name="attribution-text-label" text="3D anatomical models are based on &quot;BodyParts3D&quot; by The Database Center for Life Science (CC BY-SA 2.1 Japan) and &quot;Z-Anatomy - The Libre 3D Atlas of Anatomy&quot; (CC BY-SA 4.0), used and adapted under the Creative Commons Attribution-ShareAlike 4.0 International License. Anatomical definitions are adapted from Wikipedia (CC BY-SA 3.0). Derivative works remain licensed under the same terms." class="about-text"/>
+                    <ui:Label name="attribution-link-label" text="creativecommons.org/licenses/by-sa/4.0" class="about-link about-text-gap"/>
                 </ui:VisualElement>
-                <ui:Label text="3D Models &amp; Licenses" class="section-title section-title-spaced"/>
-                <ui:VisualElement name="models-license-card" class="info-card">
-                    <ui:Label name="models-intro-label" text="The Skeletal System, Muscular System, and Cardiovascular System 3D models used in Anatomia are adapted from:" class="card-text card-text-first"/>
-                    <ui:VisualElement name="models-citation-quote" class="card-quote">
-                        <ui:Label text="“Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0”" class="card-quote-text"/>
+                <ui:Label text="3D models and licenses" class="about-section-title about-section-spaced"/>
+                <ui:VisualElement name="models-license-card" class="about-card">
+                    <ui:Label name="models-intro-label" text="The Skeletal System, Muscular System, and Cardiovascular System 3D models used in Anatomia are adapted from:" class="about-text"/>
+                    <ui:VisualElement name="models-citation-quote" class="about-quote">
+                        <ui:Label text="“Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0”" class="about-quote-text"/>
                     </ui:VisualElement>
-                    <ui:Label text="Z-Anatomy content is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)." class="card-text"/>
-                    <ui:Label text="ORIGINAL MODEL SOURCE" class="card-caption"/>
-                    <ui:VisualElement name="original-source-quote" class="card-quote">
-                        <ui:Label text="“BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan”" class="card-quote-text"/>
+                    <ui:Label text="Z-Anatomy content is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)." class="about-text about-text-gap"/>
+                    <ui:Label text="Original model source" class="about-caption"/>
+                    <ui:VisualElement name="original-source-quote" class="about-quote">
+                        <ui:Label text="“BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan”" class="about-quote-text"/>
                     </ui:VisualElement>
-                    <ui:Label text="Z-ANATOMY SOURCE" class="card-caption"/>
-                    <ui:Label text="github.com/Z-Anatomy/Models-of-human-anatomy" class="card-link"/>
-                    <ui:Label text="BODYPARTS3D SOURCE" class="card-caption"/>
-                    <ui:Label text="dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" class="card-link"/>
-                    <ui:Label text="The models have been adapted and integrated into the Anatomia Unity application for interactive human anatomy learning." class="card-text card-text-last"/>
+                    <ui:VisualElement class="about-sources">
+                        <ui:Label text="Z-Anatomy source" class="about-source-label"/>
+                        <ui:Label text="github.com/Z-Anatomy/Models-of-human-anatomy" class="about-link"/>
+                        <ui:Label text="BodyParts3D source" class="about-source-label about-source-label-spaced"/>
+                        <ui:Label text="dbarchive.biosciencedbc.jp/en/&#10;bodyparts3d/download.html" class="about-link"/>
+                    </ui:VisualElement>
+                    <ui:Label text="The models have been adapted and integrated into the Anatomia Unity application for interactive human anatomy learning." class="about-text about-text-gap"/>
                 </ui:VisualElement>
-                <ui:Label text="License" class="section-title section-title-spaced"/>
-                <ui:VisualElement name="license-card" class="info-card">
-                    <ui:Label text="CC BY-SA 4.0 permits the use, redistribution, and creation of derivative works from the licensed content, provided that appropriate attribution is given and derivative works are distributed under the same license." class="card-text card-text-first card-text-last"/>
+                <ui:Label text="License" class="about-section-title about-section-spaced"/>
+                <ui:VisualElement name="license-card" class="about-card">
+                    <ui:Label text="CC BY-SA 4.0" class="about-badge"/>
+                    <ui:Label text="CC BY-SA 4.0 permits the use, redistribution, and creation of derivative works from the licensed content, provided that appropriate attribution is given and derivative works are distributed under the same license." class="about-text"/>
                 </ui:VisualElement>
-                <ui:Label text="Z-Anatomy Authors" class="section-title section-title-spaced"/>
-                <ui:VisualElement name="authors-card" class="menu-card">
+                <ui:Label text="Z-Anatomy authors" class="about-section-title about-section-spaced"/>
+                <ui:VisualElement name="authors-card" class="about-card about-card-list">
                     <ui:VisualElement name="authors-list" class="credits-list">
                         <ui:VisualElement class="credit-row">
                             <ui:Label text="Kousaku Okubo" class="credit-name"/>
@@ -95,13 +95,13 @@
                             <ui:Label text="Polish translation" class="credit-role"/>
                         </ui:VisualElement>
                         <ui:VisualElement class="credit-divider"/>
-                        <ui:VisualElement class="credit-row credit-row-last">
+                        <ui:VisualElement class="credit-row">
                             <ui:Label text="Shariar Ahmadpour" class="credit-name"/>
                             <ui:Label text="Parsi translation" class="credit-role"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="version-label" text="ANATOMIA  v1.0.0" class="version-label"/>
+                <ui:Label name="version-label" text="ANATOMIA  v1.0.1" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

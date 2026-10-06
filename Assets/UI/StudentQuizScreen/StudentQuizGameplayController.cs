@@ -196,7 +196,7 @@ namespace Anatomia3D.UI.Quiz
 
             if (_root == null)
             {
-                Debug.LogError("[StudentQuizGameplayController] Root is null!");
+                //Debug.LogError("[StudentQuizGameplayController] Root is null!");
                 return;
             }
 
@@ -391,6 +391,7 @@ namespace Anatomia3D.UI.Quiz
 
         private void PaintGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
             _headerGradientTexture = GradientTextureUtility.CreateDiagonalGradient(64, 64, gradientStart, gradientEnd);
             if (_header != null) _header.style.backgroundImage = new StyleBackground(Background.FromTexture2D(_headerGradientTexture));
@@ -450,7 +451,7 @@ namespace Anatomia3D.UI.Quiz
                 {
                     if (!success)
                     {
-                        Debug.LogError($"[QuizGameplay] {error}");
+                        //Debug.LogError($"[QuizGameplay] {error}");
                         return;
                     }
 
@@ -602,7 +603,7 @@ namespace Anatomia3D.UI.Quiz
                     BuildImageBased(q);
                     break;
                 default:
-                    Debug.LogWarning($"[QuizGameplay] Unknown question type slug '{q.QuestionTypeSlug}'.");
+                    //Debug.LogWarning($"[QuizGameplay] Unknown question type slug '{q.QuestionTypeSlug}'.");
                     break;
             }
         }
@@ -675,7 +676,8 @@ namespace Anatomia3D.UI.Quiz
             {
                 var box = new VisualElement();
                 box.AddToClassList("checkbox-outer");
-                var check = new Label("\u2713");
+                // check-icon.png is applied by .checkbox-check in QuizScreen.uss
+                var check = new VisualElement { pickingMode = PickingMode.Ignore };
                 check.AddToClassList("checkbox-check");
                 box.Add(check);
                 row.Add(box);
@@ -756,8 +758,15 @@ namespace Anatomia3D.UI.Quiz
         /// it never restarts the quiz.</summary>
         private void BuildImageBased(QuizService.QuestionRecord q)
         {
-            var viewButton = new Button(() => OnViewOnModelClicked(q)) { text = "🦴  View on 3D Model" };
+            var viewButton = new Button(() => OnViewOnModelClicked(q));
             viewButton.AddToClassList("view-model-button");
+            // bone-icon.png is applied by .view-model-icon in QuizScreen.uss
+            var viewIcon = new VisualElement { pickingMode = PickingMode.Ignore };
+            viewIcon.AddToClassList("view-model-icon");
+            viewButton.Add(viewIcon);
+            var viewLabel = new Label("View on 3D Model") { pickingMode = PickingMode.Ignore };
+            viewLabel.AddToClassList("view-model-label");
+            viewButton.Add(viewLabel);
             _answerContainer.Add(viewButton);
 
             var helper = new Label("Tap above to see the highlighted structure, then type its name below.");
@@ -782,14 +791,14 @@ namespace Anatomia3D.UI.Quiz
         {
             if (string.IsNullOrEmpty(q.AnatomySystemKey) || string.IsNullOrEmpty(q.StructureKey))
             {
-                Debug.LogWarning("[QuizGameplay] Image-based question is missing AnatomySystemKey/StructureKey - " +
-                                  "cannot open the 3D model. This question may have been saved before that metadata existed.");
+                //Debug.LogWarning("[QuizGameplay] Image-based question is missing AnatomySystemKey/StructureKey - " +
+                                  //"cannot open the 3D model. This question may have been saved before that metadata existed.");
                 return;
             }
 
             if (!Enum.TryParse<AnatomySystem>(q.AnatomySystemKey, out var system))
             {
-                Debug.LogWarning($"[QuizGameplay] Unknown anatomy system '{q.AnatomySystemKey}' on an Image-Based question.");
+                //Debug.LogWarning($"[QuizGameplay] Unknown anatomy system '{q.AnatomySystemKey}' on an Image-Based question.");
                 return;
             }
 
@@ -922,7 +931,7 @@ namespace Anatomia3D.UI.Quiz
                 {
                     if (!success)
                     {
-                        Debug.LogError($"[QuizGameplay] {error}");
+                        //Debug.LogError($"[QuizGameplay] {error}");
 
                         // Submission failed (e.g. network hiccup) - let the student try
                         // again instead of leaving the button permanently disabled.

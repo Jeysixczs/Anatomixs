@@ -1,0 +1,1494 @@
+/* =========================================================
+   Anatomia 3D - Student Theme  ("Quiet Glass")
+   Minimalist / modern / premium override layer for every student screen.
+
+   HOW IT WORKS
+   - Loaded AFTER each screen's own .uss (see the second <Style> tag in each
+     student .uxml), and scoped under .anatomia-theme (added to the root element),
+     so these rules out-rank the old single-class rules without editing them.
+   - Remove the <Style> tag + the "anatomia-theme" class from a UXML to roll that
+     screen back to its original look.
+
+   DESIGN
+   - Fixed ambient background (Theme/ambient-bg.png): soft blurred colour fields.
+   - Header is no longer a gradient slab: it sits directly on the background.
+   - Content sits on slightly lighter translucent "surface" cards.
+   - Neutrals + ONE accent. Semantic green/red/amber kept only for status.
+   - USS has no box-shadow / backdrop-blur, so depth = translucent surface +
+     hairline border + slightly stronger bottom edge.
+   - Transitions only touch colour properties on purpose: UIAnimationUtility drives
+     opacity / translate / scale inline, and a transition there would make it lag.
+   ========================================================= */
+
+/* ---------- Design tokens ---------- */
+
+.anatomia-theme
+{
+    --accent: rgb(91, 76, 219);
+    --accent-strong: rgb(76, 62, 199);
+    --accent-press: rgb(64, 52, 176);
+    --accent-soft: rgba(91, 76, 219, 0.11);
+    --accent-faint: rgba(91, 76, 219, 0.055);
+
+    --ink: rgb(22, 24, 38);
+    --ink-2: rgb(84, 90, 110);
+    --ink-3: rgb(139, 145, 163);
+    --ink-4: rgb(184, 188, 201);
+
+    --line: rgba(22, 24, 38, 0.07);
+    --line-strong: rgba(22, 24, 38, 0.13);
+    --sunken: rgba(22, 24, 38, 0.045);
+    --track: rgba(22, 24, 38, 0.08);
+
+    --surface: rgba(255, 255, 255, 0.86);
+    --surface-hover: rgba(255, 255, 255, 0.97);
+    --surface-solid: rgb(255, 255, 255);
+
+    --success: rgb(28, 135, 94);
+    --success-soft: rgba(28, 135, 94, 0.12);
+    --danger: rgb(204, 64, 64);
+    --danger-soft: rgba(204, 64, 64, 0.09);
+    --warn: rgb(190, 126, 24);
+    --warn-soft: rgba(190, 126, 24, 0.13);
+
+    /* Optional: drop a font asset in the project and uncomment to change the typeface everywhere.
+       -unity-font-definition: url("project://database/Assets/UI/Theme/YourFont SDF.asset"); */
+}
+
+/* ---------- Ambient background (fixed behind everything) ---------- */
+
+.anatomia-theme.screen-root,
+.anatomia-theme.quiz-root,
+.anatomia-theme.fs-root
+{
+    background-color: rgb(244, 245, 250);
+    background-image: url("project://database/Assets/UI/Theme/ambient-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ---------- Layout: comfortable measure on tablet / desktop ---------- */
+
+.anatomia-theme .content-wrapper,
+.anatomia-theme .fs-content
+{
+    max-width: 1100px;
+    align-self: center;
+    width: 100%;
+}
+
+.anatomia-theme .header,
+.anatomia-theme .fs-header
+{
+    max-width: 1100px;
+    align-self: center;
+    width: 100%;
+}
+
+.anatomia-theme .content-wrapper
+{
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 12px;
+    padding-bottom: 80px;
+}
+
+/* ---------- Header: no slab, no gradient ---------- */
+
+.anatomia-theme .header,
+.anatomia-theme .fs-header
+{
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 96px;
+    padding-bottom: 28px;
+}
+
+.anatomia-theme .header-top-row
+{
+    margin-bottom: 24px;
+}
+
+/* Round header controls: soft glass chip with ink icon */
+.anatomia-theme .back-button,
+.anatomia-theme .header-icon-circle,
+.anatomia-theme .icon-button,
+.anatomia-theme .fs-icon-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    color: var(--ink);
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .back-button:hover,
+.anatomia-theme .header-icon-circle:hover,
+.anatomia-theme .icon-button:hover,
+.anatomia-theme .fs-icon-button:hover
+{
+    background-color: var(--surface-hover);
+    border-color: var(--line-strong);
+}
+
+.anatomia-theme .back-button:active,
+.anatomia-theme .header-icon-circle:active,
+.anatomia-theme .icon-button:active,
+.anatomia-theme .fs-icon-button:active
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .back-button:focus,
+.anatomia-theme .icon-button:focus,
+.anatomia-theme .fs-icon-button:focus
+{
+    border-color: var(--accent);
+}
+
+.anatomia-theme .back-icon,
+.anatomia-theme .icon-button
+{
+    -unity-background-image-tint-color: var(--ink);
+}
+
+.anatomia-theme .back-icon
+{
+    width: 36px;
+    height: 36px;
+}
+
+/* ---------- Typography ---------- */
+
+.anatomia-theme .header-title,
+.anatomia-theme .welcome-title,
+.anatomia-theme .fs-title,
+.anatomia-theme .result-title
+{
+    color: var(--ink);
+    font-size: 50px;
+    -unity-font-style: bold;
+    letter-spacing: -0.8px;
+}
+
+.anatomia-theme .header-subtitle,
+.anatomia-theme .welcome-subtitle,
+.anatomia-theme .fs-subtitle,
+.anatomia-theme .quiz-name
+{
+    color: var(--ink-3);
+    font-size: 27px;
+    margin-top: 8px;
+}
+
+/* Greeting: small muted line above, name large (Dashboard) */
+.anatomia-theme .welcome-title
+{
+    font-size: 28px;
+    -unity-font-style: normal;
+    color: var(--ink-3);
+    letter-spacing: 0;
+}
+
+.anatomia-theme .welcome-subtitle
+{
+    font-size: 48px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: -0.8px;
+    margin-top: 2px;
+}
+
+.anatomia-theme .section-title,
+.anatomia-theme .section-label
+{
+    color: var(--ink);
+    font-size: 32px;
+    -unity-font-style: bold;
+    letter-spacing: -0.3px;
+    margin-bottom: 22px;
+    margin-top: 12px;
+    padding-left: 4px;
+}
+
+.anatomia-theme .section-label
+{
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--ink-3);
+}
+
+/* ---------- Surfaces (cards / panels) ---------- */
+
+.anatomia-theme .classroom-card,
+.anatomia-theme .stat-card,
+.anatomia-theme .quick-actions-card,
+.anatomia-theme .recent-activity-card,
+.anatomia-theme .join-classroom-card,
+.anatomia-theme .level-card,
+.anatomia-theme .level-progress-card,
+.anatomia-theme .level-roadmap-card,
+.anatomia-theme .weekly-chart-card,
+.anatomia-theme .category-card,
+.anatomia-theme .badge-card,
+.anatomia-theme .summary-card,
+.anatomia-theme .material-card,
+.anatomia-theme .quiz-card,
+.anatomia-theme .announcement-card,
+.anatomia-theme .panel-card,
+.anatomia-theme .menu-card,
+.anatomia-theme .form-card,
+.anatomia-theme .photo-card,
+.anatomia-theme .info-box,
+.anatomia-theme .tip-card,
+.anatomia-theme .login-card,
+.anatomia-theme .create-account-card,
+.anatomia-theme .score-card,
+.anatomia-theme .mini-card,
+.anatomia-theme .fs-card,
+.anatomia-theme .card,
+.anatomia-theme .notifications-empty-state,
+.anatomia-theme .classrooms-empty-state,
+.anatomia-theme .empty-state,
+.anatomia-theme .glass-stat-card,
+.anatomia-theme .lb-summary
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 32px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .classroom-card:hover,
+.anatomia-theme .material-card:hover,
+.anatomia-theme .quiz-card:hover,
+.anatomia-theme .badge-card:hover,
+.anatomia-theme .category-card:hover
+{
+    background-color: var(--surface-hover);
+    border-color: var(--line-strong);
+}
+
+.anatomia-theme .classroom-card,
+.anatomia-theme .material-card,
+.anatomia-theme .quiz-card,
+.anatomia-theme .announcement-card,
+.anatomia-theme .badge-card
+{
+    padding: 36px;
+    margin-bottom: 20px;
+}
+
+/* Translucent glass chips that used to sit on the gradient header */
+.anatomia-theme .glass-stat-card,
+.anatomia-theme .level-card
+{
+    border-radius: 28px;
+}
+
+.anatomia-theme .glass-stat-value
+{
+    color: var(--ink);
+    font-size: 42px;
+    -unity-font-style: bold;
+    letter-spacing: -0.5px;
+}
+
+.anatomia-theme .glass-stat-label
+{
+    color: var(--ink-3);
+    font-size: 22px;
+}
+
+/* ---------- Text hierarchy inside cards ---------- */
+
+.anatomia-theme .classroom-name-label,
+.anatomia-theme .material-title-label,
+.anatomia-theme .quiz-card-title,
+.anatomia-theme .announcement-title-label,
+.anatomia-theme .badge-title,
+.anatomia-theme .panel-card-title,
+.anatomia-theme .card-title,
+.anatomia-theme .join-classroom-title,
+.anatomia-theme .activity-title,
+.anatomia-theme .notification-title,
+.anatomia-theme .category-name,
+.anatomia-theme .level-roadmap-title,
+.anatomia-theme .menu-item-label,
+.anatomia-theme .peer-name-label,
+.anatomia-theme .fs-card-title,
+.anatomia-theme .info-title,
+.anatomia-theme .tip-title,
+.anatomia-theme .pro-tip-title,
+.anatomia-theme .stat-value,
+.anatomia-theme .score-stat-value,
+.anatomia-theme .mini-value,
+.anatomia-theme .profile-name
+{
+    color: var(--ink);
+    letter-spacing: -0.2px;
+}
+
+.anatomia-theme .classroom-description-label,
+.anatomia-theme .classroom-teacher-label,
+.anatomia-theme .classroom-students-label,
+.anatomia-theme .material-description-label,
+.anatomia-theme .material-meta-label,
+.anatomia-theme .announcement-body-label,
+.anatomia-theme .announcement-date-label,
+.anatomia-theme .panel-card-subtitle,
+.anatomia-theme .card-subtitle,
+.anatomia-theme .join-classroom-subtitle,
+.anatomia-theme .activity-time,
+.anatomia-theme .notification-message,
+.anatomia-theme .notification-time,
+.anatomia-theme .stat-label,
+.anatomia-theme .score-stat-label,
+.anatomia-theme .score-caption,
+.anatomia-theme .mini-label,
+.anatomia-theme .category-count,
+.anatomia-theme .level-caption,
+.anatomia-theme .level-roadmap-subtitle,
+.anatomia-theme .level-roadmap-points,
+.anatomia-theme .info-text,
+.anatomia-theme .tip-text-block,
+.anatomia-theme .pro-tip-text,
+.anatomia-theme .profile-email,
+.anatomia-theme .helper-text,
+.anatomia-theme .field-hint,
+.anatomia-theme .version-label,
+.anatomia-theme .empty-state-subtext,
+.anatomia-theme .empty-subtitle,
+.anatomia-theme .fs-meta-label,
+.anatomia-theme .fs-instructions-text,
+.anatomia-theme .fs-accepted-text,
+.anatomia-theme .peer-level-badge
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .summary-label,
+.anatomia-theme .lb-summary-caption,
+.anatomia-theme .lb-summary-hint,
+.anatomia-theme .lb-summary-of,
+.anatomia-theme .lb-summary-points-caption
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .glass-stat-icon
+{
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme .empty-state-text,
+.anatomia-theme .empty-title
+{
+    color: var(--ink);
+    letter-spacing: -0.2px;
+}
+
+.anatomia-theme .notification-message,
+.anatomia-theme .classroom-description-label,
+.anatomia-theme .material-description-label,
+.anatomia-theme .announcement-body-label
+{
+    color: var(--ink-2);
+}
+
+.anatomia-theme .summary-value,
+.anatomia-theme .lb-summary-points,
+.anatomia-theme .lb-summary-rank,
+.anatomia-theme .lb-count-label,
+.anatomia-theme .level-text,
+.anatomia-theme .fs-meta-value,
+.anatomia-theme .info-value,
+.anatomia-theme .info-label
+{
+    color: var(--ink);
+}
+
+/* ---------- Icon tiles: calm, neutral ---------- */
+
+.anatomia-theme .empty-state-icon-box,
+.anatomia-theme .tip-icon-box,
+.anatomia-theme .pro-tip-icon-box,
+.anatomia-theme .card-icon-box,
+.anatomia-theme .trophy-icon-box
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme .empty-state-icon
+{
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme .menu-icon-blue,
+.anatomia-theme .menu-icon-orange,
+.anatomia-theme .menu-icon-green,
+.anatomia-theme .menu-icon-purple,
+.anatomia-theme .menu-icon-gray,
+.anatomia-theme .stat-icon-blue,
+.anatomia-theme .stat-icon-orange,
+.anatomia-theme .stat-icon-purple,
+.anatomia-theme .mini-icon-blue,
+.anatomia-theme .mini-icon-gold,
+.anatomia-theme .badge-icon-box,
+.anatomia-theme .classroom-card-icon-tile,
+.anatomia-theme .join-classroom-icon-box
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .menu-icon-red
+{
+    background-color: var(--danger-soft);
+}
+
+/* Solid accent tiles where the glyph is a white PNG (safe to keep white) */
+.anatomia-theme .notification-icon-purple,
+.anatomia-theme .notification-icon-green,
+.anatomia-theme .notification-icon-blue,
+.anatomia-theme .notification-icon-orange,
+.anatomia-theme .icon-skeletal,
+.anatomia-theme .icon-muscular,
+.anatomia-theme .icon-cardio,
+.anatomia-theme.theme-progress .stat-icon-blue,
+.anatomia-theme.theme-progress .stat-icon-green,
+.anatomia-theme.theme-progress .stat-icon-purple,
+.anatomia-theme.theme-progress .stat-icon-gold
+{
+    background-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .stat-icon-blue,
+.anatomia-theme.theme-dashboard .stat-icon-purple,
+.anatomia-theme.theme-dashboard .stat-icon-green,
+.anatomia-theme.theme-dashboard .stat-icon-gold
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .notification-icon-box
+{
+    width: 88px;
+    height: 88px;
+    border-radius: 28px;
+}
+
+/* ---------- Lists: calm rows, hairline dividers ---------- */
+
+/* Notifications become ONE grouped surface instead of a stack of bordered cards */
+.anatomia-theme .notifications-list,
+.anatomia-theme .recent-activity-list,
+.anatomia-theme .view-all-list,
+.anatomia-theme .peers-list
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.anatomia-theme .recent-activity-list,
+.anatomia-theme .view-all-list
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+.anatomia-theme .notification-row
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line);
+    border-radius: 0;
+    margin-bottom: 0;
+    padding: 32px 34px;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .notification-row-last
+{
+    border-bottom-width: 0;
+}
+
+.anatomia-theme .notification-row:hover
+{
+    background-color: var(--accent-faint);
+}
+
+.anatomia-theme .notification-row:active
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme .notification-row-unread
+{
+    background-color: var(--accent-faint);
+    border-color: rgba(0, 0, 0, 0);
+    border-bottom-color: var(--line);
+}
+
+.anatomia-theme .notification-title
+{
+    font-size: 31px;
+}
+
+.anatomia-theme .notification-unread-dot
+{
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background-color: var(--accent);
+}
+
+/* Activity / peers / menu rows */
+.anatomia-theme .activity-item,
+.anatomia-theme .peer-row,
+.anatomia-theme .menu-item,
+.anatomia-theme .info-row,
+.anatomia-theme .category-item,
+.anatomia-theme .fs-meta-row
+{
+    border-bottom-color: var(--line);
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .activity-item:hover,
+.anatomia-theme .peer-row:hover
+{
+    background-color: var(--accent-faint);
+}
+
+.anatomia-theme .menu-item:hover
+{
+    background-color: var(--accent-faint);
+}
+
+.anatomia-theme .menu-item:active
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme .menu-divider,
+.anatomia-theme .classroom-card-divider,
+.anatomia-theme .summary-divider,
+.anatomia-theme .score-divider
+{
+    background-color: var(--line);
+}
+
+.anatomia-theme .menu-chevron
+{
+    border-color: var(--ink-4);
+}
+
+.anatomia-theme .level-roadmap-item
+{
+    background-color: var(--sunken);
+    border-radius: 24px;
+}
+
+.anatomia-theme .level-roadmap-item-current
+{
+    background-color: var(--accent-faint);
+    border-color: var(--accent);
+}
+
+.anatomia-theme .level-roadmap-item-current .level-roadmap-badge,
+.anatomia-theme .level-roadmap-item-current .level-roadmap-status
+{
+    background-color: var(--accent);
+}
+
+.anatomia-theme .level-roadmap-item-completed .level-roadmap-badge
+{
+    background-color: var(--success);
+}
+
+.anatomia-theme .level-roadmap-item-completed .level-roadmap-status
+{
+    background-color: var(--success-soft);
+    color: var(--success);
+}
+
+/* ---------- Badges, chips, codes ---------- */
+
+.anatomia-theme .classroom-code-badge,
+.anatomia-theme .material-type-badge,
+.anatomia-theme .quiz-meta-chip,
+.anatomia-theme .fs-pill,
+.anatomia-theme .pill
+{
+    background-color: var(--sunken);
+    border-radius: 100px;
+}
+
+.anatomia-theme .classroom-code-badge-label,
+.anatomia-theme .fs-pill-label,
+.anatomia-theme .pill-label
+{
+    color: var(--ink-2);
+}
+
+.anatomia-theme .quiz-chip-neutral
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .quiz-chip-easy { background-color: var(--success-soft); }
+.anatomia-theme .quiz-chip-medium { background-color: var(--warn-soft); }
+.anatomia-theme .quiz-chip-hard { background-color: var(--danger-soft); }
+
+.anatomia-theme .activity-points
+{
+    background-color: var(--success-soft);
+    color: var(--success);
+}
+
+.anatomia-theme .level-badge
+{
+    background-color: var(--accent-soft);
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.anatomia-theme .level-badge-label
+{
+    color: var(--accent);
+}
+
+/* ---------- Progress ---------- */
+
+.anatomia-theme .progress-track,
+.anatomia-theme .category-track,
+.anatomia-theme .points-progress-track,
+.anatomia-theme .performer-bar-track,
+.anatomia-theme .sync-bar-track
+{
+    background-color: var(--track);
+}
+
+.anatomia-theme .progress-fill,
+.anatomia-theme .category-fill,
+.anatomia-theme .points-progress-fill,
+.anatomia-theme .sync-bar-fill,
+.anatomia-theme .chart-bar
+{
+    background-color: var(--accent);
+}
+
+.anatomia-theme .progress-fill-complete
+{
+    background-color: var(--success);
+}
+
+.anatomia-theme .progress-fill-locked
+{
+    background-color: var(--ink-4);
+}
+
+.anatomia-theme .chart-day-label,
+.anatomia-theme .chart-axis-label
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .chart-bars-row
+{
+    border-left-color: var(--line);
+    border-bottom-color: var(--line);
+}
+
+/* Segmented tabs (Progress) */
+.anatomia-theme .tab-toggle
+{
+    background-color: var(--sunken);
+    border-radius: 100px;
+}
+
+.anatomia-theme .tab-button
+{
+    border-radius: 100px;
+    color: var(--ink-3);
+    transition-property: background-color, color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .tab-button:hover
+{
+    color: var(--ink);
+}
+
+.anatomia-theme .tab-button-active
+{
+    background-color: var(--surface-solid);
+    color: var(--ink);
+}
+
+/* ---------- Buttons ---------- */
+
+/* Primary: solid accent */
+.anatomia-theme .sign-in-button,
+.anatomia-theme .create-account-button,
+.anatomia-theme .join-submit-button,
+.anatomia-theme .save-changes-submit-button,
+.anatomia-theme .back-to-dashboard-button,
+.anatomia-theme .fs-submit-button,
+.anatomia-theme .join-classroom-button,
+.anatomia-theme .empty-state-button,
+.anatomia-theme .baseline-cta-button,
+.anatomia-theme .hub-filter-apply-button,
+.anatomia-theme .quiz-start-button,
+.anatomia-theme .create-classroom-header-button,
+.anatomia-theme .exit-submit-button,
+.anatomia-theme.theme-quiz .action-button
+{
+    background-color: var(--accent);
+    background-image: none;
+    border-width: 0;
+    border-radius: 100px;
+    color: white;
+    -unity-font-style: bold;
+    letter-spacing: 0.2px;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .sign-in-button:hover,
+.anatomia-theme .create-account-button:hover,
+.anatomia-theme .join-submit-button:hover,
+.anatomia-theme .save-changes-submit-button:hover,
+.anatomia-theme .back-to-dashboard-button:hover,
+.anatomia-theme .fs-submit-button:hover,
+.anatomia-theme .join-classroom-button:hover,
+.anatomia-theme .empty-state-button:hover,
+.anatomia-theme .baseline-cta-button:hover,
+.anatomia-theme .hub-filter-apply-button:hover,
+.anatomia-theme .quiz-start-button:hover,
+.anatomia-theme .create-classroom-header-button:hover,
+.anatomia-theme .exit-submit-button:hover,
+.anatomia-theme.theme-quiz .action-button:hover
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme .sign-in-button:active,
+.anatomia-theme .create-account-button:active,
+.anatomia-theme .join-submit-button:active,
+.anatomia-theme .save-changes-submit-button:active,
+.anatomia-theme .back-to-dashboard-button:active,
+.anatomia-theme .fs-submit-button:active,
+.anatomia-theme .join-classroom-button:active,
+.anatomia-theme .empty-state-button:active,
+.anatomia-theme .baseline-cta-button:active,
+.anatomia-theme .hub-filter-apply-button:active,
+.anatomia-theme .quiz-start-button:active,
+.anatomia-theme .create-classroom-header-button:active,
+.anatomia-theme .exit-submit-button:active,
+.anatomia-theme.theme-quiz .action-button:active
+{
+    background-color: var(--accent-press);
+}
+
+.anatomia-theme .create-classroom-plus,
+.anatomia-theme .create-classroom-header-label,
+.anatomia-theme .join-submit-label,
+.anatomia-theme .save-changes-label,
+.anatomia-theme .back-to-dashboard-label,
+.anatomia-theme .baseline-cta-label
+{
+    color: white;
+}
+
+.anatomia-theme .quiz-start-button-disabled,
+.anatomia-theme.theme-quiz .action-button--disabled
+{
+    background-color: var(--sunken);
+    color: var(--ink-3);
+}
+
+/* Secondary: quiet outline */
+.anatomia-theme .google-button,
+.anatomia-theme .fs-choose-button,
+.anatomia-theme .secondary-action-button,
+.anatomia-theme .hub-filter-button,
+.anatomia-theme .hub-filter-reset-button,
+.anatomia-theme .change-photo-button,
+.anatomia-theme .prev-button,
+.anatomia-theme .view-all-close-button,
+.anatomia-theme .view-all-inline-button,
+.anatomia-theme .material-open-button,
+.anatomia-theme .fs-download-button,
+.anatomia-theme .fs-clear-button,
+.anatomia-theme .exit-cancel-button,
+.anatomia-theme .biometric-button
+{
+    background-color: var(--surface);
+    background-image: none;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 100px;
+    color: var(--ink);
+    -unity-font-style: bold;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .google-button:hover,
+.anatomia-theme .fs-choose-button:hover,
+.anatomia-theme .secondary-action-button:hover,
+.anatomia-theme .hub-filter-button:hover,
+.anatomia-theme .hub-filter-reset-button:hover,
+.anatomia-theme .change-photo-button:hover,
+.anatomia-theme .prev-button:hover,
+.anatomia-theme .view-all-close-button:hover,
+.anatomia-theme .view-all-inline-button:hover,
+.anatomia-theme .material-open-button:hover,
+.anatomia-theme .fs-download-button:hover,
+.anatomia-theme .fs-clear-button:hover,
+.anatomia-theme .exit-cancel-button:hover,
+.anatomia-theme .biometric-button:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.anatomia-theme .hub-filter-button-active
+{
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.anatomia-theme .fs-choose-button
+{
+    border-width: 1px;
+    background-color: var(--accent-faint);
+    color: var(--accent);
+}
+
+.anatomia-theme .secondary-action-icon
+{
+    -unity-background-image-tint-color: var(--ink);
+}
+
+/* Ghost / text buttons */
+.anatomia-theme .mark-all-read-button,
+.anatomia-theme .play-mode-entry-button
+{
+    background-color: var(--accent-soft);
+    border-width: 0;
+    border-radius: 100px;
+    color: var(--accent);
+    -unity-font-style: bold;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .mark-all-read-button:hover,
+.anatomia-theme .play-mode-entry-button:hover
+{
+    background-color: rgba(91, 76, 219, 0.18);
+}
+
+.anatomia-theme .play-mode-entry-button-active
+{
+    background-color: var(--accent);
+    color: white;
+}
+
+.anatomia-theme .forgot-password-link,
+.anatomia-theme .create-account-link,
+.anatomia-theme .admin-login-link,
+.anatomia-theme .terms-link-button,
+.anatomia-theme .bottom-link-button,
+.anatomia-theme .classroom-card-button-label,
+.anatomia-theme .view-classroom-button:hover .classroom-card-button-label
+{
+    color: var(--accent);
+}
+
+.anatomia-theme .view-classroom-button-disabled .classroom-card-button-label
+{
+    color: var(--ink-4);
+}
+
+.anatomia-theme .classroom-card-chevron
+{
+    -unity-background-image-tint-color: var(--accent);
+}
+
+/* Destructive */
+.anatomia-theme .logout-button
+{
+    background-color: var(--danger-soft);
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 100px;
+}
+
+.anatomia-theme .logout-button:hover
+{
+    background-color: rgba(204, 64, 64, 0.15);
+}
+
+.anatomia-theme .logout-label
+{
+    color: var(--danger);
+}
+
+/* ---------- Forms ---------- */
+
+.anatomia-theme .field-label,
+.anatomia-theme .field-label-spaced
+{
+    color: var(--ink-2);
+    -unity-font-style: bold;
+    letter-spacing: 0.1px;
+}
+
+.anatomia-theme .input-container,
+.anatomia-theme .hub-search-wrapper,
+.anatomia-theme .search-bar
+{
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 26px;
+    transition-property: border-color, background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .input-container:hover,
+.anatomia-theme .hub-search-wrapper:hover
+{
+    border-color: var(--ink-4);
+}
+
+.anatomia-theme .input-container-focused,
+.anatomia-theme .hub-search-wrapper:focus
+{
+    border-color: var(--accent);
+    border-width: 2px;
+    background-color: var(--surface-solid);
+}
+
+.anatomia-theme .input-field,
+.anatomia-theme .code-input-field,
+.anatomia-theme .text-field,
+.anatomia-theme .hub-search-field
+{
+    color: var(--ink);
+}
+
+.anatomia-theme .text-field > #unity-text-input,
+.anatomia-theme .input-field > #unity-text-input
+{
+    color: var(--ink);
+}
+
+.anatomia-theme .text-field
+{
+    background-color: var(--surface-solid);
+    border-radius: 26px;
+    border-width: 1px;
+    border-color: var(--line-strong);
+}
+
+.anatomia-theme .text-field:focus
+{
+    border-color: var(--accent);
+}
+
+.anatomia-theme .field-error,
+.anatomia-theme .fs-error,
+.anatomia-theme .materials-error-label
+{
+    color: var(--danger);
+}
+
+.anatomia-theme .terms-checkbox
+{
+    border-color: var(--line-strong);
+    background-color: var(--surface-solid);
+}
+
+.anatomia-theme .terms-checkbox.checked
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.anatomia-theme .divider-line
+{
+    background-color: var(--line);
+}
+
+.anatomia-theme .divider-text,
+.anatomia-theme .terms-text,
+.anatomia-theme .create-account-text
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .verify-status-verified
+{
+    background-color: var(--success-soft);
+    color: var(--success);
+}
+
+.anatomia-theme .verify-status-unverified,
+.anatomia-theme .warning-box
+{
+    background-color: var(--warn-soft);
+    border-color: rgba(0, 0, 0, 0);
+}
+
+/* ---------- Overlays & sheets: solid surface, calm scrim kept from original ---------- */
+
+.anatomia-theme .modal-card,
+.anatomia-theme .view-all-card,
+.anatomia-theme .hub-filter-sheet,
+.anatomia-theme .blocked-card,
+.anatomia-theme .loading-card,
+.anatomia-theme .password-card-floating,
+.anatomia-theme .fs-working-card,
+.anatomia-theme .fs-blocked-card,
+.anatomia-theme .archived-blocked-panel
+{
+    background-color: var(--surface-solid);
+    border-color: var(--line);
+    border-radius: 40px;
+}
+
+.anatomia-theme .hub-filter-option
+{
+    border-radius: 22px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+}
+
+.anatomia-theme .hub-filter-option:hover
+{
+    background-color: var(--accent-faint);
+}
+
+.anatomia-theme .hub-filter-option-selected
+{
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
+}
+
+/* ---------- Screen specifics ---------- */
+
+/* Dashboard */
+.anatomia-theme.theme-dashboard .profile-avatar-button
+{
+    background-color: var(--accent-soft);
+    border-width: 0;
+}
+
+.anatomia-theme .profile-avatar-initials,
+.anatomia-theme .avatar-initials,
+.anatomia-theme .avatar-preview-initials
+{
+    color: var(--accent);
+}
+
+.anatomia-theme .join-classroom-icon-emoji
+{
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .action-button
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 28px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme.theme-dashboard .action-button:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .action-blue,
+.anatomia-theme.theme-dashboard .action-purple,
+.anatomia-theme.theme-dashboard .action-green,
+.anatomia-theme.theme-dashboard .action-gold
+{
+    background-color: var(--surface);
+}
+
+.anatomia-theme.theme-dashboard .action-icon
+{
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .action-label
+{
+    color: var(--ink);
+    -unity-font-style: bold;
+}
+
+/* Explore 3D: per-system colour stripes are quieted to the single accent */
+.anatomia-theme .card-accent
+{
+    background-color: var(--accent);
+    width: 6px;
+}
+
+.anatomia-theme .accent-skeletal,
+.anatomia-theme .accent-muscular,
+.anatomia-theme .accent-cardio
+{
+    background-color: var(--accent);
+}
+
+.anatomia-theme .cta-skeletal,
+.anatomia-theme .cta-muscular,
+.anatomia-theme .cta-cardio
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme .cta-label-skeletal,
+.anatomia-theme .cta-label-muscular,
+.anatomia-theme .cta-label-cardio,
+.anatomia-theme .card-cta-label
+{
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-explore .card
+{
+    border-radius: 36px;
+    overflow: hidden;
+}
+
+.anatomia-theme .sync-progress-row
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-radius: 28px;
+}
+
+.anatomia-theme .play-mode-picker-banner
+{
+    background-color: var(--accent-soft);
+    border-radius: 28px;
+}
+
+.anatomia-theme .pro-tip-card,
+.anatomia-theme .tip-card
+{
+    background-color: var(--accent-faint);
+}
+
+/* Quiz gameplay */
+.anatomia-theme.theme-quiz .header
+{
+    padding-top: 72px;
+    padding-bottom: 20px;
+}
+
+.anatomia-theme.theme-quiz .icon-button
+{
+    width: 76px;
+    height: 76px;
+    font-size: 30px;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme .question-counter
+{
+    color: var(--ink-3);
+    font-size: 26px;
+    letter-spacing: 0.3px;
+}
+
+.anatomia-theme .type-label
+{
+    color: var(--accent);
+    letter-spacing: 3px;
+}
+
+.anatomia-theme .quiz-label
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme.theme-quiz .card
+{
+    border-radius: 36px;
+}
+
+.anatomia-theme .question-text
+{
+    color: var(--ink);
+    letter-spacing: -0.3px;
+}
+
+.anatomia-theme .option-row
+{
+    background-color: var(--surface-solid);
+    border-width: 2px;
+    border-color: var(--line);
+    border-radius: 24px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme .option-row:hover
+{
+    border-color: var(--ink-4);
+}
+
+.anatomia-theme .option-row--selected
+{
+    background-color: var(--accent-faint);
+    border-color: var(--accent);
+}
+
+.anatomia-theme .option-row--selected .radio-outer
+{
+    border-color: var(--accent);
+}
+
+.anatomia-theme .option-row--selected .checkbox-outer
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.anatomia-theme .option-label
+{
+    color: var(--ink);
+}
+
+/* Quiz result */
+.anatomia-theme .score-percent
+{
+    color: var(--accent);
+    letter-spacing: -2px;
+}
+
+.anatomia-theme .points-earned-label
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .points-earned-value
+{
+    color: var(--ink);
+}
+
+/* Achievements / classroom detail badges */
+.anatomia-theme .badge-card-locked
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .badge-icon-gold
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme .badge-icon-locked,
+.anatomia-theme .badge-lock-icon
+{
+    background-color: var(--sunken);
+}
+
+.anatomia-theme .badge-status-unlocked
+{
+    color: var(--success);
+}
+
+.anatomia-theme .badge-status-locked
+{
+    color: var(--ink-3);
+}
+
+/* Login family: centred card on the ambient background */
+.anatomia-theme .app-title
+{
+    color: var(--ink);
+    letter-spacing: -1px;
+}
+
+.anatomia-theme .app-subtitle
+{
+    color: var(--ink-3);
+}
+
+.anatomia-theme .login-card,
+.anatomia-theme .create-account-card
+{
+    border-radius: 44px;
+    padding: 56px;
+}
+
+.anatomia-theme .success-message
+{
+    color: var(--success);
+}
+
+/* File submission */
+.anatomia-theme .fs-status-tag--submitted
+{
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.anatomia-theme .fs-status-tag--reviewed
+{
+    background-color: var(--success-soft);
+    color: var(--success);
+}
+
+.anatomia-theme .fs-selected-panel
+{
+    background-color: var(--sunken);
+    border-radius: 24px;
+}
+
+/* =========================================================
+   Compact (narrow phones) - toggled by each controller
+   ========================================================= */
+
+.compact .anatomia-theme .header,
+.anatomia-theme.compact .header,
+.compact .header
+{
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 84px;
+    padding-bottom: 22px;
+}
+
+.anatomia-theme.compact .content-wrapper,
+.compact .anatomia-theme .content-wrapper
+{
+    padding-left: 36px;
+    padding-right: 36px;
+}
+
+.anatomia-theme.compact .header-title,
+.compact .anatomia-theme .header-title,
+.anatomia-theme.compact .fs-title,
+.compact .anatomia-theme .fs-title
+{
+    font-size: 42px;
+}
+
+.anatomia-theme.compact .welcome-subtitle,
+.compact .anatomia-theme .welcome-subtitle
+{
+    font-size: 42px;
+}
+
+.anatomia-theme.compact .back-button,
+.compact .anatomia-theme .back-button
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
+}
+
+.anatomia-theme.compact .classroom-card,
+.compact .anatomia-theme .classroom-card,
+.anatomia-theme.compact .material-card,
+.compact .anatomia-theme .material-card,
+.anatomia-theme.compact .quiz-card,
+.compact .anatomia-theme .quiz-card,
+.anatomia-theme.compact .badge-card,
+.compact .anatomia-theme .badge-card
+{
+    padding: 28px;
+    border-radius: 28px;
+}
+
+.anatomia-theme.compact .notification-row,
+.compact .anatomia-theme .notification-row
+{
+    padding: 26px 26px;
+}
+
+.anatomia-theme.compact .notification-icon-box,
+.compact .anatomia-theme .notification-icon-box
+{
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
+}
+
+.anatomia-theme.compact .login-card,
+.compact .anatomia-theme .login-card,
+.anatomia-theme.compact .create-account-card,
+.compact .anatomia-theme .create-account-card
+{
+    padding: 40px;
+    border-radius: 36px;
+}
+
+/* ---------- Badge icons (shared: admin Gamification Settings + student badge cards) ----------
+   Preset icons are the project's white line icons, tinted gold. A custom (Cloudinary) image
+   overrides background-image and the tint inline from BadgeIconView.cs.
+   To change a preset, just point its key at a different PNG here. */
+.badge-art
+{
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    -unity-background-image-tint-color: rgb(217, 119, 6);
+}
+.badge-preset-trophy { background-image: url("project://database/Assets/UI/Icons/trophy-big-icon.png"); }
+.badge-preset-medal { background-image: url("project://database/Assets/UI/Icons/reward-icon.png"); }
+.badge-preset-shield { background-image: url("project://database/Assets/UI/Icons/shield-icon.png"); }
+.badge-preset-brain { background-image: url("project://database/Assets/UI/Icons/brain-icon.png"); }
+.badge-preset-bone { background-image: url("project://database/Assets/UI/Icons/bone-icon.png"); }
+.badge-preset-skull { background-image: url("project://database/Assets/UI/Icons/skull-white.png"); }
+.badge-preset-cardio { background-image: url("project://database/Assets/UI/Icons/cardio-white.png"); }
+.badge-preset-muscular { background-image: url("project://database/Assets/UI/Icons/muscular-white.png"); }
+.badge-preset-chart { background-image: url("project://database/Assets/UI/Icons/chart-icon.png"); }
+.badge-preset-heart { background-image: url("project://database/Assets/UI/Icons/heart-icon.png"); }
+

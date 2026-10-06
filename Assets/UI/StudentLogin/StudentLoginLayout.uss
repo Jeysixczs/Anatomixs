@@ -1,0 +1,444 @@
+/* =========================================================
+   Student Login - ISOLATED layout v11 "Hero + Card"
+   Every class is prefixed "lg-" so no other stylesheet can restyle this screen.
+   Reference canvas 1080 x 1920. Classes the controller toggles keep their names:
+   hidden, icon-eye, icon-eye-off, icon-lock, icon-fingerprint,
+   compact / landscape / ultra-compact.
+
+            (logo)
+          Anatomia 3D
+          Welcome back
+     Sign in to continue your anatomy journey.
+
+   +--------------------------------------------+
+   |  Email                                      |
+   |  [ Enter your email                      ]  |
+   |  Password                                   |
+   |  [ Enter your password               (o) ]  |
+   |                           Forgot password?  |
+   |  [               Sign in                 ]  |
+   |  [   (finger) Sign in with biometrics    ]  |
+   |  ------------------- or -----------------  |
+   |  [        (G) Continue with Google       ]  |
+   +--------------------------------------------+
+          New here? Create account
+                 Admin login
+   ========================================================= */
+
+/* ---------- Tokens ---------- */
+.lg-root
+{
+    --lg-accent: rgb(43, 109, 255);
+    --lg-accent-strong: rgb(30, 94, 236);
+    --lg-accent-press: rgb(22, 78, 208);
+    --lg-accent-soft: rgba(43, 109, 255, 0.12);
+    --lg-accent-faint: rgba(43, 109, 255, 0.06);
+    --lg-ink: rgb(22, 24, 38);
+    --lg-ink-2: rgb(84, 90, 110);
+    --lg-ink-3: rgb(139, 145, 163);
+    --lg-border: rgb(222, 228, 244);
+    --lg-border-hover: rgb(170, 182, 220);
+    --lg-field: rgb(246, 248, 253);
+    --lg-danger: rgb(204, 64, 64);
+
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    flex-direction: column;
+    background-color: rgb(240, 243, 255);
+    background-image: none;
+}
+
+.lg-root .hidden { display: none; }
+
+/* ---------- Background gradient ---------- */
+.lg-root .lg-gradient
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1000px;
+    background-image: url("project://database/Assets/UI/Theme/auth-top-gradient.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+/* ---------- Skeleton (FitToScreen: viewport centres, content keeps natural size) ---------- */
+.lg-root .lg-container
+{
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.lg-root .lg-viewport
+{
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.lg-root .lg-content
+{
+    width: 100%;
+    max-width: 900px;
+    padding: 80px 48px 56px 48px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    align-self: center;
+}
+
+/* ---------- Hero: brand + headline, centred ---------- */
+.lg-root .lg-hero
+{
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0 0 56px 0;
+    padding: 0;
+}
+
+.lg-root .lg-logo
+{
+    width: 132px;
+    height: 132px;
+    min-width: 132px;
+    margin: 0 0 22px 0;
+    padding: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+    align-self: center;
+    border-radius: 66px;
+    border-width: 1px;
+    border-color: rgba(22, 24, 38, 0.07);
+    background-color: rgb(255, 255, 255);
+    background-size: 68% 68%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.lg-root .lg-brand-name
+{
+    margin: 0 0 44px 0;
+    padding: 0;
+    font-size: 34px;
+    letter-spacing: 3px;
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    color: var(--lg-ink-2);
+}
+
+.lg-root .lg-title
+{
+    margin: 0 0 12px 0;
+    padding: 0;
+    font-size: 84px;
+    letter-spacing: -2px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: var(--lg-ink);
+}
+
+.lg-root .lg-subtitle
+{
+    margin: 0;
+    padding: 0 24px;
+    font-size: 32px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: var(--lg-ink-2);
+}
+
+/* ---------- Card ---------- */
+.lg-root .lg-card
+{
+    flex-direction: column;
+    align-self: stretch;
+    width: 100%;
+    margin: 0;
+    padding: 56px 48px 52px 48px;
+    border-width: 2px;
+    border-color: rgba(198, 207, 236, 0.7);
+    border-radius: 64px;
+    background-color: rgb(255, 255, 255);
+}
+
+.lg-root .lg-label { margin: 0 0 14px 8px; padding: 0; font-size: 30px; -unity-font-style: bold; color: var(--lg-ink); }
+.lg-root .lg-label-gap { margin-top: 36px; }
+
+.lg-root .lg-input-wrap
+{
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    align-items: center;
+    overflow: visible;
+}
+
+.lg-root .lg-input
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 34px;
+    color: var(--lg-ink);
+}
+
+.lg-root .lg-input > #unity-text-input
+{
+    height: 124px;
+    min-width: 0;
+    padding-left: 44px;
+    padding-right: 36px;
+    overflow: hidden;
+    border-width: 2px;
+    border-color: var(--lg-border);
+    border-radius: 40px;
+    background-color: var(--lg-field);
+    color: var(--lg-ink);
+    font-size: 34px;
+    -unity-text-align: middle-left;
+}
+.lg-root .lg-input > #unity-text-input:hover { border-color: var(--lg-border-hover); }
+.lg-root .lg-input > #unity-text-input:focus { border-color: var(--lg-accent); background-color: rgb(255, 255, 255); }
+.lg-root .lg-input > #unity-text-input.unity-base-text-field__input--placeholder { color: var(--lg-ink-3); -unity-font-style: normal; }
+.lg-root .lg-input-pw > #unity-text-input { padding-right: 130px; }
+
+.lg-root .lg-eye
+{
+    position: absolute;
+    right: 24px;
+    top: 26px;
+    width: 72px;
+    height: 72px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 36px;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("project://database/Assets/UI/Icons/eye.png");
+    background-size: 44px 44px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--lg-ink-2);
+}
+.lg-root .lg-eye:hover { background-color: var(--lg-accent-soft); }
+.lg-root .lg-eye.icon-eye-off { background-image: url("project://database/Assets/UI/Icons/eye-off.png"); }
+
+.lg-root .lg-error { margin: 12px 0 0 12px; padding: 0; font-size: 25px; -unity-font-style: bold; color: var(--lg-danger); white-space: normal; }
+
+.lg-root .lg-forgot-row { flex-direction: row; justify-content: flex-end; align-items: center; margin: 22px 0 40px 0; padding: 0; }
+
+.lg-root .lg-link
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 29px;
+    -unity-font-style: normal;
+    color: var(--lg-accent);
+}
+.lg-root .lg-link:hover { background-color: rgba(0, 0, 0, 0); color: var(--lg-accent-strong); }
+.lg-root .lg-link:active { background-color: rgba(0, 0, 0, 0); color: var(--lg-accent-press); }
+
+/* ---------- Buttons ---------- */
+.lg-root .lg-primary
+{
+    width: 100%;
+    height: 128px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border-width: 0;
+    border-radius: 40px;
+    background-color: var(--lg-accent);
+    background-image: none;
+    color: white;
+    font-size: 38px;
+    letter-spacing: 0;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+.lg-root .lg-primary:hover { background-color: var(--lg-accent-strong); border-width: 0; }
+.lg-root .lg-primary:active { background-color: var(--lg-accent-press); border-width: 0; }
+.lg-root .lg-primary:disabled { background-color: rgb(150, 172, 232); color: white; }
+
+.lg-root .lg-status { margin: 24px 0 0 0; padding: 0; font-size: 26px; color: var(--lg-danger); -unity-text-align: middle-center; white-space: normal; }
+
+.lg-root .lg-secondary
+{
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 120px;
+    min-width: 0;
+    margin: 0;
+    padding: 0 28px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-color: var(--lg-border);
+    border-radius: 40px;
+    background-color: rgb(255, 255, 255);
+    background-image: none;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+.lg-root .lg-secondary:hover { background-color: var(--lg-field); border-color: var(--lg-border-hover); }
+.lg-root .lg-secondary:active { background-color: var(--lg-accent-soft); border-color: var(--lg-accent); }
+.lg-root .lg-secondary:focus { border-color: var(--lg-border); }
+
+.lg-root .lg-secondary-bio { margin: 24px 0 0 0; background-color: var(--lg-accent-faint); border-color: var(--lg-accent); }
+.lg-root .lg-secondary-bio:hover { background-color: var(--lg-accent-soft); border-color: var(--lg-accent); }
+
+.lg-root .lg-secondary-label,
+.lg-root .lg-bio-label
+{
+    margin: 0 0 0 20px;
+    padding: 0;
+    font-size: 32px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    color: var(--lg-ink);
+}
+.lg-root .lg-bio-label { color: var(--lg-accent); }
+
+.lg-root .lg-icon
+{
+    width: 52px;
+    height: 52px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    align-self: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.lg-root .lg-icon-google { background-image: url("project://database/Assets/UI/Icons/google-icon.png"); -unity-background-image-tint-color: rgb(255, 255, 255); }
+.lg-root .lg-icon.icon-fingerprint { background-image: url("project://database/Assets/UI/Icons/fingerprint-icon.png"); -unity-background-image-tint-color: var(--lg-accent); }
+.lg-root .lg-icon.icon-lock { background-image: url("project://database/Assets/UI/Icons/lock-icon.png"); -unity-background-image-tint-color: var(--lg-accent); }
+
+/* ---------- "or" divider ---------- */
+.lg-root .lg-divider { flex-direction: row; align-items: center; margin: 36px 0 36px 0; padding: 0; }
+.lg-root .lg-divider-line { flex-grow: 1; flex-shrink: 1; height: 2px; background-color: var(--lg-border); }
+.lg-root .lg-divider-text { margin: 0 24px; padding: 0; font-size: 27px; color: var(--lg-ink-3); -unity-text-align: middle-center; }
+
+/* ---------- Foot: centred ---------- */
+.lg-root .lg-foot
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0;
+    padding: 52px 0 0 0;
+}
+.lg-root .lg-foot-row { flex-direction: row; align-items: center; justify-content: center; }
+.lg-root .lg-foot-text { margin: 0 10px 0 0; padding: 0; font-size: 31px; color: var(--lg-ink-2); }
+
+.lg-root .lg-foot-link,
+.lg-root .lg-admin
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 31px;
+    -unity-font-style: bold;
+}
+.lg-root .lg-foot-link { color: var(--lg-accent); }
+.lg-root .lg-admin { margin-top: 30px; font-size: 27px; -unity-font-style: normal; color: var(--lg-ink-3); }
+.lg-root .lg-foot-link:hover { background-color: rgba(0, 0, 0, 0); color: var(--lg-accent-strong); }
+.lg-root .lg-admin:hover { background-color: rgba(0, 0, 0, 0); color: var(--lg-accent); }
+
+/* =========================================================
+   Responsive (the controller puts these classes on the UIDocument root)
+   ========================================================= */
+.compact .lg-root .lg-gradient, .lg-root.compact .lg-gradient { height: 860px; }
+.compact .lg-root .lg-content, .lg-root.compact .lg-content { padding: 56px 36px 40px 36px; }
+.compact .lg-root .lg-hero, .lg-root.compact .lg-hero { margin-bottom: 40px; }
+.compact .lg-root .lg-logo, .lg-root.compact .lg-logo { width: 108px; height: 108px; min-width: 108px; border-radius: 54px; margin-bottom: 16px; }
+.compact .lg-root .lg-brand-name, .lg-root.compact .lg-brand-name { font-size: 29px; margin-bottom: 32px; }
+.compact .lg-root .lg-title, .lg-root.compact .lg-title { font-size: 68px; letter-spacing: -1.5px; }
+.compact .lg-root .lg-subtitle, .lg-root.compact .lg-subtitle { font-size: 28px; }
+.compact .lg-root .lg-card, .lg-root.compact .lg-card { padding: 44px 36px 40px 36px; border-radius: 52px; }
+.compact .lg-root .lg-label, .lg-root.compact .lg-label { font-size: 27px; margin-bottom: 10px; }
+.compact .lg-root .lg-label-gap, .lg-root.compact .lg-label-gap { margin-top: 28px; }
+.compact .lg-root .lg-input > #unity-text-input, .lg-root.compact .lg-input > #unity-text-input { height: 108px; border-radius: 34px; padding-left: 36px; font-size: 30px; }
+.compact .lg-root .lg-input-pw > #unity-text-input, .lg-root.compact .lg-input-pw > #unity-text-input { padding-right: 112px; }
+.compact .lg-root .lg-eye, .lg-root.compact .lg-eye { top: 18px; right: 20px; }
+.compact .lg-root .lg-forgot-row, .lg-root.compact .lg-forgot-row { margin: 16px 0 30px 0; }
+.compact .lg-root .lg-link, .lg-root.compact .lg-link { font-size: 26px; }
+.compact .lg-root .lg-primary, .lg-root.compact .lg-primary { height: 108px; border-radius: 34px; font-size: 33px; }
+.compact .lg-root .lg-secondary, .lg-root.compact .lg-secondary { height: 100px; border-radius: 34px; }
+.compact .lg-root .lg-secondary-bio, .lg-root.compact .lg-secondary-bio { margin-top: 18px; }
+.compact .lg-root .lg-secondary-label, .lg-root.compact .lg-secondary-label,
+.compact .lg-root .lg-bio-label, .lg-root.compact .lg-bio-label { font-size: 28px; }
+.compact .lg-root .lg-icon, .lg-root.compact .lg-icon { width: 44px; height: 44px; }
+.compact .lg-root .lg-divider, .lg-root.compact .lg-divider { margin: 28px 0; }
+.compact .lg-root .lg-foot, .lg-root.compact .lg-foot { padding-top: 40px; }
+.compact .lg-root .lg-foot-text, .lg-root.compact .lg-foot-text,
+.compact .lg-root .lg-foot-link, .lg-root.compact .lg-foot-link { font-size: 27px; }
+.compact .lg-root .lg-admin, .lg-root.compact .lg-admin { font-size: 24px; margin-top: 22px; }
+
+.landscape .lg-root .lg-gradient, .lg-root.landscape .lg-gradient { height: 300px; }
+.landscape .lg-root .lg-content, .lg-root.landscape .lg-content { padding: 16px 28px 16px 28px; max-width: 760px; }
+.landscape .lg-root .lg-hero, .lg-root.landscape .lg-hero { margin-bottom: 12px; }
+.landscape .lg-root .lg-logo, .lg-root.landscape .lg-logo { width: 44px; height: 44px; min-width: 44px; border-radius: 22px; margin-bottom: 6px; }
+.landscape .lg-root .lg-brand-name, .lg-root.landscape .lg-brand-name { font-size: 18px; margin-bottom: 8px; letter-spacing: 2px; }
+.landscape .lg-root .lg-title, .lg-root.landscape .lg-title { font-size: 40px; margin-bottom: 0; letter-spacing: -1px; }
+.landscape .lg-root .lg-subtitle, .lg-root.landscape .lg-subtitle { font-size: 20px; }
+.landscape .lg-root .lg-card, .lg-root.landscape .lg-card { padding: 20px 24px 20px 24px; border-radius: 28px; }
+.landscape .lg-root .lg-label, .lg-root.landscape .lg-label { font-size: 19px; margin-bottom: 4px; }
+.landscape .lg-root .lg-label-gap, .lg-root.landscape .lg-label-gap { margin-top: 10px; }
+.landscape .lg-root .lg-input > #unity-text-input, .lg-root.landscape .lg-input > #unity-text-input { height: 60px; border-radius: 20px; padding-left: 22px; font-size: 22px; }
+.landscape .lg-root .lg-input-pw > #unity-text-input, .lg-root.landscape .lg-input-pw > #unity-text-input { padding-right: 68px; }
+.landscape .lg-root .lg-eye, .lg-root.landscape .lg-eye { top: 6px; right: 10px; width: 48px; height: 48px; border-radius: 24px; background-size: 30px 30px; }
+.landscape .lg-root .lg-forgot-row, .lg-root.landscape .lg-forgot-row { margin: 6px 0 12px 0; }
+.landscape .lg-root .lg-link, .lg-root.landscape .lg-link { font-size: 19px; }
+.landscape .lg-root .lg-primary, .lg-root.landscape .lg-primary { height: 62px; border-radius: 20px; font-size: 24px; }
+.landscape .lg-root .lg-secondary, .lg-root.landscape .lg-secondary { height: 56px; border-radius: 20px; padding: 0 16px; }
+.landscape .lg-root .lg-secondary-bio, .lg-root.landscape .lg-secondary-bio { margin-top: 8px; }
+.landscape .lg-root .lg-secondary-label, .lg-root.landscape .lg-secondary-label,
+.landscape .lg-root .lg-bio-label, .lg-root.landscape .lg-bio-label { font-size: 20px; margin-left: 12px; }
+.landscape .lg-root .lg-icon, .lg-root.landscape .lg-icon { width: 28px; height: 28px; }
+.landscape .lg-root .lg-divider, .lg-root.landscape .lg-divider { margin: 10px 0; }
+.landscape .lg-root .lg-divider-text, .lg-root.landscape .lg-divider-text { font-size: 18px; }
+.landscape .lg-root .lg-foot, .lg-root.landscape .lg-foot { padding-top: 12px; }
+.landscape .lg-root .lg-foot-text, .lg-root.landscape .lg-foot-text,
+.landscape .lg-root .lg-foot-link, .lg-root.landscape .lg-foot-link { font-size: 19px; }
+.landscape .lg-root .lg-admin, .lg-root.landscape .lg-admin { font-size: 17px; margin-top: 6px; }
+
+.ultra-compact .lg-root .lg-title, .lg-root.ultra-compact .lg-title { font-size: 56px; }
+.ultra-compact .lg-root .lg-subtitle, .lg-root.ultra-compact .lg-subtitle { font-size: 25px; padding: 0; }
+.ultra-compact .lg-root .lg-card, .lg-root.ultra-compact .lg-card { padding-left: 28px; padding-right: 28px; }
+.ultra-compact .lg-root .lg-input > #unity-text-input, .lg-root.ultra-compact .lg-input > #unity-text-input { font-size: 27px; padding-left: 30px; }
+.ultra-compact .lg-root .lg-secondary-label, .lg-root.ultra-compact .lg-secondary-label,
+.ultra-compact .lg-root .lg-bio-label, .lg-root.ultra-compact .lg-bio-label { font-size: 25px; }

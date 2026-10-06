@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentExplore3d/StudentExplore3d.uss?fileID=7433441132597879392&amp;guid=743ca842e0d65074d907c76c9ffa0cb1&amp;type=3#StudentExplore3d"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-explore screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
 
             <!-- ============ HEADER (gradient applied at runtime by controller) ============ -->
@@ -13,7 +14,9 @@
                         <ui:Label name="header-title" text="Explore 3D" class="header-title"/>
                         <ui:Label name="header-subtitle" text="Pick a body system to study" class="header-subtitle"/>
                     </ui:VisualElement>
-                    <ui:Button name="play-mode-entry-button" text="▶ Play" class="play-mode-entry-button"/>
+                    <ui:Button name="play-mode-entry-button" text="Play" class="play-mode-entry-button">
+                        <ui:VisualElement name="play-btn-icon" picking-mode="Ignore" class="play-btn-icon"/>
+                    </ui:Button>
                 </ui:VisualElement>
 
                 <ui:Button name="sync-progress-button" class="sync-progress-row">
@@ -26,6 +29,10 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="sync-status-icon-box" picking-mode="Ignore" class="sync-status-icon-box sync-status-icon-syncing">
                         <ui:Image name="sync-status-icon" scale-mode="ScaleToFit" picking-mode="Ignore" class="sync-status-icon"/>
+                        <ui:Label name="sync-chip-label" text="Syncing" picking-mode="Ignore" class="sync-chip-label"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="sync-bar-track" picking-mode="Ignore" class="sync-bar-track">
+                        <ui:VisualElement name="sync-bar-fill" picking-mode="Ignore" class="sync-bar-fill"/>
                     </ui:VisualElement>
                 </ui:Button>
             </ui:VisualElement>
@@ -34,7 +41,8 @@
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
 
                 <ui:VisualElement name="play-mode-picker-banner" class="play-mode-picker-banner hidden">
-                    <ui:Label text="🎯 Play Mode: tap a system to start" class="play-mode-picker-banner-label"/>
+                    <ui:VisualElement picking-mode="Ignore" class="banner-icon"/>
+                    <ui:Label text="Play Mode: tap a system to start" class="play-mode-picker-banner-label"/>
                     <ui:Button name="play-mode-picker-cancel" text="Cancel" class="play-mode-picker-cancel"/>
                 </ui:VisualElement>
 
@@ -99,7 +107,7 @@
                     <!-- Pro tip -->
                     <ui:VisualElement class="pro-tip-card">
                         <ui:VisualElement picking-mode="Ignore" class="pro-tip-icon-box">
-                            <ui:Label text="💡" picking-mode="Ignore" class="pro-tip-icon"/>
+                            <ui:VisualElement picking-mode="Ignore" class="pro-tip-icon"/>
                         </ui:VisualElement>
                         <ui:VisualElement picking-mode="Ignore" class="pro-tip-text-col">
                             <ui:Label text="Pro Tip" picking-mode="Ignore" class="pro-tip-title"/>

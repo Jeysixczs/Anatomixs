@@ -235,7 +235,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminDashboardController] OnEnable called");
+            //Debug.Log("[AdminDashboardController] OnEnable called");
 
             if (_document == null)
             {
@@ -260,7 +260,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminDashboardController] Root is null!");
+                //Debug.LogError("[AdminDashboardController] Root is null!");
                 return;
             }
 
@@ -344,7 +344,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminDashboardController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminDashboardController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -386,7 +386,7 @@ namespace Anatomia3D.UI
             _recentActivityViewAllNoResults = _screenRoot.Q<VisualElement>("recent-activity-view-all-no-results");
             _recentActivityViewAllNoResultsLabel = _recentActivityViewAllNoResults?.Q<Label>();
 
-            Debug.Log($"[AdminDashboardController] Found create classroom button: {_createClassroomButton != null}, classrooms list: {_classroomsList != null}");
+            //Debug.Log($"[AdminDashboardController] Found create classroom button: {_createClassroomButton != null}, classrooms list: {_classroomsList != null}");
         }
 
         private void WireCallbacks()
@@ -510,7 +510,7 @@ namespace Anatomia3D.UI
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[AdminDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    //Debug.LogWarning($"[AdminDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
                     // Leave whatever's currently showing (initials, most likely)
                     // rather than blanking the avatar out over a transient network hiccup.
                     yield break;
@@ -595,7 +595,7 @@ namespace Anatomia3D.UI
             var admin = AdminAuthService.Instance != null ? AdminAuthService.Instance.CurrentAdmin : null;
             if (admin == null)
             {
-                Debug.LogWarning("[AdminDashboardController] No signed-in admin found; leaving dashboard empty.");
+                //Debug.LogWarning("[AdminDashboardController] No signed-in admin found; leaving dashboard empty.");
                 SetClassrooms(null);
                 return;
             }
@@ -604,7 +604,7 @@ namespace Anatomia3D.UI
 
             if (AdminClassroomService.Instance == null)
             {
-                Debug.LogWarning("[AdminDashboardController] AdminClassroomService not available; classrooms/stats won't load.");
+                //Debug.LogWarning("[AdminDashboardController] AdminClassroomService not available; classrooms/stats won't load.");
                 return;
             }
 
@@ -617,7 +617,7 @@ namespace Anatomia3D.UI
                 {
                     foreach (var record in records)
                     {
-                        summaries.Add(new ClassroomSummary(record.ClassroomId, record.Name, record.Code, record.Description, record.StudentCount, record.IsArchived));
+                        summaries.Add(new ClassroomSummary(record.ClassroomId, record.DisplayName, record.Code, record.Description, record.StudentCount, record.IsArchived));
                         totalStudents += record.StudentCount;
                     }
                 }
@@ -1289,7 +1289,7 @@ namespace Anatomia3D.UI
 
         private void OnLogoutClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminDashboardController] Logout tapped.");
+            //Debug.Log("[AdminDashboardController] Logout tapped.");
 
             // TODO: replace with your real admin logout call, e.g.:
             // AdminAuthService.Instance.LogoutAdmin();
@@ -1365,7 +1365,7 @@ namespace Anatomia3D.UI
 
         private void OnViewClassroomDetailsClicked(ClassroomSummary classroom)
         {
-            Debug.Log($"[AdminDashboardController] View Details tapped for classroom '{classroom.Name}' ({classroom.Code}).");
+            //Debug.Log($"[AdminDashboardController] View Details tapped for classroom '{classroom.Name}' ({classroom.Code}).");
 
             string classroomId = classroom.ClassroomId;
             string classroomName = classroom.Name;
@@ -1380,7 +1380,7 @@ namespace Anatomia3D.UI
 
         private void OnManageQuizzesClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminDashboardController] Manage Quizzes tapped.");
+            //Debug.Log("[AdminDashboardController] Manage Quizzes tapped.");
 
             // TODO: navigate once an Admin Quiz Management screen exists, e.g.:
             UIManager.Instance.ShowAdminQuizManagement();
@@ -1389,7 +1389,7 @@ namespace Anatomia3D.UI
 
         private void OnViewAnalyticsClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminDashboardController] View Analytics tapped.");
+            //Debug.Log("[AdminDashboardController] View Analytics tapped.");
             UIManager.Instance.ShowAdminAnalytics();
             // TODO: navigate once an Analytics screen exists, e.g.:
             // UIManager.Instance.ShowAdminAnalytics();
@@ -1397,7 +1397,7 @@ namespace Anatomia3D.UI
 
         private void OnGamificationClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminDashboardController] Gamification Configuration tapped.");
+            //Debug.Log("[AdminDashboardController] Gamification Configuration tapped.");
 
             // TODO: navigate once a Gamification Config screen exists, e.g.:
             UIManager.Instance.ShowGamificationConfig();
@@ -1419,6 +1419,7 @@ namespace Anatomia3D.UI
         private void ApplyHeaderGradient()
         {
             if (_header == null) return;
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat header, same as the student screens (see Theme/AnatomiaTheme.cs)
 
             if (_headerGradientTexture != null)
             {

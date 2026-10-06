@@ -61,6 +61,12 @@ public class StudentExplore3dController : MonoBehaviour
     private Image _syncStatusIcon;
     private Image _syncIcon;
 
+    private Label _syncChipLabel;
+    private VisualElement _syncBarFill;
+    private IVisualElementScheduledItem _syncAnim;
+    private float _syncSpinAngle;
+    private int _syncAnimTick;
+
     // Icons are loaded by name from Resources/Icons at runtime (see
     // LoadSyncIcon below) rather than baked into the UXML, so drop the
     // corresponding .png/.jpg files into Assets/Resources/Icons/ with these
@@ -89,7 +95,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("[StudentExplore3dController] OnEnable called");
+        //Debug.Log("[StudentExplore3dController] OnEnable called");
 
         // Get the root from UIManager
         if (UIManager.Instance != null)
@@ -110,7 +116,7 @@ public class StudentExplore3dController : MonoBehaviour
 
         if (_root == null)
         {
-            Debug.LogError("[StudentExplore3dController] Root is null!");
+            //Debug.LogError("[StudentExplore3dController] Root is null!");
             return;
         }
 
@@ -126,6 +132,7 @@ public class StudentExplore3dController : MonoBehaviour
             syncService.OnStatusChanged -= HandleSyncStatusChanged;
 
         if (_syncProgressButton != null) _syncProgressButton.clicked -= OnSyncProgressButtonClicked;
+        StopSyncAnimation();
 
         if (_screenRoot == null) return;
 
@@ -154,7 +161,7 @@ public class StudentExplore3dController : MonoBehaviour
         // If no wrapper, use root directly
         if (_screenRoot == null)
         {
-            Debug.LogWarning("[StudentExplore3dController] screen-root not found, using root directly");
+            //Debug.LogWarning("[StudentExplore3dController] screen-root not found, using root directly");
             _screenRoot = _root;
         }
 
@@ -174,16 +181,23 @@ public class StudentExplore3dController : MonoBehaviour
         _syncStatusIconBox = _screenRoot.Q<VisualElement>("sync-status-icon-box");
         _syncStatusIcon = _screenRoot.Q<Image>("sync-status-icon");
         _syncIcon = _screenRoot.Q<Image>("sync-icon");
+        _syncChipLabel = _screenRoot.Q<Label>("sync-chip-label");
+        _syncBarFill = _screenRoot.Q<VisualElement>("sync-bar-fill");
 
         // Static left-hand cloud icon never changes with sync state, so it's
         // set once here instead of in HandleSyncStatusChanged.
-        if (_syncIcon != null) _syncIcon.image = LoadSyncIcon("sync_icon_cloud");
+        if (_syncIcon != null)
+        {
+            _syncIcon.image = LoadSyncIcon("sync_icon_cloud");
+            // The icon PNGs have their colors baked in; white = no tint change.
+            _syncIcon.tintColor = Color.white;
+        }
 
         _skeletalImageFade = _screenRoot.Q<VisualElement>("skeletal-image-fade");
         _muscularImageFade = _screenRoot.Q<VisualElement>("muscular-image-fade");
         _cardiovascularImageFade = _screenRoot.Q<VisualElement>("cardiovascular-image-fade");
 
-        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
+        //Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
     }
 
     private void WireCallbacks()
@@ -221,17 +235,17 @@ public class StudentExplore3dController : MonoBehaviour
             // authored in the UXML rather than guessing at a state. This is
             // the #1 cause of "the sync button never updates" - it fails
             // silently otherwise, so make it loud instead.
-            Debug.LogWarning("[StudentExplore3dController] Sync Service is not assigned in the Inspector - " +
-                              "the sync button/label will stay static and never update. " +
-                              "Assign the AnatomyPlayModeSyncService from the persistent Bootstrap GameObject.");
+            //Debug.LogWarning("[StudentExplore3dController] Sync Service is not assigned in the Inspector - " +
+                              //"the sync button/label will stay static and never update. " +
+                              //"Assign the AnatomyPlayModeSyncService from the persistent Bootstrap GameObject.");
             return;
         }
 
-        Debug.Log($"[StudentExplore3dController] Wiring sync UI to service instance {syncService.GetInstanceID()} " +
-                  $"(singleton Instance is {(AnatomyPlayModeSyncService.Instance != null ? AnatomyPlayModeSyncService.Instance.GetInstanceID().ToString() : "null")})" +
-                  (AnatomyPlayModeSyncService.Instance != null && syncService.GetInstanceID() != AnatomyPlayModeSyncService.Instance.GetInstanceID()
-                      ? " - MISMATCH: this is not the live singleton, events from the real sync service will never reach this UI!"
-                      : ""));
+        //Debug.Log($"[StudentExplore3dController] Wiring sync UI to service instance {syncService.GetInstanceID()} " +
+                  //$"(singleton Instance is {(AnatomyPlayModeSyncService.Instance != null ? AnatomyPlayModeSyncService.Instance.GetInstanceID().ToString() : "null")})" +
+                  //(AnatomyPlayModeSyncService.Instance != null && syncService.GetInstanceID() != AnatomyPlayModeSyncService.Instance.GetInstanceID()
+                      //? " - MISMATCH: this is not the live singleton, events from the real sync service will never reach this UI!"
+                      //: ""));
 
         syncService.OnStatusChanged -= HandleSyncStatusChanged;
         syncService.OnStatusChanged += HandleSyncStatusChanged;
@@ -247,8 +261,8 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnSyncProgressButtonClicked()
     {
-        Debug.Log("[StudentExplore3dController] Sync Progress button clicked " +
-                   $"(syncService assigned: {syncService != null}, online: {(syncService != null ? syncService.IsOnline.ToString() : "n/a")})");
+        //Debug.Log("[StudentExplore3dController] Sync Progress button clicked " +
+                   //$"(syncService assigned: {syncService != null}, online: {(syncService != null ? syncService.IsOnline.ToString() : "n/a")})");
 
         if (syncService == null) return;
 
@@ -267,7 +281,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void HandleSyncStatusChanged(PlayModeSyncState state, int pendingCount)
     {
-        Debug.Log($"[StudentExplore3dController] Sync status changed -> {state} (pending: {pendingCount})");
+        //Debug.Log($"[StudentExplore3dController] Sync status changed -> {state} (pending: {pendingCount})");
 
         switch (state)
         {
@@ -360,7 +374,32 @@ public class StudentExplore3dController : MonoBehaviour
     // SyncStatusIconClasses) to match the current sync state.
     private void SetSyncStatusIcon(string iconResourceName, string activeClass)
     {
-        if (_syncStatusIcon != null) _syncStatusIcon.image = LoadSyncIcon(iconResourceName);
+        if (_syncStatusIcon != null)
+        {
+            _syncStatusIcon.image = LoadSyncIcon(iconResourceName);
+            _syncStatusIcon.tintColor = Color.white; // colors are baked into each state PNG
+        }
+
+        if (_syncChipLabel != null)
+        {
+            switch (activeClass)
+            {
+                case "sync-status-icon-synced":  _syncChipLabel.text = "Synced"; break;
+                case "sync-status-icon-pending": _syncChipLabel.text = "Pending"; break;
+                case "sync-status-icon-failed":  _syncChipLabel.text = "Retry"; break;
+                case "sync-status-icon-offline": _syncChipLabel.text = "Offline"; break;
+                default:                         _syncChipLabel.text = "Syncing"; break;
+            }
+        }
+
+        // Spinner + sweeping bar only while a sync is actually running.
+        bool syncing = activeClass == "sync-status-icon-syncing";
+        if (_syncProgressButton != null)
+        {
+            if (syncing) _syncProgressButton.AddToClassList("sync-row-syncing");
+            else _syncProgressButton.RemoveFromClassList("sync-row-syncing");
+        }
+        if (syncing) StartSyncAnimation(); else StopSyncAnimation();
 
         if (_syncStatusIconBox == null) return;
 
@@ -371,6 +410,37 @@ public class StudentExplore3dController : MonoBehaviour
         }
     }
 
+    // Spins the right-hand status icon and sweeps the indeterminate bar.
+    // One 30 ms scheduler item drives both; it's stopped (and the icon reset)
+    // the moment the state leaves "syncing".
+    private void StartSyncAnimation()
+    {
+        if (_syncAnim != null) { _syncAnim.Resume(); return; }
+        if (_syncStatusIcon == null && _syncBarFill == null) return;
+
+        _syncAnim = (_syncStatusIcon ?? _syncBarFill).schedule.Execute(() =>
+        {
+            if (_syncStatusIcon != null)
+            {
+                _syncSpinAngle = (_syncSpinAngle + 10f) % 360f;
+                _syncStatusIcon.style.rotate = new StyleRotate(new Rotate(new Angle(_syncSpinAngle, AngleUnit.Degree)));
+            }
+
+            // Flip the bar between its two ends every ~0.9 s (USS transition animates it).
+            if (_syncBarFill != null && ++_syncAnimTick % 30 == 1)
+                _syncBarFill.ToggleInClassList("sync-bar-fill-end");
+        }).Every(30);
+    }
+
+    private void StopSyncAnimation()
+    {
+        if (_syncAnim != null) { _syncAnim.Pause(); _syncAnim = null; }
+        _syncSpinAngle = 0f;
+        _syncAnimTick = 0;
+        if (_syncStatusIcon != null) _syncStatusIcon.style.rotate = StyleKeyword.Null;
+        if (_syncBarFill != null) _syncBarFill.RemoveFromClassList("sync-bar-fill-end");
+    }
+
     // Loads a sync icon by name from Assets/Resources/Icons/<name>.
     // Logs a warning (instead of throwing) if the file hasn't been dropped
     // in yet, so a missing icon just shows blank rather than crashing.
@@ -379,8 +449,8 @@ public class StudentExplore3dController : MonoBehaviour
         var texture = Resources.Load<Texture2D>(SyncIconResourceFolder + name);
         if (texture == null)
         {
-            Debug.LogWarning($"[StudentExplore3dController] Missing sync icon 'Assets/Resources/Icons/{name}' " +
-                              "- place an image with this exact name in that folder.");
+            //Debug.LogWarning($"[StudentExplore3dController] Missing sync icon 'Assets/Resources/Icons/{name}' " +
+                              //"- place an image with this exact name in that folder.");
         }
         return texture;
     }
@@ -446,12 +516,12 @@ public class StudentExplore3dController : MonoBehaviour
             if (armed)
             {
                 _playModeEntryButton.AddToClassList("play-mode-entry-button-active");
-                _playModeEntryButton.text = "✕ Cancel";
+                _playModeEntryButton.text = "Cancel";
             }
             else
             {
                 _playModeEntryButton.RemoveFromClassList("play-mode-entry-button-active");
-                _playModeEntryButton.text = "▶ Play";
+                _playModeEntryButton.text = "Play";
             }
         }
 
@@ -489,7 +559,7 @@ public class StudentExplore3dController : MonoBehaviour
     {
         if (_screenRoot == null)
         {
-            Debug.LogError("[AnatomyNav] WireAnatomySystemCards: _screenRoot is NULL, cannot wire cards.");
+            //Debug.LogError("[AnatomyNav] WireAnatomySystemCards: _screenRoot is NULL, cannot wire cards.");
             return;
         }
 
@@ -510,7 +580,7 @@ public class StudentExplore3dController : MonoBehaviour
                 system = AnatomySystem.Cardiovascular;
             else
             {
-                Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
+                //Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
                 continue; // not one of the three anatomy-system cards (e.g. none - skip)
             }
 
@@ -522,11 +592,11 @@ public class StudentExplore3dController : MonoBehaviour
                 try
                 {
                     UIManager.Instance.ShowStudentAnatomyScreen(system, startInPlayMode: playMode);
-                    Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}, startInPlayMode: {playMode}) called successfully.");
+                    //Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}, startInPlayMode: {playMode}) called successfully.");
                 }
-                catch (System.Exception e)
+                catch (System.Exception)
                 {
-                    Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
+                    //Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
 
                 }
             };
@@ -541,6 +611,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void ApplyHeaderGradient()
     {
+        if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
         if (_header == null) return;
 
         if (_headerGradientTexture != null)

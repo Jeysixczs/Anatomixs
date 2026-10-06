@@ -258,7 +258,7 @@ namespace Anatomia3D.UI
             
             _loadingOverlay.ShowWithTimeout("Signing in...", RequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[StudentLoginController] Timed out waiting for the server - closing the overlay.");
+                //Debug.LogWarning("[StudentLoginController] Timed out waiting for the server - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _signInButton.SetEnabled(true);
             });
@@ -294,7 +294,7 @@ namespace Anatomia3D.UI
             // The timeout is only a safety net for a request that hangs forever.
             _loadingOverlay?.ShowWithTimeout("Signing in with Google...", GoogleRequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[StudentLoginController] Timed out waiting for Google sign-in - closing the overlay.");
+                //Debug.LogWarning("[StudentLoginController] Timed out waiting for Google sign-in - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _googleButton.SetEnabled(true);
             }, GoogleSlowHint);
@@ -495,6 +495,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
             var diagonal = BuildGradientTexture(gradientStart, gradientEnd, false);
 

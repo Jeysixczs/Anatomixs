@@ -367,19 +367,19 @@ namespace Anatomia3D.UI
         private void OnBackToLoginClicked(ClickEvent evt)
         {
             UIManager.Instance?.ShowStudentLogin();
-            Debug.Log("[CreateAccountController] Navigating back to login");
+            //Debug.Log("[CreateAccountController] Navigating back to login");
         }
 
         private void OnGoogleSignupClicked(ClickEvent evt)
         {
             SetStatus("Connecting to Google...");
-            Debug.Log("[CreateAccountController] Google signup clicked");
+            //Debug.Log("[CreateAccountController] Google signup clicked");
 
             // Full-screen loading overlay until LoginWithGoogle calls back (it always does,
             // including on cancel/error); the timeout is only a safety net for a hung request.
             _loadingOverlay?.ShowWithTimeout("Connecting to Google...", GoogleRequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[CreateAccountController] Timed out waiting for Google sign-in - closing the overlay.");
+                //Debug.LogWarning("[CreateAccountController] Timed out waiting for Google sign-in - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again.");
                 _googleSignupButton.SetEnabled(true);
             }, GoogleSlowHint);
@@ -391,7 +391,7 @@ namespace Anatomia3D.UI
 
                 if (success)
                 {
-                    Debug.Log("[CreateAccountController] Google account signed up/in successfully");
+                    //Debug.Log("[CreateAccountController] Google account signed up/in successfully");
                     SetStatus("Signed in with Google! Redirecting...");
                     // Keep the overlay up through the 1s redirect delay (same as the email flow).
                     _loadingOverlay?.Show("Signed in with Google! Redirecting...");
@@ -400,7 +400,7 @@ namespace Anatomia3D.UI
                 else
                 {
                     _loadingOverlay?.Hide();
-                    Debug.LogWarning($"[CreateAccountController] Google signup failed: {errorMessage}");
+                    //Debug.LogWarning($"[CreateAccountController] Google signup failed: {errorMessage}");
                     SetStatus(errorMessage ?? "Google sign-in failed. Please try again.");
                 }
             });
@@ -456,7 +456,7 @@ namespace Anatomia3D.UI
 
                 case EmailDomainDnsChecker.Result.Unknown:
                     // Couldn't verify (offline/timeout) - don't block a real user; Firebase decides.
-                    Debug.LogWarning("[CreateAccount] Domain lookup inconclusive - continuing with sign-up.");
+                    //Debug.LogWarning("[CreateAccount] Domain lookup inconclusive - continuing with sign-up.");
                     break;
             }
 
@@ -470,7 +470,7 @@ namespace Anatomia3D.UI
             _createAccountButton.SetEnabled(false);
             _loadingOverlay.ShowWithTimeout("Creating account...", RequestTimeoutMs, () =>
             {
-                Debug.LogWarning("[CreateAccountController] Timed out waiting for the server - closing the overlay.");
+                //Debug.LogWarning("[CreateAccountController] Timed out waiting for the server - closing the overlay.");
                 SetStatus("This is taking too long. Check your connection and try again. If your account was created, try signing in.");
                 _createAccountButton.SetEnabled(true);
             });
@@ -484,7 +484,7 @@ namespace Anatomia3D.UI
                     if (success)
                     {
                         
-                        Debug.Log("[CreateAccountController] Account created successfully");
+                        //Debug.Log("[CreateAccountController] Account created successfully");
                         SetStatus("Account created successfully! Redirecting...");
                         _loadingOverlay.Show("Account created successfully! Redirecting...");
                         Invoke(nameof(RedirectToLogin), 1.5f);
@@ -492,7 +492,7 @@ namespace Anatomia3D.UI
                     else
                     {
                         _loadingOverlay.Hide();
-                        Debug.LogWarning($"[CreateAccountController] Account creation failed: {errorMessage}");
+                        //Debug.LogWarning($"[CreateAccountController] Account creation failed: {errorMessage}");
                         SetStatus($"Account creation failed: {errorMessage}");
                         _createAccountButton.SetEnabled(true);
                     }
@@ -556,6 +556,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
 
             if (_createAccountButton != null)

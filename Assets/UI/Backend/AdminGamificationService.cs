@@ -60,7 +60,10 @@ namespace Anatomia3D.Backend
         {
             public string BadgeId;
             public string Name;
-            public string IconEmoji;
+            /// <summary>Preset icon key (see BadgeIcons.PresetKeys). Used when IconUrl is empty.</summary>
+            public string IconKey;
+            /// <summary>Cloudinary secure_url of a teacher-uploaded badge image, or empty.</summary>
+            public string IconUrl;
             public int PointsRequired;
         }
 
@@ -267,7 +270,8 @@ namespace Anatomia3D.Backend
                 badgeMap[id] = new Dictionary<string, object>
                 {
                     { "name", badge.Name },
-                    { "icon", badge.IconEmoji },
+                    { "iconKey", string.IsNullOrEmpty(badge.IconKey) ? BadgeIcons.DefaultKey : badge.IconKey },
+                    { "iconUrl", badge.IconUrl ?? string.Empty },
                     { "pointsRequired", badge.PointsRequired }
                 };
             }
@@ -311,6 +315,15 @@ namespace Anatomia3D.Backend
 
         // ---------------- Helpers (also used by QuizService inside transactions) ----------------
 
+        /// <summary>Badge icon key from a badge map: new "iconKey" field first, then the
+        /// legacy emoji "icon" field (mapped onto the closest preset), else the default.</summary>
+        private static string ReadIconKey(Dictionary<string, object> map)
+        {
+            if (map.TryGetValue("iconKey", out var k) && k != null) return BadgeIcons.Normalize(k.ToString());
+            if (map.TryGetValue("icon", out var legacy) && legacy != null) return BadgeIcons.FromLegacyEmoji(legacy.ToString());
+            return BadgeIcons.DefaultKey;
+        }
+
         /// <summary>Decode a per-teacher gamificationSettings/{teacherId} snapshot
         /// (points + badges) together with the shared gamificationSettings/levels
         /// snapshot, fetched elsewhere (e.g. inside a QuizService transaction) without
@@ -341,7 +354,8 @@ namespace Anatomia3D.Backend
                             {
                                 BadgeId = kvp.Key,
                                 Name = map.TryGetValue("name", out var n) ? n.ToString() : kvp.Key,
-                                IconEmoji = map.TryGetValue("icon", out var i) ? i.ToString() : "\U0001F3C6",
+                                IconKey = ReadIconKey(map),
+                                IconUrl = map.TryGetValue("iconUrl", out var u) && u != null ? u.ToString() : string.Empty,
                                 PointsRequired = ToInt(map, "pointsRequired", 0)
                             });
                         }
@@ -420,10 +434,10 @@ namespace Anatomia3D.Backend
                 HardPoints = 5,
                 Badges = new List<BadgeEntry>
                 {
-                    new BadgeEntry { BadgeId = "beginner", Name = "Beginner", IconEmoji = "\U0001F31F", PointsRequired = 100 },
-                    new BadgeEntry { BadgeId = "quiz-master", Name = "Quiz Master", IconEmoji = "\U0001F3C6", PointsRequired = 500 },
-                    new BadgeEntry { BadgeId = "anatomist", Name = "Anatomist", IconEmoji = "\U0001F9E0", PointsRequired = 1000 },
-                    new BadgeEntry { BadgeId = "expert", Name = "Expert", IconEmoji = "\U0001F451", PointsRequired = 2000 },
+                    new BadgeEntry { BadgeId = "beginner", Name = "Beginner", IconKey = "medal", IconUrl = "", PointsRequired = 100 },
+                    new BadgeEntry { BadgeId = "quiz-master", Name = "Quiz Master", IconKey = "trophy", IconUrl = "", PointsRequired = 500 },
+                    new BadgeEntry { BadgeId = "anatomist", Name = "Anatomist", IconKey = "brain", IconUrl = "", PointsRequired = 1000 },
+                    new BadgeEntry { BadgeId = "expert", Name = "Expert", IconKey = "shield", IconUrl = "", PointsRequired = 2000 },
                 }
             };
         }

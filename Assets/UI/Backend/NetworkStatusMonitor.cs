@@ -127,7 +127,7 @@ namespace Anatomia3D.Backend
 
         private void RaiseAppResumed(float awaySeconds)
         {
-            Debug.Log($"[NetworkStatusMonitor] App resumed after {awaySeconds:F0}s in the background.");
+            //Debug.Log($"[NetworkStatusMonitor] App resumed after {awaySeconds:F0}s in the background.");
             OnAppResumed?.Invoke(awaySeconds);
         }
 
@@ -143,7 +143,7 @@ namespace Anatomia3D.Backend
                 if (online != _lastKnownOnline)
                 {
                     _lastKnownOnline = online;
-                    Debug.Log($"[NetworkStatusMonitor] Connectivity changed: {(online ? "online" : "offline")}");
+                    //Debug.Log($"[NetworkStatusMonitor] Connectivity changed: {(online ? "online" : "offline")}");
                     OnConnectivityChanged?.Invoke(online);
                 }
 

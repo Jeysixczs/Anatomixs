@@ -1,31 +1,50 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminGamificationSettings/AdminGamificationSettings.uss?fileID=7433441132597879392&amp;guid=fa61be93c142b78438326c8dacd57d46&amp;type=3#AdminGamificationSettings"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaLayout.uss?fileID=7433441132597879392&amp;guid=104bac896b87c0e4db3bd9b3134cf7a2&amp;type=3#AnatomiaLayout"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-admin-gamification screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="header" class="header">
                     <ui:VisualElement name="header-top-row" class="header-top-row">
                         <ui:Button name="back-button" class="back-button">
                             <ui:VisualElement name="back-icon" class="back-icon"/>
                         </ui:Button>
-                        <ui:Label text="Gamification Settings" class="header-title"/>
-                        <ui:Button name="save-changes-button" class="save-changes-button">
-                            <ui:VisualElement name="save-icon" class="save-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/save-icon.png?fileID=2800000&amp;guid=500598968988d664cbc4c398a8226158&amp;type=3#save-icon&quot;); height: 51px; width: 45px;"/>
-                            <ui:Label text="Save Changes" class="save-changes-label"/>
-                        </ui:Button>
+                        <ui:VisualElement class="header-title-block">
+                            <ui:Label text="Gamification Settings" class="header-title"/>
+                            <ui:Label text="Points, badges and level progression" class="header-subtitle"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="points-config-card" class="section-card">
                     <ui:Label text="Points Configuration" class="section-card-title"/>
-                    <ui:Label text="Easy Question Points" class="field-label field-label-spaced"/>
-                    <ui:TextField name="easy-points-field" value="10" class="text-field"/>
-                    <ui:Label name="easy-points-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Medium Question Points" class="field-label field-label-spaced"/>
-                    <ui:TextField name="medium-points-field" value="20" class="text-field"/>
-                    <ui:Label name="medium-points-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Hard Question Points" class="field-label field-label-spaced"/>
-                    <ui:TextField name="hard-points-field" value="30" class="text-field"/>
-                    <ui:Label name="hard-points-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Points awarded per question, by difficulty." class="section-card-note"/>
+                    <ui:VisualElement class="points-grid">
+                        <ui:VisualElement class="points-col">
+                            <ui:VisualElement class="points-col-head">
+                                <ui:VisualElement class="difficulty-dot dot-easy"/>
+                                <ui:Label text="Easy" class="field-label"/>
+                            </ui:VisualElement>
+                            <ui:TextField name="easy-points-field" value="10" class="text-field points-field"/>
+                            <ui:Label name="easy-points-error" text="" class="field-error hidden"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="points-col">
+                            <ui:VisualElement class="points-col-head">
+                                <ui:VisualElement class="difficulty-dot dot-medium"/>
+                                <ui:Label text="Medium" class="field-label"/>
+                            </ui:VisualElement>
+                            <ui:TextField name="medium-points-field" value="20" class="text-field points-field"/>
+                            <ui:Label name="medium-points-error" text="" class="field-error hidden"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="points-col points-col-last">
+                            <ui:VisualElement class="points-col-head">
+                                <ui:VisualElement class="difficulty-dot dot-hard"/>
+                                <ui:Label text="Hard" class="field-label"/>
+                            </ui:VisualElement>
+                            <ui:TextField name="hard-points-field" value="30" class="text-field points-field"/>
+                            <ui:Label name="hard-points-error" text="" class="field-error hidden"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="badges-section" class="section-card">
                     <ui:VisualElement name="badges-header-row" class="section-header-row">
@@ -79,6 +98,12 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement name="save-bar" class="save-bar">
+            <ui:Button name="save-changes-button" class="save-changes-button">
+                <ui:VisualElement name="save-icon" class="save-icon"/>
+                <ui:Label text="Save Changes" class="save-changes-label"/>
+            </ui:Button>
+        </ui:VisualElement>
         <ui:VisualElement name="leave-dialog-overlay" class="dialog-overlay hidden">
             <ui:VisualElement name="leave-dialog-card" class="dialog-card">
                 <ui:Label text="Unsaved Changes" class="dialog-title"/>
@@ -106,6 +131,12 @@
                 <ui:Label name="badge-points-error" text="" class="field-error hidden"/>
                 <ui:Label text="Badge Icon" class="field-label field-label-spaced"/>
                 <ui:VisualElement name="badge-icon-grid" class="icon-grid"/>
+                <ui:Label text="Or upload your own image" class="field-label field-label-spaced"/>
+                <ui:VisualElement class="badge-upload-row">
+                    <ui:VisualElement name="badge-custom-preview" class="badge-custom-preview"/>
+                    <ui:Button name="badge-upload-image-button" text="Choose Image" class="badge-upload-button"/>
+                    <ui:Button name="badge-remove-image-button" text="Remove" class="badge-remove-image-button hidden"/>
+                </ui:VisualElement>
                 <ui:Label name="add-badge-status-label" text="" class="status-label hidden"/>
                 <ui:Button name="add-badge-submit-button" class="modal-submit-button">
                     <ui:Label text="Add Badge" class="modal-submit-label"/>

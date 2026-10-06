@@ -156,7 +156,7 @@ namespace Anatomia3D.UI
             _emailField.value = string.Empty;
             ClearError(_emailError);
 
-            Debug.Log("[ForgotPasswordController] Password reset email sent.");
+            //Debug.Log("[ForgotPasswordController] Password reset email sent.");
         }
 
         // ---------------- Helpers ----------------
@@ -215,6 +215,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             var horizontal = BuildGradientTexture(gradientStart, gradientEnd, true);
             var diagonal = BuildGradientTexture(gradientStart, gradientEnd, false);
 

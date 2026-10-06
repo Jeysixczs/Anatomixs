@@ -21,6 +21,10 @@ namespace Anatomia3D.UI
     [RequireComponent(typeof(UIDocument))]
     public class AdminForgotPasswordController : MonoBehaviour
     {
+        [Header("Legacy dark theme")]
+        [Tooltip("These screens now use the light Anatomia auth theme. Turn this on only to paint the old purple gradients over it.")]
+        [SerializeField] private bool applyRuntimeGradients = false;
+
         [Header("Gradient colors (matches AdminLogin: purple -> pink)")]
         [SerializeField] private Color gradientStart = new Color(0.557f, 0.176f, 0.886f); // purple
         [SerializeField] private Color gradientEnd = new Color(0.878f, 0.129f, 0.541f);   // pink
@@ -64,7 +68,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminForgotPasswordController] OnEnable called");
+            //Debug.Log("[AdminForgotPasswordController] OnEnable called");
 
             if (_document == null)
             {
@@ -89,7 +93,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminForgotPasswordController] Root is null!");
+                //Debug.LogError("[AdminForgotPasswordController] Root is null!");
                 return;
             }
 
@@ -143,7 +147,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminForgotPasswordController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminForgotPasswordController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -157,7 +161,7 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _successMessageLabel = _screenRoot.Q<Label>("success-message-label");
 
-            Debug.Log($"[AdminForgotPasswordController] Found send button: {_sendResetLinkButton != null}, back link: {_backToAdminLoginButton != null}");
+            //Debug.Log($"[AdminForgotPasswordController] Found send button: {_sendResetLinkButton != null}, back link: {_backToAdminLoginButton != null}");
         }
 
         private void WireCallbacks()
@@ -175,7 +179,7 @@ namespace Anatomia3D.UI
 
         private void OnBackToAdminLoginClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminForgotPasswordController] Navigating back to admin login");
+            //Debug.Log("[AdminForgotPasswordController] Navigating back to admin login");
             UIManager.Instance.ShowAdminLogin();
         }
 
@@ -294,6 +298,8 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!applyRuntimeGradients) return;
+
             if (_screenRoot != null)
             {
                 if (_backgroundGradientTexture != null) Destroy(_backgroundGradientTexture);

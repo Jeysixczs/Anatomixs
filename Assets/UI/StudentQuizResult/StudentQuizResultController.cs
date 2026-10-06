@@ -76,7 +76,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentQuizResultController] OnEnable called");
+            //Debug.Log("[StudentQuizResultController] OnEnable called");
 
             if (_document == null)
             {
@@ -101,7 +101,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentQuizResultController] Root is null!");
+                //Debug.LogError("[StudentQuizResultController] Root is null!");
                 return;
             }
 
@@ -148,7 +148,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentQuizResultController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentQuizResultController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -172,7 +172,7 @@ namespace Anatomia3D.UI
             _backToDashboardButton = _screenRoot.Q<Button>("back-to-dashboard-button");
             _backToClassroomHubButton = _screenRoot.Q<Button>("back-to-classroom-button");
 
-            Debug.Log($"[StudentQuizResultController] Found back-to-dashboard: {_backToDashboardButton != null}, header: {_header != null}");
+            //Debug.Log($"[StudentQuizResultController] Found back-to-dashboard: {_backToDashboardButton != null}, header: {_header != null}");
         }
 
         private void WireCallbacks()
@@ -246,13 +246,13 @@ namespace Anatomia3D.UI
 
         private void OnBackToDashboardClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentQuizResultController] Navigating back to dashboard");
+            //Debug.Log("[StudentQuizResultController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
         private void OnBackToClassroomHubClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentQuizResultController] Navigating back to classroom");
+            //Debug.Log("[StudentQuizResultController] Navigating back to classroom");
             UIManager.Instance.ShowStudentClassroomHub();
         }
 
@@ -315,16 +315,23 @@ namespace Anatomia3D.UI
                 title = "Keep Practicing!";
             }
 
+            if (_screenRoot != null)
+            {
+                _screenRoot.EnableInClassList("tier-high", percent >= greatScoreThreshold);
+                _screenRoot.EnableInClassList("tier-mid", percent >= goodScoreThreshold && percent < greatScoreThreshold);
+                _screenRoot.EnableInClassList("tier-low", percent < goodScoreThreshold);
+            }
+
             if (_resultTitleLabel != null) _resultTitleLabel.text = title;
 
-            if (_header != null)
+            if (_header != null && AnatomiaTheme.UseGradientChrome)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
                 _headerGradientTexture = BuildGradientTexture(start, end);
                 _header.style.backgroundImage = new StyleBackground(_headerGradientTexture);
             }
 
-            if (_backToDashboardButton != null)
+            if (_backToDashboardButton != null && AnatomiaTheme.UseGradientChrome)
             {
                 if (_buttonGradientTexture != null) Destroy(_buttonGradientTexture);
                 _buttonGradientTexture = BuildGradientTexture(start, end);

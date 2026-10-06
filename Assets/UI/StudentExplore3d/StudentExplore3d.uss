@@ -87,81 +87,186 @@
 .play-mode-entry-button-active { background-color: rgb(34, 160, 110); color: white; }
 .play-mode-entry-button-active:hover { background-color: rgb(30, 145, 100); }
 
-/* ---------------- SYNC ROW ---------------- */
-
-/* Frosted-glass row that belongs to the header: translucent white over the
-   blue->green gradient with a soft light edge, white text, and white circle
-   badges - the same white-on-gradient language as the back button and the
-   Play pill. Icon PNGs are single-color black, so their color comes from
-   -unity-background-image-tint-color. */
-.sync-progress-row {
+/* ---------------- SYNC PROGRESS BUTTON (redesign) ---------------- */
+/* A light card that sits under the title row:
+     (cloud badge)  Title / status text          [state pill]
+     ------------- progress bar (only while syncing) -------------
+   Hooks kept for the controller: sync-progress-button, sync-icon,
+   sync-title-label, sync-status-label, sync-status-icon-box (+ .sync-status-icon-*),
+   sync-status-icon, sync-chip-label, sync-bar-track / sync-bar-fill,
+   .sync-row-syncing (on the button), .sync-bar-fill-end (sweep toggle). */
+.anatomia-theme.theme-explore .sync-progress-row
+{
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
     height: auto;
-    min-height: 116px;
-    margin: 34px 0 0 0;
-    padding: 20px 26px 20px 20px;
-    box-sizing: border-box;
-    background-color: rgba(255, 255, 255, 0.18);
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.32);
-    border-radius: 34px;
+    min-height: 120px;
+    margin: 30px 0 0 0;
+    padding: 20px 24px 26px 20px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
     -unity-font-style: normal;
     transition-property: background-color, scale;
     transition-duration: 0.12s;
 }
-.sync-progress-row:hover { background-color: rgba(255, 255, 255, 0.26); }
-.sync-progress-row:active { background-color: rgba(255, 255, 255, 0.34); scale: 0.985 0.985; }
-.sync-progress-row:disabled { opacity: 0.85; }
-.sync-progress-row:focus { border-width: 2px; border-color: rgba(255, 255, 255, 0.32); }
+.anatomia-theme.theme-explore .sync-progress-row:hover { background-color: var(--surface-hover); }
+.anatomia-theme.theme-explore .sync-progress-row:active { background-color: var(--sunken); scale: 0.985 0.985; }
+.anatomia-theme.theme-explore .sync-progress-row:disabled { opacity: 1; }
+.anatomia-theme.theme-explore .sync-progress-row:focus { border-width: 1px; border-color: var(--line); }
 
-/* Left badge: white circle, blue cloud (same blue as the Play pill text) */
-.sync-icon-box {
-    width: 76px; height: 76px; border-radius: 38px;
-    background-color: rgb(255, 255, 255);
-    justify-content: center; align-items: center;
+.anatomia-theme.theme-explore .sync-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 38px;
     flex-shrink: 0;
     margin-right: 22px;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
 }
-.sync-icon {
-    width: 40px; height: 40px;
-    -unity-background-image-tint-color: rgb(37, 99, 235);
-}
+.anatomia-theme.theme-explore .sync-icon { width: 40px; height: 40px; -unity-background-image-tint-color: var(--accent); }
 
-.sync-text-col { flex-grow: 1; flex-shrink: 1; flex-direction: column; min-width: 0; }
-.sync-title-label {
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(255, 255, 255);
-    white-space: normal;
-}
-.sync-status-label {
-    font-size: 23px;
-    color: rgba(255, 255, 255, 0.88);
-    margin-top: 4px;
-    white-space: normal;
-}
+.anatomia-theme.theme-explore .sync-text-col { flex-grow: 1; flex-shrink: 1; flex-direction: column; min-width: 0; }
+.anatomia-theme.theme-explore .sync-title-label { font-size: 29px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-explore .sync-status-label { font-size: 23px; color: var(--ink-3); margin-top: 3px; white-space: normal; }
 
-/* Right badge: white circle; only the icon carries the state color */
-.sync-status-icon-box {
-    width: 64px; height: 64px; border-radius: 32px;
-    background-color: rgb(255, 255, 255);
-    justify-content: center; align-items: center;
+.anatomia-theme.theme-explore .sync-status-icon-box
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 58px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 18px;
+    padding-right: 22px;
+    margin-left: 16px;
     flex-shrink: 0;
-    margin-left: 18px;
+    background-color: var(--accent-soft);
+    border-top-left-radius: 29px;
+    border-top-right-radius: 29px;
+    border-bottom-left-radius: 29px;
+    border-bottom-right-radius: 29px;
 }
-.sync-status-icon {
-    width: 34px; height: 34px;
-    -unity-background-image-tint-color: rgb(22, 150, 95);
+.anatomia-theme.theme-explore .sync-status-icon { width: 28px; height: 28px; margin-right: 8px; -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-explore .sync-chip-label { font-size: 23px; -unity-font-style: bold; color: var(--accent); }
+
+.anatomia-theme.theme-explore .sync-status-icon-synced  { background-color: var(--success-soft); }
+.anatomia-theme.theme-explore .sync-status-icon-pending { background-color: var(--warn-soft); }
+.anatomia-theme.theme-explore .sync-status-icon-syncing { background-color: var(--accent-soft); }
+.anatomia-theme.theme-explore .sync-status-icon-failed  { background-color: var(--danger-soft); }
+.anatomia-theme.theme-explore .sync-status-icon-offline { background-color: var(--sunken); }
+
+.anatomia-theme.theme-explore .sync-status-icon-synced  .sync-status-icon { -unity-background-image-tint-color: var(--success); }
+.anatomia-theme.theme-explore .sync-status-icon-pending .sync-status-icon { -unity-background-image-tint-color: var(--warn); }
+.anatomia-theme.theme-explore .sync-status-icon-syncing .sync-status-icon { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-explore .sync-status-icon-failed  .sync-status-icon { -unity-background-image-tint-color: var(--danger); }
+.anatomia-theme.theme-explore .sync-status-icon-offline .sync-status-icon { -unity-background-image-tint-color: var(--ink-3); }
+
+.anatomia-theme.theme-explore .sync-status-icon-synced  .sync-chip-label { color: var(--success); }
+.anatomia-theme.theme-explore .sync-status-icon-pending .sync-chip-label { color: var(--warn); }
+.anatomia-theme.theme-explore .sync-status-icon-syncing .sync-chip-label { color: var(--accent); }
+.anatomia-theme.theme-explore .sync-status-icon-failed  .sync-chip-label { color: var(--danger); }
+.anatomia-theme.theme-explore .sync-status-icon-offline .sync-chip-label { color: var(--ink-3); }
+
+/* Indeterminate bar along the bottom edge (syncing only) */
+.anatomia-theme.theme-explore .sync-bar-track
+{
+    position: absolute;
+    left: 28px; right: 28px; bottom: 12px;
+    height: 7px;
+    border-radius: 4px;
+    background-color: var(--track);
+    overflow: hidden;
+    display: none;
+}
+.anatomia-theme.theme-explore .sync-row-syncing .sync-bar-track { display: flex; }
+.anatomia-theme.theme-explore .sync-bar-fill
+{
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0%;
+    width: 34%;
+    border-radius: 4px;
+    background-color: var(--accent);
+    transition-property: left;
+    transition-duration: 0.9s;
+    transition-timing-function: ease-in-out;
+}
+.anatomia-theme.theme-explore .sync-bar-fill.sync-bar-fill-end { left: 66%; }
+
+/* ---------------- ICONS INSTEAD OF EMOJI ---------------- */
+/* Play pill: icon inside, text is plain "Play" / "Cancel" */
+.anatomia-theme.theme-explore .play-mode-entry-button
+{
+    position: relative;
+    flex-shrink: 0;
+    flex-grow: 0;
+    align-self: center;
+    width: 220px;
+    height: 76px;
+    margin: 0 0 0 16px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 62px;
+    padding-right: 26px;
+    font-size: 28px;
+    white-space: nowrap;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    border-top-left-radius: 38px;
+    border-top-right-radius: 38px;
+    border-bottom-left-radius: 38px;
+    border-bottom-right-radius: 38px;
+}
+.anatomia-theme.theme-explore .play-btn-icon
+{
+    position: absolute;
+    left: 30px;
+    top: 23px;
+    width: 30px;
+    height: 30px;
+    background-image: url("project://database/Assets/UI/Icons/play-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+.anatomia-theme.theme-explore .play-mode-entry-button-active .play-btn-icon
+{
+    background-image: url("project://database/Assets/UI/Icons/ex-icon.png");
+    -unity-background-image-tint-color: white;
 }
 
-.sync-status-icon-synced  .sync-status-icon { -unity-background-image-tint-color: rgb(22, 150, 95); }
-.sync-status-icon-pending .sync-status-icon { -unity-background-image-tint-color: rgb(217, 119, 6); }
-.sync-status-icon-syncing .sync-status-icon { -unity-background-image-tint-color: rgb(37, 99, 235); }
-.sync-status-icon-failed  .sync-status-icon { -unity-background-image-tint-color: rgb(220, 38, 38); }
-.sync-status-icon-offline .sync-status-icon { -unity-background-image-tint-color: rgb(107, 114, 128); }
+.anatomia-theme.theme-explore .banner-icon
+{
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    margin-right: 16px;
+    background-image: url("project://database/Assets/UI/Icons/targets-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-explore .pro-tip-icon
+{
+    width: 40px;
+    height: 40px;
+    background-image: url("project://database/Assets/UI/Icons/lock-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
 
 /* ---------------- SCROLL VIEW (unchanged fixes) ---------------- */
 
@@ -208,7 +313,6 @@
     border-color: rgb(120, 205, 165);
     padding: 22px 26px;
     margin: 34px 50px 0 50px;
-    box-sizing: border-box;
 }
 .play-mode-picker-banner.hidden { display: none; }
 
@@ -239,7 +343,6 @@
     flex-direction: column;
     padding: 40px 50px 70px 50px;
     width: 100%;
-    box-sizing: border-box;
 }
 
 .section-label {
@@ -261,7 +364,6 @@
     margin: 0 0 32px 0;
     width: 100%;
     min-height: 310px;
-    box-sizing: border-box;
     overflow: hidden;
 }
 
@@ -381,7 +483,6 @@
     padding: 28px 30px;
     margin-top: 6px;
     width: 100%;
-    box-sizing: border-box;
 }
 
 .pro-tip-icon-box {

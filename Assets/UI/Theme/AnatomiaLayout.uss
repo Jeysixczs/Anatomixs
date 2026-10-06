@@ -1,0 +1,3138 @@
+/* =========================================================
+   Anatomia 3D - Layout layer
+   Loaded AFTER AnatomiaTheme.uss (third <Style> tag in each screen).
+
+   PRINCIPLES
+   - ONE source of horizontal spacing: .content-wrapper owns the side padding.
+     Cards no longer carry their own left/right margins (the old per-card
+     50px margins + negative-margin overlaps are gone).
+   - ONE vertical rhythm: every top-level section is separated by 24px
+     (margin-bottom), set once per screen below.
+   - Sizes come from classes, not inline style="" attributes.
+   - Responsive: max-width 1100 + align-self:center for tablet/desktop;
+     the existing .compact / .extra-small classes (set by the controller)
+     tighten spacing on narrow windows.
+   - Specificity: .anatomia-theme.theme-X .y out-ranks both the screen .uss
+     and the .compact/.extra-small rules, so they are re-declared at the end.
+   ========================================================= */
+
+/* ---------- Shared tokens for layout ---------- */
+
+.anatomia-theme
+{
+    --gap: 24px;
+    --gap-sm: 16px;
+    --radius-card: 36px;
+    --radius-ctl: 28px;
+    --pad-card: 40px;
+}
+
+/* =========================================================
+   STUDENT DASHBOARD  (v4 - bento grid)
+   Asymmetric 3:2 tiles on a 16px gutter.
+     Row A  Level (3)            | Quizzes / Points stacked (2)
+     Row B  Explore 3D tall (3)  | Classroom Hub / Progress stacked (2)
+     Row C  Badges (2)           | Join a Classroom (3)
+     Feed   Recent activity, full width
+   Gutter = 8px margin on each side of the seam, so tiles never need
+   negative margins. Below 600px wide every row collapses to one column.
+   ========================================================= */
+
+.anatomia-theme.theme-dashboard .content-wrapper
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 0;
+    padding-bottom: 40px;
+}
+
+/* ---- Editorial header ---- */
+.anatomia-theme.theme-dashboard .header
+{
+    padding: 96px 0 0 0;
+    margin-bottom: 44px;
+}
+
+.anatomia-theme.theme-dashboard .header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 36px 0;
+}
+
+.anatomia-theme.theme-dashboard .profile-avatar-button
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .icon-button
+{
+    width: 84px;
+    height: 84px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .header-title-block
+{
+    margin: 0;
+    padding: 0;
+    align-items: flex-start;
+}
+
+.anatomia-theme.theme-dashboard .welcome-title
+{
+    font-size: 32px;
+    margin-bottom: 4px;
+}
+
+.anatomia-theme.theme-dashboard .welcome-subtitle
+{
+    margin: 0;
+    font-size: 80px;
+    -unity-font-style: bold;
+    letter-spacing: -1.5px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ---- Bento primitives ---- */
+.anatomia-theme.theme-dashboard .bento-row
+{
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-row-last
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-w3
+{
+    flex-grow: 3;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-w2
+{
+    flex-grow: 2;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-l
+{
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+.anatomia-theme.theme-dashboard .bento-r
+{
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack
+{
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* ---- Row A: level tile ---- */
+.anatomia-theme.theme-dashboard .level-card
+{
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 36px;
+    border-radius: 36px;
+    height: auto;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.anatomia-theme.theme-dashboard .level-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+}
+
+.anatomia-theme.theme-dashboard .level-text
+{
+    font-size: 34px;
+}
+
+.anatomia-theme.theme-dashboard .level-bottom
+{
+    margin-top: 40px;
+}
+
+.anatomia-theme.theme-dashboard .progress-track
+{
+    width: 100%;
+    height: 16px;
+    border-radius: 8px;
+}
+
+.anatomia-theme.theme-dashboard .progress-fill
+{
+    height: 100%;
+    border-radius: 8px;
+}
+
+.anatomia-theme.theme-dashboard .level-caption
+{
+    margin-top: 18px;
+}
+
+/* ---- Row A: stats column (two stacked tiles) ---- */
+.anatomia-theme.theme-dashboard .stats-row
+{
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-card
+{
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 150px;
+    padding: 24px 28px;
+    border-radius: 32px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-card-left
+{
+    margin-bottom: 8px;
+}
+
+.anatomia-theme.theme-dashboard .stat-card-right
+{
+    margin-top: 8px;
+}
+
+.anatomia-theme.theme-dashboard .stat-icon
+{
+    width: 56px;
+    height: 56px;
+    margin: 0 20px 0 0;
+    flex-shrink: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+.anatomia-theme.theme-dashboard .stat-value
+{
+    font-size: 46px;
+    margin: 0;
+}
+
+.anatomia-theme.theme-dashboard .stat-label
+{
+    font-size: 22px;
+    margin: 0;
+    white-space: normal;
+}
+
+/* ---- Rows B + C: actions wrapper is bare ---- */
+.anatomia-theme.theme-dashboard .quick-actions-card
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 40px 0 24px 0;
+    height: auto;
+}
+
+.anatomia-theme.theme-dashboard .section-title
+{
+    font-size: 30px;
+    color: var(--ink-2);
+    margin-bottom: 20px;
+    padding-left: 8px;
+}
+
+.anatomia-theme.theme-dashboard .action-button
+{
+    margin: 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Hero tile: tall, accent, icon top-left / label bottom-left */
+.anatomia-theme.theme-dashboard .action-primary
+{
+    height: 408px;
+    padding: 40px;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-radius: 40px;
+    border-width: 0;
+    background-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .action-primary:hover,
+.anatomia-theme.theme-dashboard .action-primary:active
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-dashboard .action-primary .action-icon
+{
+    width: 104px;
+    height: 104px;
+    margin: 0;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.anatomia-theme.theme-dashboard .action-primary .action-label
+{
+    font-size: 54px;
+    color: rgb(255, 255, 255);
+    -unity-text-align: lower-left;
+}
+
+/* Small tiles */
+.anatomia-theme.theme-dashboard .action-tile
+{
+    height: 196px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack .action-tile
+{
+    margin-bottom: 16px;
+}
+
+.anatomia-theme.theme-dashboard .bento-stack .action-tile-last
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard .action-tile .action-icon
+{
+    width: 64px;
+    height: 64px;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard .action-tile .action-label
+{
+    font-size: 28px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+/* Badges sits in a row whose height is set by the join tile; let it fill */
+.anatomia-theme.theme-dashboard .bento-row-last .action-tile
+{
+    height: auto;
+    flex-grow: 2;
+    align-self: stretch;
+}
+
+/* ---- Join tile --------------------------------------------------
+   Two lines inside the tile:
+     line 1:  [icon]  Title / subtitle          (icon fixed, text grows)
+     line 2:  [            Join button           ]  (100% wide -> wraps)
+   flex-wrap does the line break, so no extra UXML containers are needed.
+   ------------------------------------------------------------------ */
+.anatomia-theme.theme-dashboard .join-classroom-card
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+    justify-content: flex-start;
+    padding: 28px 32px;
+    margin: 0 0 0 8px;
+    border-radius: 36px;
+    height: auto;
+    min-height: 0;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-icon-box
+{
+    width: 76px;
+    height: 76px;
+    border-radius: 24px;
+    margin: 0 20px 0 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-icon-emoji
+{
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-text
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    justify-content: center;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-title
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    margin: 0;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-subtitle
+{
+    font-size: 22px;
+    margin: 4px 0 0 0;
+    white-space: normal;
+}
+
+/* Button: full-width pill on its own line */
+.anatomia-theme.theme-dashboard .join-classroom-button
+{
+    width: 100%;
+    height: 76px;
+    min-width: 0;
+    min-height: 76px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: 24px 0 0 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 38px;
+    background-color: var(--accent);
+    color: rgb(255, 255, 255);
+    font-size: 28px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 0.4px;
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-button:hover
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-dashboard .join-classroom-button:active
+{
+    background-color: var(--accent-press);
+}
+
+/* ---- Feed ---- */
+.anatomia-theme.theme-dashboard .recent-activity-card
+{
+    margin: 0;
+    border-radius: 40px;
+    padding: 36px 40px 12px 40px;
+    min-height: 0;
+    height: auto;
+}
+
+.anatomia-theme.theme-dashboard .recent-activity-header
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.anatomia-theme.theme-dashboard .recent-activity-title
+{
+    font-size: 36px;
+    color: var(--ink);
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+/* ---- Narrow windows (< 900px) ---- */
+.anatomia-theme.theme-dashboard.compact .content-wrapper
+{
+    padding-left: 36px;
+    padding-right: 36px;
+}
+
+.anatomia-theme.theme-dashboard.compact .welcome-subtitle
+{
+    font-size: 64px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-primary
+{
+    height: 360px;
+    padding: 32px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-primary .action-label
+{
+    font-size: 44px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-tile
+{
+    height: 172px;
+}
+
+.anatomia-theme.theme-dashboard.compact .action-tile .action-label
+{
+    font-size: 24px;
+}
+
+.anatomia-theme.theme-dashboard.compact .level-card,
+.anatomia-theme.theme-dashboard.compact .join-classroom-card
+{
+    padding: 28px;
+}
+
+/* ---- Very narrow (< 600px): single column ---- */
+.anatomia-theme.theme-dashboard.extra-small .content-wrapper
+{
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .header
+{
+    padding-top: 64px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .welcome-subtitle
+{
+    font-size: 52px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row
+{
+    flex-direction: column;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-w3,
+.anatomia-theme.theme-dashboard.extra-small .bento-w2
+{
+    flex-grow: 0;
+    flex-basis: auto;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-l,
+.anatomia-theme.theme-dashboard.extra-small .bento-r
+{
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row-last .bento-r
+{
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stats-row
+{
+    flex-direction: row;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stat-card-left
+{
+    margin: 0 8px 0 0;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .stat-card-right
+{
+    margin: 0 0 0 8px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .action-primary
+{
+    height: 260px;
+}
+
+.anatomia-theme.theme-dashboard.extra-small .bento-row-last .action-tile
+{
+    height: 150px;
+    flex-grow: 0;
+}
+
+
+/* =========================================================
+   STUDENT CLASSROOM HUB
+   Join button in the header ("join-classroom-header-button")
+   [ (+)  Join a Classroom ]  - one solid accent pill, fixed height,
+   the "+" sits in its own translucent circle so it centres properly.
+   ========================================================= */
+
+.anatomia-theme.theme-hub .header-stats-row
+{
+    margin-bottom: 28px;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button
+{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 96px;
+    min-height: 96px;
+    margin: 0;
+    padding: 0 40px;
+    border-width: 0;
+    border-radius: 48px;
+    background-color: var(--accent);
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button:hover
+{
+    background-color: var(--accent-strong);
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-button:active
+{
+    background-color: var(--accent-press);
+}
+
+.anatomia-theme.theme-hub .create-classroom-plus
+{
+    width: 48px;
+    height: 48px;
+    margin: 0 20px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: rgb(255, 255, 255);
+    font-size: 36px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme.theme-hub .create-classroom-header-label
+{
+    margin: 0;
+    padding: 0;
+    flex-shrink: 1;
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-header-button
+{
+    height: 88px;
+    min-height: 88px;
+    padding: 0 28px;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-plus
+{
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    margin-right: 16px;
+}
+
+.anatomia-theme.theme-hub.compact .create-classroom-header-label
+{
+    font-size: 28px;
+}
+
+
+/* =========================================================
+   ADMIN / TEACHER DASHBOARD  (matches the student dashboard)
+   Same editorial header (avatar + utility button, small muted line,
+   big greeting) and the same bento tiles:
+     Row A  Create classroom (3, accent hero) | Classrooms / Students stacked (2)
+     My Classrooms list
+     Quick Actions   Manage Quizzes | View Analytics, then Gamification
+     Student Activity feed
+   Root classes: "anatomia-theme theme-admin". Scoped so no other screen changes.
+   ========================================================= */
+
+.anatomia-theme.theme-admin .content-wrapper
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 0;
+    padding-bottom: 40px;
+}
+
+/* ---- Editorial header ---- */
+.anatomia-theme.theme-admin .header
+{
+    padding: 96px 52px 0 52px;
+    margin-bottom: 44px;
+    flex-direction: column;
+}
+
+.anatomia-theme.theme-admin .header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 36px 0;
+}
+
+.anatomia-theme.theme-admin .profile-avatar-button
+{
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+    border-width: 0;
+}
+
+.anatomia-theme.theme-admin .profile-avatar-initials
+{
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin .logout-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin .logout-icon
+{
+    width: 40px;
+    height: 40px;
+    -unity-background-image-tint-color: var(--danger);
+}
+
+.anatomia-theme.theme-admin .header-title-block
+{
+    margin: 0;
+    padding: 0;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.anatomia-theme.theme-admin .header-title
+{
+    margin: 0 0 4px 0;
+    font-size: 32px;
+    -unity-font-style: normal;
+    letter-spacing: 0;
+    color: var(--ink-3);
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin .header-subtitle
+{
+    margin: 0;
+    font-size: 64px;
+    -unity-font-style: bold;
+    letter-spacing: -1.5px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ---- Bento primitives ---- */
+.anatomia-theme.theme-admin .bento-row
+{
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-admin .bento-w3 { flex-grow: 3; flex-shrink: 1; flex-basis: 0; min-width: 0; }
+.anatomia-theme.theme-admin .bento-w2 { flex-grow: 2; flex-shrink: 1; flex-basis: 0; min-width: 0; }
+.anatomia-theme.theme-admin .bento-l { margin-left: 0; margin-right: 8px; }
+.anatomia-theme.theme-admin .bento-r { margin-left: 8px; margin-right: 0; }
+
+/* ---- Row A: create tile (hero) ---- */
+.anatomia-theme.theme-admin .create-classroom-header-button
+{
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    align-self: stretch;
+    width: auto;
+    height: auto;
+    min-height: 316px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 36px 40px;
+    border-width: 0;
+    border-radius: 40px;
+    background-color: var(--accent);
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-admin .create-classroom-header-button:hover  { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin .create-classroom-header-button:active { background-color: var(--accent-press); }
+
+.anatomia-theme.theme-admin .create-classroom-plus
+{
+    width: 84px;
+    height: 84px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 42px;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: rgb(255, 255, 255);
+    font-size: 58px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme.theme-admin .create-classroom-header-label
+{
+    margin: 0;
+    padding: 0;
+    color: rgb(255, 255, 255);
+    font-size: 44px;
+    -unity-font-style: bold;
+    -unity-text-align: lower-left;
+    white-space: normal;
+}
+
+/* ---- Row A: stats column ---- */
+.anatomia-theme.theme-admin .header-stats-row
+{
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.anatomia-theme.theme-admin .glass-stat-card
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 150px;
+    padding: 24px 28px;
+    border-radius: 32px;
+    margin: 0;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.anatomia-theme.theme-admin .glass-stat-card-left { margin-bottom: 8px; }
+.anatomia-theme.theme-admin .glass-stat-card-mid  { margin-top: 8px; }
+
+.anatomia-theme.theme-admin .glass-stat-value { margin: 0; font-size: 54px; }
+.anatomia-theme.theme-admin .glass-stat-label { margin: 0; font-size: 24px; white-space: normal; }
+
+/* ---- Section titles ---- */
+.anatomia-theme.theme-admin .section-title
+{
+    font-size: 30px;
+    color: var(--ink-2);
+    margin: 40px 0 20px 0;
+    padding-left: 8px;
+}
+
+.anatomia-theme.theme-admin .section-title-spaced { margin-top: 40px; }
+
+/* ---- Classrooms ---- */
+.anatomia-theme.theme-admin .classrooms-empty-state
+{
+    align-items: center;
+    padding: 56px 36px 48px 36px;
+    border-radius: 40px;
+}
+
+.anatomia-theme.theme-admin .empty-state-icon-box
+{
+    width: 112px;
+    height: 112px;
+    margin: 0 0 28px 0;
+    border-radius: 36px;
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin .empty-state-icon
+{
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    opacity: 1;
+    font-size: 1px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.theme-admin .empty-state-icon-students
+{
+    background-image: url("project://database/Assets/UI/Icons/student-icon.png");
+}
+
+.anatomia-theme.theme-admin .empty-state-text
+{
+    margin: 0 0 8px 0;
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin .empty-state-subtext
+{
+    max-width: 640px;
+    font-size: 25px;
+    color: var(--ink-3);
+    white-space: normal;
+    -unity-text-align: upper-center;
+}
+
+.anatomia-theme.theme-admin .view-all-button
+{
+    width: 100%;
+    height: auto;
+    margin: 4px 0 0 0;
+    padding: 20px 0;
+    border-width: 0;
+    border-radius: 28px;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--accent);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+.anatomia-theme.theme-admin .view-all-button:hover { background-color: var(--accent-faint); }
+
+/* ---- Quick actions ---- */
+.anatomia-theme.theme-admin .quick-actions-row
+{
+    flex-direction: row;
+    margin: 0 0 16px 0;
+}
+
+.anatomia-theme.theme-admin .quick-action-card
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    height: 230px;
+    margin: 0;
+    padding: 0 16px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-admin .quick-action-card:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin .quick-action-card-left  { margin-right: 8px; }
+.anatomia-theme.theme-admin .quick-action-card-right { margin-left: 8px; }
+
+.anatomia-theme.theme-admin .quick-action-icon-circle
+{
+    width: 84px;
+    height: 84px;
+    margin: 0 0 20px 0;
+    border-radius: 28px;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-admin .quick-action-icon-blue,
+.anatomia-theme.theme-admin .quick-action-icon-orange,
+.anatomia-theme.theme-admin .quick-action-icon-green
+{
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-admin .quick-action-icon
+{
+    width: 44px;
+    height: 44px;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin .quick-action-title
+{
+    margin: 0;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+.anatomia-theme.theme-admin .gamification-card
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 28px 32px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-admin .gamification-card:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin .gamification-card .quick-action-icon-circle { margin: 0 24px 0 0; }
+
+.anatomia-theme.theme-admin .gamification-title
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0;
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    white-space: normal;
+}
+
+/* ---- Student activity feed ---- */
+.anatomia-theme.theme-admin .recent-activity-header
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 40px 0 20px 0;
+}
+
+.anatomia-theme.theme-admin .recent-activity-title { margin: 0; }
+
+.anatomia-theme.theme-admin .view-all-inline-button
+{
+    padding: 12px 26px;
+    border-radius: 24px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin .view-all-inline-button:hover { background-color: var(--accent-soft); opacity: 0.8; }
+
+.anatomia-theme.theme-admin .recent-activity-card
+{
+    margin: 0;
+    border-radius: 40px;
+    padding: 12px 40px;
+    align-items: stretch;
+    min-height: 0;
+    height: auto;
+}
+
+.anatomia-theme.theme-admin .recent-activity-empty-label
+{
+    padding: 44px 0;
+    font-size: 28px;
+    color: var(--ink-3);
+    align-self: center;
+}
+
+/* ---- Narrow windows (< compactWidthThreshold) ---- */
+.anatomia-theme.theme-admin.compact .content-wrapper { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin.compact .header { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin.compact .header-subtitle { font-size: 52px; }
+.anatomia-theme.theme-admin.compact .create-classroom-header-button { min-height: 280px; padding: 30px; }
+.anatomia-theme.theme-admin.compact .create-classroom-header-label { font-size: 38px; }
+.anatomia-theme.theme-admin.compact .glass-stat-value { font-size: 46px; }
+.anatomia-theme.theme-admin.compact .quick-action-card { height: 196px; }
+.anatomia-theme.theme-admin.compact .quick-action-title { font-size: 24px; }
+
+
+/* =========================================================
+   ADMIN QUIZ MANAGEMENT  (matches the student screens)
+   Root classes: "anatomia-theme theme-admin-quiz". Scoped so no other screen changes.
+     List     flat editorial header (back + title) -> one stats strip (3 cells)
+              -> search pill -> "All quizzes" -> glass quiz cards with accent edge
+     Detail   flat header, pill tabs, glass stat tiles, question cards
+     Wizards  flat header, accent step circles + progress, pill buttons
+   The old green/blue gradient chrome and the faux card shadow are retired here.
+   Sizes from the existing 1080x1920 pass are kept; this layer changes surfaces,
+   colour, radius and structure only.
+   ========================================================= */
+
+/* ---- Screen + full-screen layers share the ambient background ---- */
+.anatomia-theme.theme-admin-quiz .quiz-detail-view,
+.anatomia-theme.theme-admin-quiz .modal-overlay.fullscreen-overlay,
+.anatomia-theme.theme-admin-quiz .modal-card.fullscreen-card
+{
+    background-color: rgb(244, 245, 250);
+    background-image: url("project://database/Assets/UI/Theme/ambient-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.theme-admin-quiz .content-wrapper
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-left: 52px;
+    padding-right: 52px;
+    padding-top: 0;
+    padding-bottom: 60px;
+}
+
+/* ---- Editorial header ---- */
+.anatomia-theme.theme-admin-quiz .header
+{
+    padding: 96px 52px 0 52px;
+    margin-bottom: 40px;
+    flex-direction: column;
+}
+
+.anatomia-theme.theme-admin-quiz .header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    margin: 0 0 36px 0;
+}
+
+.anatomia-theme.theme-admin-quiz .back-button
+{
+    margin: 0 28px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin-quiz .header-text
+{
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.anatomia-theme.theme-admin-quiz .header-title
+{
+    margin: 0;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-quiz .header-subtitle
+{
+    margin-top: 6px;
+    white-space: normal;
+}
+
+/* ---- Stats strip: one card, three equal cells ---- */
+.anatomia-theme.theme-admin-quiz .stats-strip
+{
+    flex-direction: row;
+    align-items: stretch;
+    margin: 0;
+    border-radius: 36px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.anatomia-theme.theme-admin-quiz .stat-cell
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 34px 8px;
+}
+
+.anatomia-theme.theme-admin-quiz .stat-cell-border
+{
+    border-left-width: 1px;
+    border-left-color: var(--line);
+}
+
+.anatomia-theme.theme-admin-quiz .stat-cell-value
+{
+    font-size: 56px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: -0.6px;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme.theme-admin-quiz .stat-cell-value-accent { color: var(--accent); }
+
+.anatomia-theme.theme-admin-quiz .stat-cell-label
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    margin-top: 4px;
+    white-space: nowrap;
+    -unity-text-align: middle-center;
+}
+
+/* ---- Search pill + section title ---- */
+.anatomia-theme.theme-admin-quiz .search-row
+{
+    margin: 0 0 8px 0;
+}
+
+.anatomia-theme.theme-admin-quiz .search-field-wrapper
+{
+    height: 104px;
+    margin-right: 0;
+    padding: 0 30px;
+    background-color: var(--surface-solid);
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 100px;
+}
+
+.anatomia-theme.theme-admin-quiz .search-field-wrapper:hover { border-color: var(--ink-4); }
+
+.anatomia-theme.theme-admin-quiz .search-icon
+{
+    width: 44px;
+    height: 44px;
+    margin: 0 20px 0 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--ink-3);
+}
+
+.anatomia-theme.theme-admin-quiz .search-field,
+.anatomia-theme.theme-admin-quiz .search-field > .unity-text-field__input
+{
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-quiz .section-title
+{
+    font-size: 30px;
+    color: var(--ink-2);
+    margin: 40px 0 20px 0;
+    padding-left: 8px;
+}
+
+.anatomia-theme.theme-admin-quiz .section-title-first { margin-top: 0; }
+
+/* ---- Empty states ---- */
+.anatomia-theme.theme-admin-quiz .quizzes-empty-state
+{
+    padding: 64px 40px 56px 40px;
+    border-radius: 40px;
+    margin-bottom: 20px;
+}
+
+.anatomia-theme.theme-admin-quiz .empty-state-text
+{
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    margin-bottom: 0;
+}
+
+/* ---- Quiz cards (same recipe as the student quiz card: glass + accent edge) ---- */
+.anatomia-theme.theme-admin-quiz .quizzes-list { width: 100%; flex-direction: column; }
+
+.anatomia-theme.theme-admin-quiz .quiz-card-wrapper
+{
+    margin-bottom: 20px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-card-shadow { display: none; }
+
+.anatomia-theme.theme-admin-quiz .quiz-card
+{
+    padding: 40px 36px 40px 40px;
+    border-radius: 36px;
+    border-left-width: 8px;
+    border-left-color: var(--accent);
+    margin-bottom: 0;
+    transition-property: background-color, border-color;
+    transition-duration: 0.2s;
+    translate: 0 0;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-card-wrapper:hover .quiz-card
+{
+    translate: 0 0;
+    background-color: var(--surface-hover);
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-card-icon-avatar
+{
+    width: 92px;
+    height: 92px;
+    border-radius: 28px;
+    margin-right: 28px;
+    background-color: var(--accent-soft);
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-card-icon-glyph
+{
+    width: 44px;
+    height: 44px;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-title-label
+{
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    letter-spacing: -0.2px;
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-meta-summary
+{
+    font-size: 26px;
+    color: var(--ink-3);
+    margin-top: 6px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-card-chevron
+{
+    font-size: 44px;
+    color: var(--ink-4);
+}
+
+/* ---- New Quiz footer: calm bar, solid accent pill ---- */
+.anatomia-theme.theme-admin-quiz .new-quiz-footer
+{
+    background-color: rgba(244, 245, 250, 0.94);
+    border-top-width: 1px;
+    border-top-color: var(--line);
+    padding: 22px 52px 40px 52px;
+}
+
+.anatomia-theme.theme-admin-quiz .new-quiz-full-button,
+.anatomia-theme.theme-admin-quiz .add-question-full-button
+{
+    background-color: var(--accent);
+    background-image: none;
+    border-width: 0;
+    border-radius: 100px;
+    padding: 28px 20px;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme.theme-admin-quiz .new-quiz-full-button:hover,
+.anatomia-theme.theme-admin-quiz .add-question-full-button:hover { background-color: var(--accent-strong); opacity: 1; }
+
+.anatomia-theme.theme-admin-quiz .new-quiz-full-button:active,
+.anatomia-theme.theme-admin-quiz .add-question-full-button:active { background-color: var(--accent-press); }
+
+.anatomia-theme.theme-admin-quiz .new-quiz-plus { font-size: 36px; margin-right: 14px; }
+.anatomia-theme.theme-admin-quiz .new-quiz-label,
+.anatomia-theme.theme-admin-quiz .add-question-full-label { font-size: 30px; }
+
+/* ---- Quiz detail ---- */
+.anatomia-theme.theme-admin-quiz .quiz-detail-header
+{
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding: 96px 52px 28px 52px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-back-button,
+.anatomia-theme.theme-admin-quiz .quiz-detail-delete-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-back-button:hover { background-color: var(--surface-hover); border-color: var(--line-strong); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-back-button:active { background-color: var(--sunken); }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-delete-button
+{
+    background-color: var(--danger-soft);
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-delete-button:hover { background-color: rgba(204, 64, 64, 0.16); }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-back-icon { -unity-background-image-tint-color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-delete-icon { width: 40px; height: 40px; -unity-background-image-tint-color: var(--danger); color: var(--danger); }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-title
+{
+    font-size: 46px;
+    color: var(--ink);
+    letter-spacing: -0.6px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-subtitle
+{
+    font-size: 27px;
+    color: var(--ink-3);
+    margin-top: 6px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-content { padding: 8px 52px 60px 52px; }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-add-question-footer
+{
+    background-color: rgba(244, 245, 250, 0.94);
+    border-top-color: var(--line);
+    padding: 22px 52px 40px 52px;
+}
+
+/* Segmented pill tabs (same as the student Progress tabs) */
+.anatomia-theme.theme-admin-quiz .quiz-tab-row
+{
+    background-color: var(--sunken);
+    border-radius: 100px;
+    padding: 8px;
+    margin-bottom: 36px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-tab-button
+{
+    background-image: none;
+    border-radius: 100px;
+    color: var(--ink-3);
+    transition-property: background-color, color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-tab-button:hover { color: var(--ink); }
+
+.anatomia-theme.theme-admin-quiz .quiz-tab-button.active
+{
+    background-color: var(--surface-solid);
+    color: var(--ink);
+}
+
+/* Overview: glass tiles with soft accent icon badges */
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-card,
+.anatomia-theme.theme-admin-quiz .quiz-overview-types-card
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 32px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-icon-badge { background-color: var(--accent-soft); border-radius: 26px; }
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-icon { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-value { color: var(--ink); letter-spacing: -0.2px; }
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-label { color: var(--ink-3); }
+.anatomia-theme.theme-admin-quiz .quiz-overview-types-title { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .quiz-overview-type-pill { background-color: var(--sunken); border-radius: 100px; }
+.anatomia-theme.theme-admin-quiz .quiz-overview-type-pill-label { color: var(--ink-2); }
+.anatomia-theme.theme-admin-quiz .quiz-overview-type-pill-count { color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .quiz-overview-types-empty-label { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .view-submissions-button
+{
+    background-color: var(--accent-soft);
+    background-image: none;
+    border-width: 0;
+    border-radius: 100px;
+    color: var(--accent);
+    -unity-font-style: bold;
+}
+
+.anatomia-theme.theme-admin-quiz .view-submissions-button:hover { background-color: var(--accent); color: white; }
+
+/* Question rows: same recipe as the quiz cards, lighter */
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-row
+{
+    background-color: var(--surface);
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 30px;
+    border-left-width: 8px;
+    border-left-color: var(--accent);
+    padding: 30px 30px 30px 34px;
+    margin-bottom: 18px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-icon-badge { background-color: var(--accent-soft); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-icon-glyph { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-text { color: var(--ink); letter-spacing: -0.2px; }
+.anatomia-theme.theme-admin-quiz .questions-empty-label { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge { background-color: var(--sunken); border-radius: 100px; }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-type { background-color: var(--accent-soft); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-type .quiz-detail-badge-label { color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-points .quiz-detail-badge-label { color: var(--ink-2); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-easy { background-color: var(--success-soft); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-easy .quiz-detail-badge-label { color: var(--success); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-medium { background-color: var(--warn-soft); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-medium .quiz-detail-badge-label { color: var(--warn); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-hard { background-color: var(--danger-soft); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-badge-difficulty-hard .quiz-detail-badge-label { color: var(--danger); }
+
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-delete-button { background-color: var(--danger-soft); border-color: rgba(0, 0, 0, 0); }
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-delete-button:hover { background-color: rgba(204, 64, 64, 0.16); }
+
+/* ---- Wizards (Create Quiz / Add Question): flat header, accent progress ---- */
+.anatomia-theme.theme-admin-quiz .modal-overlay { background-color: rgba(22, 24, 38, 0.5); }
+.anatomia-theme.theme-admin-quiz .modal-card { background-color: var(--surface-solid); border-radius: 40px; }
+.anatomia-theme.theme-admin-quiz .modal-card.fullscreen-card { border-radius: 0; }
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header
+{
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border-radius: 0;
+    padding: 12px 20px 12px 20px;
+    margin-bottom: 24px;
+}
+
+/* Add Question: its card has no padding, so the header supplies the top inset */
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header
+{
+    padding: 96px 52px 12px 52px;
+}
+
+.anatomia-theme.theme-admin-quiz.compact #add-question-wizard-header
+{
+    padding: 84px 36px 12px 36px;
+}
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header .wizard-back-button,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-back-button,
+.anatomia-theme.theme-admin-quiz .wizard-back-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    margin-right: 24px;
+}
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header .wizard-back-button:hover,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-back-button:hover,
+.anatomia-theme.theme-admin-quiz .wizard-back-button:hover { background-color: var(--surface-hover); border-color: var(--line-strong); }
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header .wizard-back-icon,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-back-icon,
+.anatomia-theme.theme-admin-quiz .wizard-back-icon { width: 36px; height: 36px; -unity-background-image-tint-color: var(--ink); }
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header .wizard-title,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-title,
+.anatomia-theme.theme-admin-quiz .wizard-title
+{
+    font-size: 46px;
+    color: var(--ink);
+    letter-spacing: -0.6px;
+}
+
+.anatomia-theme.theme-admin-quiz #create-quiz-wizard-header .wizard-step-label,
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-step-label,
+.anatomia-theme.theme-admin-quiz .wizard-step-label
+{
+    font-size: 26px;
+    color: var(--ink-3);
+    margin-top: 6px;
+}
+
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-cancel-link,
+.anatomia-theme.theme-admin-quiz .wizard-cancel-link
+{
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 10px 18px;
+    border-radius: 100px;
+}
+
+.anatomia-theme.theme-admin-quiz #add-question-wizard-header .wizard-cancel-link:hover,
+.anatomia-theme.theme-admin-quiz .wizard-cancel-link:hover { color: var(--accent-strong); background-color: var(--accent-soft); }
+
+/* Step circles + progress: neutral -> accent -> success */
+.anatomia-theme.theme-admin-quiz .wizard-step-circle { background-color: var(--sunken); }
+.anatomia-theme.theme-admin-quiz .wizard-step-circle-label { color: var(--ink-3); }
+.anatomia-theme.theme-admin-quiz .wizard-step-item-label { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .wizard-step-item.done .wizard-step-circle { background-color: var(--success); }
+.anatomia-theme.theme-admin-quiz .wizard-step-item.done .wizard-step-item-label { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .wizard-step-item.active .wizard-step-circle { background-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .wizard-step-item.active .wizard-step-item-label { color: var(--accent); }
+
+.anatomia-theme.theme-admin-quiz .wizard-progress-segment { background-color: var(--track); }
+.anatomia-theme.theme-admin-quiz .wizard-progress-segment.done { background-color: var(--success); }
+.anatomia-theme.theme-admin-quiz .wizard-progress-segment.active { background-color: var(--accent); }
+
+.anatomia-theme.theme-admin-quiz .wizard-step-banner,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .wizard-step-banner { color: var(--ink-3); }
+
+/* Buttons: primary = solid accent pill, secondary = quiet outline pill */
+.anatomia-theme.theme-admin-quiz .modal-submit-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .wizard-next-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .modal-submit-button
+{
+    background-color: var(--accent);
+    background-image: none;
+    border-width: 0;
+    border-radius: 100px;
+    color: white;
+    -unity-font-style: bold;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme.theme-admin-quiz .modal-submit-button:hover { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin-quiz .modal-submit-button:active { background-color: var(--accent-press); }
+
+.anatomia-theme.theme-admin-quiz .modal-cancel-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .modal-cancel-button
+{
+    background-color: var(--surface);
+    background-image: none;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 100px;
+    color: var(--ink);
+    -unity-font-style: bold;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.18s;
+}
+
+.anatomia-theme.theme-admin-quiz .modal-cancel-button:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .modal-delete-button
+{
+    background-color: var(--danger);
+    background-image: none;
+    border-width: 0;
+    border-radius: 100px;
+    color: white;
+}
+
+.anatomia-theme.theme-admin-quiz .modal-close-button:hover { background-color: var(--sunken); color: var(--ink); }
+
+/* Form controls: same field recipe as the student screens */
+.anatomia-theme.theme-admin-quiz .field-label,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .field-label,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .field-label { color: var(--ink-2); }
+
+.anatomia-theme.theme-admin-quiz .field-hint,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .field-hint,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .field-hint,
+.anatomia-theme.theme-admin-quiz .percent-suffix,
+.anatomia-theme.theme-admin-quiz .status-label { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .field-error,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .field-error,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .field-error { color: var(--danger); }
+
+.anatomia-theme.theme-admin-quiz .text-field > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .text-field > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .text-field > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz .dropdown-field > .unity-base-popup-field__input
+{
+    background-color: var(--surface-solid);
+    border-color: var(--line-strong);
+    border-radius: 26px;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-quiz .text-field > .unity-text-field__input:hover,
+.anatomia-theme.theme-admin-quiz .dropdown-field > .unity-base-popup-field__input:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--ink-4);
+}
+
+.anatomia-theme.theme-admin-quiz .text-field:focus > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .text-field:focus > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .text-field:focus > .unity-text-field__input,
+.anatomia-theme.theme-admin-quiz .dropdown-field:focus > .unity-base-popup-field__input
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__text { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .dropdown-field > .unity-base-popup-field__input > .unity-base-popup-field__arrow { -unity-background-image-tint-color: var(--ink-3); }
+
+/* Option letters, answer toggles, choice cards */
+.anatomia-theme.theme-admin-quiz .option-letter-badge,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .option-letter-badge,
+.anatomia-theme.theme-admin-quiz .enumeration-answer-index-badge
+{
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .question-type-card,
+.anatomia-theme.theme-admin-quiz .image-based-system-card,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .image-based-system-card,
+.anatomia-theme.theme-admin-quiz .difficulty-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button,
+.anatomia-theme.theme-admin-quiz .true-false-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .true-false-button
+{
+    background-color: var(--surface-solid);
+    border-color: var(--line);
+    border-radius: 28px;
+    color: var(--ink);
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+
+.anatomia-theme.theme-admin-quiz .question-type-card:hover,
+.anatomia-theme.theme-admin-quiz .image-based-system-card:hover { border-color: var(--ink-4); translate: 0 0; }
+
+.anatomia-theme.theme-admin-quiz .question-type-card.selected,
+.anatomia-theme.theme-admin-quiz .image-based-system-card.selected,
+.anatomia-theme.theme-admin-quiz .true-false-button.selected,
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-easy,
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-medium,
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-hard
+{
+    background-color: var(--accent-faint);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .question-type-icon-badge { background-color: var(--accent-soft); }
+.anatomia-theme.theme-admin-quiz .question-type-icon { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .question-type-card-title,
+.anatomia-theme.theme-admin-quiz #add-question-step-1 .question-type-card-title { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .question-type-card-subtitle,
+.anatomia-theme.theme-admin-quiz #add-question-step-1 .question-type-card-subtitle { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .image-based-selected-structure-panel
+{
+    background-color: var(--sunken);
+    border-width: 0;
+    border-radius: 24px;
+}
+
+.anatomia-theme.theme-admin-quiz .image-based-change-structure-button
+{
+    background-color: var(--surface);
+    border-color: var(--line-strong);
+    border-radius: 100px;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-quiz .enumeration-add-button { background-color: var(--accent); border-radius: 26px; }
+
+.anatomia-theme.theme-admin-quiz .deadline-selector-button
+{
+    background-color: var(--surface-solid);
+    border-color: var(--line-strong);
+    border-radius: 26px;
+}
+
+.anatomia-theme.theme-admin-quiz .deadline-selector-button:hover { border-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .deadline-selector-label { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .deadline-selector-icon { -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .deadline-selector-chevron { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin-quiz .file-extension-toggle { border-radius: 100px; }
+
+/* Success + confirm sheets */
+.anatomia-theme.theme-admin-quiz .success-icon-circle { background-color: var(--success-soft); }
+.anatomia-theme.theme-admin-quiz .success-icon-check { color: var(--success); }
+.anatomia-theme.theme-admin-quiz .success-title,
+.anatomia-theme.theme-admin-quiz .confirm-title { color: var(--ink); letter-spacing: -0.3px; }
+.anatomia-theme.theme-admin-quiz .success-subtitle,
+.anatomia-theme.theme-admin-quiz .confirm-subtitle { color: var(--ink-3); }
+.anatomia-theme.theme-admin-quiz .confirm-icon-circle { background-color: var(--danger-soft); }
+.anatomia-theme.theme-admin-quiz .confirm-icon-mark { color: var(--danger); }
+
+/* Floating deadline picker */
+.anatomia-theme.theme-admin-quiz .deadline-picker-panel
+{
+    background-color: var(--surface-solid);
+    border-color: var(--line-strong);
+    border-radius: 36px;
+}
+
+.anatomia-theme.theme-admin-quiz .calendar-month-year-label { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .calendar-nav-button { color: var(--ink); background-color: var(--sunken); border-radius: 100px; }
+.anatomia-theme.theme-admin-quiz .calendar-nav-button:hover { background-color: var(--accent-soft); color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .calendar-day-button { color: var(--ink); }
+.anatomia-theme.theme-admin-quiz .calendar-day-button:hover { background-color: var(--accent-soft); }
+.anatomia-theme.theme-admin-quiz .calendar-day-button.today { color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .calendar-day-button.selected { background-color: var(--accent); color: white; }
+.anatomia-theme.theme-admin-quiz .calendar-day-button.other-month { color: var(--ink-4); }
+.anatomia-theme.theme-admin-quiz .calendar-day-button.past-day { color: var(--ink-4); opacity: 0.6; }
+.anatomia-theme.theme-admin-quiz .ampm-button.selected { background-color: var(--accent); color: white; }
+
+/* ---- Narrow windows (< compactWidthThreshold) ---- */
+.anatomia-theme.theme-admin-quiz.compact .content-wrapper { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin-quiz.compact .header { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin-quiz.compact .stat-cell { padding: 26px 6px; }
+.anatomia-theme.theme-admin-quiz.compact .stat-cell-value { font-size: 44px; }
+.anatomia-theme.theme-admin-quiz.compact .stat-cell-label { font-size: 21px; }
+.anatomia-theme.theme-admin-quiz.compact .quiz-card { padding: 32px 28px 32px 32px; border-radius: 30px; }
+.anatomia-theme.theme-admin-quiz.compact .quiz-card-icon-avatar { width: 80px; height: 80px; margin-right: 22px; }
+.anatomia-theme.theme-admin-quiz.compact .quiz-title-label { font-size: 34px; }
+.anatomia-theme.theme-admin-quiz.compact .new-quiz-footer,
+.anatomia-theme.theme-admin-quiz.compact .quiz-detail-add-question-footer { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin-quiz.compact .quiz-detail-header { padding-left: 36px; padding-right: 36px; }
+.anatomia-theme.theme-admin-quiz.compact .quiz-detail-content { padding-left: 36px; padding-right: 36px; }
+
+
+/* =========================================================
+   ROUNDING FIXES (admin quiz)
+   - Theme rules written for other screens were drawing a SECOND rounded box
+     around some fields (nested outlines). Reset the outer element so only the
+     real input/box is drawn.
+   - Toggles round their inner .unity-toggle__input, not the outer element.
+   - Buttons that sit in a row are pills (radius >= half height); cards stay 28-36.
+   ========================================================= */
+
+/* 1) Text fields: theme draws a box on .text-field AND we draw one on its input -> keep the input only */
+.anatomia-theme.theme-admin-quiz .text-field
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+}
+
+/* 2) Answer rows: theme's gameplay ".option-row" box wraps our letter badge + field -> make it a plain row */
+.anatomia-theme.theme-admin-quiz .option-row
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 14px;
+}
+
+.anatomia-theme.theme-admin-quiz .option-row:hover { border-color: rgba(0, 0, 0, 0); }
+
+.anatomia-theme.theme-admin-quiz .option-letter-badge
+{
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    border-width: 0;
+    margin-right: 16px;
+}
+
+/* 3) Toggles: round the visible box (inner input), accent instead of green */
+.anatomia-theme.theme-admin-quiz .file-extension-toggle
+{
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.anatomia-theme.theme-admin-quiz .file-extension-toggle > .unity-toggle__input
+{
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 100px;
+    background-color: var(--surface-solid);
+    padding: 18px 26px;
+}
+
+.anatomia-theme.theme-admin-quiz .file-extension-toggle:hover > .unity-toggle__input { border-color: var(--ink-4); }
+
+.anatomia-theme.theme-admin-quiz .file-extension-toggle:checked > .unity-toggle__input
+{
+    border-color: var(--accent);
+    background-color: var(--accent-faint);
+}
+
+.anatomia-theme.theme-admin-quiz .file-extension-toggle .unity-toggle__checkmark { background-color: var(--sunken); border-radius: 12px; }
+.anatomia-theme.theme-admin-quiz .file-extension-toggle:checked .unity-toggle__checkmark { background-color: var(--accent); }
+.anatomia-theme.theme-admin-quiz .file-extension-toggle .unity-toggle__text { color: var(--ink-2); }
+.anatomia-theme.theme-admin-quiz .file-extension-toggle:checked .unity-toggle__text { color: var(--accent); }
+
+.anatomia-theme.theme-admin-quiz .radio-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark,
+.anatomia-theme.theme-admin-quiz .checkbox-toggle:checked > .unity-toggle__input > .unity-toggle__checkmark
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-quiz .radio-toggle > .unity-toggle__input > .unity-toggle__checkmark,
+.anatomia-theme.theme-admin-quiz .checkbox-toggle > .unity-toggle__input > .unity-toggle__checkmark
+{
+    background-color: var(--sunken);
+}
+
+/* 4) Row buttons are pills */
+.anatomia-theme.theme-admin-quiz .true-false-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .true-false-button,
+.anatomia-theme.theme-admin-quiz .difficulty-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button
+{
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 100px;
+    padding: 24px 12px;
+}
+
+.anatomia-theme.theme-admin-quiz .true-false-button.selected
+{
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* difficulty keeps its semantic colours (the earlier shared rule painted all three accent) */
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-easy,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button.selected-easy
+{
+    background-color: var(--success-soft);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-medium,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button.selected-medium
+{
+    background-color: var(--warn-soft);
+    border-color: var(--warn);
+    color: var(--warn);
+}
+
+.anatomia-theme.theme-admin-quiz .difficulty-button.selected-hard,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button.selected-hard
+{
+    background-color: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.anatomia-theme.theme-admin-quiz .view-submissions-button { height: 104px; border-radius: 52px; }
+.anatomia-theme.theme-admin-quiz .enumeration-add-button { border-radius: 100px; }
+.anatomia-theme.theme-admin-quiz .ampm-button.selected { border-radius: 100px; }
+
+/* 5) Rounded containers clip their children so corners never get squared off */
+.anatomia-theme.theme-admin-quiz .stats-strip,
+.anatomia-theme.theme-admin-quiz .quiz-tab-row,
+.anatomia-theme.theme-admin-quiz .quiz-overview-stat-card,
+.anatomia-theme.theme-admin-quiz .quiz-overview-types-card,
+.anatomia-theme.theme-admin-quiz .quiz-card,
+.anatomia-theme.theme-admin-quiz .quiz-detail-question-row,
+.anatomia-theme.theme-admin-quiz .quizzes-empty-state,
+.anatomia-theme.theme-admin-quiz .deadline-picker-panel,
+.anatomia-theme.theme-admin-quiz .modal-card
+{
+    overflow: hidden;
+}
+
+/* Icon buttons: perfect circles, content centred */
+.anatomia-theme.theme-admin-quiz .back-button,
+.anatomia-theme.theme-admin-quiz .quiz-detail-back-button,
+.anatomia-theme.theme-admin-quiz .quiz-detail-delete-button,
+.anatomia-theme.theme-admin-quiz .wizard-back-button
+{
+    width: 84px;
+    height: 84px;
+    min-width: 84px;
+    border-radius: 42px;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+}
+
+
+/* =========================================================
+   RADIUS FIXES - named elements
+   Why they were off: several base rules are written with an ID selector
+   (#add-question-step-2 .wizard-next-button, #add-question-step-3 .modal-...),
+   which out-ranks class-only theme rules, and a pill radius of 100px on a
+   ~90px-tall element left the corners uneven. Here every element gets an
+   explicit height and radius = height / 2 (true pill), selected by ID so it
+   always wins.
+   ========================================================= */
+
+/* ---- Search pill (104px) ---- */
+.anatomia-theme.theme-admin-quiz #screen-root .search-field-wrapper,
+.anatomia-theme.theme-admin-quiz .search-field-wrapper
+{
+    height: 104px;
+    min-height: 104px;
+    border-radius: 52px;
+}
+
+/* ---- Primary pill buttons (104px) ---- */
+.anatomia-theme.theme-admin-quiz #new-quiz-button,
+.anatomia-theme.theme-admin-quiz #quiz-detail-add-question-button,
+.anatomia-theme.theme-admin-quiz #add-question-step2-next-button,
+.anatomia-theme.theme-admin-quiz #add-question-submit-button,
+.anatomia-theme.theme-admin-quiz #add-question-success-add-another-button
+{
+    height: 104px;
+    min-height: 104px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-radius: 52px;
+    border-width: 0;
+    background-color: var(--accent);
+    background-image: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin-quiz #new-quiz-button:hover,
+.anatomia-theme.theme-admin-quiz #quiz-detail-add-question-button:hover,
+.anatomia-theme.theme-admin-quiz #add-question-step2-next-button:hover,
+.anatomia-theme.theme-admin-quiz #add-question-submit-button:hover,
+.anatomia-theme.theme-admin-quiz #add-question-success-add-another-button:hover { background-color: var(--accent-strong); }
+
+.anatomia-theme.theme-admin-quiz #new-quiz-button:active,
+.anatomia-theme.theme-admin-quiz #quiz-detail-add-question-button:active,
+.anatomia-theme.theme-admin-quiz #add-question-step2-next-button:active,
+.anatomia-theme.theme-admin-quiz #add-question-submit-button:active,
+.anatomia-theme.theme-admin-quiz #add-question-success-add-another-button:active { background-color: var(--accent-press); }
+
+/* ---- Secondary pill buttons (104px) ---- */
+.anatomia-theme.theme-admin-quiz #add-question-step3-back-button,
+.anatomia-theme.theme-admin-quiz #add-question-success-done-button
+{
+    height: 104px;
+    min-height: 104px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-radius: 52px;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    background-color: var(--surface);
+    background-image: none;
+    color: var(--ink);
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin-quiz #add-question-step3-back-button:hover,
+.anatomia-theme.theme-admin-quiz #add-question-success-done-button:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ---- Deadline picker buttons (96px) ---- */
+.anatomia-theme.theme-admin-quiz #quiz-deadline-set-button,
+.anatomia-theme.theme-admin-quiz #quiz-deadline-clear-button
+{
+    height: 96px;
+    min-height: 96px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-radius: 48px;
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+}
+
+.anatomia-theme.theme-admin-quiz #quiz-deadline-set-button
+{
+    border-width: 0;
+    background-color: var(--accent);
+    background-image: none;
+    color: white;
+}
+
+.anatomia-theme.theme-admin-quiz #quiz-deadline-set-button:hover { background-color: var(--accent-strong); }
+
+.anatomia-theme.theme-admin-quiz #quiz-deadline-clear-button
+{
+    border-width: 1px;
+    border-color: var(--line-strong);
+    background-color: var(--surface);
+    background-image: none;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-quiz #quiz-deadline-clear-button:hover
+{
+    background-color: var(--surface-solid);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ---- Detail tab row: track = 8 + 92 + 8 = 108px, radius 54; tabs 92px, radius 46 ---- */
+.anatomia-theme.theme-admin-quiz #quiz-detail-tab-row
+{
+    padding: 8px;
+    height: 108px;
+    min-height: 108px;
+    border-radius: 54px;
+    align-items: stretch;
+    overflow: hidden;
+}
+
+.anatomia-theme.theme-admin-quiz #quiz-detail-tab-row .quiz-tab-button
+{
+    height: 92px;
+    min-height: 92px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-radius: 46px;
+    justify-content: center;
+    align-items: center;
+    -unity-text-align: middle-center;
+}
+
+/* ---- Allowed file types: row holds the pills; each pill is 88px tall, radius 44 ---- */
+.anatomia-theme.theme-admin-quiz #file-extensions-row
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.anatomia-theme.theme-admin-quiz #file-extensions-row .file-extension-toggle
+{
+    border-radius: 44px;
+}
+
+.anatomia-theme.theme-admin-quiz #file-extensions-row .file-extension-toggle > .unity-toggle__input
+{
+    height: 88px;
+    min-height: 88px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-radius: 44px;
+}
+
+/* Narrow screens keep the same true-pill proportions */
+.anatomia-theme.theme-admin-quiz.compact #new-quiz-button,
+.anatomia-theme.theme-admin-quiz.compact #quiz-detail-add-question-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-step2-next-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-submit-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-success-add-another-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-step3-back-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-success-done-button
+{
+    height: 96px;
+    min-height: 96px;
+    border-radius: 48px;
+}
+
+
+/* =========================================================
+   SQUARE-ISH CORNERS (replaces the pill radii above)
+   Buttons / fields / tabs / toggles: 24px.  Tab track: 28px.  Heights unchanged.
+   Placed last and selected by ID where the elements are named, so it wins.
+   Round icon buttons (back / delete circles) are left as they are.
+   ========================================================= */
+
+.anatomia-theme.theme-admin-quiz .search-field-wrapper { border-radius: 28px; }
+
+.anatomia-theme.theme-admin-quiz #new-quiz-button,
+.anatomia-theme.theme-admin-quiz #quiz-detail-add-question-button,
+.anatomia-theme.theme-admin-quiz #add-question-step2-next-button,
+.anatomia-theme.theme-admin-quiz #add-question-submit-button,
+.anatomia-theme.theme-admin-quiz #add-question-success-add-another-button,
+.anatomia-theme.theme-admin-quiz #add-question-step3-back-button,
+.anatomia-theme.theme-admin-quiz #add-question-success-done-button,
+.anatomia-theme.theme-admin-quiz #quiz-deadline-set-button,
+.anatomia-theme.theme-admin-quiz #quiz-deadline-clear-button
+{
+    border-radius: 24px;
+}
+
+.anatomia-theme.theme-admin-quiz #quiz-detail-tab-row { border-radius: 28px; }
+.anatomia-theme.theme-admin-quiz #quiz-detail-tab-row .quiz-tab-button { border-radius: 20px; }
+
+.anatomia-theme.theme-admin-quiz #file-extensions-row .file-extension-toggle,
+.anatomia-theme.theme-admin-quiz #file-extensions-row .file-extension-toggle > .unity-toggle__input,
+.anatomia-theme.theme-admin-quiz .file-extension-toggle > .unity-toggle__input
+{
+    border-radius: 24px;
+}
+
+/* Same shape for the other buttons so the screen reads as one family */
+.anatomia-theme.theme-admin-quiz .new-quiz-full-button,
+.anatomia-theme.theme-admin-quiz .add-question-full-button,
+.anatomia-theme.theme-admin-quiz .modal-submit-button,
+.anatomia-theme.theme-admin-quiz .modal-cancel-button,
+.anatomia-theme.theme-admin-quiz .modal-delete-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .wizard-next-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .modal-submit-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .modal-cancel-button,
+.anatomia-theme.theme-admin-quiz .true-false-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-2 .true-false-button,
+.anatomia-theme.theme-admin-quiz .difficulty-button,
+.anatomia-theme.theme-admin-quiz #add-question-step-3 .difficulty-button,
+.anatomia-theme.theme-admin-quiz .view-submissions-button,
+.anatomia-theme.theme-admin-quiz .enumeration-add-button,
+.anatomia-theme.theme-admin-quiz .image-based-change-structure-button,
+.anatomia-theme.theme-admin-quiz .wizard-cancel-link,
+.anatomia-theme.theme-admin-quiz .ampm-button.selected
+{
+    border-radius: 24px;
+}
+
+.anatomia-theme.theme-admin-quiz .quiz-tab-row { border-radius: 28px; }
+.anatomia-theme.theme-admin-quiz .quiz-tab-button { border-radius: 20px; }
+
+.anatomia-theme.theme-admin-quiz.compact #new-quiz-button,
+.anatomia-theme.theme-admin-quiz.compact #quiz-detail-add-question-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-step2-next-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-submit-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-success-add-another-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-step3-back-button,
+.anatomia-theme.theme-admin-quiz.compact #add-question-success-done-button
+{
+    border-radius: 24px;
+}
+
+
+/* =========================================================
+   ADMIN GAMIFICATION SETTINGS  (matches the student / admin screens)
+   Root classes: "anatomia-theme theme-admin-gamification". Scoped so no other screen changes.
+     Header    flat editorial header: back + Save (accent) on one row, big title below
+     Points    one glass card, three equal columns (Easy / Medium / Hard)
+     Badges    glass card, soft accent "Add Badge", tinted list rows
+     Levels    glass card, read-only rows with an accent edge
+     Preview   accent-tinted card with white tiles
+     Modal     solid sheet, accent submit, 24px corners
+   The old green/blue gradient chrome is retired (controller ApplyGradients returns
+   early while AnatomiaTheme.UseGradientChrome is false).
+   Sizes follow the 1080x1920 canvas used by the other screens.
+   ========================================================= */
+
+.anatomia-theme.theme-admin-gamification .screen-scroll
+{
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.anatomia-theme.theme-admin-gamification .content-wrapper
+{
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 0 52px 48px 52px;
+}
+
+/* ---- Header ---- */
+.anatomia-theme.theme-admin-gamification .header
+{
+    flex-direction: column;
+    padding: 96px 52px 0 52px;
+    margin-bottom: 40px;
+}
+
+.anatomia-theme.theme-admin-gamification .header-top-row
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+}
+
+.anatomia-theme.theme-admin-gamification .back-button
+{
+    width: 84px;
+    height: 84px;
+    margin: 0 28px 0 0;
+    padding: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+    align-self: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.anatomia-theme.theme-admin-gamification .save-bar
+{
+    position: relative;
+    width: 100%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px 52px 44px 52px;
+    background-color: var(--surface-solid);
+    border-top-width: 1px;
+    border-top-color: var(--line);
+}
+
+.anatomia-theme.theme-admin-gamification .save-changes-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    width: 100%;
+    max-width: 1000px;
+    height: 112px;
+    margin: 0;
+    padding: 0 34px;
+    border-width: 0;
+    border-radius: 24px;
+    background-color: var(--accent);
+    background-image: none;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+.anatomia-theme.theme-admin-gamification .save-changes-button:hover  { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin-gamification .save-changes-button:active { background-color: var(--accent-press); }
+
+.anatomia-theme.theme-admin-gamification .save-icon
+{
+    width: 40px;
+    height: 40px;
+    margin: 0 16px 0 0;
+    background-image: url("project://database/Assets/UI/Icons/save-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: white;
+}
+
+.anatomia-theme.theme-admin-gamification .save-changes-label
+{
+    display: flex;
+    margin: 0;
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: white;
+}
+
+.anatomia-theme.theme-admin-gamification .header-title-block
+{
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.anatomia-theme.theme-admin-gamification .header-title
+{
+    flex-grow: 0;
+    margin: 0;
+    font-size: 54px;
+    letter-spacing: -1.2px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-gamification .header-subtitle
+{
+    margin: 8px 0 0 0;
+    font-size: 30px;
+    color: var(--ink-3);
+    white-space: normal;
+}
+
+/* ---- Glass section cards ---- */
+.anatomia-theme.theme-admin-gamification .section-card
+{
+    width: 100%;
+    margin: 0 0 24px 0;
+    padding: 40px;
+    border-radius: 36px;
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+.anatomia-theme.theme-admin-gamification .section-card-title
+{
+    margin: 0;
+    font-size: 36px;
+    letter-spacing: -0.3px;
+    -unity-font-style: bold;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-gamification .section-card-note
+{
+    margin: 8px 0 32px 0;
+    font-size: 28px;
+    color: var(--ink-3);
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-gamification .section-header-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 28px 0;
+}
+
+/* ---- Fields ---- */
+.anatomia-theme.theme-admin-gamification .field-label
+{
+    margin: 0;
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--ink-2);
+}
+
+.anatomia-theme.theme-admin-gamification .field-label-spaced { margin: 32px 0 12px 4px; }
+
+.anatomia-theme.theme-admin-gamification .text-field
+{
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 36px;
+    color: var(--ink);
+}
+
+.anatomia-theme.theme-admin-gamification .text-field > #unity-text-input
+{
+    height: 104px;
+    margin: 0;
+    padding: 0 28px;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 24px;
+    background-color: var(--surface-solid);
+    color: var(--ink);
+    font-size: 36px;
+    -unity-text-align: middle-left;
+    transition-property: border-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+.anatomia-theme.theme-admin-gamification .text-field > #unity-text-input:hover { border-color: var(--ink-4); }
+.anatomia-theme.theme-admin-gamification .text-field > #unity-text-input:focus { border-color: var(--accent); border-width: 2px; }
+
+.anatomia-theme.theme-admin-gamification .field-error
+{
+    margin: 10px 0 0 4px;
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--danger);
+    white-space: normal;
+}
+
+/* ---- Points: three equal columns ---- */
+.anatomia-theme.theme-admin-gamification .points-grid
+{
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.anatomia-theme.theme-admin-gamification .points-col
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    flex-direction: column;
+    margin: 0 16px 0 0;
+}
+.anatomia-theme.theme-admin-gamification .points-col-last { margin-right: 0; }
+
+.anatomia-theme.theme-admin-gamification .points-col-head
+{
+    flex-direction: row;
+    align-items: center;
+    margin: 0 0 14px 4px;
+}
+
+.anatomia-theme.theme-admin-gamification .difficulty-dot { width: 16px; height: 16px; border-radius: 8px; margin: 0 12px 0 0; }
+.anatomia-theme.theme-admin-gamification .dot-easy   { background-color: var(--success); }
+.anatomia-theme.theme-admin-gamification .dot-medium { background-color: var(--warn); }
+.anatomia-theme.theme-admin-gamification .dot-hard   { background-color: var(--danger); }
+
+.anatomia-theme.theme-admin-gamification .points-field > #unity-text-input
+{
+    height: 120px;
+    padding: 0 12px;
+    font-size: 48px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+/* ---- Add button (soft accent so Save stays the one primary) ---- */
+.anatomia-theme.theme-admin-gamification .add-item-button
+{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 76px;
+    margin: 0;
+    padding: 0 28px;
+    border-width: 0;
+    border-radius: 24px;
+    background-color: var(--accent-soft);
+    background-image: none;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out;
+}
+.anatomia-theme.theme-admin-gamification .add-item-button:hover  { background-color: rgba(91, 76, 219, 0.2); }
+.anatomia-theme.theme-admin-gamification .add-item-button:active { background-color: rgba(91, 76, 219, 0.28); }
+.anatomia-theme.theme-admin-gamification .add-item-plus  { margin: 0 10px 0 0; font-size: 38px; -unity-font-style: bold; color: var(--accent); }
+.anatomia-theme.theme-admin-gamification .add-item-label { margin: 0; font-size: 29px; -unity-font-style: bold; color: var(--accent); }
+
+/* ---- Global & Fixed tag + notes ---- */
+.anatomia-theme.theme-admin-gamification .global-tag
+{
+    flex-shrink: 0;
+    margin: 0;
+    padding: 10px 22px;
+    border-width: 0;
+    border-radius: 24px;
+    background-color: var(--sunken);
+}
+.anatomia-theme.theme-admin-gamification .global-tag-label { font-size: 24px; -unity-font-style: bold; color: var(--ink-2); }
+
+.anatomia-theme.theme-admin-gamification .levels-note
+{
+    margin: 0 0 28px 0;
+    font-size: 28px;
+    color: var(--ink-3);
+    white-space: normal;
+}
+
+.anatomia-theme.theme-admin-gamification .empty-list-label { align-items: center; padding: 28px 0; }
+.anatomia-theme.theme-admin-gamification .empty-list-label Label { font-size: 30px; color: var(--ink-3); }
+
+/* ---- List rows (badges + levels, built in code) ---- */
+.anatomia-theme.theme-admin-gamification .items-list { width: 100%; flex-direction: column; }
+
+.anatomia-theme.theme-admin-gamification .item-row
+{
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    margin: 0 0 16px 0;
+    padding: 24px 26px;
+    border-width: 0;
+    border-radius: 28px;
+    background-color: var(--sunken);
+}
+
+.anatomia-theme.theme-admin-gamification #levels-list .item-row
+{
+    border-left-width: 6px;
+    border-left-color: var(--accent);
+}
+
+.anatomia-theme.theme-admin-gamification .item-icon-circle
+{
+    width: 80px;
+    height: 80px;
+    margin: 0 24px 0 0;
+    border-width: 0;
+    border-radius: 40px;
+    background-color: var(--accent-soft);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+.anatomia-theme.theme-admin-gamification .item-icon-emoji { font-size: 38px; -unity-text-align: middle-center; }
+
+.anatomia-theme.theme-admin-gamification .item-text-col { flex-grow: 1; flex-shrink: 1; min-width: 0; flex-direction: column; }
+.anatomia-theme.theme-admin-gamification .item-title-label    { font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-admin-gamification .item-subtitle-label { margin-top: 2px; font-size: 28px; color: var(--ink-3); white-space: normal; }
+
+.anatomia-theme.theme-admin-gamification .item-delete-button
+{
+    width: 80px;
+    height: 80px;
+    margin: 0 0 0 16px;
+    border-width: 0;
+    border-radius: 40px;
+    background-color: rgba(0, 0, 0, 0);
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+.anatomia-theme.theme-admin-gamification .item-delete-button:hover { background-color: var(--danger-soft); }
+.anatomia-theme.theme-admin-gamification .item-delete-icon { font-size: 34px; color: var(--danger); -unity-text-align: middle-center; }
+
+/* ---- Preview ---- */
+.anatomia-theme.theme-admin-gamification .preview-card
+{
+    width: 100%;
+    margin: 0;
+    padding: 40px;
+    border-radius: 36px;
+    border-width: 1px;
+    border-color: var(--accent-soft);
+    background-color: var(--accent-faint);
+    background-image: none;
+}
+
+.anatomia-theme.theme-admin-gamification .preview-title { margin: 0 0 24px 0; font-size: 36px; letter-spacing: -0.3px; -unity-font-style: bold; color: var(--ink); }
+
+.anatomia-theme.theme-admin-gamification .preview-inner-card
+{
+    padding: 32px;
+    border-radius: 28px;
+    border-width: 1px;
+    border-color: var(--line);
+    background-color: var(--surface-solid);
+}
+.anatomia-theme.theme-admin-gamification .preview-inner-card-spaced { margin-top: 20px; }
+.anatomia-theme.theme-admin-gamification .preview-inner-title { margin: 0 0 22px 0; font-size: 30px; -unity-font-style: bold; color: var(--ink-2); }
+
+.anatomia-theme.theme-admin-gamification .points-preview-box
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    margin: 0 16px 0 0;
+    padding: 26px 0 22px 0;
+    border-radius: 24px;
+}
+.anatomia-theme.theme-admin-gamification .points-preview-hard   { margin-right: 0; background-color: var(--danger-soft); }
+.anatomia-theme.theme-admin-gamification .points-preview-easy   { background-color: var(--success-soft); }
+.anatomia-theme.theme-admin-gamification .points-preview-medium { background-color: var(--warn-soft); }
+.anatomia-theme.theme-admin-gamification .points-preview-value  { font-size: 48px; -unity-font-style: bold; -unity-text-align: middle-center; }
+.anatomia-theme.theme-admin-gamification .points-preview-easy .points-preview-value   { color: var(--success); }
+.anatomia-theme.theme-admin-gamification .points-preview-medium .points-preview-value { color: var(--warn); }
+.anatomia-theme.theme-admin-gamification .points-preview-hard .points-preview-value   { color: var(--danger); }
+.anatomia-theme.theme-admin-gamification .points-preview-label { margin-top: 6px; font-size: 26px; color: var(--ink-2); -unity-text-align: middle-center; }
+.anatomia-theme.theme-admin-gamification .progression-summary-text { font-size: 30px; color: var(--ink-2); white-space: normal; }
+
+.anatomia-theme.theme-admin-gamification .status-label { margin-top: 18px; font-size: 28px; color: var(--ink-3); -unity-text-align: middle-center; white-space: normal; }
+
+/* ---- Add Badge modal ---- */
+.anatomia-theme.theme-admin-gamification .modal-overlay,
+.anatomia-theme.theme-admin-gamification .dialog-overlay
+{
+    background-color: rgba(17, 20, 28, 0.5);
+    padding: 52px;
+}
+
+.anatomia-theme.theme-admin-gamification .modal-card,
+.anatomia-theme.theme-admin-gamification .dialog-card
+{
+    width: 100%;
+    padding: 44px;
+    border-width: 1px;
+    border-color: var(--line);
+    border-radius: 40px;
+    background-color: var(--surface-solid);
+}
+.anatomia-theme.theme-admin-gamification .modal-card  { max-width: 846px; }
+.anatomia-theme.theme-admin-gamification .dialog-card { max-width: 780px; }
+
+.anatomia-theme.theme-admin-gamification .modal-header-row { flex-direction: row; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.anatomia-theme.theme-admin-gamification .modal-title    { font-size: 40px; letter-spacing: -0.4px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-admin-gamification .modal-subtitle { margin-top: 6px; font-size: 28px; color: var(--ink-3); white-space: normal; }
+
+.anatomia-theme.theme-admin-gamification .modal-close-button
+{
+    width: 76px;
+    height: 76px;
+    border-width: 0;
+    border-radius: 38px;
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 34px;
+    color: var(--ink-3);
+    transition-property: background-color;
+    transition-duration: 0.18s;
+}
+.anatomia-theme.theme-admin-gamification .modal-close-button:hover { background-color: var(--sunken); color: var(--ink); }
+
+.anatomia-theme.theme-admin-gamification .icon-grid { flex-direction: row; flex-wrap: wrap; margin-top: 6px; }
+
+.anatomia-theme.theme-admin-gamification .icon-grid-item
+{
+    width: 100px;
+    height: 100px;
+    margin: 0 18px 18px 0;
+    padding: 0;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 24px;
+    background-color: var(--sunken);
+    justify-content: center;
+    align-items: center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.18s;
+}
+.anatomia-theme.theme-admin-gamification .icon-grid-item:hover { background-color: var(--track); }
+.anatomia-theme.theme-admin-gamification .icon-grid-item-selected,
+.anatomia-theme.theme-admin-gamification .icon-grid-item-selected:hover { background-color: var(--accent-soft); border-color: var(--accent); }
+.anatomia-theme.theme-admin-gamification .icon-grid-item-emoji { font-size: 40px; -unity-text-align: middle-center; }
+
+.anatomia-theme.theme-admin-gamification .modal-submit-button
+{
+    width: 100%;
+    height: 112px;
+    margin: 36px 0 0 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    border-width: 0;
+    border-radius: 24px;
+    background-color: var(--accent);
+    background-image: none;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+}
+.anatomia-theme.theme-admin-gamification .modal-submit-button:hover  { background-color: var(--accent-strong); }
+.anatomia-theme.theme-admin-gamification .modal-submit-button:active { background-color: var(--accent-press); }
+.anatomia-theme.theme-admin-gamification .modal-submit-label { font-size: 34px; -unity-font-style: bold; color: white; }
+
+.anatomia-theme.theme-admin-gamification .modal-cancel-button
+{
+    width: 100%;
+    height: 104px;
+    margin: 16px 0 0 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    border-width: 1px;
+    border-color: var(--line-strong);
+    border-radius: 24px;
+    background-color: var(--surface-solid);
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: var(--ink-2);
+}
+.anatomia-theme.theme-admin-gamification .modal-cancel-button:hover { background-color: var(--sunken); }
+
+/* ---- Leave-without-saving dialog ---- */
+.anatomia-theme.theme-admin-gamification .dialog-title   { margin-bottom: 16px; font-size: 40px; letter-spacing: -0.4px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.anatomia-theme.theme-admin-gamification .dialog-message { margin-bottom: 40px; font-size: 30px; color: var(--ink-2); white-space: normal; }
+
+.anatomia-theme.theme-admin-gamification .dialog-button
+{
+    height: 96px;
+    margin: 0 0 0 20px;
+    padding: 0 40px;
+    border-width: 0;
+    border-radius: 24px;
+    font-size: 30px;
+    -unity-font-style: bold;
+    transition-property: background-color;
+    transition-duration: 0.18s;
+}
+.anatomia-theme.theme-admin-gamification .dialog-button-secondary { background-color: var(--sunken); color: var(--ink); }
+.anatomia-theme.theme-admin-gamification .dialog-button-secondary:hover { background-color: var(--track); }
+.anatomia-theme.theme-admin-gamification .dialog-button-danger { background-color: var(--danger); color: white; }
+.anatomia-theme.theme-admin-gamification .dialog-button-danger:hover { background-color: rgb(176, 52, 52); }
+
+/* ---- Compact (controller toggles .compact when the panel is narrow) ---- */
+.anatomia-theme.theme-admin-gamification.compact .content-wrapper { padding: 0 36px 40px 36px; }
+.anatomia-theme.theme-admin-gamification.compact .header { padding: 72px 36px 0 36px; margin-bottom: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .header-title { font-size: 44px; letter-spacing: -0.8px; }
+.anatomia-theme.theme-admin-gamification.compact .header-subtitle { font-size: 27px; }
+.anatomia-theme.theme-admin-gamification.compact .back-button { width: 76px; height: 76px; border-radius: 38px; margin: 0 20px 0 0; }
+.anatomia-theme.theme-admin-gamification.compact .back-icon { width: 34px; height: 34px; }
+.anatomia-theme.theme-admin-gamification.compact .save-bar { padding: 20px 36px 36px 36px; }
+.anatomia-theme.theme-admin-gamification.compact .save-changes-button { height: 96px; padding: 0 28px; }
+.anatomia-theme.theme-admin-gamification.compact .save-icon { width: 34px; height: 34px; margin-right: 12px; }
+.anatomia-theme.theme-admin-gamification.compact .save-changes-label { display: flex; font-size: 31px; }
+.anatomia-theme.theme-admin-gamification.compact .section-card { padding: 30px; border-radius: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .section-card-title { font-size: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .section-card-note { font-size: 26px; margin-bottom: 26px; }
+.anatomia-theme.theme-admin-gamification.compact .field-label { font-size: 27px; }
+.anatomia-theme.theme-admin-gamification.compact .text-field > #unity-text-input { height: 92px; padding: 0 22px; font-size: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .points-field > #unity-text-input { height: 104px; font-size: 40px; }
+.anatomia-theme.theme-admin-gamification.compact .points-col { margin-right: 12px; }
+.anatomia-theme.theme-admin-gamification.compact .points-col-last { margin-right: 0; }
+.anatomia-theme.theme-admin-gamification.compact .add-item-button { height: 68px; padding: 0 22px; }
+.anatomia-theme.theme-admin-gamification.compact .add-item-label { font-size: 26px; }
+.anatomia-theme.theme-admin-gamification.compact .global-tag-label { font-size: 22px; }
+.anatomia-theme.theme-admin-gamification.compact .levels-note { font-size: 25px; }
+.anatomia-theme.theme-admin-gamification.compact .item-row { padding: 20px 22px; border-radius: 24px; }
+.anatomia-theme.theme-admin-gamification.compact .item-icon-circle { width: 68px; height: 68px; border-radius: 34px; margin-right: 20px; }
+.anatomia-theme.theme-admin-gamification.compact .item-icon-emoji { font-size: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .item-title-label { font-size: 30px; }
+.anatomia-theme.theme-admin-gamification.compact .item-subtitle-label { font-size: 25px; }
+.anatomia-theme.theme-admin-gamification.compact .preview-card { padding: 30px; }
+.anatomia-theme.theme-admin-gamification.compact .preview-title { font-size: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .preview-inner-card { padding: 26px; }
+.anatomia-theme.theme-admin-gamification.compact .points-preview-value { font-size: 42px; }
+.anatomia-theme.theme-admin-gamification.compact .points-preview-label { font-size: 24px; }
+.anatomia-theme.theme-admin-gamification.compact .progression-summary-text { font-size: 27px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-overlay,
+.anatomia-theme.theme-admin-gamification.compact .dialog-overlay { padding: 32px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-card,
+.anatomia-theme.theme-admin-gamification.compact .dialog-card { padding: 32px; border-radius: 34px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-title,
+.anatomia-theme.theme-admin-gamification.compact .dialog-title { font-size: 34px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-subtitle,
+.anatomia-theme.theme-admin-gamification.compact .dialog-message { font-size: 26px; }
+.anatomia-theme.theme-admin-gamification.compact .icon-grid-item { width: 84px; height: 84px; margin: 0 14px 14px 0; }
+.anatomia-theme.theme-admin-gamification.compact .icon-grid-item-emoji { font-size: 34px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-submit-button { height: 96px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-submit-label { font-size: 30px; }
+.anatomia-theme.theme-admin-gamification.compact .modal-cancel-button { height: 90px; font-size: 29px; }
+.anatomia-theme.theme-admin-gamification.compact .dialog-button { height: 84px; padding: 0 28px; font-size: 27px; }
+
+
+/* =========================================================
+   ADMIN DASHBOARD - Student Activity "View All" overlay  (matches the student screens)
+   Scoped under .anatomia-theme.theme-admin. Restyles the full-screen overlay chrome
+   (header, close chip, search pill) and the activity rows built in code by
+   AdminDashboardController.BuildActivityRow (also used by the inline feed).
+   ========================================================= */
+
+.anatomia-theme.theme-admin .modal-overlay { background-color: rgba(22, 24, 38, 0.5); }
+
+.anatomia-theme.theme-admin .view-all-card
+{
+    background-color: rgb(244, 245, 250);
+    background-image: url("project://database/Assets/UI/Theme/ambient-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 0;
+}
+
+.anatomia-theme.theme-admin .view-all-header
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-bottom-width: 0;
+    padding: 96px 52px 20px 52px;
+}
+
+.anatomia-theme.theme-admin .view-all-title { font-size: 50px; letter-spacing: -0.8px; color: var(--ink); }
+
+.anatomia-theme.theme-admin .view-all-close-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    font-size: 30px;
+    color: var(--ink);
+}
+
+/* Search pill */
+.anatomia-theme.theme-admin .view-all-search-row
+{
+    background-color: rgba(0, 0, 0, 0);
+    padding: 8px 52px 12px 52px;
+}
+
+.anatomia-theme.theme-admin .view-all-search-field-wrapper
+{
+    background-color: var(--surface);
+    border-radius: 100px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.anatomia-theme.theme-admin .view-all-search-icon { opacity: 1; -unity-background-image-tint-color: var(--ink-3); }
+.anatomia-theme.theme-admin .view-all-search-field > TextInput { color: var(--ink); }
+
+/* List: separate glass rows */
+.anatomia-theme.theme-admin .view-all-list
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding: 20px 52px 100px 52px;
+    overflow: visible;
+}
+
+.anatomia-theme.theme-admin .view-all-list .recent-activity-row
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
+    padding: 28px;
+    margin-bottom: 16px;
+}
+
+.anatomia-theme.theme-admin .view-all-no-results { padding-top: 80px; }
+
+/* ---- Activity rows (feed + View All): accent purple instead of blue ---- */
+.anatomia-theme.theme-admin .activity-avatar
+{
+    background-color: var(--accent-soft);
+    border-width: 0;
+}
+
+.anatomia-theme.theme-admin .activity-avatar-label { color: var(--accent); }
+
+.anatomia-theme.theme-admin .activity-avatar-high { background-color: var(--success-soft); border-width: 0; }
+.anatomia-theme.theme-admin .activity-avatar-high .activity-avatar-label { color: var(--success); }
+.anatomia-theme.theme-admin .activity-avatar-mid { background-color: var(--warn-soft); border-width: 0; }
+.anatomia-theme.theme-admin .activity-avatar-mid .activity-avatar-label { color: var(--warn); }
+.anatomia-theme.theme-admin .activity-avatar-low { background-color: var(--danger-soft); border-width: 0; }
+.anatomia-theme.theme-admin .activity-avatar-low .activity-avatar-label { color: var(--danger); }
+
+.anatomia-theme.theme-admin .recent-activity-row { border-bottom-color: var(--line); }
+.anatomia-theme.theme-admin .activity-row-new { background-color: var(--accent-faint); }
+
+.anatomia-theme.theme-admin .activity-student-name { color: var(--ink); }
+.anatomia-theme.theme-admin .activity-quiz-title { color: var(--ink-2); }
+.anatomia-theme.theme-admin .activity-join-text { color: var(--ink-2); }
+.anatomia-theme.theme-admin .activity-classroom-name,
+.anatomia-theme.theme-admin .recent-activity-time { color: var(--ink-3); }
+
+.anatomia-theme.theme-admin .activity-kind-label { color: var(--accent); }
+.anatomia-theme.theme-admin .activity-kind-label-quiz { color: var(--accent); }
+.anatomia-theme.theme-admin .activity-kind-label-join { color: var(--warn); }
+
+.anatomia-theme.theme-admin .activity-score-badge { color: var(--accent); background-color: var(--accent-soft); }
+.anatomia-theme.theme-admin .activity-score-badge-high { color: var(--success); background-color: var(--success-soft); }
+.anatomia-theme.theme-admin .activity-score-badge-mid { color: var(--warn); background-color: var(--warn-soft); }
+.anatomia-theme.theme-admin .activity-score-badge-low { color: var(--danger); background-color: var(--danger-soft); }
+
+.anatomia-theme.theme-admin .activity-score-track { background-color: var(--track); }
+.anatomia-theme.theme-admin .activity-score-fill { background-color: var(--accent); }
+.anatomia-theme.theme-admin .activity-score-fill-high { background-color: var(--success); }
+.anatomia-theme.theme-admin .activity-score-fill-mid { background-color: var(--warn); }
+.anatomia-theme.theme-admin .activity-score-fill-low { background-color: var(--danger); }
+
+.anatomia-theme.theme-admin .activity-status-pill { color: var(--success); background-color: var(--success-soft); }
+
+/* Narrow windows */
+.anatomia-theme.theme-admin.compact .view-all-header { padding: 80px 40px 16px 40px; }
+.anatomia-theme.theme-admin.compact .view-all-title { font-size: 42px; }
+.anatomia-theme.theme-admin.compact .view-all-search-row { padding: 8px 40px 12px 40px; }
+.anatomia-theme.theme-admin.compact .view-all-list { padding: 16px 40px 90px 40px; }
+.anatomia-theme.theme-admin.compact .view-all-list .recent-activity-row { padding: 22px; border-radius: 30px; }
+
+/* =========================================================
+   STUDENT DASHBOARD - Recent Activity "View All" overlay  (matches the admin dashboard + student screens)
+   Scoped under .anatomia-theme.theme-dashboard. Restyles the overlay chrome (ambient background,
+   transparent header, close chip) and turns the flat divider list into separate glass rows with a
+   soft tinted icon tile per activity kind. Rows are built in code by
+   StudentDashboardController.BuildActivityItem (same classes as the inline feed, so the inline feed
+   is untouched: everything below is scoped to .view-all-list).
+   ========================================================= */
+
+.anatomia-theme.theme-dashboard .view-all-card
+{
+    background-color: rgb(244, 245, 250);
+    background-image: url("project://database/Assets/UI/Theme/ambient-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 0;
+    border-width: 0;
+}
+
+.anatomia-theme.theme-dashboard .view-all-header
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-bottom-width: 0;
+    padding: 96px 52px 24px 52px;
+}
+
+.anatomia-theme.theme-dashboard .view-all-title-block { flex-grow: 1; flex-shrink: 1; margin-right: 24px; }
+.anatomia-theme.theme-dashboard .view-all-title { font-size: 50px; letter-spacing: -0.8px; color: var(--ink); }
+.anatomia-theme.theme-dashboard .view-all-subtitle { font-size: 26px; color: var(--ink-3); margin-top: 6px; white-space: normal; }
+
+.anatomia-theme.theme-dashboard .view-all-close-button
+{
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+}
+
+/* List: separate glass rows instead of one divided sheet */
+.anatomia-theme.theme-dashboard .view-all-list
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin: 0;
+    padding: 12px 52px 100px 52px;
+    overflow: visible;
+}
+
+.anatomia-theme.theme-dashboard .view-all-list .activity-item
+{
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--line);
+    border-bottom-color: var(--line-strong);
+    border-radius: 36px;
+    padding: 26px 28px;
+    margin-bottom: 16px;
+}
+
+.anatomia-theme.theme-dashboard .view-all-list .activity-item:hover { background-color: var(--surface-hover); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-item-last { border-bottom-width: 1px; margin-bottom: 0; }
+
+/* Icon tile: soft tint behind a smaller glyph (colour per kind) */
+.anatomia-theme.theme-dashboard .view-all-list .activity-icon
+{
+    width: 84px;
+    height: 84px;
+    margin-right: 26px;
+    border-radius: 28px;
+    background-color: var(--accent-soft);
+    background-size: 40px 40px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-quiz  { background-color: var(--accent-soft);  -unity-background-image-tint-color: var(--accent); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-badge { background-color: var(--warn-soft);    -unity-background-image-tint-color: var(--warn); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-join  { background-color: var(--success-soft); -unity-background-image-tint-color: var(--success); }
+
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-label-quiz  { color: var(--accent); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-label-badge { color: var(--warn); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-kind-label-join  { color: var(--success); }
+
+.anatomia-theme.theme-dashboard .view-all-list .activity-title { font-size: 30px; color: var(--ink); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-time { font-size: 23px; color: var(--ink-3); }
+.anatomia-theme.theme-dashboard .view-all-list .activity-points { font-size: 24px; padding: 10px 22px; }
+
+/* Empty state */
+.anatomia-theme.theme-dashboard .view-all-no-results { padding: 90px 60px 0 60px; }
+
+.anatomia-theme.theme-dashboard .view-all-empty-tile
+{
+    width: 132px;
+    height: 132px;
+    border-radius: 44px;
+    background-color: var(--accent-soft);
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+}
+
+.anatomia-theme.theme-dashboard .view-all-empty-icon
+{
+    width: 64px;
+    height: 64px;
+    background-image: url("project://database/Assets/UI/Icons/empty-icon.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.anatomia-theme.theme-dashboard .view-all-empty-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); -unity-text-align: middle-center; }
+.anatomia-theme.theme-dashboard .view-all-empty-subtitle { font-size: 26px; color: var(--ink-3); margin-top: 10px; white-space: normal; -unity-text-align: middle-center; }
+
+/* Narrow windows */
+.anatomia-theme.theme-dashboard.compact .view-all-header { padding: 80px 40px 16px 40px; }
+.anatomia-theme.theme-dashboard.compact .view-all-title { font-size: 42px; }
+.anatomia-theme.theme-dashboard.compact .view-all-subtitle { font-size: 23px; }
+.anatomia-theme.theme-dashboard.compact .view-all-close-button { width: 72px; height: 72px; border-radius: 36px; }
+.anatomia-theme.theme-dashboard.compact .view-all-list { padding: 8px 40px 90px 40px; }
+.anatomia-theme.theme-dashboard.compact .view-all-list .activity-item { padding: 22px; border-radius: 30px; }
+.anatomia-theme.theme-dashboard.compact .view-all-list .activity-icon { width: 72px; height: 72px; margin-right: 20px; border-radius: 24px; background-size: 34px 34px; }
+.anatomia-theme.theme-dashboard.compact .view-all-list .activity-title { font-size: 27px; }

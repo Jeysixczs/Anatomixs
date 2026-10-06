@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminSubmissionReview/AdminSubmissionReview.uss?fileID=7433441132597879392&amp;guid=d28fda970f8ac5443963f259e27cb487&amp;type=3#AdminSubmissionReview"/>
-    <ui:VisualElement name="submission-review-root" class="sr-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <ui:VisualElement name="submission-review-root" class="anatomia-theme theme-admin-sr sr-root">
         <ui:VisualElement name="sr-header" class="sr-header">
             <ui:VisualElement class="sr-header-top-row">
                 <ui:Button name="sr-back-button" class="sr-icon-button">
@@ -32,7 +33,25 @@
                 <ui:Label text="Classroom" class="sr-section-label"/>
                 <ui:VisualElement name="sr-classroom-chips" class="sr-chip-row"/>
             </ui:VisualElement>
-            <ui:VisualElement name="sr-filter-row" class="sr-chip-row sr-filter-row hidden"/>
+            <ui:VisualElement name="sr-filter-row" class="sr-filter-row hidden">
+                <ui:VisualElement name="sr-search-row" class="sr-search-row">
+                    <ui:VisualElement name="sr-search-wrapper" class="sr-search-wrapper">
+                        <ui:VisualElement class="sr-search-icon"/>
+                        <ui:TextField name="sr-search-field" placeholder-text="Search students" class="sr-search-field"/>
+                        <ui:Button name="sr-search-clear" class="sr-search-clear hidden">
+                            <ui:VisualElement class="sr-search-clear-icon"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:Button name="sr-filter-button" class="sr-filter-button">
+                        <ui:VisualElement class="sr-filter-button-icon"/>
+                        <ui:VisualElement name="sr-filter-badge" class="sr-filter-badge hidden"/>
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:Button name="sr-filter-clear" class="sr-filter-pill hidden">
+                    <ui:Label name="sr-filter-pill-label" text="" class="sr-filter-pill-label"/>
+                    <ui:VisualElement class="sr-filter-pill-x"/>
+                </ui:Button>
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:ScrollView name="sr-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="sr-scroll">
             <ui:VisualElement class="sr-content">
@@ -105,6 +124,9 @@
                     </ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="sr-filter-popover" class="sr-filter-popover hidden">
+            <ui:VisualElement name="sr-filter-menu" class="sr-filter-menu"/>
         </ui:VisualElement>
         <ui:VisualElement name="sr-working-overlay" class="sr-working-overlay hidden">
             <ui:VisualElement class="sr-working-card">

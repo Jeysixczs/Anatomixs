@@ -96,7 +96,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentDashboardController] OnEnable called");
+            //Debug.Log("[StudentDashboardController] OnEnable called");
 
             if (_document == null)
             {
@@ -121,7 +121,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentDashboardController] Root is null!");
+                //Debug.LogError("[StudentDashboardController] Root is null!");
                 return;
             }
 
@@ -275,12 +275,12 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentDashboardController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentDashboardController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
             else
             {
-                Debug.Log("[StudentDashboardController] Found screen-root wrapper");
+                //Debug.Log("[StudentDashboardController] Found screen-root wrapper");
             }
 
             _header = _screenRoot.Q<VisualElement>("header");
@@ -318,11 +318,11 @@ namespace Anatomia3D.UI
 
             if (_joinclassroomcard == null || _joinClassroomButton == null)
             {
-                Debug.LogWarning("[StudentDashboardController] 'join-classroom-icon-box'/'join-classroom-button' " +
-                    "not found in UXML - the join-classroom gradient will be skipped for whichever is missing.");
+                //Debug.LogWarning("[StudentDashboardController] 'join-classroom-icon-box'/'join-classroom-button' " +
+                    //"not found in UXML - the join-classroom gradient will be skipped for whichever is missing.");
             }
 
-            Debug.Log($"[StudentDashboardController] Found Explore3D: {_explore3DButton != null}, Header: {_header != null}");
+            //Debug.Log($"[StudentDashboardController] Found Explore3D: {_explore3DButton != null}, Header: {_header != null}");
         }
 
         private void WireCallbacks()
@@ -359,9 +359,9 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance?.CurrentStudent;
             if (student == null)
             {
-                Debug.LogWarning("[StudentDashboardController] No signed-in student found - " +
-                    "showing the dashboard with placeholder data. Was this screen opened without " +
-                    "going through login/create-account first?");
+                //Debug.LogWarning("[StudentDashboardController] No signed-in student found - " +
+                    //"showing the dashboard with placeholder data. Was this screen opened without " +
+                    //"going through login/create-account first?");
                 return;
             }
 
@@ -381,8 +381,8 @@ namespace Anatomia3D.UI
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
-                    "falling back to raw points/quiz stats without level-progress math.");
+                //Debug.LogWarning("[StudentDashboardController] AdminGamificationService.Instance is null - " +
+                    //"falling back to raw points/quiz stats without level-progress math.");
                 SetStudentData(student.FullName, student.Level, student.Level, 0f, 0, student.QuizzesCompleted, student.TotalPoints);
                 ApplyAvatar(student.FullName, student.AvatarUrl, student.Uid);
                 return;
@@ -532,7 +532,7 @@ namespace Anatomia3D.UI
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[StudentDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    //Debug.LogWarning($"[StudentDashboardController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
 
                     // Explicit fallback, not just "leave whatever's showing" - covers
                     // access-denied/expired-URL/deleted-asset cases (not just being
@@ -687,7 +687,7 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null || ClassroomService.Instance == null)
             {
-                Debug.LogWarning("[StudentDashboardController] QuizService/ClassroomService.Instance is null - cannot load Recent Activity.");
+                //Debug.LogWarning("[StudentDashboardController] QuizService/ClassroomService.Instance is null - cannot load Recent Activity.");
                 onComplete(new List<ActivityEntry>());
                 return;
             }
@@ -1153,6 +1153,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_gradientTexture != null)

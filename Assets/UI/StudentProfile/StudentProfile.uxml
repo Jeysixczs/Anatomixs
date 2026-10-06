@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentProfile/StudentProfile.uss?fileID=7433441132597879392&amp;guid=7a745c1bf4f217341ba6cea4252b0cbe&amp;type=3#StudentProfile"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-profile screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="header" class="header">
                 <ui:VisualElement name="header-top-row" class="header-top-row">
@@ -12,34 +13,36 @@
                         <ui:Label text="Manage your account" class="header-subtitle"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="profile-summary-card" class="profile-summary-card">
                     <ui:VisualElement name="avatar" class="avatar">
                         <ui:Label name="avatar-initials-label" text="JC" class="avatar-initials"/>
                     </ui:VisualElement>
-                    <ui:Label name="student-name-label" text="Jeysi Cruz" class="profile-name"/>
-                    <ui:Label name="student-email-label" text="jeysi.cruz@email.com" class="profile-email"/>
-                    <ui:VisualElement name="level-badge" class="level-badge">
-                        <ui:Label name="level-badge-label" text="Level 5 • 1,250 pts" class="level-badge-label"/>
+                    <ui:VisualElement name="profile-info" class="profile-info">
+                        <ui:Label name="student-name-label" text="Jeysi Cruz" class="profile-name"/>
+                        <ui:Label name="student-email-label" text="jeysi.cruz@email.com" class="profile-email"/>
+                        <ui:VisualElement name="level-badge" class="level-badge">
+                            <ui:Label name="level-badge-label" text="Student" class="level-badge-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="stats-row" class="stats-row">
-                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
+                    <ui:VisualElement name="quizzes-card" class="stat-card">
                         <ui:VisualElement name="quizzes-background" class="stat-icon stat-icon-blue">
                             <ui:VisualElement class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz.png?fileID=2800000&amp;guid=19b870387888dfc4d9f459d2aedfbf3a&amp;type=3#quiz&quot;);"/>
                         </ui:VisualElement>
                         <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
-                        <ui:Label text="Quizzes" class="stat-label"/>
+                        <ui:Label text="Quizzes taken" class="stat-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="level-stat-card" class="stat-card stat-card-mid">
+                    <ui:VisualElement name="level-stat-card" class="stat-card">
                         <ui:VisualElement name="level-background" class="stat-icon stat-icon-orange">
                             <ui:VisualElement class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/level-icon-black.png?fileID=2800000&amp;guid=f5bf8603d6a565942adfc005b80d34f8&amp;type=3#level-icon-black&quot;);"/>
                         </ui:VisualElement>
                         <ui:Label name="level-value-label" text="5" class="stat-value"/>
                         <ui:Label text="Level" class="stat-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="points-card" class="stat-card stat-card-right">
+                    <ui:VisualElement name="points-card" class="stat-card">
                         <ui:VisualElement name="points-background" class="stat-icon stat-icon-purple">
                             <ui:VisualElement class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon-black.png?fileID=2800000&amp;guid=1fbb05f85ac3e064c8b6c0f8431da21b&amp;type=3#reward-icon-black&quot;);"/>
                         </ui:VisualElement>
@@ -64,7 +67,9 @@
                         <ui:Label text="Notifications" class="menu-item-label"/>
                         <ui:VisualElement class="menu-chevron"/>
                     </ui:Button>
-                    <ui:VisualElement class="menu-divider"/>
+                </ui:VisualElement>
+                <ui:Label text="ABOUT" class="section-title"/>
+                <ui:VisualElement name="about-menu-card" class="menu-card">
                     <ui:Button name="about-button" class="menu-item">
                         <ui:VisualElement name="about-background" class="menu-icon-box menu-icon-gray">
                             <ui:VisualElement class="menu-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/about-icon.png?fileID=2800000&amp;guid=2e9e1a097c300ca428328de23c6af96e&amp;type=3#about-icon&quot;);"/>
@@ -79,7 +84,7 @@
                     </ui:VisualElement>
                     <ui:Label text="Log Out" class="logout-label"/>
                 </ui:Button>
-                <ui:Label text="Anatomia 3D  v1.0.0" class="version-label"/>
+                <ui:Label text="Anatomia 3D  v1.0.1" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

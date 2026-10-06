@@ -1070,7 +1070,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning("[QuizService] Could not record missed quiz attempt.");
+                    //Debug.LogWarning("[QuizService] Could not record missed quiz attempt.");
                 }
             });
         }
@@ -1095,7 +1095,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning("[QuizService] Could not record badge award source detail.");
+                    //Debug.LogWarning("[QuizService] Could not record badge award source detail.");
                 }
             });
         }
@@ -1252,9 +1252,9 @@ namespace Anatomia3D.Backend
                         // query (studentId + completedAt) - same situation as
                         // FetchMyScores above. Check the Firebase console (Firestore ->
                         // Indexes) or the exception below for a direct "create index" link.
-                        Debug.LogError($"[QuizService] FetchRecentActivity (quizAttempts) failed - " +
-                            $"likely a missing Firestore composite index (studentId + completedAt). " +
-                            $"Exception: {task.Exception}");
+                        //Debug.LogError($"[QuizService] FetchRecentActivity (quizAttempts) failed - " +
+                            //$"likely a missing Firestore composite index (studentId + completedAt). " +
+                            //$"Exception: {task.Exception}");
                     }
                     else if (!task.IsCanceled)
                     {
@@ -1335,9 +1335,9 @@ namespace Anatomia3D.Backend
                             // query (classroomId + completedAt) - check the Firebase console
                             // (Firestore -> Indexes) or the exception below for a direct
                             // "create index" link.
-                            Debug.LogError($"[QuizService] FetchRecentActivityForAdmin (quizAttempts) failed for " +
-                                $"classroom {classroomId} - likely a missing Firestore composite index " +
-                                $"(classroomId + completedAt). Exception: {task.Exception}");
+                            //Debug.LogError($"[QuizService] FetchRecentActivityForAdmin (quizAttempts) failed for " +
+                                //$"classroom {classroomId} - likely a missing Firestore composite index " +
+                                //$"(classroomId + completedAt). Exception: {task.Exception}");
                         }
                         else if (!task.IsCanceled)
                         {

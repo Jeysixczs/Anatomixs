@@ -1,48 +1,51 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/AdminQuizManagement/AdminQuizManagement.uss?fileID=7433441132597879392&amp;guid=9fe766227add03d49baacdb253a4545d&amp;type=3#AdminQuizManagement"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaLayout.uss"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-admin-quiz screen-root">
         <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <ui:VisualElement name="content-wrapper" class="content-wrapper" style="padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;">
-                <ui:VisualElement name="header" class="header">
-                    <ui:VisualElement name="header-top-row" class="header-top-row">
-                        <ui:Button name="back-button" class="back-button">
-                            <ui:VisualElement name="back-icon" class="back-icon"/>
-                        </ui:Button>
-                        <ui:VisualElement name="header-text" class="header-text">
-                            <ui:Label text="My Quizzes" class="header-title"/>
-                            <ui:Label text="Create and manage quizzes" class="header-subtitle"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="stats-row" class="stats-row">
-                        <ui:VisualElement name="total-quizzes-stat-card" class="stat-card stat-card-left">
-                            <ui:Label name="total-quizzes-value-label" text="0" class="stat-value"/>
-                            <ui:Label text="Quizzes" class="stat-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement name="total-questions-stat-card" class="stat-card stat-card-mid">
-                            <ui:Label name="total-questions-value-label" text="0" class="stat-value"/>
-                            <ui:Label text="Questions" class="stat-label"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement name="categories-stat-card" class="stat-card stat-card-right">
-                            <ui:Label name="categories-value-label" text="0" class="stat-value"/>
-                            <ui:Label text="Categories" class="stat-label"/>
-                        </ui:VisualElement>
+            <!-- 1. Editorial header (same language as the student screens): back + title, then ONE stats strip -->
+            <ui:VisualElement name="header" class="header">
+                <ui:VisualElement name="header-top-row" class="header-top-row">
+                    <ui:Button name="back-button" class="back-button">
+                        <ui:VisualElement name="back-icon" class="back-icon"/>
+                    </ui:Button>
+                    <ui:VisualElement name="header-text" class="header-text">
+                        <ui:Label text="My Quizzes" class="header-title"/>
+                        <ui:Label text="Create and manage quizzes" class="header-subtitle"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="body-content" class="body-content">
-                    <ui:VisualElement name="search-row" class="search-row">
-                        <ui:VisualElement name="search-field-wrapper" class="search-field-wrapper">
-                            <ui:Label text="" class="search-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;guid=46917629dafc20049adaebe048c8263a&amp;type=3#search-icon&quot;); height: 51px; width: 52px;"/>
-                            <ui:TextField name="quiz-search-field" placeholder-text="Search quizzes" class="search-field"/>
-                        </ui:VisualElement>
+                <ui:VisualElement name="stats-row" class="stats-strip">
+                    <ui:VisualElement name="total-quizzes-stat-card" class="stat-cell">
+                        <ui:Label name="total-quizzes-value-label" text="0" class="stat-cell-value"/>
+                        <ui:Label text="Quizzes" class="stat-cell-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
-                        <ui:Label text="No quizzes yet" class="empty-state-text"/>
+                    <ui:VisualElement name="total-questions-stat-card" class="stat-cell stat-cell-border">
+                        <ui:Label name="total-questions-value-label" text="0" class="stat-cell-value"/>
+                        <ui:Label text="Questions" class="stat-cell-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="quizzes-no-results-state" class="quizzes-empty-state hidden">
-                        <ui:Label text="No quizzes match your search" class="empty-state-text"/>
+                    <ui:VisualElement name="categories-stat-card" class="stat-cell stat-cell-border">
+                        <ui:Label name="categories-value-label" text="0" class="stat-cell-value stat-cell-value-accent"/>
+                        <ui:Label text="Categories" class="stat-cell-label"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
                 </ui:VisualElement>
+            </ui:VisualElement>
+            <!-- 2. Content: search pill, section title, list (content-wrapper owns the side padding) -->
+            <ui:VisualElement name="content-wrapper" class="content-wrapper">
+                <ui:VisualElement name="search-row" class="search-row">
+                    <ui:VisualElement name="search-field-wrapper" class="search-field-wrapper">
+                        <ui:Label text="" class="search-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/search-icon.png?fileID=2800000&amp;guid=46917629dafc20049adaebe048c8263a&amp;type=3#search-icon&quot;);"/>
+                        <ui:TextField name="quiz-search-field" placeholder-text="Search quizzes" class="search-field"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label text="All quizzes" class="section-title"/>
+                <ui:VisualElement name="quizzes-empty-state" class="quizzes-empty-state hidden">
+                    <ui:Label text="No quizzes yet" class="empty-state-text"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-no-results-state" class="quizzes-empty-state hidden">
+                    <ui:Label text="No quizzes match your search" class="empty-state-text"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="quizzes-list" class="quizzes-list"/>
             </ui:VisualElement>
         </ui:ScrollView>
         <ui:VisualElement name="new-quiz-footer" class="new-quiz-footer">
@@ -71,6 +74,7 @@
                         <ui:Button name="quiz-detail-tab-questions-button" text="Questions" class="quiz-tab-button"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="quiz-detail-overview-panel" class="quiz-detail-panel">
+                        <ui:Label text="Settings" class="section-title section-title-first"/>
                         <ui:VisualElement class="quiz-overview-grid">
                             <ui:VisualElement class="quiz-overview-stat-card">
                                 <ui:VisualElement class="quiz-overview-stat-icon-badge">
@@ -109,6 +113,7 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
+                        <ui:Label text="Totals" class="section-title"/>
                         <ui:VisualElement class="quiz-overview-totals-grid">
                             <ui:VisualElement class="quiz-overview-stat-card">
                                 <ui:VisualElement class="quiz-overview-stat-icon-badge">
@@ -159,7 +164,7 @@
                         <ui:Label name="create-quiz-step-label" text="Basic Info, Settings &amp; Availability" class="wizard-step-label"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="create-quiz-progress-row" class="wizard-progress-row" style="padding-right: 32px; padding-left: 32px;">
+                <ui:VisualElement name="create-quiz-progress-row" class="wizard-progress-row">
                     <ui:VisualElement name="create-quiz-progress-1" class="wizard-progress-segment wizard-progress-segment-last"/>
                 </ui:VisualElement>
                 <ui:ScrollView name="create-quiz-step-1" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" touch-scroll-type="Clamped" class="wizard-step wizard-step-scroll">
@@ -454,11 +459,11 @@
                                 <ui:Label text="Cardiovascular" class="image-based-system-label"/>
                             </ui:Button>
                         </ui:VisualElement>
-                        <ui:VisualElement name="image-based-selected-structure-panel" class="image-based-selected-structure-panel hidden" style="border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255);">
+                        <ui:VisualElement name="image-based-selected-structure-panel" class="image-based-selected-structure-panel hidden">
                             <ui:Label text="Selected Structure" class="field-label"/>
                             <ui:Label name="image-based-selected-structure-name" text="" class="image-based-selected-structure-name"/>
                             <ui:Label name="image-based-selected-structure-system" text="" class="image-based-selected-structure-system"/>
-                            <ui:Button name="image-based-change-structure-button" text="Change Structure" class="image-based-change-structure-button" style="border-left-color: rgb(160, 166, 178); border-right-color: rgb(160, 166, 178); border-top-color: rgb(160, 166, 178); border-bottom-color: rgb(160, 166, 178);"/>
+                            <ui:Button name="image-based-change-structure-button" text="Change Structure" class="image-based-change-structure-button"/>
                         </ui:VisualElement>
                         <ui:Label name="image-based-structure-error" text="" class="field-error hidden"/>
                     </ui:VisualElement>

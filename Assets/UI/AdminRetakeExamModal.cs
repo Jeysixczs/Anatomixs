@@ -12,7 +12,13 @@ namespace Anatomia3D.UI
     /// with inline styles (no UXML/USS changes needed). Opened from the Quizzes tab of
     /// AdminClassroomDetailController.
     ///
-    /// Layout: colored header band (title + quiz name + close) / scrolling body /
+    /// Styled to match the student-side "Quiet Glass" theme (AnatomiaTheme.uss tokens:
+    /// purple accent, ink neutrals, hairline borders, soft semantic tints, pill buttons,
+    /// 40px card corners). No emoji/text glyphs: every symbol is a PNG from Assets/UI/Icons,
+    /// applied through the .rt-icon-* classes in AdminClassroomDetail.uss (this modal is
+    /// hosted on the Admin Classroom Detail screen) and tinted from code.
+    ///
+    /// Layout: white header (icon tile + title + quiz name + close chip) / scrolling body /
     /// sticky footer (status message + Cancel + Allow Retake).
     ///
     /// Body:
@@ -28,19 +34,22 @@ namespace Anatomia3D.UI
     /// </summary>
     public static class AdminRetakeExamModal
     {
-        // ---------------- palette ----------------
-        private static readonly Color Ink = new Color(0.13f, 0.15f, 0.14f);
-        private static readonly Color Muted = new Color(0.45f, 0.49f, 0.48f);
-        private static readonly Color Line = new Color(0.89f, 0.91f, 0.90f);
-        private static readonly Color LineStrong = new Color(0.78f, 0.81f, 0.80f);
-        private static readonly Color Surface = new Color(0.96f, 0.97f, 0.97f);
+        // ---------------- palette (mirrors the student theme tokens) ----------------
+        private static readonly Color Ink = new Color(22 / 255f, 24 / 255f, 38 / 255f);               // --ink
+        private static readonly Color Muted = new Color(84 / 255f, 90 / 255f, 110 / 255f);            // --ink-2
+        private static readonly Color Faint = new Color(139 / 255f, 145 / 255f, 163 / 255f);          // --ink-3
+        private static readonly Color Line = new Color(22 / 255f, 24 / 255f, 38 / 255f, 0.07f);       // --line
+        private static readonly Color LineStrong = new Color(22 / 255f, 24 / 255f, 38 / 255f, 0.13f); // --line-strong
+        private static readonly Color Surface = new Color(22 / 255f, 24 / 255f, 38 / 255f, 0.045f);   // --sunken
 
-        private static readonly Color Accent = new Color(0.13f, 0.55f, 0.42f);
-        private static readonly Color AccentSoft = new Color(0.90f, 0.96f, 0.93f);
-        private static readonly Color Danger = new Color(0.80f, 0.20f, 0.25f);
-        private static readonly Color DangerSoft = new Color(0.99f, 0.92f, 0.93f);
-        private static readonly Color Amber = new Color(0.72f, 0.45f, 0.05f);
-        private static readonly Color AmberSoft = new Color(1.00f, 0.95f, 0.85f);
+        private static readonly Color Accent = new Color(91 / 255f, 76 / 255f, 219 / 255f);           // --accent
+        private static readonly Color AccentSoft = new Color(91 / 255f, 76 / 255f, 219 / 255f, 0.11f);// --accent-soft
+        private static readonly Color Success = new Color(28 / 255f, 135 / 255f, 94 / 255f);          // --success
+        private static readonly Color SuccessSoft = new Color(28 / 255f, 135 / 255f, 94 / 255f, 0.12f);
+        private static readonly Color Danger = new Color(204 / 255f, 64 / 255f, 64 / 255f);           // --danger
+        private static readonly Color DangerSoft = new Color(204 / 255f, 64 / 255f, 64 / 255f, 0.09f);
+        private static readonly Color Amber = new Color(190 / 255f, 126 / 255f, 24 / 255f);           // --warn
+        private static readonly Color AmberSoft = new Color(190 / 255f, 126 / 255f, 24 / 255f, 0.13f);
 
         private const int MinExtraAttempts = 1;
         private const int MaxExtraAttempts = 10;
@@ -57,7 +66,7 @@ namespace Anatomia3D.UI
             var overlay = new VisualElement { name = "retake-exam-overlay" };
             overlay.style.position = Position.Absolute;
             overlay.style.left = overlay.style.top = overlay.style.right = overlay.style.bottom = 0;
-            overlay.style.backgroundColor = new Color(0.05f, 0.08f, 0.07f, 0.6f);
+            overlay.style.backgroundColor = new Color(22 / 255f, 24 / 255f, 38 / 255f, 0.55f);
             overlay.style.justifyContent = Justify.Center;
             overlay.style.alignItems = Align.Center;
 
@@ -73,43 +82,46 @@ namespace Anatomia3D.UI
             card.style.backgroundColor = Color.white;
             card.style.overflow = Overflow.Hidden; // clips the header band to the rounded corners
             Radius(card, 40);
+            Border(card, 1, Line);
             overlay.Add(card);
 
-            // ---------- header band ----------
+            // ---------- header ----------
             var header = new VisualElement();
             header.style.flexDirection = FlexDirection.Row;
             header.style.alignItems = Align.Center;
             header.style.flexShrink = 0;
-            header.style.backgroundColor = Accent;
+            header.style.backgroundColor = Color.white;
+            header.style.borderBottomWidth = 2;
+            header.style.borderBottomColor = Line;
             Padding(header, 32, 36);
 
-            var iconCircle = new VisualElement();
-            iconCircle.style.width = iconCircle.style.height = 88;
-            iconCircle.style.flexShrink = 0;
-            iconCircle.style.backgroundColor = new Color(1, 1, 1, 0.20f);
-            iconCircle.style.alignItems = Align.Center;
-            iconCircle.style.justifyContent = Justify.Center;
-            Radius(iconCircle, 44);
-            iconCircle.Add(MakeLabel("\u21BB", 50, FontStyle.Bold, Color.white));
-            header.Add(iconCircle);
+            var iconTile = new VisualElement();
+            iconTile.style.width = iconTile.style.height = 88;
+            iconTile.style.flexShrink = 0;
+            iconTile.style.backgroundColor = AccentSoft;
+            iconTile.style.alignItems = Align.Center;
+            iconTile.style.justifyContent = Justify.Center;
+            Radius(iconTile, 30);
+            iconTile.Add(MakeIcon("rt-icon-reset", 46, Accent));
+            header.Add(iconTile);
 
             var titles = new VisualElement();
             titles.style.flexGrow = 1;
             titles.style.flexShrink = 1;
             titles.style.marginLeft = 24;
-            titles.Add(MakeLabel("Allow Retake", 42, FontStyle.Bold, Color.white));
-            titles.Add(MakeLabel(quizTitle, 26, FontStyle.Normal, new Color(1, 1, 1, 0.85f), 4, 0));
+            titles.Add(MakeLabel("Allow Retake", 42, FontStyle.Bold, Ink));
+            titles.Add(MakeLabel(quizTitle, 26, FontStyle.Normal, Faint, 4, 0));
             header.Add(titles);
 
-            var closeButton = new Button(Close) { text = "\u2715" };
+            var closeButton = new Button(Close);
             ResetButton(closeButton);
             closeButton.style.width = closeButton.style.height = 72;
             closeButton.style.flexShrink = 0;
-            closeButton.style.fontSize = 32;
-            closeButton.style.unityFontStyleAndWeight = FontStyle.Bold;
-            closeButton.style.color = Color.white;
-            closeButton.style.backgroundColor = new Color(1, 1, 1, 0.20f);
+            closeButton.style.backgroundColor = Surface;
+            closeButton.style.justifyContent = Justify.Center;
+            closeButton.style.alignItems = Align.Center;
             Radius(closeButton, 36);
+            closeButton.Add(MakeIcon("rt-icon-close", 32, Muted));
             header.Add(closeButton);
 
             card.Add(header);
@@ -145,7 +157,7 @@ namespace Anatomia3D.UI
 
                 if (quiz == null)
                 {
-                    scroll.Add(MakeMessageState("!", DangerSoft, Danger,
+                    scroll.Add(MakeMessageState("rt-icon-close", DangerSoft, Danger,
                         "Could not load results",
                         "Something went wrong while loading this quiz's results. Please try again."));
 
@@ -178,7 +190,8 @@ namespace Anatomia3D.UI
 
             // Elements the selection callbacks need to refresh.
             VisualElement selectAllRow = null, selectAllBox = null;
-            Label selectAllMark = null, selectAllCount = null;
+            VisualElement selectAllMark = null;
+            Label selectAllCount = null;
             Label attemptsValueLabel = null, summaryLabel = null;
             var deadlineChips = new List<(Button button, int days)>();
 
@@ -216,7 +229,7 @@ namespace Anatomia3D.UI
             // ---------- empty state ----------
             if (eligible.Count == 0 && others.Count == 0)
             {
-                scroll.Add(MakeMessageState("\u2713", AccentSoft, Accent,
+                scroll.Add(MakeMessageState("rt-icon-check", SuccessSoft, Success,
                     "No retakes needed",
                     "A student appears here only after failing this quiz with no attempts left."));
             }
@@ -305,7 +318,7 @@ namespace Anatomia3D.UI
 
                     if (passed)
                     {
-                        soft = AccentSoft; strong = Accent;
+                        soft = SuccessSoft; strong = Success;
                         pillText = $"Passed {row.RetakeBestPercent:0}%";
                         sub = "Retake completed";
                     }
@@ -354,7 +367,7 @@ namespace Anatomia3D.UI
 
                 var settingsCard = new VisualElement();
                 settingsCard.style.backgroundColor = Surface;
-                Radius(settingsCard, 28);
+                Radius(settingsCard, 32);
                 Padding(settingsCard, 28, 28);
 
                 // Extra attempts stepper
@@ -362,18 +375,21 @@ namespace Anatomia3D.UI
                 attemptsRow.style.flexDirection = FlexDirection.Row;
                 attemptsRow.style.alignItems = Align.Center;
 
+                attemptsRow.Add(MakeIconTile("rt-icon-attempt", Accent, AccentSoft));
+
                 var attemptsText = new VisualElement();
                 attemptsText.style.flexGrow = 1;
                 attemptsText.style.flexShrink = 1;
+                attemptsText.style.marginLeft = 20;
                 attemptsText.Add(MakeLabel("Extra attempts", 30, FontStyle.Bold, Ink));
                 attemptsText.Add(MakeLabel("On top of the attempts already used", 24, FontStyle.Normal, Muted, 2, 0));
                 attemptsRow.Add(attemptsText);
 
-                var minus = MakeStepButton("\u2212");
+                var minus = MakeStepButton(false);
                 attemptsValueLabel = MakeLabel(extraAttempts.ToString(), 40, FontStyle.Bold, Ink);
-                attemptsValueLabel.style.width = 96;
+                attemptsValueLabel.style.width = 88;
                 attemptsValueLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-                var plus = MakeStepButton("+");
+                var plus = MakeStepButton(true);
 
                 minus.clicked += () => { extraAttempts = Mathf.Max(MinExtraAttempts, extraAttempts - 1); RefreshSettings(); };
                 plus.clicked += () => { extraAttempts = Mathf.Min(MaxExtraAttempts, extraAttempts + 1); RefreshSettings(); };
@@ -391,8 +407,20 @@ namespace Anatomia3D.UI
                 settingsCard.Add(divider);
 
                 // Deadline chips
-                settingsCard.Add(MakeLabel("Deadline", 30, FontStyle.Bold, Ink));
-                settingsCard.Add(MakeLabel("How long students have to finish the retake", 24, FontStyle.Normal, Muted, 2, 16));
+                var deadlineHeader = new VisualElement();
+                deadlineHeader.style.flexDirection = FlexDirection.Row;
+                deadlineHeader.style.alignItems = Align.Center;
+                deadlineHeader.style.marginBottom = 20;
+                deadlineHeader.Add(MakeIconTile("rt-icon-deadline", Accent, AccentSoft));
+
+                var deadlineText = new VisualElement();
+                deadlineText.style.flexGrow = 1;
+                deadlineText.style.flexShrink = 1;
+                deadlineText.style.marginLeft = 20;
+                deadlineText.Add(MakeLabel("Deadline", 30, FontStyle.Bold, Ink));
+                deadlineText.Add(MakeLabel("How long students have to finish the retake", 24, FontStyle.Normal, Muted, 2, 0));
+                deadlineHeader.Add(deadlineText);
+                settingsCard.Add(deadlineHeader);
 
                 var chipRow = new VisualElement();
                 chipRow.style.flexDirection = FlexDirection.Row;
@@ -493,29 +521,29 @@ namespace Anatomia3D.UI
             row.style.backgroundColor = background;
             row.style.marginBottom = 14;
             Padding(row, 22, 24);
-            Radius(row, 26);
+            Radius(row, 30);
             Border(row, 2, Line);
             return row;
         }
 
-        private static VisualElement MakeCheckBox(out Label mark)
+        private static VisualElement MakeCheckBox(out VisualElement mark)
         {
             var box = new VisualElement();
             box.style.width = box.style.height = 52;
             box.style.flexShrink = 0;
             box.style.alignItems = Align.Center;
             box.style.justifyContent = Justify.Center;
-            Radius(box, 16);
+            Radius(box, 18);
             Border(box, 3, LineStrong);
             box.style.backgroundColor = Color.white;
 
-            mark = MakeLabel("\u2713", 34, FontStyle.Bold, Color.white);
+            mark = MakeIcon("rt-icon-check", 34, Color.white);
             mark.style.display = DisplayStyle.None;
             box.Add(mark);
             return box;
         }
 
-        private static void SetCheckVisual(VisualElement row, VisualElement box, Label mark, bool on, Color offRowBackground)
+        private static void SetCheckVisual(VisualElement row, VisualElement box, VisualElement mark, bool on, Color offRowBackground)
         {
             box.style.backgroundColor = on ? Accent : Color.white;
             SetBorderColor(box, on ? Accent : LineStrong);
@@ -557,6 +585,7 @@ namespace Anatomia3D.UI
             return pill;
         }
 
+        /// <summary>Small-caps caption (same look as the student drawer/filter captions) + optional count badge.</summary>
         /// <param name="count">Pass -1 to omit the count badge.</param>
         private static VisualElement MakeSectionHeader(string title, int count, float top, Color badgeText, Color badgeBackground)
         {
@@ -566,7 +595,9 @@ namespace Anatomia3D.UI
             row.style.marginTop = top;
             row.style.marginBottom = 16;
 
-            row.Add(MakeLabel(title, 32, FontStyle.Bold, Ink));
+            var caption = MakeLabel(title.ToUpperInvariant(), 24, FontStyle.Bold, Faint);
+            caption.style.letterSpacing = 2;
+            row.Add(caption);
 
             if (count >= 0)
             {
@@ -579,7 +610,7 @@ namespace Anatomia3D.UI
         }
 
         /// <summary>Centered icon + title + body text, used for the empty and error states.</summary>
-        private static VisualElement MakeMessageState(string glyph, Color circleColor, Color glyphColor, string title, string body)
+        private static VisualElement MakeMessageState(string iconClass, Color circleColor, Color iconColor, string title, string body)
         {
             var wrap = new VisualElement();
             wrap.style.alignItems = Align.Center;
@@ -591,7 +622,7 @@ namespace Anatomia3D.UI
             circle.style.alignItems = Align.Center;
             circle.style.justifyContent = Justify.Center;
             Radius(circle, 66);
-            circle.Add(MakeLabel(glyph, 68, FontStyle.Bold, glyphColor));
+            circle.Add(MakeIcon(iconClass, 64, iconColor));
             wrap.Add(circle);
 
             var t = MakeLabel(title, 34, FontStyle.Bold, Ink, 28, 0);
@@ -625,26 +656,80 @@ namespace Anatomia3D.UI
             b.style.height = 104;
             b.style.fontSize = 32;
             b.style.unityFontStyleAndWeight = FontStyle.Bold;
-            Radius(b, 26);
+            Radius(b, 52);
             b.style.backgroundColor = primary ? Accent : Color.white;
             b.style.color = primary ? Color.white : Ink;
             Border(b, primary ? 0 : 2, LineStrong);
+            b.style.justifyContent = Justify.Center;
             return b;
         }
 
-        private static Button MakeStepButton(string glyph)
+        /// <summary>Round +/- button. The symbol is drawn from bars (no text glyph, so no font dependence).</summary>
+        private static Button MakeStepButton(bool plus)
         {
-            var b = new Button { text = glyph };
+            var b = new Button();
             ResetButton(b);
             b.style.width = b.style.height = 76;
             b.style.flexShrink = 0;
-            b.style.fontSize = 40;
-            b.style.unityFontStyleAndWeight = FontStyle.Bold;
-            b.style.color = Accent;
             b.style.backgroundColor = Color.white;
+            b.style.alignItems = Align.Center;
+            b.style.justifyContent = Justify.Center;
             Radius(b, 38);
             Border(b, 2, LineStrong);
+
+            var symbol = new VisualElement { pickingMode = PickingMode.Ignore };
+            symbol.style.width = symbol.style.height = 30;
+            symbol.style.alignItems = Align.Center;
+            symbol.style.justifyContent = Justify.Center;
+
+            var horizontal = new VisualElement { pickingMode = PickingMode.Ignore };
+            horizontal.style.position = Position.Absolute;
+            horizontal.style.width = 30;
+            horizontal.style.height = 5;
+            horizontal.style.backgroundColor = Accent;
+            Radius(horizontal, 3);
+            symbol.Add(horizontal);
+
+            if (plus)
+            {
+                var vertical = new VisualElement { pickingMode = PickingMode.Ignore };
+                vertical.style.position = Position.Absolute;
+                vertical.style.width = 5;
+                vertical.style.height = 30;
+                vertical.style.backgroundColor = Accent;
+                Radius(vertical, 3);
+                symbol.Add(vertical);
+            }
+
+            b.Add(symbol);
             return b;
+        }
+
+        /// <summary>PNG icon from Assets/UI/Icons. The image comes from the .rt-icon-* classes in
+        /// AdminClassroomDetail.uss; size and tint are set here.</summary>
+        private static VisualElement MakeIcon(string iconClass, float size, Color tint)
+        {
+            var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+            icon.AddToClassList("rt-icon");
+            icon.AddToClassList(iconClass);
+            icon.style.width = icon.style.height = size;
+            icon.style.flexShrink = 0;
+            icon.style.unityBackgroundImageTintColor = tint;
+            return icon;
+        }
+
+        /// <summary>Soft rounded tile with a centered icon (same treatment as the student drawer items).</summary>
+        private static VisualElement MakeIconTile(string iconClass, Color tint, Color background)
+        {
+            var tile = new VisualElement();
+            tile.style.width = tile.style.height = 68;
+            tile.style.flexShrink = 0;
+            tile.style.backgroundColor = background;
+            tile.style.alignItems = Align.Center;
+            tile.style.justifyContent = Justify.Center;
+            Radius(tile, 22);
+            tile.Add(MakeIcon(iconClass, 34, tint));
+            return tile;
         }
 
         private static void StyleChip(Button chip, bool selected)

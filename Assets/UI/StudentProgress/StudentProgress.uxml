@@ -1,99 +1,87 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentProgress/StudentProgress.uss?fileID=7433441132597879392&amp;guid=eef620edd27aa1648b4818bae109a5a6&amp;type=3#StudentProgress"/>
-    <ui:VisualElement name="screen-root" class="screen-root">
-        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
-            <ui:VisualElement name="header" class="header">
-                <ui:VisualElement name="header-top-row" class="header-top-row">
-                    <ui:Button name="back-button" class="back-button">
-                        <ui:VisualElement name="back-icon" class="back-icon"/>
-                    </ui:Button>
-                    <ui:VisualElement name="header-text" class="header-text">
-                        <ui:Label text="Progress Tracker" class="header-title"/>
-                        <ui:Label text="Your learning journey" class="header-subtitle"/>
-                    </ui:VisualElement>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
+    <ui:VisualElement name="screen-root" class="anatomia-theme theme-progress screen-root">
+        <ui:VisualElement name="header" class="header">
+            <ui:VisualElement name="header-top-row" class="header-top-row">
+                <ui:Button name="back-button" class="back-button">
+                    <ui:VisualElement name="back-icon" class="back-icon"/>
+                </ui:Button>
+                <ui:VisualElement name="header-text" class="header-text">
+                    <ui:Label text="Progress" class="header-title"/>
+                    <ui:Label text="Your learning journey" class="header-subtitle"/>
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                <ui:VisualElement name="level-progress-card" class="level-progress-card">
-                    <ui:Label text="Level Progress" class="section-title"/>
+                <ui:VisualElement name="level-progress-card" class="level-hero">
+                    <ui:Label name="level-caption-label" text="CURRENT LEVEL" class="hero-caption"/>
                     <ui:VisualElement name="level-row" class="level-row">
                         <ui:VisualElement class="level-block">
                             <ui:Label name="current-level-label" text="Level 5" class="level-number"/>
-                            <ui:Label name="current-level-title-label" text="Expert" class="level-caption-small"/>
+                            <ui:Label name="current-level-title-label" text="Expert" class="level-title-pill"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="level-block level-block-right">
-                            <ui:Label name="next-level-label" text="Level 6" class="level-number"/>
+                        <ui:VisualElement name="next-level-block" class="level-block level-block-right">
+                            <ui:Label text="NEXT UP" class="hero-caption hero-caption-right"/>
+                            <ui:Label name="next-level-label" text="Level 6" class="level-next-number"/>
                             <ui:Label name="next-level-title-label" text="Master" class="level-caption-small"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="progress-track">
+                    <ui:VisualElement name="level-progress-track" class="progress-track">
                         <ui:VisualElement name="progress-fill" class="progress-fill" style="width: 62%;"/>
                     </ui:VisualElement>
                     <ui:Label name="points-to-next-label" text="250 points to next level" class="level-caption"/>
                 </ui:VisualElement>
-                <ui:VisualElement name="level-roadmap-card" class="level-roadmap-card">
-                    <ui:Label text="Level Roadmap" class="section-title"/>
-                    <ui:Label text="Points needed for every level" class="level-roadmap-subtitle"/>
-                    <ui:VisualElement name="level-roadmap-list" class="level-roadmap-list"/>
-                </ui:VisualElement>
-                <ui:VisualElement name="baseline-assessment-card" class="category-card">
-                    <ui:Label text="Pretest / Posttest" class="section-title"/>
-                    <ui:VisualElement name="baseline-pretest-row" class="category-item">
-                        <ui:VisualElement class="category-header-row">
-                            <ui:Label text="Pretest" class="category-name"/>
-                            <ui:Label name="baseline-pretest-score" text="Not yet taken" class="category-count"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="baseline-posttest-row" class="category-item category-item-last">
-                        <ui:VisualElement class="category-header-row">
-                            <ui:Label text="Posttest" class="category-name"/>
-                            <ui:Label name="baseline-posttest-score" text="Not yet taken" class="category-count"/>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:Label name="baseline-improvement-label" text="" class="level-caption hidden"/>
-                    <ui:Button name="baseline-take-posttest-button" class="baseline-cta-button hidden">
-                        <ui:Label text="Take Posttest" class="baseline-cta-label" picking-mode="Ignore"/>
-                    </ui:Button>
-                </ui:VisualElement>
                 <ui:VisualElement name="stats-row-1" class="stats-row">
-                    <ui:VisualElement name="quizzes-card" class="stat-card stat-card-left">
-                        <ui:VisualElement class="stat-icon stat-icon-blue icon-book" style="background-color: rgb(241, 243, 247); background-image: none;">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/quiz-iconss.png?fileID=2800000&amp;guid=b237e436295e3424a8c43029c5256670&amp;type=3#quiz-iconss&quot;); height: 31px; width: 31px;"/>
+                    <ui:VisualElement name="quizzes-card" class="stat-tile">
+                        <ui:VisualElement class="stat-tile-icon-box">
+                            <ui:VisualElement class="stat-tile-icon icon-quizzes"/>
                         </ui:VisualElement>
-                        <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
-                        <ui:Label text="Quizzes Completed" class="stat-label"/>
+                        <ui:VisualElement class="stat-tile-text">
+                            <ui:Label name="quizzes-value-label" text="24" class="stat-value"/>
+                            <ui:Label text="Quizzes done" class="stat-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="avg-score-card" class="stat-card stat-card-right">
-                        <ui:VisualElement class="stat-icon stat-icon-green icon-target" style="background-image: none; background-color: rgb(241, 243, 247);">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/target-iconss.png?fileID=2800000&amp;guid=6a89be03f5b863346b3f6b8ad74c290e&amp;type=3#target-iconss&quot;); height: 44px; width: 39px;"/>
+                    <ui:VisualElement name="avg-score-card" class="stat-tile">
+                        <ui:VisualElement class="stat-tile-icon-box">
+                            <ui:VisualElement class="stat-tile-icon icon-target"/>
                         </ui:VisualElement>
-                        <ui:Label name="avg-score-value-label" text="87%" class="stat-value"/>
-                        <ui:Label text="Avg. Score" class="stat-label"/>
+                        <ui:VisualElement class="stat-tile-text">
+                            <ui:Label name="avg-score-value-label" text="87%" class="stat-value"/>
+                            <ui:Label text="Avg. score" class="stat-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="stats-row-2" class="stats-row stats-row-spaced">
-                    <ui:VisualElement name="points-card" class="stat-card stat-card-left">
-                        <ui:VisualElement class="stat-icon stat-icon-purple icon-trophy" style="background-image: none; background-color: rgb(241, 243, 247);">
-                            <ui:Label text="" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/total-points-icon.png?fileID=2800000&amp;guid=14939b5fcc2af964eace266874971dbc&amp;type=3#total-points-icon&quot;); height: 45px; width: 40px;"/>
+                <ui:VisualElement name="stats-row-2" class="stats-row">
+                    <ui:VisualElement name="points-card" class="stat-tile">
+                        <ui:VisualElement class="stat-tile-icon-box">
+                            <ui:VisualElement class="stat-tile-icon icon-points"/>
                         </ui:VisualElement>
-                        <ui:Label name="points-value-label" text="1250" class="stat-value"/>
-                        <ui:Label text="Total Points" class="stat-label"/>
+                        <ui:VisualElement class="stat-tile-text">
+                            <ui:Label name="points-value-label" text="1250" class="stat-value"/>
+                            <ui:Label text="Total points" class="stat-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="badges-card" class="stat-card stat-card-right">
-                        <ui:VisualElement class="stat-icon stat-icon-gold icon-badge" style="background-color: rgb(241, 243, 247); background-image: none;">
-                            <ui:Label text="🎖" class="stat-icon-glyph" style="background-image: url(&quot;project://database/Assets/UI/Icons/reward-icon-black.png?fileID=2800000&amp;guid=1fbb05f85ac3e064c8b6c0f8431da21b&amp;type=3#reward-icon-black&quot;); color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgb(0, 0, 0); height: 42px; width: 47px;"/>
+                    <ui:VisualElement name="badges-card" class="stat-tile">
+                        <ui:VisualElement class="stat-tile-icon-box">
+                            <ui:VisualElement class="stat-tile-icon icon-badges"/>
                         </ui:VisualElement>
-                        <ui:Label name="badges-value-label" text="3" class="stat-value"/>
-                        <ui:Label text="Badges Earned" class="stat-label"/>
+                        <ui:VisualElement class="stat-tile-text">
+                            <ui:Label name="badges-value-label" text="3" class="stat-value"/>
+                            <ui:Label text="Badges earned" class="stat-label"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="tab-toggle" class="tab-toggle">
-                    <ui:Button name="weekly-tab-button" text="Weekly Activity" class="tab-button tab-button-active"/>
-                    <ui:Button name="performance-tab-button" text="Performance" class="tab-button"/>
+                    <ui:Button name="weekly-tab-button" text="Activity" class="tab-button tab-button-active"/>
+                    <ui:Button name="performance-tab-button" text="Skills" class="tab-button"/>
+                    <ui:Button name="roadmap-tab-button" text="Levels" class="tab-button"/>
                 </ui:VisualElement>
                 <ui:VisualElement name="weekly-activity-panel" class="tab-panel">
                     <ui:VisualElement name="weekly-chart-card" class="weekly-chart-card">
-                        <ui:Label text="Points This Week" class="section-title"/>
+                        <ui:Label text="Points this week" class="section-title"/>
+                        <ui:Label text="Daily points earned, Monday to Sunday" class="section-subtitle"/>
                         <ui:VisualElement name="chart-area" class="chart-area">
                             <ui:VisualElement name="chart-y-axis" class="chart-y-axis">
                                 <ui:Label text="220" class="chart-axis-label"/>
@@ -103,6 +91,10 @@
                                 <ui:Label text="0" class="chart-axis-label"/>
                             </ui:VisualElement>
                             <ui:VisualElement name="chart-bars-row" class="chart-bars-row">
+                                <ui:VisualElement picking-mode="Ignore" class="chart-gridline" style="bottom: 25%;"/>
+                                <ui:VisualElement picking-mode="Ignore" class="chart-gridline" style="bottom: 50%;"/>
+                                <ui:VisualElement picking-mode="Ignore" class="chart-gridline" style="bottom: 75%;"/>
+                                <ui:VisualElement picking-mode="Ignore" class="chart-gridline" style="bottom: 100%;"/>
                                 <ui:VisualElement name="bar-col-mon" class="bar-col">
                                     <ui:VisualElement name="bar-mon" class="chart-bar" style="height: 50%;"/>
                                 </ui:VisualElement>
@@ -139,23 +131,30 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="performance-panel" class="tab-panel hidden">
                     <ui:VisualElement name="category-card" class="category-card">
-                        <ui:Label text="Progress by Category" class="section-title"/>
+                        <ui:Label text="Anatomy systems" class="section-title"/>
+                        <ui:Label text="How much of each system you&apos;ve completed" class="section-subtitle"/>
                         <ui:VisualElement name="category-skeletal" class="category-item">
                             <ui:VisualElement class="category-header-row">
+                                <ui:VisualElement class="category-icon-box">
+                                    <ui:VisualElement class="category-icon icon-skeletal" style="background-color: rgba(91, 76, 219, 0);"/>
+                                </ui:VisualElement>
                                 <ui:Label text="Skeletal" class="category-name"/>
-                                <ui:Label name="category-skeletal-count" text="12 quizzes" class="category-count"/>
+                                <ui:Label name="category-skeletal-count" text="" class="category-count"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="category-progress-row">
                                 <ui:VisualElement class="category-track">
-                                    <ui:VisualElement name="category-skeletal-fill" class="category-fill" style="width: 85%;"/>
+                                    <ui:VisualElement name="category-skeletal-fill" class="category-fill" style="width: 85%; background-color: rgb(255, 255, 255);"/>
                                 </ui:VisualElement>
                                 <ui:Label name="category-skeletal-percent" text="85%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement name="category-muscular" class="category-item">
                             <ui:VisualElement class="category-header-row">
+                                <ui:VisualElement class="category-icon-box">
+                                    <ui:VisualElement class="category-icon icon-muscular" style="background-color: rgba(91, 76, 219, 0);"/>
+                                </ui:VisualElement>
                                 <ui:Label text="Muscular" class="category-name"/>
-                                <ui:Label name="category-muscular-count" text="8 quizzes" class="category-count"/>
+                                <ui:Label name="category-muscular-count" text="" class="category-count"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="category-progress-row">
                                 <ui:VisualElement class="category-track">
@@ -166,8 +165,11 @@
                         </ui:VisualElement>
                         <ui:VisualElement name="category-nervous" class="category-item">
                             <ui:VisualElement class="category-header-row">
+                                <ui:VisualElement class="category-icon-box">
+                                    <ui:VisualElement class="category-icon icon-nervous"/>
+                                </ui:VisualElement>
                                 <ui:Label text="Nervous" class="category-name"/>
-                                <ui:Label name="category-nervous-count" text="10 quizzes" class="category-count"/>
+                                <ui:Label name="category-nervous-count" text="" class="category-count"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="category-progress-row">
                                 <ui:VisualElement class="category-track">
@@ -178,8 +180,11 @@
                         </ui:VisualElement>
                         <ui:VisualElement name="category-cardiovascular" class="category-item category-item-last">
                             <ui:VisualElement class="category-header-row">
+                                <ui:VisualElement class="category-icon-box">
+                                    <ui:VisualElement class="category-icon icon-cardio" style="background-color: rgba(91, 76, 219, 0);"/>
+                                </ui:VisualElement>
                                 <ui:Label text="Cardiovascular" class="category-name"/>
-                                <ui:Label name="category-cardiovascular-count" text="6 quizzes" class="category-count"/>
+                                <ui:Label name="category-cardiovascular-count" text="" class="category-count"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="category-progress-row">
                                 <ui:VisualElement class="category-track">
@@ -188,6 +193,31 @@
                                 <ui:Label name="category-cardiovascular-percent" text="70%" class="category-percent"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="baseline-assessment-card" class="category-card">
+                        <ui:Label text="Pretest vs Posttest" class="section-title"/>
+                        <ui:Label text="Measure how much you&apos;ve improved" class="section-subtitle"/>
+                        <ui:VisualElement class="baseline-grid">
+                            <ui:VisualElement name="baseline-pretest-row" class="baseline-tile">
+                                <ui:Label text="PRETEST" class="baseline-caption"/>
+                                <ui:Label name="baseline-pretest-score" text="Not yet taken" class="baseline-score"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="baseline-posttest-row" class="baseline-tile baseline-tile-last">
+                                <ui:Label text="POSTTEST" class="baseline-caption"/>
+                                <ui:Label name="baseline-posttest-score" text="Not yet taken" class="baseline-score"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label name="baseline-improvement-label" text="" class="baseline-improvement hidden"/>
+                        <ui:Button name="baseline-take-posttest-button" class="baseline-cta-button hidden">
+                            <ui:Label text="Take Posttest" picking-mode="Ignore" class="baseline-cta-label"/>
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="roadmap-panel" class="tab-panel hidden">
+                    <ui:VisualElement name="level-roadmap-card" class="level-roadmap-card">
+                        <ui:Label text="Level roadmap" class="section-title"/>
+                        <ui:Label text="Points needed for every level" class="section-subtitle"/>
+                        <ui:VisualElement name="level-roadmap-list" class="level-roadmap-list"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

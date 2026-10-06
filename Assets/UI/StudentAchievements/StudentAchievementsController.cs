@@ -60,15 +60,17 @@ namespace Anatomia3D.UI
         {
             public string BadgeId;
             public string Name;
-            public string IconEmoji;
+            public string IconKey;
+            public string IconUrl;
             public int PointsRequired;
             public bool Earned;
 
-            public BadgeInfo(string badgeId, string name, string iconEmoji, int pointsRequired, bool earned)
+            public BadgeInfo(string badgeId, string name, string iconKey, string iconUrl, int pointsRequired, bool earned)
             {
                 BadgeId = badgeId;
                 Name = name;
-                IconEmoji = iconEmoji;
+                IconKey = iconKey;
+                IconUrl = iconUrl;
                 PointsRequired = pointsRequired;
                 Earned = earned;
             }
@@ -93,7 +95,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentAchievementsController] OnEnable called");
+            //Debug.Log("[StudentAchievementsController] OnEnable called");
 
             if (_document == null)
             {
@@ -118,7 +120,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentAchievementsController] Root is null!");
+                //Debug.LogError("[StudentAchievementsController] Root is null!");
                 return;
             }
 
@@ -142,9 +144,19 @@ namespace Anatomia3D.UI
                 // alone only repaints the badge-list, so the summary card needs its own
                 // repaint here too or it shows blank/stale text on every re-open after the
                 // first.
-                int earnedCount = _lastBadges.Count(b => b.Earned);
-                SetSummaryData(_lastTotalPoints, earnedCount, _lastBadges.Count);
-                RenderBadges();
+                var cachedStudent = PlayerSessionManager.Instance?.CurrentStudent;
+                if (cachedStudent != null && _lastConfiguredBadges != null)
+                {
+                    // Still no network call: re-merge anything the Classroom Detail screen
+                    // has registered since the last load (BadgeCatalog), then repaint.
+                    RenderMergedBadges(cachedStudent, _lastConfiguredBadges);
+                }
+                else
+                {
+                    int earnedCount = _lastBadges.Count(b => b.Earned);
+                    SetSummaryData(_lastTotalPoints, earnedCount, _lastBadges.Count);
+                    RenderBadges();
+                }
             }
             else
             {
@@ -197,7 +209,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentAchievementsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -208,7 +220,7 @@ namespace Anatomia3D.UI
             _badgesEarnedLabel = _screenRoot.Q<Label>("badges-earned-label");
             _badgeList = _screenRoot.Q<VisualElement>("badge-list");
 
-            Debug.Log($"[StudentAchievementsController] Found back button: {_backButton != null}, header: {_header != null}, badge-list: {_badgeList != null}");
+            //Debug.Log($"[StudentAchievementsController] Found back button: {_backButton != null}, header: {_header != null}, badge-list: {_badgeList != null}");
         }
 
         private void WireCallbacks()
@@ -237,7 +249,7 @@ namespace Anatomia3D.UI
         {
             if (ClassroomService.Instance == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] ClassroomService not available - falling back to the default badge set.");
+                //Debug.LogWarning("[StudentAchievementsController] ClassroomService not available - falling back to the default badge set.");
                 LoadBadgesForTeachers(new List<string> { null });
                 return;
             }
@@ -278,13 +290,13 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance?.CurrentStudent;
             if (student == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] No signed-in student - can't load achievements.");
+                //Debug.LogWarning("[StudentAchievementsController] No signed-in student - can't load achievements.");
                 return;
             }
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] AdminGamificationService not available yet.");
+                //Debug.LogWarning("[StudentAchievementsController] AdminGamificationService not available yet.");
                 return;
             }
 
@@ -311,6 +323,13 @@ namespace Anatomia3D.UI
 
         private void RenderMergedBadges(PlayerSessionManager.StudentProfile student, Dictionary<string, AdminGamificationService.BadgeEntry> configuredBadges)
         {
+            // Badges already seen on the Classroom Detail screen (BadgeCatalog) - a fresh
+            // teacher config fetched above always wins, these only fill in what's missing.
+            foreach (var shared in BadgeCatalog.For(student.Uid))
+            {
+                if (!configuredBadges.ContainsKey(shared.BadgeId)) configuredBadges[shared.BadgeId] = shared;
+            }
+
             var earnedIds = new HashSet<string>(student.BadgesEarned ?? new List<string>());
 
             var badges = configuredBadges.Values
@@ -318,7 +337,8 @@ namespace Anatomia3D.UI
                 .Select(b => new BadgeInfo(
                     b.BadgeId,
                     b.Name,
-                    b.IconEmoji,
+                    b.IconKey,
+                    b.IconUrl,
                     b.PointsRequired,
                     earnedIds.Contains(b.BadgeId) || student.TotalPoints >= b.PointsRequired))
                 .ToList();
@@ -331,7 +351,7 @@ namespace Anatomia3D.UI
             foreach (var id in earnedIds)
             {
                 if (configuredBadges.ContainsKey(id)) continue;
-                badges.Add(new BadgeInfo(id, HumanizeBadgeId(id), "\U0001F3C5", 0, true));
+                badges.Add(new BadgeInfo(id, HumanizeBadgeId(id), "medal", "", 0, true));
             }
 
             _hasLoadedOnce = true;
@@ -541,10 +561,9 @@ namespace Anatomia3D.UI
 
                 if (badge.Earned)
                 {
-                    var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
-                    emojiLabel.AddToClassList("badge-icon-emoji");
-                    refs.IconBox.Add(emojiLabel);
-                    refs.IconContent = emojiLabel;
+                    var iconArt = BadgeIconView.Create(badge.IconKey, badge.IconUrl, 64);
+                    refs.IconBox.Add(iconArt);
+                    refs.IconContent = iconArt;
                 }
                 else
                 {
@@ -628,7 +647,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentAchievementsController] Navigating back to dashboard");
+            //Debug.Log("[StudentAchievementsController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
@@ -647,6 +666,7 @@ namespace Anatomia3D.UI
 
         private void ApplyHeaderGradient()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header == null) return;
 
             if (_headerGradientTexture != null)

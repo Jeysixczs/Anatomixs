@@ -52,7 +52,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentClassroomController] OnEnable called");
+            //Debug.Log("[StudentClassroomController] OnEnable called");
 
             if (_document == null)
             {
@@ -77,7 +77,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentClassroomController] Root is null!");
+                //Debug.LogError("[StudentClassroomController] Root is null!");
                 return;
             }
 
@@ -124,7 +124,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentClassroomController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentClassroomController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -141,7 +141,7 @@ namespace Anatomia3D.UI
             // Trim/uppercase to match how the code is validated on submit.
             _classroomCodeField?.EnableLongPressPaste(s => s.Trim().ToUpperInvariant());
 
-            Debug.Log($"[StudentClassroomController] Found submit button: {_joinClassroomSubmitButton != null}, header: {_header != null}");
+            //Debug.Log($"[StudentClassroomController] Found submit button: {_joinClassroomSubmitButton != null}, header: {_header != null}");
         }
 
         private void WireCallbacks()
@@ -166,7 +166,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentClassroomController] Navigating back to dashboard");
+            //Debug.Log("[StudentClassroomController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
@@ -198,7 +198,7 @@ namespace Anatomia3D.UI
         {
             if (success)
             {
-                Debug.Log("[StudentClassroomController] Join classroom succeeded");
+                //Debug.Log("[StudentClassroomController] Join classroom succeeded");
                 SetStatus("Successfully joined classroom!");
 
                 // Hub's "My Classrooms" list only fetches once per screen instance
@@ -219,7 +219,7 @@ namespace Anatomia3D.UI
             }
             else
             {
-                Debug.LogWarning($"[StudentClassroomController] Join classroom failed: {message}");
+                //Debug.LogWarning($"[StudentClassroomController] Join classroom failed: {message}");
                 SetError($"Failed to join classroom: {message}");
                 SetStatus(string.Empty);
                 _joinClassroomSubmitButton.SetEnabled(true);
@@ -268,6 +268,7 @@ namespace Anatomia3D.UI
 
         private void ApplyGradients()
         {
+            if (!AnatomiaTheme.UseGradientChrome) return; // minimalist theme: flat chrome, see Theme/AnatomiaTheme.cs
             if (_header != null)
             {
                 if (_headerGradientTexture != null) Destroy(_headerGradientTexture);
