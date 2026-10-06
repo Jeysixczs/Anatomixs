@@ -1469,3 +1469,26 @@
     padding: 40px;
     border-radius: 36px;
 }
+
+/* ---------- Badge icons (shared: admin Gamification Settings + student badge cards) ----------
+   Preset icons are the project's white line icons, tinted gold. A custom (Cloudinary) image
+   overrides background-image and the tint inline from BadgeIconView.cs.
+   To change a preset, just point its key at a different PNG here. */
+.badge-art
+{
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    -unity-background-image-tint-color: rgb(217, 119, 6);
+}
+.badge-preset-trophy { background-image: url("project://database/Assets/UI/Icons/trophy-big-icon.png"); }
+.badge-preset-medal { background-image: url("project://database/Assets/UI/Icons/reward-icon.png"); }
+.badge-preset-shield { background-image: url("project://database/Assets/UI/Icons/shield-icon.png"); }
+.badge-preset-brain { background-image: url("project://database/Assets/UI/Icons/brain-icon.png"); }
+.badge-preset-bone { background-image: url("project://database/Assets/UI/Icons/bone-icon.png"); }
+.badge-preset-skull { background-image: url("project://database/Assets/UI/Icons/skull-white.png"); }
+.badge-preset-cardio { background-image: url("project://database/Assets/UI/Icons/cardio-white.png"); }
+.badge-preset-muscular { background-image: url("project://database/Assets/UI/Icons/muscular-white.png"); }
+.badge-preset-chart { background-image: url("project://database/Assets/UI/Icons/chart-icon.png"); }
+.badge-preset-heart { background-image: url("project://database/Assets/UI/Icons/heart-icon.png"); }
+

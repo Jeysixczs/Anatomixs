@@ -736,7 +736,6 @@ MonoBehaviour:
   studentAchivementScreen: {fileID: 9197481963319205126, guid: fa42bb56e3eb3764ebb4580c743bf2ae, type: 3}
   studentProfileScreen: {fileID: 9197481963319205126, guid: 390fc6f8573df2a4685d4eeb8f00ba9d, type: 3}
   studentClassroomScreen: {fileID: 9197481963319205126, guid: aec2a91a4c1fef74d87866d95e62910b, type: 3}
-  studentQuizSelectionScreen: {fileID: 9197481963319205126, guid: 83e939716f66ed143b86d87ac01673ac, type: 3}
   studentQuizGameplayScreen: {fileID: 9197481963319205126, guid: d82b69fcc8b33314ea2cd01f9425e407, type: 3}
   studentFileSubmissionScreen: {fileID: 9197481963319205126, guid: 9e692c701402606468a5794060021cca, type: 3}
   adminSubmissionReviewScreen: {fileID: 9197481963319205126, guid: a660c44cc1faa2644a606871fe675eed, type: 3}
@@ -913,6 +912,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58241946734aa0b44a51ededf8200a2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminLoginController
+  applyRuntimeGradients: 0
   gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
   gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
@@ -932,6 +932,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7be333f68f69c01458ba704ebfc3d304, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminForgotPasswordController
+  applyRuntimeGradients: 0
   gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
   gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
@@ -952,6 +953,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475ce2d37cad1fd46b66da4933b6db6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Anatomia3D.UI.AdminCreateAccountController
+  applyRuntimeGradients: 0
   gradientStart: {r: 0.557, g: 0.176, b: 0.886, a: 1}
   gradientEnd: {r: 0.878, g: 0.129, b: 0.541, a: 1}
   backgroundTop: {r: 0.145, g: 0.055, b: 0.235, a: 1}
@@ -1181,7 +1183,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
   appName: ANATOMIA
   appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
-  appVersion: 1.0.0
+  appVersion: 1.0.1
   appDescription: ANATOMIA is a gamified mobile application that makes learning human
     anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
     it transforms traditional anatomy lessons into a fun and immersive learning experience
@@ -1328,7 +1330,7 @@ MonoBehaviour:
   gradientEnd: {r: 0.18431373, g: 0.43529412, b: 0.92941177, a: 1}
   appName: ANATOMIA
   appFullTitle: A Gamified Mobile Application for Interactive Human Anatomy Learning
-  appVersion: 1.0.0
+  appVersion: 1.0.1
   appDescription: ANATOMIA is a gamified mobile application that makes learning human
     anatomy interactive and engaging. Through 3D models, quizzes, points, and levels,
     it transforms traditional anatomy lessons into a fun and immersive learning experience
@@ -1536,6 +1538,7 @@ MonoBehaviour:
   cloudName: xyln0c9n
   uploadPreset: anatomia3d_avatars
   assetFolder: avatars
+  badgeAssetFolder: badges
 --- !u!114 &1051780059
 MonoBehaviour:
   m_ObjectHideFlags: 0

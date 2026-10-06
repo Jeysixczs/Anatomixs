@@ -136,13 +136,38 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="badges-panel" class="tab-panel hidden">
                     <ui:Label text="Badges" class="section-title"/>
-                    <ui:Label text="Badges configured by your teacher for this classroom" class="section-subtitle"/>
+                    <ui:Label text="Earn points from quizzes to unlock your teacher's badges" class="section-subtitle"/>
+                    <ui:VisualElement name="badges-summary" class="panel-card bdg-summary hidden">
+                        <ui:VisualElement class="bdg-stats-row">
+                            <ui:VisualElement class="bdg-stat">
+                                <ui:Label name="badges-unlocked-value" text="0" class="bdg-stat-value bdg-stat-value-accent"/>
+                                <ui:Label text="Unlocked" class="bdg-stat-caption"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="bdg-stat-divider"/>
+                            <ui:VisualElement class="bdg-stat">
+                                <ui:Label name="badges-total-value" text="0" class="bdg-stat-value"/>
+                                <ui:Label text="Total badges" class="bdg-stat-caption"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="bdg-stat-divider"/>
+                            <ui:VisualElement class="bdg-stat">
+                                <ui:Label name="badges-points-value" text="0" class="bdg-stat-value"/>
+                                <ui:Label text="Your points" class="bdg-stat-caption"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="bdg-next">
+                            <ui:Label name="badges-next-title" text="" class="bdg-next-title"/>
+                            <ui:VisualElement class="bdg-track">
+                                <ui:VisualElement name="badges-next-fill" class="bdg-fill"/>
+                            </ui:VisualElement>
+                            <ui:Label name="badges-next-hint" text="" class="bdg-next-hint"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                     <ui:VisualElement name="badges-empty-state" class="panel-card empty-state">
                         <ui:VisualElement class="empty-icon icon-history-gray"/>
                         <ui:Label text="No badges configured yet" class="empty-title"/>
                         <ui:Label text="Your teacher hasn&apos;t set up any badges for this classroom yet." class="empty-subtitle"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="badges-list" class="badge-list hidden"/>
+                    <ui:VisualElement name="badges-list" class="bdg-grid hidden"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:ScrollView>

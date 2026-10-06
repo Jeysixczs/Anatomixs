@@ -125,6 +125,19 @@ namespace Anatomia3D.UI
         /// call is now a safe no-op, kept for source compatibility).</summary>
         private ListenerRegistration _classroomsListener;
 
+        // ---- "Quizzes Open" stat card ----
+        // One live available-quizzes listener per enrolled (non-archived) classroom. Each
+        // update re-runs the same start-eligibility pre-flight the classroom detail screen
+        // uses, and the card shows the sum of quizzes the student can actually start right now.
+        private readonly Dictionary<string, ClassroomService.AvailableQuizzesListenerHandle> _quizListenersByClassroom
+            = new Dictionary<string, ClassroomService.AvailableQuizzesListenerHandle>();
+        private readonly Dictionary<string, int> _openQuizCountByClassroom = new Dictionary<string, int>();
+        // Bumped every time a classroom's quiz list is re-evaluated so slow, out-of-order
+        // eligibility callbacks from an older snapshot are ignored.
+        private readonly Dictionary<string, int> _quizEvalVersionByClassroom = new Dictionary<string, int>();
+        private int _lastClassroomCountForStats;
+        private int _lastClassmatesForStats;
+
         /// <summary>"You're Offline" overlay with Retry / Go back to Dashboard - shown
         /// when this screen is opened offline, and toggled live if the connection drops
         /// or comes back while it's open. Rebuilt every OnEnable (see OfflineOverlay's
@@ -319,11 +332,134 @@ namespace Anatomia3D.UI
                 totalClassmates += Mathf.Max(0, record.StudentCount - 1);
             }
 
-            // TODO: quizzesAvailable needs a QuizService (not built yet) to count
-            // quizzes scoped to these classrooms + global quizzes. Wire it in once
-            // QuizService.FetchAvailableQuizCount() exists.
-            SetHeaderStats(classroomCount: summaries.Count, totalClassmates: totalClassmates, quizzesAvailable: 0);
+            _lastClassroomCountForStats = summaries.Count;
+            _lastClassmatesForStats = totalClassmates;
+
+            SyncQuizListeners(records);
+
+            SetHeaderStats(classroomCount: summaries.Count, totalClassmates: totalClassmates, quizzesAvailable: SumOpenQuizzes());
             SetClassrooms(summaries);
+        }
+
+        // ---------------- Quizzes Open (across all enrolled classrooms) ----------------
+
+        private int SumOpenQuizzes()
+        {
+            int total = 0;
+            foreach (var kv in _openQuizCountByClassroom) total += kv.Value;
+            return total;
+        }
+
+        /// <summary>Keeps exactly one available-quizzes listener per enrolled, non-archived
+        /// classroom: starts one for newly joined classrooms, stops the ones for classrooms the
+        /// student left or that were archived. Archived classrooms are locked, so their quizzes
+        /// don't count as open.</summary>
+        private void SyncQuizListeners(List<ClassroomService.ClassroomRecord> records)
+        {
+            if (ClassroomService.Instance == null) return;
+
+            var wanted = new HashSet<string>();
+            foreach (var r in records)
+            {
+                if (r != null && !r.IsArchived && !string.IsNullOrEmpty(r.ClassroomId)) wanted.Add(r.ClassroomId);
+            }
+
+            // Drop classrooms that are no longer enrolled / are now archived.
+            var toRemove = new List<string>();
+            foreach (var id in _quizListenersByClassroom.Keys) if (!wanted.Contains(id)) toRemove.Add(id);
+            foreach (var id in _openQuizCountByClassroom.Keys) if (!wanted.Contains(id) && !toRemove.Contains(id)) toRemove.Add(id);
+
+            foreach (var id in toRemove)
+            {
+                if (_quizListenersByClassroom.TryGetValue(id, out var handle)) handle?.Stop();
+                _quizListenersByClassroom.Remove(id);
+                _openQuizCountByClassroom.Remove(id);
+                _quizEvalVersionByClassroom[id] = (_quizEvalVersionByClassroom.TryGetValue(id, out var v) ? v : 0) + 1;
+            }
+
+            foreach (var id in wanted)
+            {
+                if (_quizListenersByClassroom.ContainsKey(id)) continue;
+
+                string classroomId = id;
+                // Register first so a callback that fires before Listen() returns isn't treated as stale.
+                _quizListenersByClassroom[classroomId] = null;
+                _quizListenersByClassroom[classroomId] = ClassroomService.Instance.ListenToAvailableQuizzes(
+                    classroomId, quizzes => EvaluateOpenQuizzes(classroomId, quizzes));
+            }
+        }
+
+        private void StopQuizListeners()
+        {
+            foreach (var kv in _quizListenersByClassroom) kv.Value?.Stop();
+            _quizListenersByClassroom.Clear();
+            // Counts are intentionally kept so the card doesn't flash to 0 while the
+            // listeners re-attach; fresh snapshots overwrite them.
+        }
+
+        /// <summary>Counts how many of this classroom's published quizzes the student can start
+        /// right now (visible to them, deadline not passed, attempts left) - the same
+        /// pre-flight StudentClassroomDetailController runs before painting Start buttons.</summary>
+        private void EvaluateOpenQuizzes(string classroomId, List<ClassroomService.QuizSummary> quizzes)
+        {
+            int version = (_quizEvalVersionByClassroom.TryGetValue(classroomId, out var v) ? v : 0) + 1;
+            _quizEvalVersionByClassroom[classroomId] = version;
+
+            bool IsStale() => !_quizListenersByClassroom.ContainsKey(classroomId)
+                              || _quizEvalVersionByClassroom[classroomId] != version;
+
+            if (quizzes == null || quizzes.Count == 0)
+            {
+                ApplyOpenQuizCount(classroomId, 0);
+                return;
+            }
+
+            if (QuizService.Instance == null)
+            {
+                // Backend not ready - count published quizzes that aren't already past their deadline.
+                int fallback = 0;
+                foreach (var q in quizzes)
+                {
+                    if (!(q.IsDeadlineEnabled && q.DeadlineUtc.HasValue && DateTime.UtcNow > q.DeadlineUtc.Value)) fallback++;
+                }
+                ApplyOpenQuizCount(classroomId, fallback);
+                return;
+            }
+
+            int remaining = quizzes.Count;
+            int open = 0;
+
+            void OnChecked(bool checkOk, bool canStart)
+            {
+                // If the check itself failed (network blip) don't hide the quiz - the real
+                // enforcement still happens when the student taps Start.
+                if (!checkOk || canStart) open++;
+
+                remaining--;
+                if (remaining == 0 && !IsStale()) ApplyOpenQuizCount(classroomId, open);
+            }
+
+            foreach (var q in quizzes)
+            {
+                if (SubmissionTypes.IsFileSubmission(q.SubmissionType) && FileSubmissionService.Instance != null)
+                {
+                    FileSubmissionService.Instance.CheckSubmitEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
+                        OnChecked(checkOk, checkOk && eligibility != null && eligibility.CanSubmit));
+                }
+                else
+                {
+                    QuizService.Instance.CheckAttemptEligibility(classroomId, q.QuizId, (checkOk, checkError, eligibility) =>
+                        OnChecked(checkOk, checkOk && eligibility != null && eligibility.CanStart));
+                }
+            }
+        }
+
+        private void ApplyOpenQuizCount(string classroomId, int count)
+        {
+            if (!_quizListenersByClassroom.ContainsKey(classroomId)) return;
+
+            _openQuizCountByClassroom[classroomId] = count;
+            SetHeaderStats(_lastClassroomCountForStats, _lastClassmatesForStats, SumOpenQuizzes());
         }
 
         /// <summary>Fills the hub with one sample classroom (matches "Anatomy 101 - Section A" in the mocks) for preview purposes.</summary>
@@ -346,6 +482,7 @@ namespace Anatomia3D.UI
         {
             UnregisterCallbacks();
             StopClassroomsListener();
+            StopQuizListeners();
 
             NetworkStatusMonitor.OnConnectivityChanged -= OnConnectivityStatusChanged;
             NetworkStatusMonitor.OnAppResumed -= HandleAppResumed;

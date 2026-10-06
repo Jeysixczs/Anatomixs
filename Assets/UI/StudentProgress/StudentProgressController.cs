@@ -57,6 +57,9 @@ namespace Anatomia3D.UI
         private Label _nextLevelLabel;
         private Label _nextLevelTitleLabel;
         private VisualElement _progressFill;
+        private Label _levelCaptionLabel;
+        private VisualElement _nextLevelBlock;
+        private VisualElement _levelProgressTrack;
         private Label _pointsToNextLabel;
 
         // Level roadmap (all configured levels + points required)
@@ -265,6 +268,9 @@ namespace Anatomia3D.UI
             _nextLevelLabel = _screenRoot.Q<Label>("next-level-label");
             _nextLevelTitleLabel = _screenRoot.Q<Label>("next-level-title-label");
             _progressFill = _screenRoot.Q<VisualElement>("progress-fill");
+            _levelCaptionLabel = _screenRoot.Q<Label>("level-caption-label");
+            _nextLevelBlock = _screenRoot.Q<VisualElement>("next-level-block");
+            _levelProgressTrack = _screenRoot.Q<VisualElement>("level-progress-track");
             _pointsToNextLabel = _screenRoot.Q<Label>("points-to-next-label");
 
             _levelRoadmapList = _screenRoot.Q<VisualElement>("level-roadmap-list");
@@ -370,18 +376,37 @@ namespace Anatomia3D.UI
                 if (_nextLevelLabel != null) _nextLevelLabel.text = $"Level {progress.nextLevel}";
                 if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = progress.nextTitle;
                 if (_progressFill != null) _progressFill.style.width = new Length(Mathf.Clamp01(progress.progress01) * 100f, LengthUnit.Percent);
-                if (_pointsToNextLabel != null)
+                if (_pointsToNextLabel != null && progress.pointsToNext > 0)
                 {
-                    _pointsToNextLabel.text = progress.pointsToNext > 0
-                        ? $"{progress.pointsToNext} points to next level"
-                        : "You're at the top level!";
+                    _pointsToNextLabel.text = $"{progress.pointsToNext} points to next level";
                 }
+
+                // ComputeLevelProgress reports nextLevel == level once there's no higher level.
+                ApplyMaxLevelState(progress.nextLevel == progress.level && progress.pointsToNext <= 0);
 
                 if (_quizzesValueLabel != null) _quizzesValueLabel.text = student.QuizzesCompleted.ToString();
                 if (_pointsValueLabel != null) _pointsValueLabel.text = student.TotalPoints.ToString();
 
                 BuildLevelRoadmap(settings.Levels, progress.level, student.TotalPoints);
             });
+        }
+
+        /// <summary>At the top level there's no "next up" to show, so the hero card drops the
+        /// right-hand Next Up block and the progress bar, switches the caption to MAX LEVEL
+        /// and shows a congratulatory line instead. Any other level restores the normal
+        /// layout (this can be called repeatedly as points change).</summary>
+        private void ApplyMaxLevelState(bool isMaxLevel)
+        {
+            var shown = isMaxLevel ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_nextLevelBlock != null) _nextLevelBlock.style.display = shown;
+            if (_levelProgressTrack != null) _levelProgressTrack.style.display = shown;
+
+            if (_levelCaptionLabel != null) _levelCaptionLabel.text = isMaxLevel ? "MAX LEVEL" : "CURRENT LEVEL";
+
+            if (isMaxLevel && _pointsToNextLabel != null)
+            {
+                _pointsToNextLabel.text = "You've reached the top level - amazing work!";
+            }
         }
 
         /// <summary>Fills in the two stat-card values PopulateLevelProgress() above
@@ -410,6 +435,14 @@ namespace Anatomia3D.UI
 
                 if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{result.AvgScorePercent.ToString("0.##")}%";
                 if (_badgesValueLabel != null) _badgesValueLabel.text = result.BadgesEarnedCount.ToString();
+            });
+
+            // The saved badgesEarned list can lag behind points (e.g. points edited by hand), so
+            // recount the way the Achievements screen does - by points as well - to keep both
+            // screens showing the same number.
+            BadgeProgress.FetchEarnedCount(count =>
+            {
+                if (count >= 0 && _badgesValueLabel != null) _badgesValueLabel.text = count.ToString();
             });
         }
 
@@ -832,6 +865,7 @@ namespace Anatomia3D.UI
             if (_nextLevelTitleLabel != null) _nextLevelTitleLabel.text = nextLevelTitle;
             if (_progressFill != null) UIAnimationUtility.AnimateFill(_progressFill, levelProgress01);
             if (_pointsToNextLabel != null) _pointsToNextLabel.text = $"{pointsToNextLevel} points to next level";
+            ApplyMaxLevelState(nextLevel == currentLevel && pointsToNextLevel <= 0);
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{avgScorePercent.ToString("0.##")}%";

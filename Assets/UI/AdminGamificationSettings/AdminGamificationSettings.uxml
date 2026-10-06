@@ -131,6 +131,12 @@
                 <ui:Label name="badge-points-error" text="" class="field-error hidden"/>
                 <ui:Label text="Badge Icon" class="field-label field-label-spaced"/>
                 <ui:VisualElement name="badge-icon-grid" class="icon-grid"/>
+                <ui:Label text="Or upload your own image" class="field-label field-label-spaced"/>
+                <ui:VisualElement class="badge-upload-row">
+                    <ui:VisualElement name="badge-custom-preview" class="badge-custom-preview"/>
+                    <ui:Button name="badge-upload-image-button" text="Choose Image" class="badge-upload-button"/>
+                    <ui:Button name="badge-remove-image-button" text="Remove" class="badge-remove-image-button hidden"/>
+                </ui:VisualElement>
                 <ui:Label name="add-badge-status-label" text="" class="status-label hidden"/>
                 <ui:Button name="add-badge-submit-button" class="modal-submit-button">
                     <ui:Label text="Add Badge" class="modal-submit-label"/>

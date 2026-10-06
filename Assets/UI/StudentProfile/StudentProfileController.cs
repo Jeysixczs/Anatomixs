@@ -264,7 +264,8 @@ namespace Anatomia3D.UI
         {
             if (_studentNameLabel != null) _studentNameLabel.text = studentName;
             if (_studentEmailLabel != null) _studentEmailLabel.text = email;
-            if (_levelBadgeLabel != null) _levelBadgeLabel.text = $"Level {level} \u2022 {totalPoints:N0} pts";
+            // The badge under the name shows the account role; level and points live in the stat cards below.
+            if (_levelBadgeLabel != null) _levelBadgeLabel.text = "Student";
 
             if (_quizzesValueLabel != null) _quizzesValueLabel.text = quizzesCompleted.ToString();
             if (_levelValueLabel != null) _levelValueLabel.text = level.ToString();

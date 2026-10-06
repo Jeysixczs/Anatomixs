@@ -404,7 +404,61 @@ namespace Anatomia3D.Backend
                         return;
                     }
                     onComplete?.Invoke(true, null);
+
+                    // Publishing (not unpublishing) tells students. Fire-and-forget: the publish
+                    // itself already succeeded, so a failed notification never fails it.
+                    if (published) QueueQuizPublishedNotification(classroomId, quizId);
                 });
+        }
+
+        /// <summary>Writes `classrooms/{id}/quizPublishEvents/{eventId}`. The QuizPublishedPushSender
+        /// Apps Script picks these up and sends a `quiz_published` push to the `classroom_{id}`
+        /// topic (the client can't send FCM itself - see FCMNotificationService). The event
+        /// carries the quiz's title and submission type so the push can say "quiz" vs
+        /// "file submission".</summary>
+        private void QueueQuizPublishedNotification(string classroomId, string quizId)
+        {
+            var admin = AdminAuthService.Instance != null ? AdminAuthService.Instance.CurrentAdmin : null;
+
+            Db.Collection("quizzes").Document(quizId).GetSnapshotAsync().ContinueWithOnMainThread(quizTask =>
+            {
+                if (quizTask.IsCanceled || quizTask.IsFaulted || !quizTask.Result.Exists)
+                {
+                    Debug.LogWarning($"[AdminClassroomService] Quiz {quizId} published, but its details couldn't be read for the student notification.");
+                    return;
+                }
+
+                var quizDoc = quizTask.Result;
+                string title = quizDoc.ContainsField("title") ? quizDoc.GetValue<string>("title") : "Untitled";
+                string submissionType = SubmissionTypes.Normalize(
+                    quizDoc.ContainsField("submissionType") ? quizDoc.GetValue<string>("submissionType") : null);
+
+                // Retake exams are assigned to specific students only - carry that list so the
+                // push (and the in-app notification) reach just those students, not the class.
+                var allowedIds = quizDoc.ContainsField("allowedStudentIds")
+                    ? quizDoc.GetValue<List<string>>("allowedStudentIds")
+                    : new List<string>();
+
+                var evt = new Dictionary<string, object>
+                {
+                    { "allowedStudentIds", allowedIds ?? new List<string>() },
+                    { "quizId", quizId },
+                    { "title", title },
+                    { "submissionType", submissionType },
+                    { "authorId", admin != null ? admin.Uid : "" },
+                    { "createdAt", Timestamp.GetCurrentTimestamp() },
+                    { "pushed", false }
+                };
+
+                Db.Collection("classrooms").Document(classroomId).Collection("quizPublishEvents").Document()
+                    .SetAsync(evt).ContinueWithOnMainThread(writeTask =>
+                    {
+                        if (writeTask.IsCanceled || writeTask.IsFaulted)
+                            Debug.LogWarning($"[AdminClassroomService] Could not queue the publish notification for quiz {quizId}: " +
+                                             $"{writeTask.Exception?.GetBaseException().Message ?? "cancelled"} " +
+                                             "(PermissionDenied = add a Firestore rule for classrooms/{id}/quizPublishEvents).");
+                    });
+            });
         }
 
         /// <summary>Call from AdminClassroomDetailController.OnShowToStudentsToggleClicked().</summary>

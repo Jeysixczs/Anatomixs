@@ -16,19 +16,19 @@
         <ui:ScrollView name="screen-scroll" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="level-progress-card" class="level-hero">
-                    <ui:Label text="CURRENT LEVEL" class="hero-caption"/>
+                    <ui:Label name="level-caption-label" text="CURRENT LEVEL" class="hero-caption"/>
                     <ui:VisualElement name="level-row" class="level-row">
                         <ui:VisualElement class="level-block">
                             <ui:Label name="current-level-label" text="Level 5" class="level-number"/>
                             <ui:Label name="current-level-title-label" text="Expert" class="level-title-pill"/>
                         </ui:VisualElement>
-                        <ui:VisualElement class="level-block level-block-right">
+                        <ui:VisualElement name="next-level-block" class="level-block level-block-right">
                             <ui:Label text="NEXT UP" class="hero-caption hero-caption-right"/>
                             <ui:Label name="next-level-label" text="Level 6" class="level-next-number"/>
                             <ui:Label name="next-level-title-label" text="Master" class="level-caption-small"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="progress-track">
+                    <ui:VisualElement name="level-progress-track" class="progress-track">
                         <ui:VisualElement name="progress-fill" class="progress-fill" style="width: 62%;"/>
                     </ui:VisualElement>
                     <ui:Label name="points-to-next-label" text="250 points to next level" class="level-caption"/>

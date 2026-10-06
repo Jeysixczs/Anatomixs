@@ -389,11 +389,26 @@ namespace Anatomia3D.Backend
         /// MarkAllNotificationsRead() to advance that cursor (e.g. from
         /// StudentNotificationsController.OnMarkAllReadClicked()).
         /// </summary>
+        public enum NotificationKind
+        {
+            Announcement,
+            QuizPublished,
+            FileSubmissionPublished,
+            Material
+        }
+
         [Serializable]
         public class NotificationRecord
         {
+            public NotificationKind Kind = NotificationKind.Announcement;
             public string ClassroomId;
             public string ClassroomName;
+            public string TeacherName;
+            /// <summary>The id of the announcement / quiz / material this row is about.</summary>
+            public string SourceId;
+            /// <summary>Unique row id across all kinds (plain announcement id for announcements,
+            /// "quiz:{eventId}" / "material:{id}" for the rest) - kept under this name so
+            /// existing callers keep working.</summary>
             public string AnnouncementId;
             public string Title;
             public string Body;
@@ -486,22 +501,28 @@ namespace Anatomia3D.Backend
         {
             private ListenerRegistration _studentListener;
             private ListenerRegistration _classroomsListener;
-            private readonly Dictionary<string, ListenerRegistration> _announcementListeners = new Dictionary<string, ListenerRegistration>();
+            private readonly Dictionary<string, List<ListenerRegistration>> _announcementListeners = new Dictionary<string, List<ListenerRegistration>>();
 
             internal void SetStudentListener(ListenerRegistration listener) => _studentListener = listener;
             internal void SetClassroomsListener(ListenerRegistration listener) => _classroomsListener = listener;
 
-            internal void SetAnnouncementListener(string classroomId, ListenerRegistration listener)
+            /// <summary>Registers one more listener for this classroom (announcements, quiz
+            /// publish events and materials each add one). StopAnnouncementListener stops them all.</summary>
+            internal void AddClassroomListener(string classroomId, ListenerRegistration listener)
             {
-                StopAnnouncementListener(classroomId);
-                _announcementListeners[classroomId] = listener;
+                if (!_announcementListeners.TryGetValue(classroomId, out var list))
+                {
+                    list = new List<ListenerRegistration>();
+                    _announcementListeners[classroomId] = list;
+                }
+                list.Add(listener);
             }
 
             internal void StopAnnouncementListener(string classroomId)
             {
-                if (_announcementListeners.TryGetValue(classroomId, out var listener))
+                if (_announcementListeners.TryGetValue(classroomId, out var list))
                 {
-                    listener.Stop();
+                    foreach (var l in list) l.Stop();
                     _announcementListeners.Remove(classroomId);
                 }
             }
@@ -513,7 +534,8 @@ namespace Anatomia3D.Backend
                 _classroomsListener?.Stop();
                 _classroomsListener = null;
 
-                foreach (var listener in _announcementListeners.Values) listener.Stop();
+                foreach (var list in _announcementListeners.Values)
+                    foreach (var listener in list) listener.Stop();
                 _announcementListeners.Clear();
             }
         }
@@ -541,15 +563,17 @@ namespace Anatomia3D.Backend
             Timestamp lastReadAt = default;
 
             var classroomNames = new Dictionary<string, string>();
+            var teacherNames = new Dictionary<string, string>();
             var announcementsByClassroom = new Dictionary<string, List<NotificationRecord>>();
+            var quizEventsByClassroom = new Dictionary<string, List<NotificationRecord>>();
+            var materialsByClassroom = new Dictionary<string, List<NotificationRecord>>();
 
             void Recompute()
             {
                 var merged = new List<NotificationRecord>();
-                foreach (var list in announcementsByClassroom.Values)
-                {
-                    merged.AddRange(list);
-                }
+                foreach (var list in announcementsByClassroom.Values) merged.AddRange(list);
+                foreach (var list in quizEventsByClassroom.Values) merged.AddRange(list);
+                foreach (var list in materialsByClassroom.Values) merged.AddRange(list);
 
                 // Re-derive IsRead against whatever the cursor currently is - this is
                 // what makes MarkAllNotificationsRead() reflect instantly here without
@@ -582,6 +606,7 @@ namespace Anatomia3D.Backend
                         string classroomId = doc.Id;
                         incomingIds.Add(classroomId);
                         classroomNames[classroomId] = doc.ContainsField("name") ? doc.GetValue<string>("name") : "Classroom";
+                        teacherNames[classroomId] = doc.ContainsField("teacherName") ? doc.GetValue<string>("teacherName") : "";
 
                         // Only start a new announcements listener for classrooms we're not
                         // already watching - joining/archiving elsewhere shouldn't restart
@@ -602,7 +627,10 @@ namespace Anatomia3D.Backend
                                         list.Add(new NotificationRecord
                                         {
                                             ClassroomId = classroomId,
+                                            Kind = NotificationKind.Announcement,
                                             ClassroomName = classroomNames.TryGetValue(classroomId, out var name) ? name : "Classroom",
+                                            TeacherName = teacherNames.TryGetValue(classroomId, out var tn) ? tn : "",
+                                            SourceId = annDoc.Id,
                                             AnnouncementId = annDoc.Id,
                                             Title = annDoc.ContainsField("title") ? annDoc.GetValue<string>("title") : "",
                                             Body = annDoc.ContainsField("body") ? annDoc.GetValue<string>("body") : "",
@@ -615,7 +643,83 @@ namespace Anatomia3D.Backend
                                     Recompute();
                                 });
 
-                            subscription.SetAnnouncementListener(classroomId, annListener);
+                            subscription.AddClassroomListener(classroomId, annListener);
+
+                            // Quiz / file-submission publish events (written by
+                            // AdminClassroomService.SetQuizPublished when a teacher publishes).
+                            quizEventsByClassroom[classroomId] = new List<NotificationRecord>();
+                            var quizListener = Db.Collection("classrooms").Document(classroomId).Collection("quizPublishEvents")
+                                .OrderByDescending("createdAt")
+                                .Limit(maxPerClassroom)
+                                .Listen(evtSnapshot =>
+                                {
+                                    var list = new List<NotificationRecord>();
+                                    foreach (var evtDoc in evtSnapshot.Documents)
+                                    {
+                                        var createdAt = evtDoc.ContainsField("createdAt") ? evtDoc.GetValue<Timestamp>("createdAt") : Timestamp.GetCurrentTimestamp();
+                                        string quizTitle = evtDoc.ContainsField("title") ? evtDoc.GetValue<string>("title") : "Untitled";
+                                        bool isFile = SubmissionTypes.IsFileSubmission(
+                                            evtDoc.ContainsField("submissionType") ? evtDoc.GetValue<string>("submissionType") : null);
+                                        string quizId = evtDoc.ContainsField("quizId") ? evtDoc.GetValue<string>("quizId") : "";
+
+                                        // Retake exam assigned to specific students: everyone else gets no notification.
+                                        var allowed = evtDoc.ContainsField("allowedStudentIds")
+                                            ? evtDoc.GetValue<List<string>>("allowedStudentIds")
+                                            : null;
+                                        if (allowed != null && allowed.Count > 0 && !allowed.Contains(studentUid)) continue;
+
+                                        list.Add(new NotificationRecord
+                                        {
+                                            Kind = isFile ? NotificationKind.FileSubmissionPublished : NotificationKind.QuizPublished,
+                                            ClassroomId = classroomId,
+                                            ClassroomName = classroomNames.TryGetValue(classroomId, out var cn) ? cn : "Classroom",
+                                            TeacherName = teacherNames.TryGetValue(classroomId, out var tn) ? tn : "",
+                                            SourceId = quizId,
+                                            AnnouncementId = "quiz:" + evtDoc.Id,
+                                            Title = isFile ? "New file submission" : "New quiz available",
+                                            Body = isFile ? $"\"{quizTitle}\" is open for submission." : $"\"{quizTitle}\" has been published.",
+                                            CreatedAt = createdAt,
+                                            IsRead = hasLastRead && createdAt.ToDateTime() <= lastReadAt.ToDateTime()
+                                        });
+                                    }
+
+                                    quizEventsByClassroom[classroomId] = list;
+                                    Recompute();
+                                });
+                            subscription.AddClassroomListener(classroomId, quizListener);
+
+                            // New learning materials.
+                            materialsByClassroom[classroomId] = new List<NotificationRecord>();
+                            var materialListener = Db.Collection("classrooms").Document(classroomId).Collection("materials")
+                                .OrderByDescending("createdAt")
+                                .Limit(maxPerClassroom)
+                                .Listen(matSnapshot =>
+                                {
+                                    var list = new List<NotificationRecord>();
+                                    foreach (var matDoc in matSnapshot.Documents)
+                                    {
+                                        var createdAt = matDoc.ContainsField("createdAt") ? matDoc.GetValue<Timestamp>("createdAt") : Timestamp.GetCurrentTimestamp();
+                                        string matTitle = matDoc.ContainsField("title") ? matDoc.GetValue<string>("title") : "";
+
+                                        list.Add(new NotificationRecord
+                                        {
+                                            Kind = NotificationKind.Material,
+                                            ClassroomId = classroomId,
+                                            ClassroomName = classroomNames.TryGetValue(classroomId, out var cn) ? cn : "Classroom",
+                                            TeacherName = teacherNames.TryGetValue(classroomId, out var tn) ? tn : "",
+                                            SourceId = matDoc.Id,
+                                            AnnouncementId = "material:" + matDoc.Id,
+                                            Title = "New material",
+                                            Body = string.IsNullOrEmpty(matTitle) ? "A new file was uploaded." : $"\"{matTitle}\" was uploaded.",
+                                            CreatedAt = createdAt,
+                                            IsRead = hasLastRead && createdAt.ToDateTime() <= lastReadAt.ToDateTime()
+                                        });
+                                    }
+
+                                    materialsByClassroom[classroomId] = list;
+                                    Recompute();
+                                });
+                            subscription.AddClassroomListener(classroomId, materialListener);
                         }
                     }
 
@@ -634,7 +738,10 @@ namespace Anatomia3D.Backend
                         {
                             subscription.StopAnnouncementListener(id);
                             announcementsByClassroom.Remove(id);
+                            quizEventsByClassroom.Remove(id);
+                            materialsByClassroom.Remove(id);
                             classroomNames.Remove(id);
+                            teacherNames.Remove(id);
                         }
                     }
 

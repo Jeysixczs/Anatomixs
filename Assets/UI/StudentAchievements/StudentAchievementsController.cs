@@ -60,15 +60,17 @@ namespace Anatomia3D.UI
         {
             public string BadgeId;
             public string Name;
-            public string IconEmoji;
+            public string IconKey;
+            public string IconUrl;
             public int PointsRequired;
             public bool Earned;
 
-            public BadgeInfo(string badgeId, string name, string iconEmoji, int pointsRequired, bool earned)
+            public BadgeInfo(string badgeId, string name, string iconKey, string iconUrl, int pointsRequired, bool earned)
             {
                 BadgeId = badgeId;
                 Name = name;
-                IconEmoji = iconEmoji;
+                IconKey = iconKey;
+                IconUrl = iconUrl;
                 PointsRequired = pointsRequired;
                 Earned = earned;
             }
@@ -142,9 +144,19 @@ namespace Anatomia3D.UI
                 // alone only repaints the badge-list, so the summary card needs its own
                 // repaint here too or it shows blank/stale text on every re-open after the
                 // first.
-                int earnedCount = _lastBadges.Count(b => b.Earned);
-                SetSummaryData(_lastTotalPoints, earnedCount, _lastBadges.Count);
-                RenderBadges();
+                var cachedStudent = PlayerSessionManager.Instance?.CurrentStudent;
+                if (cachedStudent != null && _lastConfiguredBadges != null)
+                {
+                    // Still no network call: re-merge anything the Classroom Detail screen
+                    // has registered since the last load (BadgeCatalog), then repaint.
+                    RenderMergedBadges(cachedStudent, _lastConfiguredBadges);
+                }
+                else
+                {
+                    int earnedCount = _lastBadges.Count(b => b.Earned);
+                    SetSummaryData(_lastTotalPoints, earnedCount, _lastBadges.Count);
+                    RenderBadges();
+                }
             }
             else
             {
@@ -311,6 +323,13 @@ namespace Anatomia3D.UI
 
         private void RenderMergedBadges(PlayerSessionManager.StudentProfile student, Dictionary<string, AdminGamificationService.BadgeEntry> configuredBadges)
         {
+            // Badges already seen on the Classroom Detail screen (BadgeCatalog) - a fresh
+            // teacher config fetched above always wins, these only fill in what's missing.
+            foreach (var shared in BadgeCatalog.For(student.Uid))
+            {
+                if (!configuredBadges.ContainsKey(shared.BadgeId)) configuredBadges[shared.BadgeId] = shared;
+            }
+
             var earnedIds = new HashSet<string>(student.BadgesEarned ?? new List<string>());
 
             var badges = configuredBadges.Values
@@ -318,7 +337,8 @@ namespace Anatomia3D.UI
                 .Select(b => new BadgeInfo(
                     b.BadgeId,
                     b.Name,
-                    b.IconEmoji,
+                    b.IconKey,
+                    b.IconUrl,
                     b.PointsRequired,
                     earnedIds.Contains(b.BadgeId) || student.TotalPoints >= b.PointsRequired))
                 .ToList();
@@ -331,7 +351,7 @@ namespace Anatomia3D.UI
             foreach (var id in earnedIds)
             {
                 if (configuredBadges.ContainsKey(id)) continue;
-                badges.Add(new BadgeInfo(id, HumanizeBadgeId(id), "\U0001F3C5", 0, true));
+                badges.Add(new BadgeInfo(id, HumanizeBadgeId(id), "medal", "", 0, true));
             }
 
             _hasLoadedOnce = true;
@@ -541,10 +561,9 @@ namespace Anatomia3D.UI
 
                 if (badge.Earned)
                 {
-                    var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
-                    emojiLabel.AddToClassList("badge-icon-emoji");
-                    refs.IconBox.Add(emojiLabel);
-                    refs.IconContent = emojiLabel;
+                    var iconArt = BadgeIconView.Create(badge.IconKey, badge.IconUrl, 64);
+                    refs.IconBox.Add(iconArt);
+                    refs.IconContent = iconArt;
                 }
                 else
                 {

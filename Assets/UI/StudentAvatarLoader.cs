@@ -113,7 +113,7 @@ namespace Anatomia3D.UI
             });
         }
 
-        private static void LoadUrl(string url, Action<Texture2D> onLoaded)
+        public static void LoadUrl(string url, Action<Texture2D> onLoaded)
         {
             if (UrlCache.TryGetValue(url, out var cached))
             {

@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StudentProfile/StudentProfile.uss?fileID=7433441132597879392&amp;guid=7a745c1bf4f217341ba6cea4252b0cbe&amp;type=3#StudentProfile"/>
-    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss"/>
+    <Style src="project://database/Assets/UI/Theme/AnatomiaTheme.uss?fileID=7433441132597879392&amp;guid=f3df4a0ff9d42424986b13ce625d35c9&amp;type=3#AnatomiaTheme"/>
     <ui:VisualElement name="screen-root" class="anatomia-theme theme-profile screen-root">
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="header" class="header">
@@ -23,7 +23,7 @@
                         <ui:Label name="student-name-label" text="Jeysi Cruz" class="profile-name"/>
                         <ui:Label name="student-email-label" text="jeysi.cruz@email.com" class="profile-email"/>
                         <ui:VisualElement name="level-badge" class="level-badge">
-                            <ui:Label name="level-badge-label" text="Level 5 • 1,250 pts" class="level-badge-label"/>
+                            <ui:Label name="level-badge-label" text="Student" class="level-badge-label"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -84,7 +84,7 @@
                     </ui:VisualElement>
                     <ui:Label text="Log Out" class="logout-label"/>
                 </ui:Button>
-                <ui:Label text="Anatomia 3D  v1.0.0" class="version-label"/>
+                <ui:Label text="Anatomia 3D  v1.0.1" class="version-label"/>
             </ui:VisualElement>
         </ui:ScrollView>
     </ui:VisualElement>

@@ -118,6 +118,13 @@ namespace Anatomia3D.UI
         // Badges tab
         private VisualElement _badgesEmptyState;
         private VisualElement _badgesList;
+        private VisualElement _badgesSummary;
+        private Label _badgesUnlockedValue;
+        private Label _badgesTotalValue;
+        private Label _badgesPointsValue;
+        private Label _badgesNextTitle;
+        private Label _badgesNextHint;
+        private VisualElement _badgesNextFill;
 
         /// <summary>A single row in the Overview tab's Announcements section.</summary>
         public struct AnnouncementInfo
@@ -267,15 +274,17 @@ namespace Anatomia3D.UI
         {
             public string BadgeId;
             public string Name;
-            public string IconEmoji;
+            public string IconKey;
+            public string IconUrl;
             public int PointsRequired;
             public bool Earned;
 
-            public BadgeInfo(string badgeId, string name, string iconEmoji, int pointsRequired, bool earned)
+            public BadgeInfo(string badgeId, string name, string iconKey, string iconUrl, int pointsRequired, bool earned)
             {
                 BadgeId = badgeId;
                 Name = name;
-                IconEmoji = iconEmoji;
+                IconKey = iconKey;
+                IconUrl = iconUrl;
                 PointsRequired = pointsRequired;
                 Earned = earned;
             }
@@ -604,6 +613,13 @@ namespace Anatomia3D.UI
 
             _badgesEmptyState = _screenRoot.Q<VisualElement>("badges-empty-state");
             _badgesList = _screenRoot.Q<VisualElement>("badges-list");
+            _badgesSummary = _screenRoot.Q<VisualElement>("badges-summary");
+            _badgesUnlockedValue = _screenRoot.Q<Label>("badges-unlocked-value");
+            _badgesTotalValue = _screenRoot.Q<Label>("badges-total-value");
+            _badgesPointsValue = _screenRoot.Q<Label>("badges-points-value");
+            _badgesNextTitle = _screenRoot.Q<Label>("badges-next-title");
+            _badgesNextHint = _screenRoot.Q<Label>("badges-next-hint");
+            _badgesNextFill = _screenRoot.Q<VisualElement>("badges-next-fill");
 
             Debug.Log($"[StudentClassroomDetailController] Found tabs: {_overviewTabButton != null}/{_studentsTabButton != null}/{_quizzesTabButton != null}/{_leaderboardTabButton != null}/{_scoresTabButton != null}/{_badgesTabButton != null}");
         }
@@ -869,6 +885,10 @@ namespace Anatomia3D.UI
             {
                 if (isStale()) return;
 
+                // Share these definitions with the Achievements screen so the badges
+                // earned here also appear there.
+                BadgeCatalog.Register(student.Uid, settings?.Badges);
+
                 var earnedIds = new HashSet<string>(student.BadgesEarned ?? new List<string>());
 
                 var badges = (settings?.Badges ?? new List<AdminGamificationService.BadgeEntry>())
@@ -876,7 +896,8 @@ namespace Anatomia3D.UI
                     .Select(b => new BadgeInfo(
                         b.BadgeId,
                         b.Name,
-                        b.IconEmoji,
+                        b.IconKey,
+                        b.IconUrl,
                         b.PointsRequired,
                         earnedIds.Contains(b.BadgeId) || student.TotalPoints >= b.PointsRequired))
                     .ToList();
@@ -1378,15 +1399,129 @@ namespace Anatomia3D.UI
             bool hasBadges = _lastBadges.Count > 0;
             _badgesEmptyState?.EnableInClassList("hidden", hasBadges);
             _badgesList?.EnableInClassList("hidden", !hasBadges);
+            _badgesSummary?.EnableInClassList("hidden", !hasBadges);
 
             if (_badgesList == null) return;
             _badgesList.Clear();
             if (!hasBadges) return;
 
+            // The first badge (lowest points) that isn't earned yet is the "next up" one.
+            string nextId = null;
+            BadgeInfo? next = null;
+            foreach (var b in _lastBadges.OrderBy(b => b.PointsRequired))
+            {
+                if (!b.Earned) { next = b; nextId = b.BadgeId; break; }
+            }
+
+            UpdateBadgesSummary(currentPoints, next);
+
             foreach (var badge in _lastBadges)
             {
-                _badgesList.Add(BuildBadgeCard(badge, currentPoints));
+                _badgesList.Add(BuildBadgeTile(badge, currentPoints, badge.BadgeId == nextId && !badge.Earned));
             }
+        }
+
+        private void UpdateBadgesSummary(int currentPoints, BadgeInfo? next)
+        {
+            int unlocked = _lastBadges.Count(b => b.Earned);
+            if (_badgesUnlockedValue != null) _badgesUnlockedValue.text = unlocked.ToString();
+            if (_badgesTotalValue != null) _badgesTotalValue.text = _lastBadges.Count.ToString();
+            if (_badgesPointsValue != null) _badgesPointsValue.text = currentPoints.ToString("N0");
+
+            if (_badgesNextFill == null) return;
+
+            if (next.HasValue)
+            {
+                var n = next.Value;
+                float pct = n.PointsRequired > 0 ? Mathf.Clamp01((float)currentPoints / n.PointsRequired) : 0f;
+                int remaining = Mathf.Max(0, n.PointsRequired - currentPoints);
+
+                if (_badgesNextTitle != null) _badgesNextTitle.text = $"Next badge: {n.Name}";
+                if (_badgesNextHint != null) _badgesNextHint.text = $"{remaining:N0} more {(remaining == 1 ? "point" : "points")} to unlock  ({currentPoints:N0} / {n.PointsRequired:N0})";
+                _badgesNextFill.style.width = new Length(pct * 100f, LengthUnit.Percent);
+                _badgesNextFill.RemoveFromClassList("bdg-fill-complete");
+            }
+            else
+            {
+                if (_badgesNextTitle != null) _badgesNextTitle.text = "All badges unlocked";
+                if (_badgesNextHint != null) _badgesNextHint.text = "You've earned every badge in this classroom.";
+                _badgesNextFill.style.width = new Length(100f, LengthUnit.Percent);
+                _badgesNextFill.AddToClassList("bdg-fill-complete");
+            }
+        }
+
+        /// <summary>One tile in the Badges tab's 2-column grid. Earned badges show their icon on a
+        /// gold disc with an "Unlocked" pill; locked ones show it faded with a lock chip, a points
+        /// pill and progress. The next badge to unlock gets an accent outline and a "NEXT" tag.</summary>
+        private VisualElement BuildBadgeTile(BadgeInfo badge, int currentPoints, bool isNext)
+        {
+            var tile = new VisualElement();
+            tile.AddToClassList("bdg-tile");
+            if (!badge.Earned) tile.AddToClassList("bdg-tile-locked");
+            if (isNext) tile.AddToClassList("bdg-tile-next");
+
+            var iconWrap = new VisualElement();
+            iconWrap.AddToClassList("bdg-icon-wrap");
+            iconWrap.AddToClassList(badge.Earned ? "bdg-icon-earned" : "bdg-icon-locked");
+
+            var art = BadgeIconView.Create(badge.IconKey, badge.IconUrl, 84);
+            if (!badge.Earned) art.AddToClassList("bdg-art-locked");
+            iconWrap.Add(art);
+
+            if (!badge.Earned)
+            {
+                var chip = new VisualElement { pickingMode = PickingMode.Ignore };
+                chip.AddToClassList("bdg-lock-chip");
+                var glyph = new VisualElement { pickingMode = PickingMode.Ignore };
+                glyph.AddToClassList("bdg-lock-glyph");
+                chip.Add(glyph);
+                iconWrap.Add(chip);
+            }
+
+            tile.Add(iconWrap);
+
+            var nameLabel = new Label(badge.Name);
+            nameLabel.AddToClassList("bdg-name");
+            if (!badge.Earned) nameLabel.AddToClassList("bdg-name-locked");
+            tile.Add(nameLabel);
+
+            if (badge.Earned)
+            {
+                var pill = new Label("Unlocked");
+                pill.AddToClassList("bdg-pill");
+                pill.AddToClassList("bdg-pill-unlocked");
+                tile.Add(pill);
+            }
+            else
+            {
+                var pill = new Label($"{badge.PointsRequired:N0} pts");
+                pill.AddToClassList("bdg-pill");
+                pill.AddToClassList("bdg-pill-locked");
+                tile.Add(pill);
+
+                float pct = badge.PointsRequired > 0 ? Mathf.Clamp01((float)currentPoints / badge.PointsRequired) : 0f;
+
+                var track = new VisualElement();
+                track.AddToClassList("bdg-tile-track");
+                var fill = new VisualElement();
+                fill.AddToClassList("bdg-tile-fill");
+                fill.style.width = new Length(pct * 100f, LengthUnit.Percent);
+                track.Add(fill);
+                tile.Add(track);
+
+                var meta = new Label($"{Mathf.Min(currentPoints, badge.PointsRequired):N0} / {badge.PointsRequired:N0}");
+                meta.AddToClassList("bdg-tile-meta");
+                tile.Add(meta);
+            }
+
+            if (isNext)
+            {
+                var tag = new Label("NEXT") { pickingMode = PickingMode.Ignore };
+                tag.AddToClassList("bdg-next-tag");
+                tile.Add(tag);
+            }
+
+            return tile;
         }
 
         // ---------------- Row builders (built at runtime - lists are dynamic) ----------------
@@ -1826,9 +1961,7 @@ namespace Anatomia3D.UI
 
             if (badge.Earned)
             {
-                var emojiLabel = new Label(string.IsNullOrEmpty(badge.IconEmoji) ? "\U0001F3C6" : badge.IconEmoji);
-                emojiLabel.AddToClassList("badge-icon-emoji");
-                iconBox.Add(emojiLabel);
+                iconBox.Add(BadgeIconView.Create(badge.IconKey, badge.IconUrl, 64));
             }
             else
             {

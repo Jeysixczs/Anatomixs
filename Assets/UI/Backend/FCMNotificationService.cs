@@ -93,6 +93,11 @@ namespace Anatomia3D.Backend
         /// new file simply appears there.</summary>
         public event Action<string, string, string, string> OnForegroundMaterial;
 
+        /// <summary>For a "quiz / file submission published" push that arrives while the app is
+        /// open. Args are (classroomId, quizId, title, body). Nothing subscribes by default -
+        /// the Available Quizzes tab and the hub's Quizzes Open card are already live.</summary>
+        public event Action<string, string, string, string> OnForegroundQuizPublished;
+
         /// <summary>Which tab of the student's classroom screen a tapped notification lands on.</summary>
         private enum ClassroomTab { Overview, Quizzes, Materials }
 
@@ -369,6 +374,9 @@ namespace Anatomia3D.Backend
                 case "material":
                     HandleMaterialMessage(message);
                     break;
+                case "quiz_published":
+                    HandleQuizPublishedMessage(message);
+                    break;
                 default:
                     // Unknown push type - ignore rather than guess. Keeps older app
                     // builds from misreading a payload shape added after they shipped.
@@ -473,6 +481,36 @@ namespace Anatomia3D.Backend
             else
             {
                 OnForegroundMaterial?.Invoke(classroomId, materialId, title, body);
+            }
+        }
+
+        /// <summary>A "your teacher published a quiz / file submission" push, sent by the
+        /// QuizPublishedPushSender Apps Script to `classroom_{classroomId}` (same topic as
+        /// announcements). Tapping it lands on the Available Quizzes tab.</summary>
+        private void HandleQuizPublishedMessage(FirebaseMessage message)
+        {
+            message.Data.TryGetValue("classroomId", out string classroomId);
+            message.Data.TryGetValue("quizId", out string quizId);
+            message.Data.TryGetValue("eventId", out string eventId);
+            string title = message.Notification != null ? message.Notification.Title : "";
+            string body = message.Notification != null ? message.Notification.Body : "";
+
+            if (string.IsNullOrEmpty(classroomId))
+            {
+                Debug.LogWarning("[FCMNotificationService] Quiz-published push missing classroomId - ignoring.");
+                return;
+            }
+
+            string dedupeKey = !string.IsNullOrEmpty(eventId) ? eventId : classroomId + "_" + quizId;
+            if (IsDuplicateMessage("quiz_published:" + dedupeKey)) return;
+
+            if (message.NotificationOpened)
+            {
+                NavigateToClassroom(classroomId, ClassroomTab.Quizzes);
+            }
+            else
+            {
+                OnForegroundQuizPublished?.Invoke(classroomId, quizId, title, body);
             }
         }
 
