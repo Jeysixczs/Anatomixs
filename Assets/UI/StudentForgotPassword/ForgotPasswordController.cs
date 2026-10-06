@@ -156,7 +156,7 @@ namespace Anatomia3D.UI
             _emailField.value = string.Empty;
             ClearError(_emailError);
 
-            Debug.Log("[ForgotPasswordController] Password reset email sent.");
+            //Debug.Log("[ForgotPasswordController] Password reset email sent.");
         }
 
         // ---------------- Helpers ----------------

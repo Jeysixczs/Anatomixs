@@ -613,6 +613,48 @@
     background-color: var(--danger);
 }
 
+.dialog-button-primary
+{
+    background-color: var(--accent);
+    color: white;
+}
+
+.dialog-button-primary:hover
+{
+    background-color: var(--accent-strong);
+}
+
+/* ---------- Edit classroom dialog ---------- */
+
+.edit-field-label
+{
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: var(--ink-2);
+    margin: 22px 0 8px 4px;
+}
+
+.edit-field-hint
+{
+    font-size: 24px;
+    color: var(--ink-3);
+    white-space: normal;
+    margin: 12px 4px 0 4px;
+}
+
+.edit-dialog-error
+{
+    font-size: 26px;
+    color: var(--danger);
+    white-space: normal;
+    margin: 16px 4px 0 4px;
+}
+
+.edit-dialog-button-row
+{
+    margin-top: 36px;
+}
+
 /* ---------- Classroom Code Box ---------- */
 
 .copy-code-icon
@@ -1916,3 +1958,85 @@
 .rt-icon-check { background-image: url("project://database/Assets/UI/Icons/check-icon.png"); }
 .rt-icon-attempt { background-image: url("project://database/Assets/UI/Icons/attempt-icon.png"); }
 .rt-icon-deadline { background-image: url("project://database/Assets/UI/Icons/deadline-icon.png"); }
+
+
+/* ---------- Overview tab ---------- */
+
+.overview-info-card { padding-top: 12px; padding-bottom: 12px; }
+
+.overview-info-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line);
+}
+
+.overview-info-row-last { border-bottom-width: 0; }
+
+.overview-info-label { font-size: 30px; color: var(--ink-3); flex-shrink: 0; margin-right: 24px; }
+
+.overview-info-value
+{
+    font-size: 34px;
+    -unity-font-style: bold;
+    color: var(--ink);
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-text-align: middle-right;
+}
+
+.overview-status-pill
+{
+    padding: 8px 26px;
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+.overview-status-pill-locked
+{
+    background-color: var(--danger-soft);
+    color: var(--danger);
+}
+
+.overview-section-header
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.overview-section-title { flex-grow: 1; flex-shrink: 1; }
+
+.overview-see-all-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 8px 0 8px 16px;
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--accent);
+}
+
+.overview-empty-card { align-items: center; padding-top: 40px; padding-bottom: 40px; }
+
+.overview-material-row
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--line);
+}
+
+.overview-material-row-last { border-bottom-width: 0; }
+.overview-material-text { flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0; margin-right: 20px; }
+.overview-material-title { font-size: 34px; -unity-font-style: bold; color: var(--ink); white-space: normal; }
+.overview-material-meta { font-size: 26px; color: var(--ink-3); margin-top: 4px; }

@@ -57,9 +57,9 @@ namespace Anatomia3D.UI
                 {
                     File.WriteAllBytes(path, bytes);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogWarning($"[MaterialFileOpener] Could not cache the downloaded file: {e.Message}");
+                    //Debug.LogWarning($"[MaterialFileOpener] Could not cache the downloaded file: {e.Message}");
                     onError?.Invoke("Could not open that file on this device.");
                     return;
                 }
@@ -71,7 +71,7 @@ namespace Anatomia3D.UI
 
                 NativeFilePicker.ExportFile(path, success =>
                 {
-                    if (!success) Debug.Log("[MaterialFileOpener] File export cancelled.");
+                    //if (!success) Debug.Log("[MaterialFileOpener] File export cancelled.");
                 });
             });
         }

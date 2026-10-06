@@ -108,9 +108,9 @@ namespace Anatomia3D.Backend
                 if (File.Exists(path))
                     File.Delete(path);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[AdminReportExportService] Could not delete temp export file '{path}': {e.Message}");
+                //Debug.LogWarning($"[AdminReportExportService] Could not delete temp export file '{path}': {e.Message}");
             }
         }
 
@@ -255,12 +255,12 @@ namespace Anatomia3D.Backend
                 byte[] pdfBytes = BuildPdfBytes(pages, data);
 
                 File.WriteAllBytes(path, pdfBytes);
-                Debug.Log($"[AdminReportExportService] Wrote PDF report to '{path}'.");
+                //Debug.Log($"[AdminReportExportService] Wrote PDF report to '{path}'.");
                 return path;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogError($"[AdminReportExportService] Failed to export PDF: {e.Message}");
+                //Debug.LogError($"[AdminReportExportService] Failed to export PDF: {e.Message}");
                 return null;
             }
         }

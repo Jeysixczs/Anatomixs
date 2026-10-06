@@ -144,7 +144,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentNotificationsController] OnEnable called");
+            //Debug.Log("[StudentNotificationsController] OnEnable called");
 
             if (_document == null)
             {
@@ -167,7 +167,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentNotificationsController] Root is null!");
+                //Debug.LogError("[StudentNotificationsController] Root is null!");
                 return;
             }
 
@@ -211,7 +211,7 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            Debug.LogWarning("[StudentNotificationsController] ClassroomService not ready or no student signed in - showing empty state.");
+            //Debug.LogWarning("[StudentNotificationsController] ClassroomService not ready or no student signed in - showing empty state.");
             SetNotifications(new List<NotificationEntry>());
         }
 
@@ -275,7 +275,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentNotificationsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentNotificationsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -287,7 +287,7 @@ namespace Anatomia3D.UI
             _emptyState = _screenRoot.Q<VisualElement>("notifications-empty-state");
             _notificationsList = _screenRoot.Q<VisualElement>("notifications-list");
 
-            Debug.Log($"[StudentNotificationsController] Found list: {_notificationsList != null}");
+            //Debug.Log($"[StudentNotificationsController] Found list: {_notificationsList != null}");
         }
 
         private void WireCallbacks()
@@ -546,7 +546,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentNotificationsController] Navigating back to previous screen");
+            //Debug.Log("[StudentNotificationsController] Navigating back to previous screen");
             UIManager.Instance.ReturnFromStudentNotifications();
         }
 
@@ -572,7 +572,7 @@ namespace Anatomia3D.UI
             {
                 if (!success)
                 {
-                    Debug.LogWarning("[StudentNotificationsController] Could not persist mark-all-read; will re-sync next time this screen opens.");
+                    //Debug.LogWarning("[StudentNotificationsController] Could not persist mark-all-read; will re-sync next time this screen opens.");
                 }
             });
         }

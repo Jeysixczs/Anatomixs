@@ -63,12 +63,12 @@ namespace Anatomia3D.Backend
                     Db.Settings.PersistenceEnabled = true;
 
                     IsReady = true;
-                    Debug.Log("[FirebaseBootstrap] Firebase ready.");
+                    //Debug.Log("[FirebaseBootstrap] Firebase ready.");
                     OnReady?.Invoke();
                 }
                 else
                 {
-                    Debug.LogError($"[FirebaseBootstrap] Could not resolve Firebase dependencies: {status}");
+                    //Debug.LogError($"[FirebaseBootstrap] Could not resolve Firebase dependencies: {status}");
                 }
             });
         }

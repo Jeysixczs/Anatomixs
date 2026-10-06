@@ -212,7 +212,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminGamificationSettingsController] OnEnable called");
+            //Debug.Log("[AdminGamificationSettingsController] OnEnable called");
 
             if (_document == null)
             {
@@ -237,7 +237,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminGamificationSettingsController] Root is null!");
+                //Debug.LogError("[AdminGamificationSettingsController] Root is null!");
                 return;
             }
 
@@ -294,8 +294,8 @@ namespace Anatomia3D.UI
         {
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - " +
-                    "showing built-in defaults only.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - " +
+                    //"showing built-in defaults only.");
                 return;
             }
 
@@ -358,7 +358,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminGamificationSettingsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -407,7 +407,7 @@ namespace Anatomia3D.UI
 
             BuildBadgeIconGrid();
 
-            Debug.Log($"[AdminGamificationSettingsController] Found badges list: {_badgesList != null}, levels list: {_levelsList != null}");
+            //Debug.Log($"[AdminGamificationSettingsController] Found badges list: {_badgesList != null}, levels list: {_levelsList != null}");
         }
 
         private void WireCallbacks()
@@ -603,7 +603,7 @@ namespace Anatomia3D.UI
 
         private void OnDeleteBadgeClicked(BadgeData badge)
         {
-            Debug.Log($"[AdminGamificationSettingsController] Deleting badge '{badge.Name}'.");
+            //Debug.Log($"[AdminGamificationSettingsController] Deleting badge '{badge.Name}'.");
             _currentBadges.Remove(badge);
             RefreshBadgesUI();
             RefreshPreview();
@@ -799,7 +799,7 @@ namespace Anatomia3D.UI
                 Texture2D picked = NativeGallery.LoadImageAtPath(path, maxSize: 512, markTextureNonReadable: false);
                 if (picked == null)
                 {
-                    Debug.LogWarning($"[AdminGamificationSettingsController] Could not load image at '{path}'.");
+                    //Debug.LogWarning($"[AdminGamificationSettingsController] Could not load image at '{path}'.");
                     SetStatus(_addBadgeStatusLabel, "Could not load that image. Please try a different one.");
                     return;
                 }
@@ -864,7 +864,7 @@ namespace Anatomia3D.UI
 
         private void NavigateBackToDashboard()
         {
-            Debug.Log("[AdminGamificationSettingsController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminGamificationSettingsController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
@@ -910,11 +910,11 @@ namespace Anatomia3D.UI
 
         private void OnSaveChangesClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminGamificationSettingsController] Save Changes tapped.");
+            //Debug.Log("[AdminGamificationSettingsController] Save Changes tapped.");
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - can't save.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] AdminGamificationService.Instance is null - can't save.");
                 return;
             }
 
@@ -924,7 +924,7 @@ namespace Anatomia3D.UI
 
             if (!easyValid || !mediumValid || !hardValid)
             {
-                Debug.LogWarning("[AdminGamificationSettingsController] Save blocked - one or more points fields are invalid.");
+                //Debug.LogWarning("[AdminGamificationSettingsController] Save blocked - one or more points fields are invalid.");
                 return;
             }
 
@@ -963,11 +963,11 @@ namespace Anatomia3D.UI
         {
             if (success)
             {
-                Debug.Log("[AdminGamificationSettingsController] Gamification settings saved.");
+                //Debug.Log("[AdminGamificationSettingsController] Gamification settings saved.");
             }
             else
             {
-                Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
+                //Debug.LogWarning($"[AdminGamificationSettingsController] Save failed: {error}");
             }
         }
 

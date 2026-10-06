@@ -68,7 +68,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminForgotPasswordController] OnEnable called");
+            //Debug.Log("[AdminForgotPasswordController] OnEnable called");
 
             if (_document == null)
             {
@@ -93,7 +93,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminForgotPasswordController] Root is null!");
+                //Debug.LogError("[AdminForgotPasswordController] Root is null!");
                 return;
             }
 
@@ -147,7 +147,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminForgotPasswordController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminForgotPasswordController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -161,7 +161,7 @@ namespace Anatomia3D.UI
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _successMessageLabel = _screenRoot.Q<Label>("success-message-label");
 
-            Debug.Log($"[AdminForgotPasswordController] Found send button: {_sendResetLinkButton != null}, back link: {_backToAdminLoginButton != null}");
+            //Debug.Log($"[AdminForgotPasswordController] Found send button: {_sendResetLinkButton != null}, back link: {_backToAdminLoginButton != null}");
         }
 
         private void WireCallbacks()
@@ -179,7 +179,7 @@ namespace Anatomia3D.UI
 
         private void OnBackToAdminLoginClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminForgotPasswordController] Navigating back to admin login");
+            //Debug.Log("[AdminForgotPasswordController] Navigating back to admin login");
             UIManager.Instance.ShowAdminLogin();
         }
 

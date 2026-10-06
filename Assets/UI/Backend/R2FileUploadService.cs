@@ -82,7 +82,7 @@ namespace Anatomia3D.Backend
 
             if (user == null)
             {
-                Debug.LogWarning("[R2FileUploadService] No signed-in Firebase user - cannot call the Worker.");
+                //Debug.LogWarning("[R2FileUploadService] No signed-in Firebase user - cannot call the Worker.");
                 onComplete?.Invoke(null);
                 return;
             }
@@ -91,7 +91,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted || string.IsNullOrEmpty(task.Result))
                 {
-                    Debug.LogWarning("[R2FileUploadService] Could not get a Firebase ID token.");
+                    //Debug.LogWarning("[R2FileUploadService] Could not get a Firebase ID token.");
                     onComplete?.Invoke(null);
                     return;
                 }
@@ -137,7 +137,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(workerBaseUrl))
             {
-                Debug.LogError("[R2FileUploadService] workerBaseUrl is not configured in the Inspector.");
+                //Debug.LogError("[R2FileUploadService] workerBaseUrl is not configured in the Inspector.");
                 onComplete?.Invoke(false, "File uploads are not configured yet. Please contact your teacher.", null);
                 return;
             }
@@ -181,7 +181,7 @@ namespace Anatomia3D.Backend
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     string message = ExtractWorkerError(request);
-                    Debug.LogWarning($"[R2FileUploadService] Upload failed ({request.responseCode}): {request.error} / {request.downloadHandler?.text}");
+                    //Debug.LogWarning($"[R2FileUploadService] Upload failed ({request.responseCode}): {request.error} / {request.downloadHandler?.text}");
                     onComplete?.Invoke(false, message, null);
                     yield break;
                 }
@@ -251,7 +251,7 @@ namespace Anatomia3D.Backend
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     string message = ExtractWorkerError(request);
-                    Debug.LogWarning($"[R2FileUploadService] Download failed ({request.responseCode}): {request.error}");
+                    //Debug.LogWarning($"[R2FileUploadService] Download failed ({request.responseCode}): {request.error}");
                     onComplete?.Invoke(false, message, null);
                     yield break;
                 }
@@ -294,7 +294,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(workerBaseUrl))
             {
-                Debug.LogError("[R2FileUploadService] workerBaseUrl is not configured in the Inspector.");
+                //Debug.LogError("[R2FileUploadService] workerBaseUrl is not configured in the Inspector.");
                 onComplete?.Invoke(false, "File uploads are not configured yet.", null);
                 return;
             }
@@ -335,7 +335,7 @@ namespace Anatomia3D.Backend
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[R2FileUploadService] Material upload failed ({request.responseCode}): {request.error} / {request.downloadHandler?.text}");
+                    //Debug.LogWarning($"[R2FileUploadService] Material upload failed ({request.responseCode}): {request.error} / {request.downloadHandler?.text}");
                     onComplete?.Invoke(false, ExtractWorkerError(request), null);
                     yield break;
                 }
@@ -420,7 +420,7 @@ namespace Anatomia3D.Backend
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[R2FileUploadService] Material delete failed ({request.responseCode}): {request.error}");
+                    //Debug.LogWarning($"[R2FileUploadService] Material delete failed ({request.responseCode}): {request.error}");
                     onComplete?.Invoke(false, ExtractWorkerError(request));
                     yield break;
                 }

@@ -332,7 +332,7 @@ namespace Anatomia3D.Backend
                         // index-creation link, ...) goes to the Console / logcat instead of
                         // being swallowed behind a generic message.
                         var ex = task.Exception?.Flatten().InnerException;
-                        Debug.LogError($"[FileSubmissionService] FetchSubmissionsForQuiz failed (quizId={quizId}, classroomId={classroomId}): {ex}");
+                        //Debug.LogError($"[FileSubmissionService] FetchSubmissionsForQuiz failed (quizId={quizId}, classroomId={classroomId}): {ex}");
 
                         onComplete?.Invoke(false, DescribeFirestoreError(ex, "Could not load submissions."), new List<SubmissionRecord>());
                         return;
@@ -565,7 +565,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[FileSubmissionService] Review failed: {task.Exception?.InnerException?.Message}");
+                    //Debug.LogWarning($"[FileSubmissionService] Review failed: {task.Exception?.InnerException?.Message}");
                     onComplete?.Invoke(false, "Could not save this review. Please try again.", null);
                     return;
                 }

@@ -120,7 +120,7 @@ public class BoneOutlineController : MonoBehaviour
             return real;
         }
 
-        bool usedDescendantFallback = false;
+        //bool usedDescendantFallback = false;
         var ownRenderer = selectedGameObject.GetComponent<Renderer>();
         var realRenderers = new List<Renderer>();
 
@@ -139,7 +139,7 @@ public class BoneOutlineController : MonoBehaviour
             // (disabled, or degenerate/zero-size bounds - e.g. a placeholder
             // mesh on a group/joint node like a tiny vessel branch or
             // muscle pulley whose real geometry lives on a child piece).
-            usedDescendantFallback = true;
+            //usedDescendantFallback = true;
            
             var descendantCandidates = new List<Renderer>();
             foreach (var r in selectedGameObject.GetComponentsInChildren<Renderer>())
@@ -170,10 +170,10 @@ public class BoneOutlineController : MonoBehaviour
         _selectedRenderers.AddRange(realRenderers);
         BoneOutlineFeature.Instance.SetSelectedRenderers(_selectedRenderers);
 
-        Debug.Log($"[BoneOutlineController] SetSelectedBone: Clicked/Selected GameObject='{selectedGameObject.name}', " +
-                  $"{realRenderers.Count} renderer(s) registered for the screen-space outline " +
-                  $"({(usedDescendantFallback ? "descendant fallback - no own renderer" : "exact GameObject's own renderer only")}). " +
-                  "The selected bone's own material/renderer is never modified - the outline is drawn entirely as a separate screen-space overlay.");
+        //Debug.Log($"[BoneOutlineController] SetSelectedBone: Clicked/Selected GameObject='{selectedGameObject.name}', " +
+                  //$"{realRenderers.Count} renderer(s) registered for the screen-space outline " +
+                  //$"({(usedDescendantFallback ? "descendant fallback - no own renderer" : "exact GameObject's own renderer only")}). " +
+                  //"The selected bone's own material/renderer is never modified - the outline is drawn entirely as a separate screen-space overlay.");
     }
 
     /// <summary>Removes whatever outline is currently shown, if any.</summary>

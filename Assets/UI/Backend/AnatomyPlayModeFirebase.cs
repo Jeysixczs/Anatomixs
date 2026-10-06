@@ -63,14 +63,14 @@ namespace Anatomia3D.Backend
         {
             if (Db == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - skipping save.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - skipping save.");
                 return;
             }
 
             var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
             if (student == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] No signed-in student - skipping save.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] No signed-in student - skipping save.");
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer for '{key}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer for '{key}': {task.Exception}");
                     }
                 });
                 return;
@@ -106,7 +106,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer/points for '{key}': {task.Exception}");
+                    //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not save Play Mode answer/points for '{key}': {task.Exception}");
                 }
             });
         }
@@ -155,7 +155,7 @@ namespace Anatomia3D.Backend
 
             if (Db == null)
             {
-                Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync '{record.key}' yet.");
+                //Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync '{record.key}' yet.");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -179,7 +179,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record for '{record.key}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record for '{record.key}': {task.Exception}");
                         onComplete?.Invoke(false);
                         return;
                     }
@@ -209,7 +209,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record/points for '{record.key}': {task.Exception}");
+                    //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync Play Mode record/points for '{record.key}': {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }
@@ -239,7 +239,7 @@ namespace Anatomia3D.Backend
         {
             if (Db == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch progress.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch progress.");
                 onError?.Invoke("Firebase is not ready yet.");
                 return;
             }
@@ -258,7 +258,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch progress for '{studentId}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch progress for '{studentId}': {task.Exception}");
                         onError?.Invoke("Could not reach Firebase.");
                         return;
                     }
@@ -313,14 +313,14 @@ namespace Anatomia3D.Backend
 
             if (Db == null)
             {
-                Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync hint use for '{record.system}' yet.");
+                //Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync hint use for '{record.system}' yet.");
                 onComplete?.Invoke(false);
                 return;
             }
 
             if (!DateTime.TryParse(record.timestampUtc, null, System.Globalization.DateTimeStyles.RoundtripKind, out var utc))
             {
-                Debug.LogWarning($"[AnatomyPlayModeFirebase] Malformed hint timestamp '{record.timestampUtc}' - skipping sync.");
+                //Debug.LogWarning($"[AnatomyPlayModeFirebase] Malformed hint timestamp '{record.timestampUtc}' - skipping sync.");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -337,7 +337,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync hint use for '{record.system}': {task.Exception}");
+                    //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync hint use for '{record.system}': {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }
@@ -373,7 +373,7 @@ namespace Anatomia3D.Backend
         {
             if (Db == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch hint uses.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch hint uses.");
                 onError?.Invoke("Firebase is not ready yet.");
                 return;
             }
@@ -396,7 +396,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch hint uses for '{studentId}'/'{systemStr}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch hint uses for '{studentId}'/'{systemStr}': {task.Exception}");
                         onError?.Invoke("Could not reach Firebase.");
                         return;
                     }
@@ -451,7 +451,7 @@ namespace Anatomia3D.Backend
 
             if (Db == null)
             {
-                Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync revealed hint for '{record.key}' yet.");
+                //Debug.LogWarning($"[AnatomyPlayModeFirebase] Firebase not ready - cannot sync revealed hint for '{record.key}' yet.");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -469,7 +469,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync revealed hint for '{record.key}': {task.Exception}");
+                    //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not sync revealed hint for '{record.key}': {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }
@@ -494,7 +494,7 @@ namespace Anatomia3D.Backend
         {
             if (Db == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch revealed hints.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - cannot fetch revealed hints.");
                 onError?.Invoke("Firebase is not ready yet.");
                 return;
             }
@@ -512,7 +512,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch revealed hints for '{studentId}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not fetch revealed hints for '{studentId}': {task.Exception}");
                         onError?.Invoke("Could not reach Firebase.");
                         return;
                     }
@@ -570,7 +570,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not delete revealed hint for '{record.key}': {task.Exception}");
+                        //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not delete revealed hint for '{record.key}': {task.Exception}");
                         onComplete?.Invoke(false);
                         return;
                     }
@@ -601,7 +601,7 @@ namespace Anatomia3D.Backend
         {
             if (Db == null)
             {
-                Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - skipping last-synced update.");
+                //Debug.LogWarning("[AnatomyPlayModeFirebase] Firebase not ready - skipping last-synced update.");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -621,7 +621,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not update last-synced timestamp for '{studentId}': {task.Exception}");
+                    //Debug.LogWarning($"[AnatomyPlayModeFirebase] Could not update last-synced timestamp for '{studentId}': {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }

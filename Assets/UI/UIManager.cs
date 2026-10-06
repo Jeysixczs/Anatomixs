@@ -175,8 +175,8 @@ namespace Anatomia3D.UI
 
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                Debug.Log($"[UIManager] Back pressed. TouchScreenKeyboard.visible={TouchScreenKeyboard.visible}, " +
-                          $"focusedElement={_root?.panel?.focusController?.focusedElement?.GetType().Name ?? "null"}");
+                //Debug.Log($"[UIManager] Back pressed. TouchScreenKeyboard.visible={TouchScreenKeyboard.visible}, " +
+                          //$"focusedElement={_root?.panel?.focusController?.focusedElement?.GetType().Name ?? "null"}");
 
                 if (TouchScreenKeyboard.visible)
                 {
@@ -213,7 +213,7 @@ private IEnumerator DecideInitialScreen()
 
                     if (restored)
                     {
-                        Debug.Log("[UIManager] Offline with no biometric hardware and a cached student session - skipping Login, opening Student Explore 3D.");
+                        //Debug.Log("[UIManager] Offline with no biometric hardware and a cached student session - skipping Login, opening Student Explore 3D.");
                         ShowStudentExplore3d();
                         yield break;
                     }
@@ -412,9 +412,9 @@ private IEnumerator DecideInitialScreen()
 
                 if (playMode != null)
                     playMode.RequestPlayModeOnOpen();
-                else
-                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreen: startInPlayMode was true but no " +
-                                      "AnatomyPlayModeController was found on the Anatomy Screen GameObject.");
+                //else
+                    //Debug.LogWarning("[UIManager] ShowStudentAnatomyScreen: startInPlayMode was true but no " +
+                                      //"AnatomyPlayModeController was found on the Anatomy Screen GameObject.");
             });
         }
 
@@ -430,9 +430,9 @@ private IEnumerator DecideInitialScreen()
 
                 if (teacherSelection != null)
                     teacherSelection.RequestTeacherSelectionModeOnOpen(system);
-                else
-                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForTeacherSelection: no " +
-                                      "AnatomyTeacherSelectionController was found on the Anatomy Screen GameObject.");
+                //else
+                    //Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForTeacherSelection: no " +
+                                      //"AnatomyTeacherSelectionController was found on the Anatomy Screen GameObject.");
             });
         }
 
@@ -448,9 +448,9 @@ private IEnumerator DecideInitialScreen()
 
                 if (quizHighlight != null)
                     quizHighlight.RequestHighlightModeOnOpen(structureKey);
-                else
-                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForQuizHighlight: no " +
-                                      "AnatomyQuizHighlightController was found on the Anatomy Screen GameObject.");
+                //else
+                    //Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForQuizHighlight: no " +
+                                      //"AnatomyQuizHighlightController was found on the Anatomy Screen GameObject.");
             });
         }
 
@@ -461,8 +461,8 @@ private IEnumerator DecideInitialScreen()
                 ? _studentAnatomyScreenController.GetComponent<BaselineAssessmentController>()
                 : null;
 
-            if (controller == null)
-                Debug.LogWarning("[UIManager] No BaselineAssessmentController was found on the Anatomy Screen GameObject.");
+            //if (controller == null)
+                //Debug.LogWarning("[UIManager] No BaselineAssessmentController was found on the Anatomy Screen GameObject.");
 
             return controller;
         }
@@ -483,9 +483,9 @@ private IEnumerator DecideInitialScreen()
 
                 if (baseline != null)
                     baseline.RequestBaselineAssessmentOnOpen(type);
-                else
-                    Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForBaselineAssessment: no " +
-                                      "BaselineAssessmentController was found on the Anatomy Screen GameObject.");
+                //else
+                    //Debug.LogWarning("[UIManager] ShowStudentAnatomyScreenForBaselineAssessment: no " +
+                                      //"BaselineAssessmentController was found on the Anatomy Screen GameObject.");
             });
         }
 
@@ -673,7 +673,7 @@ private IEnumerator DecideInitialScreen()
         {
             if (screenAsset == null)
             {
-                Debug.LogError($"Screen asset is null for {controller?.GetType().Name}");
+                //Debug.LogError($"Screen asset is null for {controller?.GetType().Name}");
                 return;
             }
 
@@ -702,7 +702,7 @@ private IEnumerator DecideInitialScreen()
                 StartCoroutine(InitializeControllerAfterUI(controller, onReady));
             }
 
-            Debug.Log($"[UIManager] Showing {controller?.GetType().Name}");
+            //Debug.Log($"[UIManager] Showing {controller?.GetType().Name}");
         }
 
       
@@ -780,10 +780,10 @@ private IEnumerator DecideInitialScreen()
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Never let a keyboard-close side effect break navigation.
-                Debug.LogWarning($"[UIManager] ForceHideAndroidKeyboard failed: {e.Message}");
+                //Debug.LogWarning($"[UIManager] ForceHideAndroidKeyboard failed: {e.Message}");
             }
         }
 #else

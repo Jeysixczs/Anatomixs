@@ -75,7 +75,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminProfileController] OnEnable called");
+            //Debug.Log("[AdminProfileController] OnEnable called");
 
             if (_document == null)
             {
@@ -100,7 +100,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminProfileController] Root is null!");
+                //Debug.LogError("[AdminProfileController] Root is null!");
                 return;
             }
 
@@ -154,7 +154,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminProfileController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminProfileController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -183,7 +183,7 @@ namespace Anatomia3D.UI
             _logoutBackground = _screenRoot.Q<VisualElement>("logout-background");
 
 
-            Debug.Log($"[AdminProfileController] Found back button: {_backButton != null}, logout: {_logoutButton != null}");
+            //Debug.Log($"[AdminProfileController] Found back button: {_backButton != null}, logout: {_logoutButton != null}");
         }
 
         private void WireCallbacks()
@@ -223,7 +223,7 @@ namespace Anatomia3D.UI
             var admin = AdminAuthService.Instance != null ? AdminAuthService.Instance.CurrentAdmin : null;
             if (admin == null)
             {
-                Debug.LogWarning("[AdminProfileController] No admin signed in - leaving profile fields as-is.");
+                //Debug.LogWarning("[AdminProfileController] No admin signed in - leaving profile fields as-is.");
                 return;
             }
 
@@ -339,7 +339,7 @@ namespace Anatomia3D.UI
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[AdminProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
+                    //Debug.LogWarning($"[AdminProfileController] Could not load Cloudinary avatar '{avatarUrl}': {request.error}");
                     // Leave whatever's currently showing (initials, most likely)
                     // rather than blanking the avatar out over a transient network hiccup.
                     yield break;
@@ -380,13 +380,13 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminProfileController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminProfileController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
         private void OnEditProfileClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminProfileController] Edit Profile tapped.");
+            //Debug.Log("[AdminProfileController] Edit Profile tapped.");
             UIManager.Instance.ShowAdminEditProfile(_teacherNameLabel?.text, _teacherEmailLabel?.text);
 
         }
@@ -399,7 +399,7 @@ namespace Anatomia3D.UI
 
         private void OnLogoutClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminProfileController] Log Out tapped.");
+            //Debug.Log("[AdminProfileController] Log Out tapped.");
             AdminAuthService.Instance?.LogoutAdmin();
             UIManager.Instance.ShowAdminLogin();
         }

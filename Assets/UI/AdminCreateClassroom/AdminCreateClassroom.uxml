@@ -21,8 +21,12 @@
                     <ui:Label text="Classroom Code *" class="field-label"/>
                     <ui:TextField name="classroom-name-field" class="text-field"/>
                     <ui:Label name="classroom-name-error" text="" class="field-error hidden"/>
-                    <ui:Label text="Classroom Name" class="field-label field-label-spaced"/>
+                    <ui:Label text="Classroom Name *" class="field-label field-label-spaced"/>
                     <ui:TextField name="classroom-description-field" multiline="true" class="text-field text-area"/>
+                    <ui:Label name="classroom-description-error" text="" class="field-error hidden"/>
+                    <ui:Label text="Section *" class="field-label field-label-spaced"/>
+                    <ui:TextField name="classroom-section-field" class="text-field"/>
+                    <ui:Label name="classroom-section-error" text="" class="field-error hidden"/>
                     <ui:VisualElement name="info-box" class="info-box">
                         <ui:Label text="What happens next?" class="info-box-title"/>
                         <ui:VisualElement name="info-bullet-list" class="info-bullet-list">

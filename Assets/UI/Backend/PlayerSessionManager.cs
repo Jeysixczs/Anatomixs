@@ -209,7 +209,7 @@ namespace Anatomia3D.Backend
                     // purely so `adb logcat -s Unity` shows WHY the OS-level check
                     // failed (no hardware, nothing enrolled, user cancelled,
                     // lockout, etc.) instead of us having to guess.
-                    Debug.Log($"[PlayerSessionManager] Offline gate failed: {reason}");
+                    //Debug.Log($"[PlayerSessionManager] Offline gate failed: {reason}");
 
                     bool offline = Application.internetReachability == NetworkReachability.NotReachable;
                     onComplete?.Invoke(OfflineGateResult.NeedsPasswordLogin, offline
@@ -225,9 +225,9 @@ namespace Anatomia3D.Backend
             {
                 File.WriteAllText(SessionCacheFilePath, JsonUtility.ToJson(profile));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[PlayerSessionManager] Could not cache session: {e.Message}");
+                //Debug.LogWarning($"[PlayerSessionManager] Could not cache session: {e.Message}");
             }
         }
 
@@ -238,9 +238,9 @@ namespace Anatomia3D.Backend
                 if (!File.Exists(SessionCacheFilePath)) return null;
                 return JsonUtility.FromJson<StudentProfile>(File.ReadAllText(SessionCacheFilePath));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[PlayerSessionManager] Could not read cached session: {e.Message}");
+                //Debug.LogWarning($"[PlayerSessionManager] Could not read cached session: {e.Message}");
                 return null;
             }
         }
@@ -251,9 +251,9 @@ namespace Anatomia3D.Backend
             {
                 if (File.Exists(SessionCacheFilePath)) File.Delete(SessionCacheFilePath);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[PlayerSessionManager] Could not clear cached session: {e.Message}");
+                //Debug.LogWarning($"[PlayerSessionManager] Could not clear cached session: {e.Message}");
             }
         }
 
@@ -283,7 +283,7 @@ namespace Anatomia3D.Backend
             // through a not-yet-ready FirebaseBootstrap.Instance.Auth.
             if (FirebaseBootstrap.Instance == null || FirebaseBootstrap.Instance.Auth == null)
             {
-                Debug.LogWarning("[PlayerSessionManager] Firebase not ready yet - cannot restore offline session this early.");
+                //Debug.LogWarning("[PlayerSessionManager] Firebase not ready yet - cannot restore offline session this early.");
                 return false;
             }
 
@@ -419,20 +419,20 @@ namespace Anatomia3D.Backend
             try
             {
                 GoogleSignIn.DefaultInstance.Disconnect();
-                Debug.Log("[PlayerSessionManager] Disconnect() completed without throwing.");
+                //Debug.Log("[PlayerSessionManager] Disconnect() completed without throwing.");
             }
-            catch (System.Exception disconnectEx)
+            catch (System.Exception)
             {
-                Debug.LogWarning($"[PlayerSessionManager] Disconnect() threw (expected on first-ever sign-in): {disconnectEx.Message}");
+                //Debug.LogWarning($"[PlayerSessionManager] Disconnect() threw (expected on first-ever sign-in): {disconnectEx.Message}");
             }
 
             GoogleSignIn.DefaultInstance.SignIn().ContinueWithOnMainThread(signInTask =>
             {
                 diagnosticStopwatch.Stop();
-                Debug.Log($"[PlayerSessionManager] SignIn() resolved in {diagnosticStopwatch.ElapsedMilliseconds}ms " +
-                          $"(canceled={signInTask.IsCanceled}, faulted={signInTask.IsFaulted}). " +
-                          "A near-instant resolve here with no visible UI means it reused a cached " +
-                          "credential rather than showing the picker.");
+                //Debug.Log($"[PlayerSessionManager] SignIn() resolved in {diagnosticStopwatch.ElapsedMilliseconds}ms " +
+                          //$"(canceled={signInTask.IsCanceled}, faulted={signInTask.IsFaulted}). " +
+                          //"A near-instant resolve here with no visible UI means it reused a cached " +
+                          //"credential rather than showing the picker.");
 
                 if (signInTask.IsCanceled)
                 {
@@ -812,7 +812,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted || !task.Result.Exists)
                 {
-                    Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale {what} until next sync.");
+                    //Debug.LogWarning($"[PlayerSessionManager] Could not read enrolledClassroomIds for {uid} - classroom rosters may show a stale {what} until next sync.");
                     return;
                 }
 
@@ -835,7 +835,7 @@ namespace Anatomia3D.Backend
                 {
                     if (commitTask.IsCanceled || commitTask.IsFaulted)
                     {
-                        Debug.LogWarning($"[PlayerSessionManager] Failed to sync new {what} to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
+                        //Debug.LogWarning($"[PlayerSessionManager] Failed to sync new {what} to one or more classroom rosters for {uid}: {commitTask.Exception?.InnerException?.Message}");
                         return;
                     }
                     onSuccess?.Invoke();
@@ -934,11 +934,11 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsFaulted)
                 {
-                    Debug.LogWarning($"[PlayerSessionManager] ReloadAsync failed (PendingEmail={PendingEmail}): {task.Exception}");
+                    //Debug.LogWarning($"[PlayerSessionManager] ReloadAsync failed (PendingEmail={PendingEmail}): {task.Exception}");
 
                     if (PendingEmail != null && IsInvalidCredentialError(task.Exception))
                     {
-                        Debug.Log("[PlayerSessionManager] Invalidated credential while an email change was pending - treating as confirmed.");
+                        //Debug.Log("[PlayerSessionManager] Invalidated credential while an email change was pending - treating as confirmed.");
                         PendingEmail = null;
                     }
 
@@ -1125,7 +1125,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[PlayerSessionManager] Could not save avatarUrl for '{uid}': {task.Exception}");
+                    //Debug.LogWarning($"[PlayerSessionManager] Could not save avatarUrl for '{uid}': {task.Exception}");
                     onComplete?.Invoke(false, "Could not save your photo. Please try again.");
                     return;
                 }
@@ -1251,7 +1251,7 @@ namespace Anatomia3D.Backend
                     },
                     onFailure: reason =>
                     {
-                        Debug.LogWarning($"[PlayerSessionManager] Biometric.SetActive(true) onFailure fired: {reason} - biometric opt-in not enabled this login.");
+                        //Debug.LogWarning($"[PlayerSessionManager] Biometric.SetActive(true) onFailure fired: {reason} - biometric opt-in not enabled this login.");
                     });
 
                 // Confirmed via logcat: with authenticate:false, neither onSuccess nor
@@ -1283,7 +1283,7 @@ namespace Anatomia3D.Backend
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[PlayerSessionManager] Could not cache avatar for '{uid}' at login: {request.error}");
+                    //Debug.LogWarning($"[PlayerSessionManager] Could not cache avatar for '{uid}' at login: {request.error}");
                     yield break;
                 }
 
@@ -1374,12 +1374,12 @@ namespace Anatomia3D.Backend
 
             if (fbEx == null)
             {
-                Debug.LogWarning("[Auth] Sign-in failed with a non-Firebase exception: " + ex);
+                //Debug.LogWarning("[Auth] Sign-in failed with a non-Firebase exception: " + ex);
                 return "Something went wrong. Please try again.";
             }
 
             // Log the real code/message so an unmapped error is easy to spot in the Console.
-            Debug.LogWarning($"[Auth] Firebase error code={fbEx.ErrorCode} ({(AuthError)fbEx.ErrorCode}) message={fbEx.Message}");
+            //Debug.LogWarning($"[Auth] Firebase error code={fbEx.ErrorCode} ({(AuthError)fbEx.ErrorCode}) message={fbEx.Message}");
 
             var code = (AuthError)fbEx.ErrorCode;
             switch (code)

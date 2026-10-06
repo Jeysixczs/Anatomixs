@@ -2633,3 +2633,106 @@
 .compact .bdg-pill { font-size: 18px; padding: 4px 16px; }
 .compact .bdg-tile-meta { font-size: 18px; }
 
+
+
+/* ---------- Overview (progress summary) + Announcements tab ---------- */
+
+.ov-stat-grid
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.ov-stat-tile
+{
+    width: 48.5%;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 34px;
+    margin-bottom: 20px;
+    border-radius: 30px;
+    background-color: white;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.ov-stat-value { font-size: 56px; -unity-font-style: bold; color: rgb(31, 36, 48); }
+.ov-stat-value-accent { color: rgb(91, 76, 219); }
+.ov-stat-caption { font-size: 26px; color: rgb(139, 145, 163); margin-top: 2px; white-space: normal; }
+
+.ov-badge-card { padding: 34px; }
+.ov-badge-title { font-size: 30px; -unity-font-style: bold; color: rgb(31, 36, 48); white-space: normal; }
+
+.ov-section-header
+{
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.ov-section-title { flex-grow: 1; flex-shrink: 1; }
+
+.ov-see-all-button
+{
+    background-color: transparent;
+    border-width: 0;
+    padding: 8px 0 8px 16px;
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: rgb(91, 76, 219);
+}
+
+.ov-count-label { font-size: 28px; color: rgb(150, 155, 168); margin-bottom: 8px; }
+
+.ov-empty-card { align-items: center; padding-top: 40px; padding-bottom: 40px; }
+.ov-empty-text { font-size: 30px; color: rgb(150, 155, 168); white-space: normal; -unity-text-align: middle-center; }
+
+.ov-upnext-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 38px;
+    margin-bottom: 28px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+    border-left-width: 8px;
+    border-left-color: rgb(91, 76, 219);
+}
+
+.ov-upnext-title { font-size: 40px; -unity-font-style: bold; color: rgb(31, 36, 48); white-space: normal; }
+.ov-upnext-meta { font-size: 28px; color: rgb(139, 145, 163); margin-top: 8px; white-space: normal; }
+
+.ov-upnext-pill
+{
+    align-self: flex-start;
+    margin-top: 18px;
+    padding: 8px 24px;
+    border-radius: 999px;
+    background-color: rgba(91, 76, 219, 0.1);
+    color: rgb(91, 76, 219);
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+.ov-upnext-pill-urgent { background-color: rgba(204, 64, 64, 0.1); color: rgb(204, 64, 64); }
+.ov-upnext-more { font-size: 26px; color: rgb(139, 145, 163); margin-top: 18px; }
+
+.ov-material-card
+{
+    background-color: white;
+    border-radius: 28px;
+    padding: 38px;
+    margin-bottom: 28px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.ov-material-title { font-size: 38px; -unity-font-style: bold; color: rgb(31, 36, 48); white-space: normal; }
+.ov-material-meta { font-size: 26px; color: rgb(139, 145, 163); margin-top: 8px; }
+
+.ov-announcement-body { margin-bottom: 0; }
+.compact .ov-stat-value { font-size: 44px; }
+.compact .ov-stat-caption { font-size: 22px; }

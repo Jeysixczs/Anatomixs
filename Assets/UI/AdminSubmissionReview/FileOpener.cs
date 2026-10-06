@@ -70,12 +70,12 @@ namespace Anatomia3D.UI
                 }
 
                 // Anything else (most likely the FileProvider isn't in the manifest yet).
-                Debug.LogWarning("[FileOpener] Could not open the file in a viewer app: " + e.Message);
+                //Debug.LogWarning("[FileOpener] Could not open the file in a viewer app: " + e.Message);
                 return false;
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogWarning("[FileOpener] Could not open the file in a viewer app: " + e.Message);
+                //Debug.LogWarning("[FileOpener] Could not open the file in a viewer app: " + e.Message);
                 return false;
             }
 #else

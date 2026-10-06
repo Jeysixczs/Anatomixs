@@ -80,21 +80,21 @@ namespace Anatomia3D.Backend
         {
             if (imageBytes == null || imageBytes.Length == 0)
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No image bytes provided - skipping upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No image bytes provided - skipping upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(uploadPreset))
             {
-                Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
+                //Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(studentUid))
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No studentUid - skipping upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No studentUid - skipping upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
@@ -112,21 +112,21 @@ namespace Anatomia3D.Backend
         {
             if (imageBytes == null || imageBytes.Length == 0)
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No badge image bytes provided - skipping upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No badge image bytes provided - skipping upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(uploadPreset))
             {
-                Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
+                //Debug.LogError("[CloudinaryAvatarUploadService] cloudName/uploadPreset not configured in the Inspector.");
                 onComplete?.Invoke(false, null);
                 return;
             }
 
             if (string.IsNullOrEmpty(ownerUid))
             {
-                Debug.LogWarning("[CloudinaryAvatarUploadService] No ownerUid - skipping badge upload.");
+                //Debug.LogWarning("[CloudinaryAvatarUploadService] No ownerUid - skipping badge upload.");
                 onComplete?.Invoke(false, null);
                 return;
             }
@@ -184,8 +184,8 @@ namespace Anatomia3D.Backend
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload failed for '{studentUid}': " +
-                                      $"{request.error} ({request.downloadHandler?.text})");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload failed for '{studentUid}': " +
+                                      //$"{request.error} ({request.downloadHandler?.text})");
                     onComplete?.Invoke(false, null);
                     yield break;
                 }
@@ -193,7 +193,7 @@ namespace Anatomia3D.Backend
                 string secureUrl = ExtractSecureUrl(request.downloadHandler.text);
                 if (string.IsNullOrEmpty(secureUrl))
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload succeeded but no secure_url in response: {request.downloadHandler.text}");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Upload succeeded but no secure_url in response: {request.downloadHandler.text}");
                     onComplete?.Invoke(false, null);
                     yield break;
                 }
@@ -214,8 +214,8 @@ namespace Anatomia3D.Backend
                 // with a stale photo.
                 if (ResponseIndicatesExistingAsset(request.downloadHandler.text))
                 {
-                    Debug.LogWarning($"[CloudinaryAvatarUploadService] Cloudinary reported 'existing: true' for '{studentUid}' - " +
-                                      "the returned secure_url may point at a pre-existing asset instead of this upload.");
+                    //Debug.LogWarning($"[CloudinaryAvatarUploadService] Cloudinary reported 'existing: true' for '{studentUid}' - " +
+                                      //"the returned secure_url may point at a pre-existing asset instead of this upload.");
                 }
 
                 onComplete?.Invoke(true, secureUrl);
@@ -234,9 +234,9 @@ namespace Anatomia3D.Backend
                     return url;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not parse Cloudinary response: {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not parse Cloudinary response: {e.Message}");
             }
 
             return null;
@@ -281,9 +281,9 @@ namespace Anatomia3D.Backend
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 File.WriteAllBytes(path, imageBytes);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not cache avatar locally for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not cache avatar locally for '{uid}': {e.Message}");
             }
         }
 
@@ -305,9 +305,9 @@ namespace Anatomia3D.Backend
                 imageBytes = File.ReadAllBytes(path);
                 return imageBytes != null && imageBytes.Length > 0;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not read cached avatar for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not read cached avatar for '{uid}': {e.Message}");
                 imageBytes = null;
                 return false;
             }
@@ -327,9 +327,9 @@ namespace Anatomia3D.Backend
                 string path = GetLocalAvatarPath(uid);
                 if (File.Exists(path)) File.Delete(path);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not delete cached avatar for '{uid}': {e.Message}");
+                //Debug.LogWarning($"[CloudinaryAvatarUploadService] Could not delete cached avatar for '{uid}': {e.Message}");
             }
         }
     }

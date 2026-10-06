@@ -45,12 +45,80 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="section-bar" class="section-bar">
-            <ui:Label name="section-title-label" text="Students" class="section-bar-title"/>
+            <ui:Label name="section-title-label" text="Overview" class="section-bar-title"/>
             <ui:Label text="Tap the menu to switch section" class="section-bar-hint"/>
         </ui:VisualElement>
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
-                <ui:VisualElement name="students-panel" class="tab-panel">
+                <ui:VisualElement name="overview-panel" class="tab-panel">
+                    <ui:Label text="Classroom Info" class="section-title section-title-first"/>
+                    <ui:VisualElement name="overview-info-card" class="panel-card overview-info-card">
+                        <ui:VisualElement class="overview-info-row">
+                            <ui:Label text="Name" class="overview-info-label"/>
+                            <ui:Label name="overview-name-value" text="-" class="overview-info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-info-row">
+                            <ui:Label text="Section" class="overview-info-label"/>
+                            <ui:Label name="overview-section-value" text="-" class="overview-info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-info-row">
+                            <ui:Label text="Class code" class="overview-info-label"/>
+                            <ui:Label name="overview-code-value" text="-" class="overview-info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-info-row">
+                            <ui:Label text="Teacher" class="overview-info-label"/>
+                            <ui:Label name="overview-teacher-value" text="-" class="overview-info-value"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="overview-info-row overview-info-row-last">
+                            <ui:Label text="Status" class="overview-info-label"/>
+                            <ui:Label name="overview-status-pill" text="Active" class="overview-status-pill" style="border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px;"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="Quick Stats" class="section-title"/>
+                    <ui:VisualElement name="overview-metric-grid" class="metric-grid">
+                        <ui:VisualElement class="metric-tile">
+                            <ui:VisualElement class="metric-icon-box">
+                                <ui:VisualElement class="metric-icon icon-metric-quizzes"/>
+                            </ui:VisualElement>
+                            <ui:Label name="overview-quizzes-value" text="0" class="metric-value"/>
+                            <ui:Label text="Quizzes published" class="metric-label"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-tile">
+                            <ui:VisualElement class="metric-icon-box">
+                                <ui:VisualElement class="metric-icon icon-metric-points"/>
+                            </ui:VisualElement>
+                            <ui:Label name="overview-points-value" text="0" class="metric-value"/>
+                            <ui:Label text="Points earned" class="metric-label"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="overview-section-header">
+                        <ui:Label text="Top Students" class="section-title overview-section-title"/>
+                        <ui:Button name="overview-see-analytics-button" text="See all" class="overview-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="panel-card">
+                        <ui:VisualElement name="overview-top-empty" class="top-performers-empty-state">
+                            <ui:Label text="No student data yet" class="top-performers-empty-text"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="overview-top-list" class="top-performers-list hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="overview-section-header">
+                        <ui:Label text="Latest Announcement" class="section-title overview-section-title"/>
+                        <ui:Button name="overview-see-announcements-button" text="See all" class="overview-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="overview-announcement-empty" class="panel-card overview-empty-card">
+                        <ui:Label text="No announcements yet" class="top-performers-empty-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="overview-announcement-host" class="hidden"/>
+                    <ui:VisualElement class="overview-section-header">
+                        <ui:Label text="Recent Materials" class="section-title overview-section-title"/>
+                        <ui:Button name="overview-see-materials-button" text="See all" class="overview-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="overview-materials-empty" class="panel-card overview-empty-card">
+                        <ui:Label text="No materials yet" class="top-performers-empty-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="overview-materials-host" class="panel-card hidden"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="students-panel" class="tab-panel hidden">
                     <ui:VisualElement name="students-empty-state" class="panel-card empty-state">
                         <ui:VisualElement class="empty-icon icon-users-gray" style="background-image: url(&quot;project://database/Assets/UI/Icons/empty-icon.png?fileID=2800000&amp;guid=1868d052d7c3e484ea032e01e5091786&amp;type=3#empty-icon&quot;);"/>
                         <ui:Label text="No students yet" class="empty-title"/>
@@ -211,8 +279,15 @@
                 </ui:Button>
             </ui:VisualElement>
             <ui:VisualElement name="drawer-scroll" class="drawer-scroll">
+                <ui:Label text="CLASSROOM" class="drawer-group-caption"/>
+                <ui:Button name="overview-tab-button" class="drawer-item tab-button-active">
+                    <ui:VisualElement picking-mode="Ignore" class="drawer-item-tile">
+                        <ui:VisualElement picking-mode="Ignore" class="drawer-item-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/open-book.png?fileID=2800000&amp;guid=1b3291bdc5f5e2a4e9d7e8f765dcacc2&amp;type=3#open-book&quot;);"/>
+                    </ui:VisualElement>
+                    <ui:Label picking-mode="Ignore" text="Overview" class="drawer-item-label"/>
+                </ui:Button>
                 <ui:Label text="PEOPLE" class="drawer-group-caption"/>
-                <ui:Button name="students-tab-button" class="drawer-item tab-button-active">
+                <ui:Button name="students-tab-button" class="drawer-item">
                     <ui:VisualElement picking-mode="Ignore" class="drawer-item-tile">
                         <ui:VisualElement picking-mode="Ignore" class="drawer-item-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/student-icon.png?fileID=2800000&amp;guid=ea5b6ac4141decf4a953e4fdcf22155f&amp;type=3#student-icon&quot;);"/>
                     </ui:VisualElement>
@@ -245,6 +320,7 @@
                 </ui:Button>
             </ui:VisualElement>
             <ui:VisualElement class="drawer-footer">
+                <ui:Button name="edit-details-button" text="Edit Details" class="drawer-footer-button"/>
                 <ui:Button name="archive-button" text="Lock Classroom" class="archive-button"/>
                 <ui:Button name="drawer-back-button" text="Back to Dashboard" class="drawer-footer-button"/>
             </ui:VisualElement>
@@ -256,6 +332,22 @@
                 <ui:VisualElement name="archive-dialog-button-row" class="dialog-button-row">
                     <ui:Button name="archive-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
                     <ui:Button name="archive-dialog-confirm-button" text="Archive" class="dialog-button dialog-button-danger"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="edit-dialog-overlay" class="dialog-overlay hidden">
+            <ui:VisualElement name="edit-dialog-card" class="dialog-card">
+                <ui:Label text="Edit Classroom" class="dialog-title"/>
+                <ui:Label text="Classroom Code *" class="edit-field-label"/>
+                <ui:TextField name="edit-code-field" max-length="60" class="announcement-input"/>
+                <ui:Label text="Classroom Name *" class="edit-field-label"/>
+                <ui:TextField name="edit-name-field" max-length="120" class="announcement-input"/>
+                <ui:Label text="Section *" class="edit-field-label"/>
+                <ui:TextField name="edit-section-field" max-length="40" class="announcement-input"/>
+                <ui:Label name="edit-dialog-error-label" text="" class="edit-dialog-error hidden"/>
+                <ui:VisualElement name="edit-dialog-button-row" class="dialog-button-row edit-dialog-button-row">
+                    <ui:Button name="edit-dialog-cancel-button" text="Cancel" class="dialog-button dialog-button-secondary"/>
+                    <ui:Button name="edit-dialog-save-button" text="Save" class="dialog-button dialog-button-primary"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

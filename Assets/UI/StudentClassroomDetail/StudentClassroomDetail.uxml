@@ -46,8 +46,90 @@
         <ui:ScrollView name="screen-scroll" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" class="screen-scroll">
             <ui:VisualElement name="content-wrapper" class="content-wrapper">
                 <ui:VisualElement name="overview-panel" class="tab-panel">
+                    <ui:Label text="Your Progress" class="section-title section-title-first"/>
+                    <ui:VisualElement name="ov-stat-grid" class="ov-stat-grid">
+                        <ui:VisualElement class="ov-stat-tile">
+                            <ui:Label name="ov-points-value" text="0" class="ov-stat-value ov-stat-value-accent"/>
+                            <ui:Label text="Points" class="ov-stat-caption"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ov-stat-tile">
+                            <ui:Label name="ov-rank-value" text="-" class="ov-stat-value"/>
+                            <ui:Label name="ov-rank-caption" text="Class rank" class="ov-stat-caption"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ov-stat-tile">
+                            <ui:Label name="ov-quizzes-value" text="0" class="ov-stat-value"/>
+                            <ui:Label text="Quizzes taken" class="ov-stat-caption"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ov-stat-tile">
+                            <ui:Label name="ov-avg-value" text="-" class="ov-stat-value"/>
+                            <ui:Label text="Average score" class="ov-stat-caption"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-badge-card" class="panel-card ov-badge-card hidden">
+                        <ui:Label name="ov-badge-title" text="" class="ov-badge-title"/>
+                        <ui:VisualElement class="bdg-track">
+                            <ui:VisualElement name="ov-badge-fill" class="bdg-fill"/>
+                        </ui:VisualElement>
+                        <ui:Label name="ov-badge-hint" text="" class="bdg-next-hint"/>
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="ov-section-header">
+                        <ui:Label text="Up Next" class="section-title ov-section-title"/>
+                        <ui:Button name="ov-see-quizzes-button" text="See all" class="ov-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-upnext-empty" class="panel-card ov-empty-card">
+                        <ui:Label name="ov-upnext-empty-label" text="No quizzes are open right now" class="ov-empty-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-upnext-host" class="hidden"/>
+
+                    <ui:VisualElement class="ov-section-header">
+                        <ui:Label text="Latest Announcement" class="section-title ov-section-title"/>
+                        <ui:Button name="ov-see-announcements-button" text="See all" class="ov-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-announcement-empty" class="panel-card ov-empty-card">
+                        <ui:Label text="No announcements yet" class="ov-empty-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-announcement-host" class="hidden"/>
+
+                    <ui:VisualElement class="ov-section-header">
+                        <ui:Label text="Latest Material" class="section-title ov-section-title"/>
+                        <ui:Button name="ov-see-materials-button" text="See all" class="ov-see-all-button"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-material-empty" class="panel-card ov-empty-card">
+                        <ui:Label text="No materials yet" class="ov-empty-text"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ov-material-host" class="hidden"/>
+
+                    <ui:Label text="Classroom Info" class="section-title"/>
                     <ui:VisualElement name="classroom-info-card" class="panel-card info-card">
-                        <ui:VisualElement class="info-row">
+                        <ui:VisualElement name="code-row" class="info-row">
+                            <ui:VisualElement class="info-icon-box">
+                                <ui:VisualElement class="info-icon icon-description"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="info-text-col">
+                                <ui:Label text="Classroom Code" class="info-label"/>
+                                <ui:Label name="code-value-label" text="" class="info-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="name-row" class="info-row">
+                            <ui:VisualElement class="info-icon-box">
+                                <ui:VisualElement class="info-icon icon-description"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="info-text-col">
+                                <ui:Label text="Classroom Name" class="info-label"/>
+                                <ui:Label name="name-value-label" text="" class="info-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="section-row" class="info-row">
+                            <ui:VisualElement class="info-icon-box">
+                                <ui:VisualElement class="info-icon icon-description"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="info-text-col">
+                                <ui:Label text="Section" class="info-label"/>
+                                <ui:Label name="section-value-label" text="" class="info-value"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="info-row info-row-last">
                             <ui:VisualElement class="info-icon-box">
                                 <ui:VisualElement class="info-icon icon-teacher"/>
                             </ui:VisualElement>
@@ -56,17 +138,14 @@
                                 <ui:Label name="teacher-value-label" text="Dr. Smith" class="info-value"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="info-row info-row-last">
-                            <ui:VisualElement class="info-icon-box">
-                                <ui:VisualElement class="info-icon icon-description"/>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="info-text-col">
-                                <ui:Label text="About" class="info-label"/>
-                                <ui:Label name="description-value-label" text="Introduction to Human Anatomy" class="info-value"/>
-                            </ui:VisualElement>
-                        </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label text="Announcements" class="section-title section-title-first"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="announcements-panel" class="tab-panel hidden">
+                    <ui:VisualElement class="ov-section-header">
+                        <ui:Label text="Announcements" class="section-title section-title-first ov-section-title"/>
+                        <ui:Label name="announcements-count-label" text="" class="ov-count-label"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Updates from your teacher" class="section-subtitle"/>
                     <ui:VisualElement name="announcements-empty-state" class="panel-card empty-state">
                         <ui:VisualElement class="empty-icon icon-announce-gray"/>
                         <ui:Label text="No announcements yet" class="empty-title"/>
@@ -194,6 +273,12 @@
                     <ui:VisualElement picking-mode="Ignore" class="drawer-item-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/home-icon.png&quot;);"/>
                 </ui:VisualElement>
                 <ui:Label picking-mode="Ignore" text="Overview" class="drawer-item-label"/>
+            </ui:Button>
+            <ui:Button name="announcements-tab-button" class="drawer-item">
+                <ui:VisualElement picking-mode="Ignore" class="drawer-item-tile">
+                    <ui:VisualElement picking-mode="Ignore" class="drawer-item-icon" style="background-image: url(&quot;project://database/Assets/UI/Icons/bell-icon.png&quot;);"/>
+                </ui:VisualElement>
+                <ui:Label picking-mode="Ignore" text="Announcements" class="drawer-item-label"/>
             </ui:Button>
             <ui:Button name="materials-tab-button" class="drawer-item">
                 <ui:VisualElement picking-mode="Ignore" class="drawer-item-tile">

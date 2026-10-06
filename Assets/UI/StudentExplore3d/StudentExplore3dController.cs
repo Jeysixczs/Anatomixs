@@ -95,7 +95,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("[StudentExplore3dController] OnEnable called");
+        //Debug.Log("[StudentExplore3dController] OnEnable called");
 
         // Get the root from UIManager
         if (UIManager.Instance != null)
@@ -116,7 +116,7 @@ public class StudentExplore3dController : MonoBehaviour
 
         if (_root == null)
         {
-            Debug.LogError("[StudentExplore3dController] Root is null!");
+            //Debug.LogError("[StudentExplore3dController] Root is null!");
             return;
         }
 
@@ -161,7 +161,7 @@ public class StudentExplore3dController : MonoBehaviour
         // If no wrapper, use root directly
         if (_screenRoot == null)
         {
-            Debug.LogWarning("[StudentExplore3dController] screen-root not found, using root directly");
+            //Debug.LogWarning("[StudentExplore3dController] screen-root not found, using root directly");
             _screenRoot = _root;
         }
 
@@ -197,7 +197,7 @@ public class StudentExplore3dController : MonoBehaviour
         _muscularImageFade = _screenRoot.Q<VisualElement>("muscular-image-fade");
         _cardiovascularImageFade = _screenRoot.Q<VisualElement>("cardiovascular-image-fade");
 
-        Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
+        //Debug.Log($"[StudentExplore3dController] Found back button: {_backButton != null}, header: {_header != null}, play mode entry button: {_playModeEntryButton != null}, sync button: {_syncProgressButton != null}");
     }
 
     private void WireCallbacks()
@@ -235,17 +235,17 @@ public class StudentExplore3dController : MonoBehaviour
             // authored in the UXML rather than guessing at a state. This is
             // the #1 cause of "the sync button never updates" - it fails
             // silently otherwise, so make it loud instead.
-            Debug.LogWarning("[StudentExplore3dController] Sync Service is not assigned in the Inspector - " +
-                              "the sync button/label will stay static and never update. " +
-                              "Assign the AnatomyPlayModeSyncService from the persistent Bootstrap GameObject.");
+            //Debug.LogWarning("[StudentExplore3dController] Sync Service is not assigned in the Inspector - " +
+                              //"the sync button/label will stay static and never update. " +
+                              //"Assign the AnatomyPlayModeSyncService from the persistent Bootstrap GameObject.");
             return;
         }
 
-        Debug.Log($"[StudentExplore3dController] Wiring sync UI to service instance {syncService.GetInstanceID()} " +
-                  $"(singleton Instance is {(AnatomyPlayModeSyncService.Instance != null ? AnatomyPlayModeSyncService.Instance.GetInstanceID().ToString() : "null")})" +
-                  (AnatomyPlayModeSyncService.Instance != null && syncService.GetInstanceID() != AnatomyPlayModeSyncService.Instance.GetInstanceID()
-                      ? " - MISMATCH: this is not the live singleton, events from the real sync service will never reach this UI!"
-                      : ""));
+        //Debug.Log($"[StudentExplore3dController] Wiring sync UI to service instance {syncService.GetInstanceID()} " +
+                  //$"(singleton Instance is {(AnatomyPlayModeSyncService.Instance != null ? AnatomyPlayModeSyncService.Instance.GetInstanceID().ToString() : "null")})" +
+                  //(AnatomyPlayModeSyncService.Instance != null && syncService.GetInstanceID() != AnatomyPlayModeSyncService.Instance.GetInstanceID()
+                      //? " - MISMATCH: this is not the live singleton, events from the real sync service will never reach this UI!"
+                      //: ""));
 
         syncService.OnStatusChanged -= HandleSyncStatusChanged;
         syncService.OnStatusChanged += HandleSyncStatusChanged;
@@ -261,8 +261,8 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void OnSyncProgressButtonClicked()
     {
-        Debug.Log("[StudentExplore3dController] Sync Progress button clicked " +
-                   $"(syncService assigned: {syncService != null}, online: {(syncService != null ? syncService.IsOnline.ToString() : "n/a")})");
+        //Debug.Log("[StudentExplore3dController] Sync Progress button clicked " +
+                   //$"(syncService assigned: {syncService != null}, online: {(syncService != null ? syncService.IsOnline.ToString() : "n/a")})");
 
         if (syncService == null) return;
 
@@ -281,7 +281,7 @@ public class StudentExplore3dController : MonoBehaviour
 
     private void HandleSyncStatusChanged(PlayModeSyncState state, int pendingCount)
     {
-        Debug.Log($"[StudentExplore3dController] Sync status changed -> {state} (pending: {pendingCount})");
+        //Debug.Log($"[StudentExplore3dController] Sync status changed -> {state} (pending: {pendingCount})");
 
         switch (state)
         {
@@ -449,8 +449,8 @@ public class StudentExplore3dController : MonoBehaviour
         var texture = Resources.Load<Texture2D>(SyncIconResourceFolder + name);
         if (texture == null)
         {
-            Debug.LogWarning($"[StudentExplore3dController] Missing sync icon 'Assets/Resources/Icons/{name}' " +
-                              "- place an image with this exact name in that folder.");
+            //Debug.LogWarning($"[StudentExplore3dController] Missing sync icon 'Assets/Resources/Icons/{name}' " +
+                              //"- place an image with this exact name in that folder.");
         }
         return texture;
     }
@@ -559,7 +559,7 @@ public class StudentExplore3dController : MonoBehaviour
     {
         if (_screenRoot == null)
         {
-            Debug.LogError("[AnatomyNav] WireAnatomySystemCards: _screenRoot is NULL, cannot wire cards.");
+            //Debug.LogError("[AnatomyNav] WireAnatomySystemCards: _screenRoot is NULL, cannot wire cards.");
             return;
         }
 
@@ -580,7 +580,7 @@ public class StudentExplore3dController : MonoBehaviour
                 system = AnatomySystem.Cardiovascular;
             else
             {
-                Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
+                //Debug.LogWarning($"[AnatomyNav] Card '{card.name}' matched .card but has no known icon class - skipping.");
                 continue; // not one of the three anatomy-system cards (e.g. none - skip)
             }
 
@@ -592,11 +592,11 @@ public class StudentExplore3dController : MonoBehaviour
                 try
                 {
                     UIManager.Instance.ShowStudentAnatomyScreen(system, startInPlayMode: playMode);
-                    Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}, startInPlayMode: {playMode}) called successfully.");
+                    //Debug.Log($"[AnatomyNav] ShowStudentAnatomyScreen({system}, startInPlayMode: {playMode}) called successfully.");
                 }
-                catch (System.Exception e)
+                catch (System.Exception)
                 {
-                    Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
+                    //Debug.LogError($"[AnatomyNav] EXCEPTION in ShowStudentAnatomyScreen({system}): {e}");
 
                 }
             };

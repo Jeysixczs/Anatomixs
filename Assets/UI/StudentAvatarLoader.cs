@@ -71,8 +71,8 @@ namespace Anatomia3D.UI
                 {
                     if (task.IsCanceled || task.IsFaulted || !task.Result.Exists || !task.Result.ContainsField("avatarUrl"))
                     {
-                        if (task.IsFaulted)
-                            Debug.LogWarning($"[StudentAvatarLoader] Could not read avatarUrl for '{studentId}': {task.Exception?.Flatten().InnerException?.Message}");
+                        //if (task.IsFaulted)
+                            //Debug.LogWarning($"[StudentAvatarLoader] Could not read avatarUrl for '{studentId}': {task.Exception?.Flatten().InnerException?.Message}");
                         onComplete(null);
                         return;
                     }
@@ -131,8 +131,8 @@ namespace Anatomia3D.UI
                 Texture2D tex = null;
                 if (request.result == UnityWebRequest.Result.Success)
                     tex = DownloadHandlerTexture.GetContent(request);
-                else
-                    Debug.LogWarning($"[StudentAvatarLoader] Could not load avatar '{url}': {request.error}");
+                //else
+                    //Debug.LogWarning($"[StudentAvatarLoader] Could not load avatar '{url}': {request.error}");
                 request.Dispose();
 
                 UrlCache[url] = tex;
@@ -188,8 +188,8 @@ namespace Anatomia3D.UI
                     Texture2D tex = null;
                     if (request.result == UnityWebRequest.Result.Success)
                         tex = DownloadHandlerTexture.GetContent(request);
-                    else
-                        Debug.LogWarning($"[StudentAvatarLoader] Could not load avatar for '{studentId}': {request.error}");
+                    //else
+                        //Debug.LogWarning($"[StudentAvatarLoader] Could not load avatar for '{studentId}': {request.error}");
 
                     request.Dispose();
                     Finish(tex);

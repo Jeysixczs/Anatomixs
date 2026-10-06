@@ -110,7 +110,7 @@ namespace Anatomia3D.UI
             if (_root == null && _document != null) _root = _document.rootVisualElement;
             if (_root == null)
             {
-                Debug.LogError("[StudentFileSubmissionController] Root is null!");
+                //Debug.LogError("[StudentFileSubmissionController] Root is null!");
                 return;
             }
 
@@ -459,16 +459,16 @@ namespace Anatomia3D.UI
                 {
                     File.WriteAllBytes(path, bytes);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogWarning($"[StudentFileSubmissionController] Could not cache the downloaded file: {e.Message}");
+                    //Debug.LogWarning($"[StudentFileSubmissionController] Could not cache the downloaded file: {e.Message}");
                     SetError("Could not open that file on this device.");
                     return;
                 }
 
                 NativeFilePicker.ExportFile(path, success =>
                 {
-                    if (!success) Debug.Log("[StudentFileSubmissionController] File export cancelled.");
+                    //if (!success) Debug.Log("[StudentFileSubmissionController] File export cancelled.");
                 });
             });
         }
@@ -505,9 +505,9 @@ namespace Anatomia3D.UI
                 {
                     size = new FileInfo(path).Length;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogWarning($"[StudentFileSubmissionController] Could not read '{path}': {e.Message}");
+                    //Debug.LogWarning($"[StudentFileSubmissionController] Could not read '{path}': {e.Message}");
                     SetError("Could not read that file. Please choose a different one.");
                     return;
                 }
@@ -585,9 +585,9 @@ namespace Anatomia3D.UI
             {
                 bytes = File.ReadAllBytes(_pendingFilePath);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[StudentFileSubmissionController] Could not read the picked file: {e.Message}");
+                //Debug.LogWarning($"[StudentFileSubmissionController] Could not read the picked file: {e.Message}");
                 SetError("Could not read that file. Please choose it again.");
                 return;
             }

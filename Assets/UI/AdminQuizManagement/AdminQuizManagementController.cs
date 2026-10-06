@@ -589,7 +589,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminQuizManagementController] OnEnable called");
+            //Debug.Log("[AdminQuizManagementController] OnEnable called");
 
             if (_document == null)
             {
@@ -612,7 +612,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminQuizManagementController] Root is null!");
+                //Debug.LogError("[AdminQuizManagementController] Root is null!");
                 return;
             }
 
@@ -795,7 +795,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminQuizManagementController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminQuizManagementController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -821,7 +821,7 @@ namespace Anatomia3D.UI
             QueryCreateQuizElements();
             QueryAddQuestionElements();
 
-            Debug.Log($"[AdminQuizManagementController] Found quizzes list: {_quizzesList != null}, question type grid: {_addQuestionStep1 != null}");
+            //Debug.Log($"[AdminQuizManagementController] Found quizzes list: {_quizzesList != null}, question type grid: {_addQuestionStep1 != null}");
         }
 
         private void QueryQuizDetailElements()
@@ -1079,7 +1079,7 @@ namespace Anatomia3D.UI
             var panelRoot = _screenRoot.panel?.visualTree;
             if (panelRoot == null)
             {
-                Debug.Log("[AdminQuizManagementController] PropagateStyleSheetsToPanelRoot: panel not attached yet, waiting for AttachToPanelEvent");
+                //Debug.Log("[AdminQuizManagementController] PropagateStyleSheetsToPanelRoot: panel not attached yet, waiting for AttachToPanelEvent");
                 _screenRoot.RegisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
                 return;
             }
@@ -1091,7 +1091,7 @@ namespace Anatomia3D.UI
         {
             _screenRoot.UnregisterCallback<AttachToPanelEvent>(OnScreenRootAttachedToPanel);
             var panelRoot = _screenRoot.panel?.visualTree;
-            Debug.Log($"[AdminQuizManagementController] OnScreenRootAttachedToPanel fired, panelRoot found: {panelRoot != null}");
+            //Debug.Log($"[AdminQuizManagementController] OnScreenRootAttachedToPanel fired, panelRoot found: {panelRoot != null}");
             if (panelRoot != null) CopyAncestorStyleSheetsOnto(panelRoot);
         }
 
@@ -1120,7 +1120,7 @@ namespace Anatomia3D.UI
                 current = current.parent;
             }
             _panelRootWithCopiedStyles = panelRoot;
-            Debug.Log($"[AdminQuizManagementController] CopyAncestorStyleSheetsOnto: copied {copied} new stylesheet(s) onto panelRoot (now has {panelRoot.styleSheets.count} total)");
+            //Debug.Log($"[AdminQuizManagementController] CopyAncestorStyleSheetsOnto: copied {copied} new stylesheet(s) onto panelRoot (now has {panelRoot.styleSheets.count} total)");
         }
 
         /// <summary>Undoes CopyAncestorStyleSheetsOnto: removes exactly the stylesheet(s) this
@@ -1144,7 +1144,7 @@ namespace Anatomia3D.UI
                         panelRoot.styleSheets.Remove(sheet);
                     }
                 }
-                Debug.Log($"[AdminQuizManagementController] RemoveCopiedStyleSheetsFromPanelRoot: removed {_stylesheetsCopiedToPanelRoot.Count} stylesheet(s) from panelRoot (now has {panelRoot.styleSheets.count} total)");
+                //Debug.Log($"[AdminQuizManagementController] RemoveCopiedStyleSheetsFromPanelRoot: removed {_stylesheetsCopiedToPanelRoot.Count} stylesheet(s) from panelRoot (now has {panelRoot.styleSheets.count} total)");
             }
 
             _stylesheetsCopiedToPanelRoot.Clear();
@@ -1252,7 +1252,7 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[AdminQuizManagementController] QuizService not available yet.");
+                //Debug.LogWarning("[AdminQuizManagementController] QuizService not available yet.");
                 return;
             }
 
@@ -1712,17 +1712,17 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(quiz.QuizId))
             {
-                Debug.LogWarning("[AdminQuizManagementController] Quiz has no id yet - ignoring delete.");
+                //Debug.LogWarning("[AdminQuizManagementController] Quiz has no id yet - ignoring delete.");
                 return;
             }
 
-            Debug.Log($"[AdminQuizManagementController] Deleting quiz '{quiz.Title}'.");
+            //Debug.Log($"[AdminQuizManagementController] Deleting quiz '{quiz.Title}'.");
 
             QuizService.Instance.DeleteQuiz(quiz.QuizId, (ok, error) =>
             {
                 if (!ok)
                 {
-                    Debug.LogError($"[AdminQuizManagementController] Could not delete quiz: {error}");
+                    //Debug.LogError($"[AdminQuizManagementController] Could not delete quiz: {error}");
                     return;
                 }
 
@@ -1737,17 +1737,17 @@ namespace Anatomia3D.UI
             int index = quiz.Questions.IndexOf(question);
             if (string.IsNullOrEmpty(quiz.QuizId) || index < 0)
             {
-                Debug.LogWarning("[AdminQuizManagementController] Quiz/question not backed by Firestore yet - ignoring delete.");
+                //Debug.LogWarning("[AdminQuizManagementController] Quiz/question not backed by Firestore yet - ignoring delete.");
                 return;
             }
 
-            Debug.Log($"[AdminQuizManagementController] Deleting question from '{quiz.Title}'.");
+            //Debug.Log($"[AdminQuizManagementController] Deleting question from '{quiz.Title}'.");
 
             QuizService.Instance.DeleteQuestion(quiz.QuizId, index, (ok, error, record) =>
             {
                 if (!ok)
                 {
-                    Debug.LogError($"[AdminQuizManagementController] Could not delete question: {error}");
+                    //Debug.LogError($"[AdminQuizManagementController] Could not delete question: {error}");
                     return;
                 }
 
@@ -2479,7 +2479,7 @@ namespace Anatomia3D.UI
                             {
                                 _createQuizSubmitButton?.SetEnabled(true);
                                 if (pointsOk) quizBeingEdited.PointsPossible = filePoints;
-                                else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
+                                //else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
 
                                 RefreshQuizzesUI();
                                 RefreshStats();
@@ -2528,7 +2528,7 @@ namespace Anatomia3D.UI
                         {
                             _createQuizSubmitButton?.SetEnabled(true);
                             if (pointsOk) newQuiz.PointsPossible = filePoints;
-                            else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
+                            //else Debug.LogWarning($"[AdminQuizManagementController] Could not save assignment points: {pointsError}");
 
                             _currentQuizzes.Add(newQuiz);
                             _lastSavedQuiz = newQuiz;
@@ -2960,7 +2960,7 @@ namespace Anatomia3D.UI
             if (_quizPendingQuestion == null || string.IsNullOrEmpty(systemKey)) return;
             if (!Enum.TryParse<AnatomySystem>(systemKey, out var anatomySystem))
             {
-                Debug.LogWarning($"[AdminQuizManagementController] Unknown anatomy system '{systemKey}' - cannot open the Anatomy Screen.");
+                //Debug.LogWarning($"[AdminQuizManagementController] Unknown anatomy system '{systemKey}' - cannot open the Anatomy Screen.");
                 return;
             }
 
@@ -3305,7 +3305,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminQuizManagementController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminQuizManagementController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 

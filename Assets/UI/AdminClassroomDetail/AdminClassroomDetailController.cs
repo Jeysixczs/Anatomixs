@@ -13,7 +13,8 @@ namespace Anatomia3D.UI
     ///
     /// Responsibilities:
     ///  - Wires up the back button, the classroom-code copy buttons, the
-    ///    Students/Quizzes/Analytics/Announcements tab switcher, the per-quiz
+    ///    Overview/Students/Quizzes/Analytics/Announcements/Materials tab switcher
+    ///    (Overview is the default tab - see RefreshOverview()), the per-quiz
     ///    publish toggles, the "Show to Students" leaderboard-visibility
     ///    toggle, and the announcement compose form
     ///  - Applies the green->blue gradient (matches AdminDashboard) to the
@@ -91,6 +92,16 @@ namespace Anatomia3D.UI
         // Archive
         private Button _archiveButton;
         private Label _archivedBadgeLabel;
+        // Edit-details dialog (name / section / code) - opened from the drawer's "Edit Details" button.
+        private Button _editDetailsButton;
+        private VisualElement _editDialogOverlay;
+        private TextField _editCodeField;   // "Classroom Code" - stored as the classroom `name`
+        private TextField _editNameField;   // "Classroom Name" - stored as the classroom `description`
+        private TextField _editSectionField;
+        private Label _editDialogErrorLabel;
+        private Button _editDialogCancelButton;
+        private Button _editDialogSaveButton;
+
         private VisualElement _archiveDialogOverlay;
         private Label _archiveDialogTitleLabel;
         private Label _archiveDialogMessageLabel;
@@ -108,16 +119,43 @@ namespace Anatomia3D.UI
         private Label _quizzesDoneValueLabel;
 
         // Tabs
+        private Button _overviewTabButton;
         private Button _studentsTabButton;
         private Button _quizzesTabButton;
         private Button _analyticsTabButton;
         private Button _announcementsTabButton;
         private Button _materialsTabButton;
+        private VisualElement _overviewPanel;
         private VisualElement _studentsPanel;
         private VisualElement _quizzesPanel;
         private VisualElement _analyticsPanel;
         private VisualElement _announcementsPanel;
         private VisualElement _materialsPanel;
+
+        // Overview tab. Read-only summary; everything here is derived from state the other
+        // tabs already load (see RefreshOverview()), so it costs no extra Firestore reads.
+        private Label _overviewNameValue;
+        private Label _overviewSectionValue;
+        private Label _overviewCodeValue;
+        private Label _overviewTeacherValue;
+        private Label _overviewStatusPill;
+        private Label _overviewStudentsValue;
+        private Label _overviewAvgValue;
+        private Label _overviewQuizzesValue;
+        private Label _overviewPointsValue;
+        private VisualElement _overviewTopEmpty;
+        private VisualElement _overviewTopList;
+        private VisualElement _overviewAnnouncementEmpty;
+        private VisualElement _overviewAnnouncementHost;
+        private VisualElement _overviewMaterialsEmpty;
+        private VisualElement _overviewMaterialsHost;
+        private Button _overviewSeeAnalyticsButton;
+        private Button _overviewSeeAnnouncementsButton;
+        private Button _overviewSeeMaterialsButton;
+        private string _classroomSection = "";
+        private string _teacherName = "";
+        private const int OverviewTopStudentCount = 3;
+        private const int OverviewMaterialCount = 3;
 
         // Students tab
         private VisualElement _studentsEmptyState;
@@ -246,7 +284,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminClassroomDetailController] OnEnable called");
+            //Debug.Log("[AdminClassroomDetailController] OnEnable called");
 
             if (_document == null)
             {
@@ -269,7 +307,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminClassroomDetailController] Root is null!");
+                //Debug.LogError("[AdminClassroomDetailController] Root is null!");
                 return;
             }
 
@@ -282,7 +320,7 @@ namespace Anatomia3D.UI
             WireCallbacks();
             UpdateResponsiveLayout();
 
-            ShowStudentsTab();
+            ShowOverviewTab();
 
             // Re-apply cached identity/state (survives screen rebuilds within the same session).
             if (!string.IsNullOrEmpty(_classroomName) || !string.IsNullOrEmpty(_classroomCode))
@@ -294,11 +332,13 @@ namespace Anatomia3D.UI
             SetLeaderboardVisibility(LeaderboardVisibleToStudents);
             SetArchived(IsArchived);
             _archiveDialogOverlay?.AddToClassList("hidden");
+            _editDialogOverlay?.AddToClassList("hidden");
             _unenrollDialogOverlay?.AddToClassList("hidden");
             _pendingUnenrollStudentId = null;
             _pendingUnenrollStudentName = null;
             RefreshAnnouncementsUI();
             RefreshMaterialsUI();
+            RefreshOverview();
 
             // Screen was re-enabled (e.g. switching tabs elsewhere and coming back)
             // with a classroom already loaded - refresh from Firestore.
@@ -330,12 +370,19 @@ namespace Anatomia3D.UI
             _copyClassroomCodeButton?.UnregisterCallback<ClickEvent>(OnCopyCodeClicked);
 
             _archiveButton?.UnregisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _editDetailsButton?.UnregisterCallback<ClickEvent>(OnEditDetailsClicked);
+            _editDialogCancelButton?.UnregisterCallback<ClickEvent>(OnEditDialogCancelClicked);
+            _editDialogSaveButton?.UnregisterCallback<ClickEvent>(OnEditDialogSaveClicked);
             _archiveDialogCancelButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
             _archiveDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
 
             _unenrollDialogCancelButton?.UnregisterCallback<ClickEvent>(OnUnenrollDialogCancelClicked);
             _unenrollDialogConfirmButton?.UnregisterCallback<ClickEvent>(OnUnenrollDialogConfirmClicked);
 
+            _overviewTabButton?.UnregisterCallback<ClickEvent>(OnOverviewTabClicked);
+            _overviewSeeAnalyticsButton?.UnregisterCallback<ClickEvent>(OnAnalyticsTabClicked);
+            _overviewSeeAnnouncementsButton?.UnregisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
+            _overviewSeeMaterialsButton?.UnregisterCallback<ClickEvent>(OnMaterialsTabClicked);
             _studentsTabButton?.UnregisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.UnregisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.UnregisterCallback<ClickEvent>(OnAnalyticsTabClicked);
@@ -359,7 +406,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminClassroomDetailController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminClassroomDetailController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -379,6 +426,14 @@ namespace Anatomia3D.UI
             _sectionTitleLabel = _screenRoot.Q<Label>("section-title-label");
             _screenScroll = _screenRoot.Q<ScrollView>("screen-scroll");
             _archivedBadgeLabel = _screenRoot.Q<Label>("archived-badge-label");
+            _editDetailsButton = _screenRoot.Q<Button>("edit-details-button");
+            _editDialogOverlay = _screenRoot.Q<VisualElement>("edit-dialog-overlay");
+            _editCodeField = _screenRoot.Q<TextField>("edit-code-field");
+            _editNameField = _screenRoot.Q<TextField>("edit-name-field");
+            _editSectionField = _screenRoot.Q<TextField>("edit-section-field");
+            _editDialogErrorLabel = _screenRoot.Q<Label>("edit-dialog-error-label");
+            _editDialogCancelButton = _screenRoot.Q<Button>("edit-dialog-cancel-button");
+            _editDialogSaveButton = _screenRoot.Q<Button>("edit-dialog-save-button");
             _archiveDialogOverlay = _screenRoot.Q<VisualElement>("archive-dialog-overlay");
             _archiveDialogTitleLabel = _screenRoot.Q<Label>("archive-dialog-title-label");
             _archiveDialogMessageLabel = _screenRoot.Q<Label>("archive-dialog-message-label");
@@ -388,6 +443,27 @@ namespace Anatomia3D.UI
             _studentsValueLabel = _screenRoot.Q<Label>("students-value-label");
             _avgScoreValueLabel = _screenRoot.Q<Label>("avg-score-value-label");
             _quizzesDoneValueLabel = _screenRoot.Q<Label>("quizzes-done-value-label");
+
+            _overviewTabButton = _screenRoot.Q<Button>("overview-tab-button");
+            _overviewPanel = _screenRoot.Q<VisualElement>("overview-panel");
+            _overviewNameValue = _screenRoot.Q<Label>("overview-name-value");
+            _overviewSectionValue = _screenRoot.Q<Label>("overview-section-value");
+            _overviewCodeValue = _screenRoot.Q<Label>("overview-code-value");
+            _overviewTeacherValue = _screenRoot.Q<Label>("overview-teacher-value");
+            _overviewStatusPill = _screenRoot.Q<Label>("overview-status-pill");
+            _overviewStudentsValue = _screenRoot.Q<Label>("overview-students-value");
+            _overviewAvgValue = _screenRoot.Q<Label>("overview-avg-value");
+            _overviewQuizzesValue = _screenRoot.Q<Label>("overview-quizzes-value");
+            _overviewPointsValue = _screenRoot.Q<Label>("overview-points-value");
+            _overviewTopEmpty = _screenRoot.Q<VisualElement>("overview-top-empty");
+            _overviewTopList = _screenRoot.Q<VisualElement>("overview-top-list");
+            _overviewAnnouncementEmpty = _screenRoot.Q<VisualElement>("overview-announcement-empty");
+            _overviewAnnouncementHost = _screenRoot.Q<VisualElement>("overview-announcement-host");
+            _overviewMaterialsEmpty = _screenRoot.Q<VisualElement>("overview-materials-empty");
+            _overviewMaterialsHost = _screenRoot.Q<VisualElement>("overview-materials-host");
+            _overviewSeeAnalyticsButton = _screenRoot.Q<Button>("overview-see-analytics-button");
+            _overviewSeeAnnouncementsButton = _screenRoot.Q<Button>("overview-see-announcements-button");
+            _overviewSeeMaterialsButton = _screenRoot.Q<Button>("overview-see-materials-button");
 
             _studentsTabButton = _screenRoot.Q<Button>("students-tab-button");
             _quizzesTabButton = _screenRoot.Q<Button>("quizzes-tab-button");
@@ -442,7 +518,7 @@ namespace Anatomia3D.UI
             _materialsEmptyState = _screenRoot.Q<VisualElement>("materials-empty-state");
             _materialsList = _screenRoot.Q<VisualElement>("materials-list");
 
-            Debug.Log($"[AdminClassroomDetailController] Found tabs: {_studentsTabButton != null}/{_quizzesTabButton != null}/{_analyticsTabButton != null}/{_announcementsTabButton != null}");
+            //Debug.Log($"[AdminClassroomDetailController] Found tabs: {_studentsTabButton != null}/{_quizzesTabButton != null}/{_analyticsTabButton != null}/{_announcementsTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -456,12 +532,19 @@ namespace Anatomia3D.UI
             _copyClassroomCodeButton?.RegisterCallback<ClickEvent>(OnCopyCodeClicked);
 
             _archiveButton?.RegisterCallback<ClickEvent>(OnArchiveButtonClicked);
+            _editDetailsButton?.RegisterCallback<ClickEvent>(OnEditDetailsClicked);
+            _editDialogCancelButton?.RegisterCallback<ClickEvent>(OnEditDialogCancelClicked);
+            _editDialogSaveButton?.RegisterCallback<ClickEvent>(OnEditDialogSaveClicked);
             _archiveDialogCancelButton?.RegisterCallback<ClickEvent>(OnArchiveDialogCancelClicked);
             _archiveDialogConfirmButton?.RegisterCallback<ClickEvent>(OnArchiveDialogConfirmClicked);
 
             _unenrollDialogCancelButton?.RegisterCallback<ClickEvent>(OnUnenrollDialogCancelClicked);
             _unenrollDialogConfirmButton?.RegisterCallback<ClickEvent>(OnUnenrollDialogConfirmClicked);
 
+            _overviewTabButton?.RegisterCallback<ClickEvent>(OnOverviewTabClicked);
+            _overviewSeeAnalyticsButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
+            _overviewSeeAnnouncementsButton?.RegisterCallback<ClickEvent>(OnAnnouncementsTabClicked);
+            _overviewSeeMaterialsButton?.RegisterCallback<ClickEvent>(OnMaterialsTabClicked);
             _studentsTabButton?.RegisterCallback<ClickEvent>(OnStudentsTabClicked);
             _quizzesTabButton?.RegisterCallback<ClickEvent>(OnQuizzesTabClicked);
             _analyticsTabButton?.RegisterCallback<ClickEvent>(OnAnalyticsTabClicked);
@@ -516,12 +599,15 @@ namespace Anatomia3D.UI
             // LoadClassroomContent()'s FetchClassroomDetail callback will set the real value
             // once it resolves.
             SetArchived(false);
+            _classroomSection = "";
+            _teacherName = "";
 
             // Same reused-screen rule for the Materials tab: don't carry the previous
             // classroom's list or half-filled upload form into this one.
             _materials.Clear();
             ResetMaterialForm();
             RefreshMaterialsUI();
+            RefreshOverview();
 
             LoadClassroomContent();
         }
@@ -550,13 +636,13 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(_classroomId))
             {
-                Debug.LogWarning("[AdminClassroomDetailController] LoadClassroomContent called with no classroom id set.");
+                //Debug.LogWarning("[AdminClassroomDetailController] LoadClassroomContent called with no classroom id set.");
                 return;
             }
 
             if (AdminClassroomService.Instance == null)
             {
-                Debug.LogWarning("[AdminClassroomDetailController] AdminClassroomService not available yet.");
+                //Debug.LogWarning("[AdminClassroomDetailController] AdminClassroomService not available yet.");
                 return;
             }
 
@@ -564,9 +650,12 @@ namespace Anatomia3D.UI
             {
                 if (record == null) return;
                 _publishedQuizIds = record.PublishedQuizIds ?? new List<string>();
+                _classroomSection = record.Section ?? "";
+                _teacherName = record.TeacherName ?? "";
                 SetLeaderboardVisibility(record.LeaderboardVisible);
                 SetArchived(record.IsArchived);
                 LoadQuizzesTab();
+                RefreshOverview();
             });
 
             AdminClassroomService.Instance.FetchAnnouncements(_classroomId, announcements =>
@@ -608,6 +697,8 @@ namespace Anatomia3D.UI
                 if (_studentsValueLabel != null) _studentsValueLabel.text = analytics.Students.Count.ToString("N0");
                 if (_avgScoreValueLabel != null) _avgScoreValueLabel.text = $"{Mathf.RoundToInt(analytics.AvgScorePercent)}%";
                 if (_quizzesDoneValueLabel != null) _quizzesDoneValueLabel.text = analytics.TotalQuizzesCompleted.ToString("N0");
+
+                RefreshOverview();
             });
         }
 
@@ -621,7 +712,7 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[AdminClassroomDetailController] QuizService not available yet.");
+                //Debug.LogWarning("[AdminClassroomDetailController] QuizService not available yet.");
                 return;
             }
 
@@ -729,7 +820,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminClassroomDetailController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminClassroomDetailController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
@@ -737,14 +828,21 @@ namespace Anatomia3D.UI
         {
             if (_classroomCodeLabel == null) return;
             GUIUtility.systemCopyBuffer = _classroomCodeLabel.text;
-            Debug.Log($"[AdminClassroomDetailController] Copied classroom code: {_classroomCodeLabel.text}");
+            //Debug.Log($"[AdminClassroomDetailController] Copied classroom code: {_classroomCodeLabel.text}");
         }
 
+        private void OnOverviewTabClicked(ClickEvent evt) => ShowOverviewTab();
         private void OnStudentsTabClicked(ClickEvent evt) => ShowStudentsTab();
         private void OnQuizzesTabClicked(ClickEvent evt) => ShowQuizzesTab();
         private void OnAnalyticsTabClicked(ClickEvent evt) => ShowAnalyticsTab();
         private void OnAnnouncementsTabClicked(ClickEvent evt) => ShowAnnouncementsTab();
         private void OnMaterialsTabClicked(ClickEvent evt) => ShowMaterialsTab();
+
+        private void ShowOverviewTab()
+        {
+            RefreshOverview();
+            SetActiveTab(_overviewTabButton, _overviewPanel, "Overview");
+        }
 
         private void ShowStudentsTab()
         {
@@ -773,6 +871,7 @@ namespace Anatomia3D.UI
 
         private void SetActiveTab(Button activeButton, VisualElement activePanel, string tabName)
         {
+            _overviewTabButton?.RemoveFromClassList("tab-button-active");
             _studentsTabButton?.RemoveFromClassList("tab-button-active");
             _quizzesTabButton?.RemoveFromClassList("tab-button-active");
             _analyticsTabButton?.RemoveFromClassList("tab-button-active");
@@ -780,6 +879,7 @@ namespace Anatomia3D.UI
             _materialsTabButton?.RemoveFromClassList("tab-button-active");
             activeButton?.AddToClassList("tab-button-active");
 
+            _overviewPanel?.AddToClassList("hidden");
             _studentsPanel?.AddToClassList("hidden");
             _quizzesPanel?.AddToClassList("hidden");
             _analyticsPanel?.AddToClassList("hidden");
@@ -844,11 +944,11 @@ namespace Anatomia3D.UI
                     if (newState) { if (!_publishedQuizIds.Contains(row.QuizId)) _publishedQuizIds.Add(row.QuizId); }
                     else _publishedQuizIds.Remove(row.QuizId);
 
-                    Debug.Log($"[AdminClassroomDetailController] Quiz {row.QuizId} published: {newState}");
+                    //Debug.Log($"[AdminClassroomDetailController] Quiz {row.QuizId} published: {newState}");
                     return;
                 }
 
-                Debug.LogWarning($"[AdminClassroomDetailController] Could not update quiz {row.QuizId} publish state: {error}");
+                //Debug.LogWarning($"[AdminClassroomDetailController] Could not update quiz {row.QuizId} publish state: {error}");
                 SetQuizRowPublished(row, wasPublished); // roll back
             });
         }
@@ -866,11 +966,11 @@ namespace Anatomia3D.UI
             {
                 if (success)
                 {
-                    Debug.Log($"[AdminClassroomDetailController] Leaderboard visible to students: {newState}");
+                    //Debug.Log($"[AdminClassroomDetailController] Leaderboard visible to students: {newState}");
                     return;
                 }
 
-                Debug.LogWarning($"[AdminClassroomDetailController] Could not update leaderboard visibility: {error}");
+                //Debug.LogWarning($"[AdminClassroomDetailController] Could not update leaderboard visibility: {error}");
                 SetLeaderboardVisibility(wasVisible); // roll back
             });
         }
@@ -892,6 +992,7 @@ namespace Anatomia3D.UI
             IsArchived = archived;
             _archivedBadgeLabel?.EnableInClassList("hidden", !archived);
             if (_archiveButton != null) _archiveButton.text = archived ? "Unlock Classroom" : "Lock Classroom";
+            RefreshOverview();
         }
 
         private void OnArchiveButtonClicked(ClickEvent evt)
@@ -936,13 +1037,88 @@ namespace Anatomia3D.UI
 
                 if (!success)
                 {
-                    Debug.LogWarning($"[AdminClassroomDetailController] Could not update archived state: {error}");
+                    //Debug.LogWarning($"[AdminClassroomDetailController] Could not update archived state: {error}");
                     return;
                 }
 
                 SetArchived(newState);
-                Debug.Log($"[AdminClassroomDetailController] Classroom {_classroomId} archived: {newState}");
+                //Debug.Log($"[AdminClassroomDetailController] Classroom {_classroomId} archived: {newState}");
             });
+        }
+
+        // ---------------- Edit classroom details ----------------
+
+        /// <summary>"Edit Details" in the drawer. Loads the classroom fresh (so the dialog
+        /// is pre-filled with the raw code / name / section, not the combined "Name - Section"
+        /// header text) and opens the dialog.</summary>
+        private void OnEditDetailsClicked(ClickEvent evt)
+        {
+            SetDrawerOpen(false);
+            if (string.IsNullOrEmpty(_classroomId) || _editDialogOverlay == null || AdminClassroomService.Instance == null) return;
+
+            _editDetailsButton?.SetEnabled(false);
+            AdminClassroomService.Instance.FetchClassroomDetail(_classroomId, record =>
+            {
+                _editDetailsButton?.SetEnabled(true);
+                if (record == null) return;
+
+                _editCodeField?.SetValueWithoutNotify(record.Name ?? "");
+                _editNameField?.SetValueWithoutNotify(record.Description ?? "");
+                _editSectionField?.SetValueWithoutNotify(record.Section ?? "");
+                SetEditDialogError(null);
+                _editDialogSaveButton?.SetEnabled(true);
+                _editDialogOverlay.RemoveFromClassList("hidden");
+            });
+        }
+
+        private void OnEditDialogCancelClicked(ClickEvent evt)
+        {
+            _editDialogOverlay?.AddToClassList("hidden");
+        }
+
+        private void OnEditDialogSaveClicked(ClickEvent evt)
+        {
+            if (string.IsNullOrEmpty(_classroomId) || AdminClassroomService.Instance == null) return;
+
+            string code = _editCodeField?.value?.Trim();
+            string name = _editNameField?.value?.Trim();
+            string section = _editSectionField?.value?.Trim() ?? "";
+
+            if (string.IsNullOrEmpty(code)) { SetEditDialogError("Please enter a classroom code."); return; }
+            if (string.IsNullOrEmpty(name)) { SetEditDialogError("Please enter a classroom name."); return; }
+            if (string.IsNullOrEmpty(section)) { SetEditDialogError("Please enter a section."); return; }
+
+            SetEditDialogError(null);
+            _editDialogSaveButton?.SetEnabled(false);
+
+            AdminClassroomService.Instance.UpdateClassroomDetails(_classroomId, code, name, section, (success, error, record) =>
+            {
+                _editDialogSaveButton?.SetEnabled(true);
+
+                if (!success)
+                {
+                    SetEditDialogError(error);
+                    return;
+                }
+
+                // Repaint everything on this screen that shows the identity. (The dashboard's
+                // classroom list and the student screens are fed by live listeners, so they
+                // update on their own.)
+                _classroomName = record.DisplayName;
+                _classroomSection = record.Section ?? "";
+                if (_classroomNameLabel != null) _classroomNameLabel.text = _classroomName;
+                if (_drawerClassroomLabel != null) _drawerClassroomLabel.text = _classroomName;
+                RefreshOverview();
+
+                _editDialogOverlay?.AddToClassList("hidden");
+            });
+        }
+
+        private void SetEditDialogError(string message)
+        {
+            if (_editDialogErrorLabel == null) return;
+            _editDialogErrorLabel.text = message ?? "";
+            _editDialogErrorLabel.EnableInClassList("hidden", string.IsNullOrEmpty(message));
         }
 
         // ---------------- Unenroll student ----------------
@@ -996,11 +1172,11 @@ namespace Anatomia3D.UI
 
                 if (!success)
                 {
-                    Debug.LogWarning($"[AdminClassroomDetailController] Could not remove student {studentId}: {error}");
+                    //Debug.LogWarning($"[AdminClassroomDetailController] Could not remove student {studentId}: {error}");
                     return;
                 }
 
-                Debug.Log($"[AdminClassroomDetailController] Removed student \"{studentName}\" ({studentId}) from classroom {_classroomId}");
+                //Debug.Log($"[AdminClassroomDetailController] Removed student \"{studentName}\" ({studentId}) from classroom {_classroomId}");
 
                 // Re-pull everything from Firestore rather than just deleting the row
                 // locally - removing a student changes the header stats, the Analytics
@@ -1038,9 +1214,11 @@ namespace Anatomia3D.UI
 
         private void RefreshAnnouncementsUI()
         {
-            if (_announcementsList == null) return;
+            if (_announcementsList == null) { RefreshOverview(); return; }
 
             _announcementsList.Clear();
+
+            RefreshOverview();
 
             bool hasData = _liveAnnouncements.Count > 0;
             _announcementsEmptyState?.EnableInClassList("hidden", hasData);
@@ -1058,7 +1236,7 @@ namespace Anatomia3D.UI
         {
             if (string.IsNullOrEmpty(_classroomId))
             {
-                Debug.LogWarning("[AdminClassroomDetailController] Post Announcement tapped with no classroom loaded - ignoring.");
+                //Debug.LogWarning("[AdminClassroomDetailController] Post Announcement tapped with no classroom loaded - ignoring.");
                 return;
             }
 
@@ -1067,7 +1245,7 @@ namespace Anatomia3D.UI
 
             if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(body))
             {
-                Debug.Log("[AdminClassroomDetailController] Post Announcement tapped with an empty title and message - ignoring.");
+                //Debug.Log("[AdminClassroomDetailController] Post Announcement tapped with an empty title and message - ignoring.");
                 return;
             }
 
@@ -1083,7 +1261,7 @@ namespace Anatomia3D.UI
 
                 if (!success)
                 {
-                    Debug.LogWarning($"[AdminClassroomDetailController] Could not post announcement: {error}");
+                    //Debug.LogWarning($"[AdminClassroomDetailController] Could not post announcement: {error}");
                     // Restore the text the teacher typed so they don't lose it.
                     if (_announcementTitleField != null) _announcementTitleField.value = title;
                     if (_announcementBodyField != null) _announcementBodyField.value = body;
@@ -1097,7 +1275,7 @@ namespace Anatomia3D.UI
                 });
                 RefreshAnnouncementsUI();
 
-                Debug.Log($"[AdminClassroomDetailController] Posted announcement \"{record.Title}\" to classroom {_classroomId}");
+                //Debug.Log($"[AdminClassroomDetailController] Posted announcement \"{record.Title}\" to classroom {_classroomId}");
             });
         }
 
@@ -1114,14 +1292,14 @@ namespace Anatomia3D.UI
             {
                 if (!success)
                 {
-                    Debug.LogWarning($"[AdminClassroomDetailController] Could not delete announcement: {error}");
+                    //Debug.LogWarning($"[AdminClassroomDetailController] Could not delete announcement: {error}");
                     return;
                 }
 
                 _liveAnnouncements.Remove(announcement);
                 RefreshAnnouncementsUI();
 
-                Debug.Log($"[AdminClassroomDetailController] Deleted announcement \"{announcement.Info.Title}\" from classroom {_classroomId}");
+                //Debug.Log($"[AdminClassroomDetailController] Deleted announcement \"{announcement.Info.Title}\" from classroom {_classroomId}");
             });
         }
 
@@ -1182,9 +1360,9 @@ namespace Anatomia3D.UI
                 {
                     size = new System.IO.FileInfo(path).Length;
                 }
-                catch (System.Exception e)
+                catch (System.Exception)
                 {
-                    Debug.LogWarning($"[AdminClassroomDetailController] Could not read '{path}': {e.Message}");
+                    //Debug.LogWarning($"[AdminClassroomDetailController] Could not read '{path}': {e.Message}");
                     SetMaterialStatus("Could not read that file. Please choose a different one.", true);
                     return;
                 }
@@ -1283,9 +1461,9 @@ namespace Anatomia3D.UI
             {
                 bytes = System.IO.File.ReadAllBytes(_pendingMaterialPath);
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogWarning($"[AdminClassroomDetailController] Could not read the picked file: {e.Message}");
+                //Debug.LogWarning($"[AdminClassroomDetailController] Could not read the picked file: {e.Message}");
                 SetMaterialStatus("Could not read that file. Please choose it again.", true);
                 return;
             }
@@ -1349,16 +1527,18 @@ namespace Anatomia3D.UI
                     RefreshMaterialsUI();
                     SetMaterialStatus("Uploaded. Students can open it from their Materials tab.", false);
 
-                    Debug.Log($"[AdminClassroomDetailController] Uploaded material \"{record.Title}\" to classroom {classroomId}");
+                    //Debug.Log($"[AdminClassroomDetailController] Uploaded material \"{record.Title}\" to classroom {classroomId}");
                 });
             });
         }
 
         private void RefreshMaterialsUI()
         {
-            if (_materialsList == null) return;
+            if (_materialsList == null) { RefreshOverview(); return; }
 
             _materialsList.Clear();
+
+            RefreshOverview();
 
             bool hasData = _materials.Count > 0;
             _materialsEmptyState?.EnableInClassList("hidden", hasData);
@@ -1459,8 +1639,133 @@ namespace Anatomia3D.UI
 
                 _materials.Remove(material);
                 RefreshMaterialsUI();
-                Debug.Log($"[AdminClassroomDetailController] Deleted material \"{material.Title}\" from classroom {classroomId}");
+                //Debug.Log($"[AdminClassroomDetailController] Deleted material \"{material.Title}\" from classroom {classroomId}");
             });
+        }
+
+        // ---------------- Overview tab ----------------
+
+        /// <summary>Repaints the Overview tab from state this screen already holds: the cached
+        /// identity, the header stat labels (kept live by LoadClassroomContent()), the
+        /// leaderboard, announcements and materials lists. Safe to call at any time and
+        /// before the elements exist - it just returns.</summary>
+        private void RefreshOverview()
+        {
+            if (_overviewPanel == null) return;
+
+            string Or(string value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+            if (_overviewNameValue != null) _overviewNameValue.text = Or(_classroomName);
+            if (_overviewSectionValue != null) _overviewSectionValue.text = Or(_classroomSection);
+            if (_overviewCodeValue != null) _overviewCodeValue.text = Or(_classroomCodeLabel != null ? _classroomCodeLabel.text : _classroomCode);
+            if (_overviewTeacherValue != null) _overviewTeacherValue.text = Or(_teacherName);
+
+            if (_overviewStatusPill != null)
+            {
+                _overviewStatusPill.text = IsArchived ? "Locked" : "Active";
+                _overviewStatusPill.EnableInClassList("overview-status-pill-locked", IsArchived);
+            }
+
+            if (_overviewStudentsValue != null && _studentsValueLabel != null) _overviewStudentsValue.text = _studentsValueLabel.text;
+            if (_overviewAvgValue != null && _avgScoreValueLabel != null) _overviewAvgValue.text = _avgScoreValueLabel.text;
+            if (_overviewPointsValue != null && _totalPointsValueLabel != null) _overviewPointsValue.text = _totalPointsValueLabel.text;
+            if (_overviewQuizzesValue != null) _overviewQuizzesValue.text = (_publishedQuizIds?.Count ?? 0).ToString("N0");
+
+            RefreshOverviewTopStudents();
+            RefreshOverviewLatestAnnouncement();
+            RefreshOverviewRecentMaterials();
+        }
+
+        private void RefreshOverviewTopStudents()
+        {
+            if (_overviewTopList == null) return;
+            _overviewTopList.Clear();
+
+            int count = Mathf.Min(OverviewTopStudentCount, _lastTopPerformers.Count);
+            _overviewTopEmpty?.EnableInClassList("hidden", count > 0);
+            _overviewTopList.EnableInClassList("hidden", count == 0);
+
+            for (int i = 0; i < count; i++)
+            {
+                var (studentId, name, points, _) = _lastTopPerformers[i];
+                _overviewTopList.Add(BuildPerformerRow(i + 1, studentId, name, points));
+            }
+        }
+
+        private void RefreshOverviewLatestAnnouncement()
+        {
+            if (_overviewAnnouncementHost == null) return;
+            _overviewAnnouncementHost.Clear();
+
+            bool hasData = _liveAnnouncements.Count > 0;
+            _overviewAnnouncementEmpty?.EnableInClassList("hidden", hasData);
+            _overviewAnnouncementHost.EnableInClassList("hidden", !hasData);
+            if (!hasData) return;
+
+            // _liveAnnouncements is most-recent-first. Read-only card: no Delete button here,
+            // that stays on the Announcements tab.
+            var info = _liveAnnouncements[0].Info;
+
+            var card = new VisualElement();
+            card.AddToClassList("announcement-card");
+
+            var headerRow = new VisualElement();
+            headerRow.AddToClassList("announcement-header-row");
+
+            var titleLabel = new Label(info.Title);
+            titleLabel.AddToClassList("announcement-title-label");
+            var dateLabel = new Label(info.DateText);
+            dateLabel.AddToClassList("announcement-date-label");
+            headerRow.Add(titleLabel);
+            headerRow.Add(dateLabel);
+            card.Add(headerRow);
+
+            if (!string.IsNullOrEmpty(info.Body))
+            {
+                var bodyLabel = new Label(info.Body);
+                bodyLabel.AddToClassList("announcement-body-label");
+                bodyLabel.style.marginBottom = 0;
+                card.Add(bodyLabel);
+            }
+
+            _overviewAnnouncementHost.Add(card);
+        }
+
+        private void RefreshOverviewRecentMaterials()
+        {
+            if (_overviewMaterialsHost == null) return;
+            _overviewMaterialsHost.Clear();
+
+            bool hasData = _materials.Count > 0;
+            _overviewMaterialsEmpty?.EnableInClassList("hidden", hasData);
+            _overviewMaterialsHost.EnableInClassList("hidden", !hasData);
+            if (!hasData) return;
+
+            // Sorted locally so this doesn't depend on the order FetchMaterials() returns.
+            var recent = _materials.OrderByDescending(m => m.CreatedAt.ToDateTime()).Take(OverviewMaterialCount).ToList();
+            for (int i = 0; i < recent.Count; i++)
+            {
+                var material = recent[i];
+
+                var row = new VisualElement();
+                row.AddToClassList("overview-material-row");
+                if (i == recent.Count - 1) row.AddToClassList("overview-material-row-last");
+
+                var text = new VisualElement();
+                text.AddToClassList("overview-material-text");
+
+                string title = string.IsNullOrWhiteSpace(material.Title) ? material.FileName : material.Title;
+                var titleLabel = new Label(title);
+                titleLabel.AddToClassList("overview-material-title");
+
+                var metaLabel = new Label($"{FileSubmissionConfig.FormatSize(material.FileSize)}  \u2022  {material.CreatedAt.ToDateTime().ToLocalTime():MMM d, yyyy}");
+                metaLabel.AddToClassList("overview-material-meta");
+
+                text.Add(titleLabel);
+                text.Add(metaLabel);
+                row.Add(text);
+                _overviewMaterialsHost.Add(row);
+            }
         }
 
         // ---------------- Row builders (built at runtime - lists are dynamic) ----------------

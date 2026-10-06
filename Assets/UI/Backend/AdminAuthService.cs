@@ -408,7 +408,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogError($"[AdminAuthService] WriteFullName failed (uid={uid}): {task.Exception}");
+                        //Debug.LogError($"[AdminAuthService] WriteFullName failed (uid={uid}): {task.Exception}");
                         onComplete?.Invoke(false, "Could not save your profile.");
                         return;
                     }
@@ -439,7 +439,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AdminAuthService] Could not load classrooms to sync teacherName: {task.Exception}");
+                        //Debug.LogWarning($"[AdminAuthService] Could not load classrooms to sync teacherName: {task.Exception}");
                         return;
                     }
 
@@ -465,8 +465,8 @@ namespace Anatomia3D.Backend
                     {
                         batch.CommitAsync().ContinueWithOnMainThread(commit =>
                         {
-                            if (commit.IsCanceled || commit.IsFaulted)
-                                Debug.LogWarning($"[AdminAuthService] teacherName sync failed: {commit.Exception}");
+                            //if (commit.IsCanceled || commit.IsFaulted)
+                                //Debug.LogWarning($"[AdminAuthService] teacherName sync failed: {commit.Exception}");
                         });
                     }
                 });
@@ -560,11 +560,11 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AdminAuthService] ReloadAsync failed (PendingEmail={PendingEmail}): {task.Exception}");
+                    //Debug.LogWarning($"[AdminAuthService] ReloadAsync failed (PendingEmail={PendingEmail}): {task.Exception}");
 
                     if (PendingEmail != null && IsInvalidCredentialError(task.Exception))
                     {
-                        Debug.Log("[AdminAuthService] Invalidated credential while an email change was pending - treating as confirmed.");
+                        //Debug.Log("[AdminAuthService] Invalidated credential while an email change was pending - treating as confirmed.");
                         PendingEmail = null;
                     }
 
@@ -717,7 +717,7 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[AdminAuthService] Could not save avatarUrl for '{uid}': {task.Exception}");
+                    //Debug.LogWarning($"[AdminAuthService] Could not save avatarUrl for '{uid}': {task.Exception}");
                     onComplete?.Invoke(false, "Could not save your photo. Please try again.");
                     return;
                 }
@@ -783,12 +783,12 @@ namespace Anatomia3D.Backend
 
             if (fbEx == null)
             {
-                Debug.LogWarning("[Auth] Sign-in failed with a non-Firebase exception: " + ex);
+                //Debug.LogWarning("[Auth] Sign-in failed with a non-Firebase exception: " + ex);
                 return "Something went wrong. Please try again.";
             }
 
             // Log the real code/message so an unmapped error is easy to spot in the Console.
-            Debug.LogWarning($"[Auth] Firebase error code={fbEx.ErrorCode} ({(AuthError)fbEx.ErrorCode}) message={fbEx.Message}");
+            //Debug.LogWarning($"[Auth] Firebase error code={fbEx.ErrorCode} ({(AuthError)fbEx.ErrorCode}) message={fbEx.Message}");
 
             var code = (AuthError)fbEx.ErrorCode;
             switch (code)

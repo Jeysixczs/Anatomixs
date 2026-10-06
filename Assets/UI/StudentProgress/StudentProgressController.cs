@@ -121,7 +121,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentProgressController] OnEnable called");
+            //Debug.Log("[StudentProgressController] OnEnable called");
 
             if (_document == null)
             {
@@ -146,7 +146,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentProgressController] Root is null!");
+                //Debug.LogError("[StudentProgressController] Root is null!");
                 return;
             }
 
@@ -256,7 +256,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentProgressController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentProgressController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -321,7 +321,7 @@ namespace Anatomia3D.UI
             _categoryMuscularCount?.AddToClassList("hidden");
             _categoryCardiovascularCount?.AddToClassList("hidden");
 
-            Debug.Log($"[StudentProgressController] Found back button: {_backButton != null}, tabs: {_weeklyTabButton != null}/{_performanceTabButton != null}");
+            //Debug.Log($"[StudentProgressController] Found back button: {_backButton != null}, tabs: {_weeklyTabButton != null}/{_performanceTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -355,15 +355,15 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance?.CurrentStudent;
             if (student == null)
             {
-                Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
-                    "leaving the Level Progress card and roadmap with placeholder data.");
+                //Debug.LogWarning("[StudentProgressController] No signed-in student found - " +
+                    //"leaving the Level Progress card and roadmap with placeholder data.");
                 return;
             }
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
-                    "can't compute level progress or build the roadmap.");
+                //Debug.LogWarning("[StudentProgressController] AdminGamificationService.Instance is null - " +
+                    //"can't compute level progress or build the roadmap.");
                 return;
             }
 
@@ -424,8 +424,8 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
-                    "leaving avg score and badges as placeholders.");
+                //Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - " +
+                    //"leaving avg score and badges as placeholders.");
                 return;
             }
 
@@ -528,19 +528,19 @@ namespace Anatomia3D.UI
             string studentId = PlayerSessionManager.Instance?.CurrentStudent?.Uid;
             if (string.IsNullOrEmpty(studentId))
             {
-                Debug.LogWarning("[StudentProgressController] No signed-in student - leaving the Performance Panel as-is.");
+                //Debug.LogWarning("[StudentProgressController] No signed-in student - leaving the Performance Panel as-is.");
                 return;
             }
 
             if (AnatomyPlayModeLocalStorage.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AnatomyPlayModeLocalStorage.Instance is null - can't read Anatomy Play Mode progress.");
+                //Debug.LogWarning("[StudentProgressController] AnatomyPlayModeLocalStorage.Instance is null - can't read Anatomy Play Mode progress.");
                 return;
             }
 
             if (AnatomyScreenController.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] AnatomyScreenController.Instance is null - can't determine actual structure totals per system.");
+                //Debug.LogWarning("[StudentProgressController] AnatomyScreenController.Instance is null - can't determine actual structure totals per system.");
                 return;
             }
 
@@ -555,17 +555,17 @@ namespace Anatomia3D.UI
             float muscularPercent = CalculatePerformanceBySystem(AnatomySystem.Muscular, completedKeys, out int muscularCompleted, out int muscularTotal);
             float cardioPercent = CalculatePerformanceBySystem(AnatomySystem.Cardiovascular, completedKeys, out int cardioCompleted, out int cardioTotal);
 
-            Debug.Log($"[StudentProgress] Completed Skeletal structures: {skeletalCompleted}");
-            Debug.Log($"[StudentProgress] Total Skeletal structures: {skeletalTotal}");
-            Debug.Log($"[StudentProgress] Skeletal progress: {skeletalPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Skeletal structures: {skeletalCompleted}");
+            //Debug.Log($"[StudentProgress] Total Skeletal structures: {skeletalTotal}");
+            //Debug.Log($"[StudentProgress] Skeletal progress: {skeletalPercent:0.00}%");
 
-            Debug.Log($"[StudentProgress] Completed Muscular structures: {muscularCompleted}");
-            Debug.Log($"[StudentProgress] Total Muscular structures: {muscularTotal}");
-            Debug.Log($"[StudentProgress] Muscular progress: {muscularPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Muscular structures: {muscularCompleted}");
+            //Debug.Log($"[StudentProgress] Total Muscular structures: {muscularTotal}");
+            //Debug.Log($"[StudentProgress] Muscular progress: {muscularPercent:0.00}%");
 
-            Debug.Log($"[StudentProgress] Completed Cardiovascular structures: {cardioCompleted}");
-            Debug.Log($"[StudentProgress] Total Cardiovascular structures: {cardioTotal}");
-            Debug.Log($"[StudentProgress] Cardiovascular progress: {cardioPercent:0.00}%");
+            //Debug.Log($"[StudentProgress] Completed Cardiovascular structures: {cardioCompleted}");
+            //Debug.Log($"[StudentProgress] Total Cardiovascular structures: {cardioTotal}");
+            //Debug.Log($"[StudentProgress] Cardiovascular progress: {cardioPercent:0.00}%");
             // Totals/completed counts are logged for debugging only - never shown in
             // the UI itself (see the plan's section 16).
 
@@ -608,7 +608,7 @@ namespace Anatomia3D.UI
         {
             if (QuizService.Instance == null)
             {
-                Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - leaving the Weekly Activity Panel as-is.");
+                //Debug.LogWarning("[StudentProgressController] QuizService.Instance is null - leaving the Weekly Activity Panel as-is.");
                 return;
             }
 
@@ -627,9 +627,9 @@ namespace Anatomia3D.UI
                     AddPointsToWeek(weekly, anatomyPoints);
                 }
 
-                Debug.Log("[StudentProgress] Weekly points:\n" +
-                    $"Mon={weekly[0]}\nTue={weekly[1]}\nWed={weekly[2]}\nThu={weekly[3]}\n" +
-                    $"Fri={weekly[4]}\nSat={weekly[5]}\nSun={weekly[6]}");
+                //Debug.Log("[StudentProgress] Weekly points:\n" +
+                    //$"Mon={weekly[0]}\nTue={weekly[1]}\nWed={weekly[2]}\nThu={weekly[3]}\n" +
+                    //$"Fri={weekly[4]}\nSat={weekly[5]}\nSun={weekly[6]}");
 
                 SetWeeklyPoints(weekly);
             });
@@ -676,7 +676,7 @@ namespace Anatomia3D.UI
                 return parsed.Kind == DateTimeKind.Utc ? parsed : parsed.ToUniversalTime();
             }
 
-            Debug.LogWarning($"[StudentProgressController] Could not parse Play Mode timestamp '{isoUtc}' - using current time instead.");
+            //Debug.LogWarning($"[StudentProgressController] Could not parse Play Mode timestamp '{isoUtc}' - using current time instead.");
             return DateTime.UtcNow;
         }
 
@@ -913,7 +913,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentProgressController] Navigating back to dashboard");
+            //Debug.Log("[StudentProgressController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 

@@ -141,9 +141,9 @@ namespace Anatomia3D.Backend
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogError($"[AnatomyPlayModeLocalStorage] Failed to read '{path}': {e.Message}");
+                //Debug.LogError($"[AnatomyPlayModeLocalStorage] Failed to read '{path}': {e.Message}");
             }
         }
 
@@ -162,9 +162,9 @@ namespace Anatomia3D.Backend
                 string json = JsonUtility.ToJson(wrapper);
                 File.WriteAllText(FilePath(_loadedStudentId), json);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogError($"[AnatomyPlayModeLocalStorage] Failed to write progress for '{_loadedStudentId}': {e.Message}");
+                //Debug.LogError($"[AnatomyPlayModeLocalStorage] Failed to write progress for '{_loadedStudentId}': {e.Message}");
             }
         }
 

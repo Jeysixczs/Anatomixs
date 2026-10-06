@@ -43,13 +43,16 @@ namespace Anatomia3D.UI
 
         private TextField _nameField;
         private Label _nameError;
+        private Label _descriptionError;
+        private Label _sectionError;
+        private TextField _sectionField;
         private TextField _descriptionField;
         private Label _statusLabel;
         private Button _createButton;
 
         private void OnEnable()
         {
-            Debug.Log("[AdminCreateClassroomController] OnEnable called");
+            //Debug.Log("[AdminCreateClassroomController] OnEnable called");
 
             if (_document == null)
             {
@@ -72,7 +75,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminCreateClassroomController] Root is null!");
+                //Debug.LogError("[AdminCreateClassroomController] Root is null!");
                 return;
             }
 
@@ -119,7 +122,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminCreateClassroomController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminCreateClassroomController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -128,11 +131,14 @@ namespace Anatomia3D.UI
 
             _nameField = _screenRoot.Q<TextField>("classroom-name-field");
             _nameError = _screenRoot.Q<Label>("classroom-name-error");
+            _descriptionError = _screenRoot.Q<Label>("classroom-description-error");
+            _sectionError = _screenRoot.Q<Label>("classroom-section-error");
+            _sectionField = _screenRoot.Q<TextField>("classroom-section-field");
             _descriptionField = _screenRoot.Q<TextField>("classroom-description-field");
             _statusLabel = _screenRoot.Q<Label>("status-label");
             _createButton = _screenRoot.Q<Button>("create-classroom-button");
 
-            Debug.Log($"[AdminCreateClassroomController] Found name field: {_nameField != null}, create button: {_createButton != null}");
+            //Debug.Log($"[AdminCreateClassroomController] Found name field: {_nameField != null}, create button: {_createButton != null}");
         }
 
         private void WireCallbacks()
@@ -150,30 +156,48 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminCreateClassroomController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminCreateClassroomController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
         private void OnCreateClassroomClicked(ClickEvent evt)
         {
             string name = _nameField.value?.Trim();
+            string section = _sectionField?.value?.Trim() ?? string.Empty;
             string description = _descriptionField.value?.Trim();
 
 
+            // "Classroom Code" (stored as `name`), "Classroom Name" (stored as
+            // `description`) and "Section" are all required.
+            ClearError();
+            bool valid = true;
             if (string.IsNullOrEmpty(name))
             {
-                SetError("Please enter a classroom name");
+                SetError("Please enter a classroom code");
+                valid = false;
+            }
+            if (string.IsNullOrEmpty(description))
+            {
+                SetDescriptionError("Please enter a classroom name");
+                valid = false;
+            }
+            if (string.IsNullOrEmpty(section))
+            {
+                SetSectionError("Please enter a section");
+                valid = false;
+            }
+            if (!valid)
+            {
                 SetStatus(string.Empty);
                 return;
             }
 
-            ClearError();
             SetStatus("Creating classroom...");
             _createButton.SetEnabled(false);
 
             // TODO: replace with your real classroom-creation call, e.g.:
-            // AdminClassroomService.Instance.CreateClassroom(name, description, OnCreateResult);
-            AdminClassroomService.Instance.CreateClassroom(name, description, (success, errorMessage, record) =>
+            // AdminClassroomService.Instance.CreateClassroom(name, section, description, OnCreateResult);
+            AdminClassroomService.Instance.CreateClassroom(name, section, description, (success, errorMessage, record) =>
             {
                 OnCreateResult(success, record, errorMessage);
             });
@@ -186,10 +210,11 @@ namespace Anatomia3D.UI
             if (success)
             {
                 SetStatus(string.Empty);
-                Debug.Log($"[AdminCreateClassroomController] Classroom created successfully with code: {record.Code}");
-                string createdName = string.IsNullOrEmpty(_nameField.value) ? "Classroom" : _nameField.value;
+                //Debug.Log($"[AdminCreateClassroomController] Classroom created successfully with code: {record.Code}");
+                string createdName = string.IsNullOrEmpty(record?.Name) ? "Classroom" : record.DisplayName;
                 // Clear the form for the next classroom.
                 _nameField.value = string.Empty;
+                if (_sectionField != null) _sectionField.value = string.Empty;
                 _descriptionField.value = string.Empty;
                 // NOTE: ShowAdminClassroomCreated now needs a leading classroomId
                 // parameter (record.ClassroomId) - update its signature in UIManager.cs
@@ -201,7 +226,7 @@ namespace Anatomia3D.UI
             {
                 SetStatus(string.Empty);
                 SetError($"Failed to create classroom: {errorMessage}");
-                Debug.LogError($"[AdminCreateClassroomController] Failed to create classroom: {errorMessage}");
+                //Debug.LogError($"[AdminCreateClassroomController] Failed to create classroom: {errorMessage}");
             }
         }
 
@@ -216,11 +241,37 @@ namespace Anatomia3D.UI
             _nameError.RemoveFromClassList("hidden");
         }
 
+        private void SetDescriptionError(string message)
+        {
+            if (_descriptionError == null) return;
+            _descriptionError.text = message;
+            _descriptionError.RemoveFromClassList("hidden");
+        }
+
+        private void SetSectionError(string message)
+        {
+            if (_sectionError == null) return;
+            _sectionError.text = message;
+            _sectionError.RemoveFromClassList("hidden");
+        }
+
         private void ClearError()
         {
-            if (_nameError == null) return;
-            _nameError.text = string.Empty;
-            _nameError.AddToClassList("hidden");
+            if (_sectionError != null)
+            {
+                _sectionError.text = string.Empty;
+                _sectionError.AddToClassList("hidden");
+            }
+            if (_nameError != null)
+            {
+                _nameError.text = string.Empty;
+                _nameError.AddToClassList("hidden");
+            }
+            if (_descriptionError != null)
+            {
+                _descriptionError.text = string.Empty;
+                _descriptionError.AddToClassList("hidden");
+            }
         }
 
         private void SetStatus(string message)

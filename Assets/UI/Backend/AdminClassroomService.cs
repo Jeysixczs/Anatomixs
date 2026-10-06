@@ -29,6 +29,8 @@ namespace Anatomia3D.Backend
         {
             public string ClassroomId;
             public string Name;
+            /// <summary>Optional class section, e.g. "BSN 1-A". Empty for classrooms created before sections existed.</summary>
+            public string Section;
             public string Description;
             public string Code;
             public string TeacherId;
@@ -42,6 +44,9 @@ namespace Anatomia3D.Backend
             /// AdminClassroomDetailController's Archive button / SetArchived(), and
             /// ClassroomService.FetchClassroomDetail on the student side.</summary>
             public bool IsArchived;
+
+            /// <summary>Name + section as shown on every screen (see ClassroomNaming).</summary>
+            public string DisplayName => ClassroomNaming.Compose(Name, Section);
         }
 
         /// <summary>One row in the Students tab / Leaderboard - reads straight off the
@@ -180,7 +185,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogWarning($"[AdminClassroomService] Could not fetch Play Mode progress for '{studentId}': {task.Exception}");
+                        //Debug.LogWarning($"[AdminClassroomService] Could not fetch Play Mode progress for '{studentId}': {task.Exception}");
                         onComplete?.Invoke(null);
                         return;
                     }
@@ -207,15 +212,18 @@ namespace Anatomia3D.Backend
         /// in place of the fake stub. Retries a few times on the (very rare)
         /// chance of a code collision.
         /// </summary>
-        public void CreateClassroom(string name, string description, Action<bool, string, ClassroomRecord> onComplete)
+        public void CreateClassroom(string name, string section, string description, Action<bool, string, ClassroomRecord> onComplete)
         {
             var admin = AdminAuthService.Instance.CurrentAdmin;
             if (admin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+            if (string.IsNullOrWhiteSpace(name)) { onComplete?.Invoke(false, "Classroom code is required.", null); return; }
+            if (string.IsNullOrWhiteSpace(description)) { onComplete?.Invoke(false, "Classroom name is required.", null); return; }
+            if (string.IsNullOrWhiteSpace(section)) { onComplete?.Invoke(false, "Section is required.", null); return; }
 
-            TryCreateWithFreshCode(admin, name, description, 0, onComplete);
+            TryCreateWithFreshCode(admin, name?.Trim(), section?.Trim(), description?.Trim(), 0, onComplete);
         }
 
-        private void TryCreateWithFreshCode(AdminAuthService.AdminProfile admin, string name, string description, int attempt, Action<bool, string, ClassroomRecord> onComplete)
+        private void TryCreateWithFreshCode(AdminAuthService.AdminProfile admin, string name, string section, string description, int attempt, Action<bool, string, ClassroomRecord> onComplete)
         {
             string code = GenerateClassroomCode();
             var codeRef = Db.Collection("classroomCodes").Document(code);
@@ -233,6 +241,7 @@ namespace Anatomia3D.Backend
                 transaction.Set(classroomRef, new Dictionary<string, object>
                 {
                     { "name", name },
+                    { "section", section ?? string.Empty },
                     { "description", description },
                     { "code", code },
                     { "teacherId", admin.Uid },
@@ -251,7 +260,7 @@ namespace Anatomia3D.Backend
                     bool wasCollision = txTask.Exception?.InnerException?.Message == "__CODE_COLLISION__";
                     if (wasCollision && attempt < MaxCodeGenerationAttempts)
                     {
-                        TryCreateWithFreshCode(admin, name, description, attempt + 1, onComplete);
+                        TryCreateWithFreshCode(admin, name, section, description, attempt + 1, onComplete);
                         return;
                     }
 
@@ -263,6 +272,7 @@ namespace Anatomia3D.Backend
                 {
                     ClassroomId = classroomRef.Id,
                     Name = name,
+                    Section = section ?? string.Empty,
                     Description = description,
                     Code = code,
                     TeacherId = admin.Uid,
@@ -278,6 +288,47 @@ namespace Anatomia3D.Backend
 
                 onComplete?.Invoke(true, null, record);
             });
+        }
+
+        // ---------------- Edit classroom details ----------------
+
+        /// <summary>Edits what the Create Classroom form collects: "Classroom Code" (stored as
+        /// `name`), "Classroom Name" (stored as `description`) and Section - all required. The generated
+        /// student join code is deliberately not editable here (students joined with it and
+        /// the `classroomCodes` lookup points at it). onComplete receives a record with
+        /// ClassroomId/Name/Description/Section filled in.</summary>
+        public void UpdateClassroomDetails(string classroomId, string name, string description, string section,
+            Action<bool, string, ClassroomRecord> onComplete)
+        {
+            if (AdminAuthService.Instance?.CurrentAdmin == null) { onComplete?.Invoke(false, "Not signed in.", null); return; }
+            if (string.IsNullOrEmpty(classroomId)) { onComplete?.Invoke(false, "Missing classroom id.", null); return; }
+
+            name = name?.Trim();
+            description = description?.Trim();
+            section = section?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(name)) { onComplete?.Invoke(false, "Classroom code is required.", null); return; }
+            if (string.IsNullOrEmpty(description)) { onComplete?.Invoke(false, "Classroom name is required.", null); return; }
+            if (string.IsNullOrEmpty(section)) { onComplete?.Invoke(false, "Section is required.", null); return; }
+
+            Db.Collection("classrooms").Document(classroomId)
+                .UpdateAsync(new Dictionary<string, object> { { "name", name }, { "description", description }, { "section", section } })
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        onComplete?.Invoke(false, "Could not save changes. Please try again.", null);
+                        return;
+                    }
+
+                    onComplete?.Invoke(true, null, new ClassroomRecord
+                    {
+                        ClassroomId = classroomId,
+                        Name = name,
+                        Description = description,
+                        Section = section
+                    });
+                });
         }
 
         /// <summary>Call when showing AdminDashboardController's "My Classrooms" list.</summary>
@@ -357,6 +408,7 @@ namespace Anatomia3D.Backend
             {
                 ClassroomId = doc.Id,
                 Name = doc.GetValue<string>("name"),
+                Section = doc.ContainsField("section") ? doc.GetValue<string>("section") : "",
                 Description = doc.ContainsField("description") ? doc.GetValue<string>("description") : "",
                 Code = doc.GetValue<string>("code"),
                 TeacherId = doc.GetValue<string>("teacherId"),
@@ -424,7 +476,7 @@ namespace Anatomia3D.Backend
             {
                 if (quizTask.IsCanceled || quizTask.IsFaulted || !quizTask.Result.Exists)
                 {
-                    Debug.LogWarning($"[AdminClassroomService] Quiz {quizId} published, but its details couldn't be read for the student notification.");
+                    //Debug.LogWarning($"[AdminClassroomService] Quiz {quizId} published, but its details couldn't be read for the student notification.");
                     return;
                 }
 
@@ -453,10 +505,10 @@ namespace Anatomia3D.Backend
                 Db.Collection("classrooms").Document(classroomId).Collection("quizPublishEvents").Document()
                     .SetAsync(evt).ContinueWithOnMainThread(writeTask =>
                     {
-                        if (writeTask.IsCanceled || writeTask.IsFaulted)
-                            Debug.LogWarning($"[AdminClassroomService] Could not queue the publish notification for quiz {quizId}: " +
-                                             $"{writeTask.Exception?.GetBaseException().Message ?? "cancelled"} " +
-                                             "(PermissionDenied = add a Firestore rule for classrooms/{id}/quizPublishEvents).");
+                        //if (writeTask.IsCanceled || writeTask.IsFaulted)
+                            //Debug.LogWarning($"[AdminClassroomService] Could not queue the publish notification for quiz {quizId}: " +
+                                             //$"{writeTask.Exception?.GetBaseException().Message ?? "cancelled"} " +
+                                             //"(PermissionDenied = add a Firestore rule for classrooms/{id}/quizPublishEvents).");
                     });
             });
         }
@@ -663,7 +715,7 @@ namespace Anatomia3D.Backend
                     {
                         R2FileUploadService.Instance.DeleteMaterialFile(material.StorageKey, (ok, error) =>
                         {
-                            if (!ok) Debug.LogWarning($"[AdminClassroomService] Material {material.MaterialId} removed, but its file was not cleaned out of R2: {error}");
+                            //if (!ok) Debug.LogWarning($"[AdminClassroomService] Material {material.MaterialId} removed, but its file was not cleaned out of R2: {error}");
                         });
                     }
 
@@ -762,7 +814,7 @@ namespace Anatomia3D.Backend
                 {
                     if (task.IsCanceled || task.IsFaulted)
                     {
-                        Debug.LogError($"[AdminClassroomService] FetchClassroomMembers failed for classroom {classroomId}: {task.Exception?.Flatten().InnerException}");
+                        //Debug.LogError($"[AdminClassroomService] FetchClassroomMembers failed for classroom {classroomId}: {task.Exception?.Flatten().InnerException}");
                         onComplete?.Invoke(false, "Could not load this classroom's student list.", results);
                         return;
                     }

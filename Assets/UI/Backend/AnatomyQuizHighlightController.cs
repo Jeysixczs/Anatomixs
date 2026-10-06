@@ -117,9 +117,9 @@ namespace Anatomia3D.Backend
 
             if (_quizHighlightControls == null || _locateStructureButton == null)
             {
-                Debug.LogWarning("[AnatomyQuizHighlightController] 'QuizHighlightControls'/" +
-                                  "'LocateStructureButton' not found in UXML - the Locate button " +
-                                  "cannot be shown. See AnatomyScreen.uxml.");
+                //Debug.LogWarning("[AnatomyQuizHighlightController] 'QuizHighlightControls'/" +
+                                  //"'LocateStructureButton' not found in UXML - the Locate button " +
+                                  //"cannot be shown. See AnatomyScreen.uxml.");
             }
 
             _quizHighlightControls?.AddToClassList("hidden");
@@ -174,8 +174,8 @@ namespace Anatomia3D.Backend
 
             if (_targetStructure == null)
             {
-                Debug.LogWarning($"[AnatomyQuizHighlightController] No structure named '{structureKey}' " +
-                                  "found on the current model - the question's saved StructureKey may be stale.");
+                //Debug.LogWarning($"[AnatomyQuizHighlightController] No structure named '{structureKey}' " +
+                                  //"found on the current model - the question's saved StructureKey may be stale.");
                 _locateStructureButton?.SetEnabled(false);
                 return;
             }

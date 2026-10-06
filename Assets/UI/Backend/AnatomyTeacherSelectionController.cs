@@ -142,9 +142,9 @@ namespace Anatomia3D.Backend
 
             if (_teacherSelectionControls == null || _selectStructureButton == null)
             {
-                Debug.LogWarning("[AnatomyTeacherSelectionController] 'TeacherSelectionControls'/" +
-                                  "'TeacherSelectStructureButton' not found in UXML - the teacher " +
-                                  "structure picker cannot be shown. See AnatomyScreen.uxml.");
+                //Debug.LogWarning("[AnatomyTeacherSelectionController] 'TeacherSelectionControls'/" +
+                                  //"'TeacherSelectStructureButton' not found in UXML - the teacher " +
+                                  //"structure picker cannot be shown. See AnatomyScreen.uxml.");
             }
 
             if (_teacherSelectionControls != null)
@@ -237,8 +237,8 @@ namespace Anatomia3D.Backend
 
             if (!_screen.TryGetBoneDatabaseEntry(info, out var entry) || entry == null)
             {
-                Debug.LogWarning($"[AnatomyTeacherSelectionController] No BoneDatabase entry for " +
-                                  $"'{info.boneName}' - cannot use it as a question answer.");
+                //Debug.LogWarning($"[AnatomyTeacherSelectionController] No BoneDatabase entry for " +
+                                  //$"'{info.boneName}' - cannot use it as a question answer.");
                 _highlightedStructure = null;
                 _highlightedEntry = null;
                 _selectStructureButton?.SetEnabled(false);

@@ -100,7 +100,7 @@ namespace Anatomia3D.Backend
 
                 bool pretestDone = map.TryGetValue("pretestCompleted", out var p) && p is bool pb && pb;
                 bool posttestDone = map.TryGetValue("posttestCompleted", out var q) && q is bool qb && qb;
-                Debug.Log($"[BaselineAssessmentService] GetStatus: pretestDone={pretestDone}, posttestDone={posttestDone}");
+                //Debug.Log($"[BaselineAssessmentService] GetStatus: pretestDone={pretestDone}, posttestDone={posttestDone}");
                 onResult?.Invoke(pretestDone, posttestDone);
             });
         }
@@ -164,7 +164,7 @@ namespace Anatomia3D.Backend
             string studentId = CurrentStudentId;
             if (Db == null || string.IsNullOrEmpty(studentId))
             {
-                Debug.LogWarning("[BaselineAssessmentService] Firebase not ready or no signed-in student - cannot record attempt.");
+                //Debug.LogWarning("[BaselineAssessmentService] Firebase not ready or no signed-in student - cannot record attempt.");
                 onComplete?.Invoke(false);
                 return;
             }
@@ -193,7 +193,7 @@ namespace Anatomia3D.Backend
 
                 if (alreadyCompleted)
                 {
-                    Debug.LogWarning($"[BaselineAssessmentService] RecordAttempt({type}) refused - already completed.");
+                    //Debug.LogWarning($"[BaselineAssessmentService] RecordAttempt({type}) refused - already completed.");
                     return false; // signal "refused" back through the task result below
                 }
 
@@ -222,13 +222,13 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsFaulted || task.IsCanceled)
                 {
-                    Debug.LogWarning($"[BaselineAssessmentService] Failed to record {type} attempt: {task.Exception}");
+                    //Debug.LogWarning($"[BaselineAssessmentService] Failed to record {type} attempt: {task.Exception}");
                     onComplete?.Invoke(false);
                     return;
                 }
 
                 onComplete?.Invoke(task.Result);
-                Debug.Log($"[BaselineAssessmentService] RecordAttempt({type}) transaction result: {task.Result}");
+                //Debug.Log($"[BaselineAssessmentService] RecordAttempt({type}) transaction result: {task.Result}");
 
             });
         }

@@ -196,7 +196,7 @@ namespace Anatomia3D.UI.Quiz
 
             if (_root == null)
             {
-                Debug.LogError("[StudentQuizGameplayController] Root is null!");
+                //Debug.LogError("[StudentQuizGameplayController] Root is null!");
                 return;
             }
 
@@ -451,7 +451,7 @@ namespace Anatomia3D.UI.Quiz
                 {
                     if (!success)
                     {
-                        Debug.LogError($"[QuizGameplay] {error}");
+                        //Debug.LogError($"[QuizGameplay] {error}");
                         return;
                     }
 
@@ -603,7 +603,7 @@ namespace Anatomia3D.UI.Quiz
                     BuildImageBased(q);
                     break;
                 default:
-                    Debug.LogWarning($"[QuizGameplay] Unknown question type slug '{q.QuestionTypeSlug}'.");
+                    //Debug.LogWarning($"[QuizGameplay] Unknown question type slug '{q.QuestionTypeSlug}'.");
                     break;
             }
         }
@@ -791,14 +791,14 @@ namespace Anatomia3D.UI.Quiz
         {
             if (string.IsNullOrEmpty(q.AnatomySystemKey) || string.IsNullOrEmpty(q.StructureKey))
             {
-                Debug.LogWarning("[QuizGameplay] Image-based question is missing AnatomySystemKey/StructureKey - " +
-                                  "cannot open the 3D model. This question may have been saved before that metadata existed.");
+                //Debug.LogWarning("[QuizGameplay] Image-based question is missing AnatomySystemKey/StructureKey - " +
+                                  //"cannot open the 3D model. This question may have been saved before that metadata existed.");
                 return;
             }
 
             if (!Enum.TryParse<AnatomySystem>(q.AnatomySystemKey, out var system))
             {
-                Debug.LogWarning($"[QuizGameplay] Unknown anatomy system '{q.AnatomySystemKey}' on an Image-Based question.");
+                //Debug.LogWarning($"[QuizGameplay] Unknown anatomy system '{q.AnatomySystemKey}' on an Image-Based question.");
                 return;
             }
 
@@ -931,7 +931,7 @@ namespace Anatomia3D.UI.Quiz
                 {
                     if (!success)
                     {
-                        Debug.LogError($"[QuizGameplay] {error}");
+                        //Debug.LogError($"[QuizGameplay] {error}");
 
                         // Submission failed (e.g. network hiccup) - let the student try
                         // again instead of leaving the button permanently disabled.

@@ -176,7 +176,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentClassroomHubController] OnEnable called");
+            //Debug.Log("[StudentClassroomHubController] OnEnable called");
 
             if (_document == null)
             {
@@ -201,7 +201,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentClassroomHubController] Root is null!");
+                //Debug.LogError("[StudentClassroomHubController] Root is null!");
                 return;
             }
 
@@ -235,7 +235,7 @@ namespace Anatomia3D.UI
                 // Scenario 1: student opens "My Classrooms" while already offline -
                 // show the overlay instead of starting (and immediately failing) the
                 // live listener.
-                Debug.Log("[StudentClassroomHubController] Offline on enable - showing offline overlay instead of starting the classrooms listener.");
+                //Debug.Log("[StudentClassroomHubController] Offline on enable - showing offline overlay instead of starting the classrooms listener.");
                 _offlineOverlay.Show();
             }
         }
@@ -250,12 +250,12 @@ namespace Anatomia3D.UI
 
             if (!isOnline)
             {
-                Debug.Log("[StudentClassroomHubController] Connection lost - showing offline overlay.");
+                //Debug.Log("[StudentClassroomHubController] Connection lost - showing offline overlay.");
                 _offlineOverlay.Show();
             }
             else if (_offlineOverlay.IsVisible)
             {
-                Debug.Log("[StudentClassroomHubController] Connection restored - hiding offline overlay and reloading classrooms.");
+                //Debug.Log("[StudentClassroomHubController] Connection restored - hiding offline overlay and reloading classrooms.");
                 _offlineOverlay.Hide();
                 StartClassroomsListener();
             }
@@ -275,13 +275,13 @@ namespace Anatomia3D.UI
 
         private void OnOfflineRetry()
         {
-            Debug.Log("[StudentClassroomHubController] Offline overlay Retry tapped while back online - reloading classrooms.");
+            //Debug.Log("[StudentClassroomHubController] Offline overlay Retry tapped while back online - reloading classrooms.");
             StartClassroomsListener();
         }
 
         private void OnOfflineGoToDashboard()
         {
-            Debug.Log("[StudentClassroomHubController] Offline overlay - returning to dashboard.");
+            //Debug.Log("[StudentClassroomHubController] Offline overlay - returning to dashboard.");
             UIManager.Instance?.ShowStudentDashboard();
         }
 
@@ -299,7 +299,7 @@ namespace Anatomia3D.UI
                 return;
             }
 
-            Debug.LogWarning("[StudentClassroomHubController] ClassroomService not ready or no student signed in.");
+            //Debug.LogWarning("[StudentClassroomHubController] ClassroomService not ready or no student signed in.");
 
             if (useMockDataUntilWired && _currentClassrooms.Count == 0)
             {
@@ -322,7 +322,7 @@ namespace Anatomia3D.UI
             {
                 summaries.Add(new ClassroomSummary(
                     record.ClassroomId,
-                    record.Name,
+                    record.DisplayName,
                     record.Code,
                     record.TeacherName,
                     record.StudentCount,
@@ -512,7 +512,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentClassroomHubController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentClassroomHubController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -532,7 +532,7 @@ namespace Anatomia3D.UI
 
             BuildSearchAndFilterUI();
 
-            Debug.Log($"[StudentClassroomHubController] Found classrooms list: {_classroomsList != null}, empty state: {_classroomsEmptyState != null}");
+            //Debug.Log($"[StudentClassroomHubController] Found classrooms list: {_classroomsList != null}, empty state: {_classroomsEmptyState != null}");
         }
 
         private void WireCallbacks()
@@ -1038,13 +1038,13 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentClassroomHubController] Navigating back to dashboard");
+            //Debug.Log("[StudentClassroomHubController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 
         private void OnJoinClassroomClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentClassroomHubController] Join Classroom tapped");
+            //Debug.Log("[StudentClassroomHubController] Join Classroom tapped");
             UIManager.Instance.ShowJoinClassroom();
         }
 
@@ -1055,11 +1055,11 @@ namespace Anatomia3D.UI
             // case this is ever called directly.
             if (classroom.IsArchived)
             {
-                Debug.Log($"[StudentClassroomHubController] Ignored tap on archived classroom '{classroom.Name}' ({classroom.Code}).");
+                //Debug.Log($"[StudentClassroomHubController] Ignored tap on archived classroom '{classroom.Name}' ({classroom.Code}).");
                 return;
             }
 
-            Debug.Log($"[StudentClassroomHubController] Opening classroom '{classroom.Name}' ({classroom.Code}).");
+            //Debug.Log($"[StudentClassroomHubController] Opening classroom '{classroom.Name}' ({classroom.Code}).");
             UIManager.Instance.ShowStudentClassroomDetail(classroom.ClassroomId, classroom.Name, classroom.TeacherName);
         }
 

@@ -95,7 +95,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[StudentAchievementsController] OnEnable called");
+            //Debug.Log("[StudentAchievementsController] OnEnable called");
 
             if (_document == null)
             {
@@ -120,7 +120,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[StudentAchievementsController] Root is null!");
+                //Debug.LogError("[StudentAchievementsController] Root is null!");
                 return;
             }
 
@@ -209,7 +209,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[StudentAchievementsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -220,7 +220,7 @@ namespace Anatomia3D.UI
             _badgesEarnedLabel = _screenRoot.Q<Label>("badges-earned-label");
             _badgeList = _screenRoot.Q<VisualElement>("badge-list");
 
-            Debug.Log($"[StudentAchievementsController] Found back button: {_backButton != null}, header: {_header != null}, badge-list: {_badgeList != null}");
+            //Debug.Log($"[StudentAchievementsController] Found back button: {_backButton != null}, header: {_header != null}, badge-list: {_badgeList != null}");
         }
 
         private void WireCallbacks()
@@ -249,7 +249,7 @@ namespace Anatomia3D.UI
         {
             if (ClassroomService.Instance == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] ClassroomService not available - falling back to the default badge set.");
+                //Debug.LogWarning("[StudentAchievementsController] ClassroomService not available - falling back to the default badge set.");
                 LoadBadgesForTeachers(new List<string> { null });
                 return;
             }
@@ -290,13 +290,13 @@ namespace Anatomia3D.UI
             var student = PlayerSessionManager.Instance?.CurrentStudent;
             if (student == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] No signed-in student - can't load achievements.");
+                //Debug.LogWarning("[StudentAchievementsController] No signed-in student - can't load achievements.");
                 return;
             }
 
             if (AdminGamificationService.Instance == null)
             {
-                Debug.LogWarning("[StudentAchievementsController] AdminGamificationService not available yet.");
+                //Debug.LogWarning("[StudentAchievementsController] AdminGamificationService not available yet.");
                 return;
             }
 
@@ -647,7 +647,7 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[StudentAchievementsController] Navigating back to dashboard");
+            //Debug.Log("[StudentAchievementsController] Navigating back to dashboard");
             UIManager.Instance.ShowStudentDashboard();
         }
 

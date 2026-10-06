@@ -186,7 +186,7 @@ namespace Anatomia3D.UI
             if (_root == null && _document != null) _root = _document.rootVisualElement;
             if (_root == null)
             {
-                Debug.LogError("[AdminSubmissionReviewController] Root is null!");
+                //Debug.LogError("[AdminSubmissionReviewController] Root is null!");
                 return;
             }
 
@@ -686,7 +686,7 @@ namespace Anatomia3D.UI
             }
 
             int students = _rosterLoaded ? _roster.Count : _selectedClassroom.StudentCount;
-            string name = string.IsNullOrEmpty(_selectedClassroom.Name) ? "Classroom" : _selectedClassroom.Name;
+            string name = string.IsNullOrEmpty(_selectedClassroom.Name) ? "Classroom" : _selectedClassroom.DisplayName;
             _classroomLabel.text = $"{name} \u2022 {students} student{(students == 1 ? "" : "s")}";
             _classroomLabel.RemoveFromClassList("hidden");
         }
@@ -718,7 +718,7 @@ namespace Anatomia3D.UI
             foreach (var classroom in _classrooms)
             {
                 var captured = classroom;
-                string text = string.IsNullOrEmpty(captured.Name) ? "Classroom" : captured.Name;
+                string text = string.IsNullOrEmpty(captured.Name) ? "Classroom" : captured.DisplayName;
                 bool active = _selectedClassroom != null && _selectedClassroom.ClassroomId == captured.ClassroomId;
 
                 _classroomChips.Add(MakeChip(text, active, () =>
@@ -1189,7 +1189,7 @@ namespace Anatomia3D.UI
         {
             NativeFilePicker.ExportFile(path, success =>
             {
-                if (!success) Debug.Log("[AdminSubmissionReviewController] File export cancelled.");
+                //if (!success) Debug.Log("[AdminSubmissionReviewController] File export cancelled.");
             });
         }
 
@@ -1227,9 +1227,9 @@ namespace Anatomia3D.UI
                 {
                     File.WriteAllBytes(path, bytes);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogWarning($"[AdminSubmissionReviewController] Could not cache the download: {e.Message}");
+                    //Debug.LogWarning($"[AdminSubmissionReviewController] Could not cache the download: {e.Message}");
                     SetReviewError("Could not open that file on this device.");
                     return;
                 }

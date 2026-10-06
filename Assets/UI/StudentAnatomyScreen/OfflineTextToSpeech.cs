@@ -47,10 +47,10 @@ public static class OfflineTextToSpeech
         void onInit(int status)
         {
             _isReady = (status == 0 /* TextToSpeech.SUCCESS */);
-            Debug.Log("[OfflineTextToSpeech] Android TTS onInit status=" + status +
-                      " (ready=" + _isReady + "). If this is anything other than " +
-                      "0/true, the device/emulator likely has no TTS engine installed " +
-                      "- check Settings > Accessibility > Text-to-speech output.");
+            //Debug.Log("[OfflineTextToSpeech] Android TTS onInit status=" + status +
+                      //" (ready=" + _isReady + "). If this is anything other than " +
+                      //"0/true, the device/emulator likely has no TTS engine installed " +
+                      //"- check Settings > Accessibility > Text-to-speech output.");
 
             if (_isReady && !string.IsNullOrEmpty(_pendingText))
             {
@@ -76,11 +76,11 @@ public static class OfflineTextToSpeech
                     activity,
                     _initListener);
             }
-            Debug.Log("[OfflineTextToSpeech] TextToSpeech constructed, waiting for onInit...");
+            //Debug.Log("[OfflineTextToSpeech] TextToSpeech constructed, waiting for onInit...");
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogError("[OfflineTextToSpeech] Failed to construct Android TTS: " + e);
+            //Debug.LogError("[OfflineTextToSpeech] Failed to construct Android TTS: " + e);
             _tts = null;
         }
     }
@@ -93,9 +93,9 @@ public static class OfflineTextToSpeech
             // speak this instead.
             _tts.Call<int>("speak", text, 0, null, "anatomy_tts");
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogError("[OfflineTextToSpeech] speak() failed: " + e);
+            //Debug.LogError("[OfflineTextToSpeech] speak() failed: " + e);
         }
     }
 #elif UNITY_IOS && !UNITY_EDITOR
@@ -157,8 +157,8 @@ public static class OfflineTextToSpeech
 #elif UNITY_IOS && !UNITY_EDITOR
         _TTS_Speak(text);
 #else
-        Debug.LogWarning("[OfflineTextToSpeech] No on-device TTS available on this platform " +
-                          "(Editor/Standalone). Text that would have been spoken: " + text);
+        //Debug.LogWarning("[OfflineTextToSpeech] No on-device TTS available on this platform " +
+                          //"(Editor/Standalone). Text that would have been spoken: " + text);
 #endif
     }
 
@@ -178,10 +178,10 @@ public static class OfflineTextToSpeech
                 // actual method is "()I").
                 _tts.Call<int>("stop");
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogWarning("[OfflineTextToSpeech] stop() failed (engine may not have " +
-                                  "initialized correctly - see the onInit log above): " + e);
+                //Debug.LogWarning("[OfflineTextToSpeech] stop() failed (engine may not have " +
+                                  //"initialized correctly - see the onInit log above): " + e);
             }
         }
 #elif UNITY_IOS && !UNITY_EDITOR
@@ -193,9 +193,9 @@ public static class OfflineTextToSpeech
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
         EnsureInitialized();
-        Debug.Log("[OfflineTextToSpeech] Android TTS initialization started on startup.");
+        //Debug.Log("[OfflineTextToSpeech] Android TTS initialization started on startup.");
 #endif
-        Debug.Log("[OfflineTextToSpeech] Initialized on startup.");
+        //Debug.Log("[OfflineTextToSpeech] Initialized on startup.");
     }
 
 

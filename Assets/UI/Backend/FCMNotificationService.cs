@@ -138,8 +138,8 @@ namespace Anatomia3D.Backend
             }
             else
             {
-                Debug.LogError("[FCMNotificationService] FirebaseBootstrap.Instance is missing - " +
-                                "make sure this is on the Bootstrap GameObject alongside it.");
+                //Debug.LogError("[FCMNotificationService] FirebaseBootstrap.Instance is missing - " +
+                                //"make sure this is on the Bootstrap GameObject alongside it.");
             }
         }
 
@@ -148,7 +148,7 @@ namespace Anatomia3D.Backend
             while (_mainThreadActions.TryDequeue(out var action))
             {
                 try { action(); }
-                catch (Exception e) { Debug.LogError($"[FCMNotificationService] Queued action threw: {e}"); }
+                catch (Exception) { /* Debug.LogError($"[FCMNotificationService] Queued action threw: {e}"); */ }
             }
 
             if (_pendingNavigationDeadline > 0f)
@@ -168,7 +168,7 @@ namespace Anatomia3D.Backend
             FirebaseMessaging.TokenReceived += OnTokenReceived;
             FirebaseMessaging.MessageReceived += OnMessageReceived;
 
-            Debug.Log("[FCMNotificationService] Initialized.");
+            //Debug.Log("[FCMNotificationService] Initialized.");
         }
 
         private void OnDestroy()
@@ -191,7 +191,7 @@ namespace Anatomia3D.Backend
             var subscribed = LoadSubscribedTopics();
             if (subscribed.Contains(classroomId))
             {
-                Debug.Log($"[FCMNotificationService] Already subscribed to classroom {classroomId} - skipping.");
+                //Debug.Log($"[FCMNotificationService] Already subscribed to classroom {classroomId} - skipping.");
                 return;
             }
 
@@ -200,13 +200,13 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[FCMNotificationService] Could not subscribe to {topic}: {task.Exception}");
+                    //Debug.LogWarning($"[FCMNotificationService] Could not subscribe to {topic}: {task.Exception}");
                     return;
                 }
 
                 subscribed.Add(classroomId);
                 SaveSubscribedTopics(subscribed);
-                Debug.Log($"[FCMNotificationService] Subscribed to {topic}.");
+                //Debug.Log($"[FCMNotificationService] Subscribed to {topic}.");
             });
         }
 
@@ -222,14 +222,14 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[FCMNotificationService] Could not unsubscribe from {topic}: {task.Exception}");
+                    //Debug.LogWarning($"[FCMNotificationService] Could not unsubscribe from {topic}: {task.Exception}");
                     return;
                 }
 
                 var subscribed = LoadSubscribedTopics();
                 subscribed.Remove(classroomId);
                 SaveSubscribedTopics(subscribed);
-                Debug.Log($"[FCMNotificationService] Unsubscribed from {topic}.");
+                //Debug.Log($"[FCMNotificationService] Unsubscribed from {topic}.");
             });
         }
 
@@ -265,7 +265,7 @@ namespace Anatomia3D.Backend
             string prefKey = string.Format(SubscribedPersonalTopicPrefKeyFormat, student.Uid);
             if (PlayerPrefs.GetInt(prefKey, 0) == 1)
             {
-                Debug.Log("[FCMNotificationService] Already subscribed to personal topic - skipping.");
+                //Debug.Log("[FCMNotificationService] Already subscribed to personal topic - skipping.");
                 return;
             }
 
@@ -274,13 +274,13 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[FCMNotificationService] Could not subscribe to {topic}: {task.Exception}");
+                    //Debug.LogWarning($"[FCMNotificationService] Could not subscribe to {topic}: {task.Exception}");
                     return;
                 }
 
                 PlayerPrefs.SetInt(prefKey, 1);
                 PlayerPrefs.Save();
-                Debug.Log($"[FCMNotificationService] Subscribed to {topic}.");
+                //Debug.Log($"[FCMNotificationService] Subscribed to {topic}.");
             });
         }
 
@@ -297,13 +297,13 @@ namespace Anatomia3D.Backend
             {
                 if (task.IsCanceled || task.IsFaulted)
                 {
-                    Debug.LogWarning($"[FCMNotificationService] Could not unsubscribe from {topic}: {task.Exception}");
+                    //Debug.LogWarning($"[FCMNotificationService] Could not unsubscribe from {topic}: {task.Exception}");
                     return;
                 }
 
                 PlayerPrefs.DeleteKey(string.Format(SubscribedPersonalTopicPrefKeyFormat, studentUid));
                 PlayerPrefs.Save();
-                Debug.Log($"[FCMNotificationService] Unsubscribed from {topic}.");
+                //Debug.Log($"[FCMNotificationService] Unsubscribed from {topic}.");
             });
         }
 
@@ -342,7 +342,7 @@ namespace Anatomia3D.Backend
         {
             _mainThreadActions.Enqueue(() =>
             {
-                Debug.Log("[FCMNotificationService] FCM token (re)issued - re-syncing classroom subscriptions.");
+                //Debug.Log("[FCMNotificationService] FCM token (re)issued - re-syncing classroom subscriptions.");
                 var student = PlayerSessionManager.Instance != null ? PlayerSessionManager.Instance.CurrentStudent : null;
                 if (student == null) return; // nothing to sync yet - login will call SyncClassroomSubscriptions() itself
 
@@ -393,7 +393,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(classroomId))
             {
-                Debug.LogWarning("[FCMNotificationService] Announcement push missing classroomId - ignoring.");
+                //Debug.LogWarning("[FCMNotificationService] Announcement push missing classroomId - ignoring.");
                 return;
             }
 
@@ -435,7 +435,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(classroomId))
             {
-                Debug.LogWarning("[FCMNotificationService] Quiz deadline push missing classroomId - ignoring.");
+                //Debug.LogWarning("[FCMNotificationService] Quiz deadline push missing classroomId - ignoring.");
                 return;
             }
 
@@ -468,7 +468,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(classroomId))
             {
-                Debug.LogWarning("[FCMNotificationService] Material push missing classroomId - ignoring.");
+                //Debug.LogWarning("[FCMNotificationService] Material push missing classroomId - ignoring.");
                 return;
             }
 
@@ -497,7 +497,7 @@ namespace Anatomia3D.Backend
 
             if (string.IsNullOrEmpty(classroomId))
             {
-                Debug.LogWarning("[FCMNotificationService] Quiz-published push missing classroomId - ignoring.");
+                //Debug.LogWarning("[FCMNotificationService] Quiz-published push missing classroomId - ignoring.");
                 return;
             }
 
@@ -552,7 +552,7 @@ namespace Anatomia3D.Backend
 
             if (ClassroomService.Instance == null || UIManager.Instance == null)
             {
-                Debug.LogWarning("[FCMNotificationService] ClassroomService/UIManager not ready - cannot navigate to announcement.");
+                //Debug.LogWarning("[FCMNotificationService] ClassroomService/UIManager not ready - cannot navigate to announcement.");
                 return;
             }
 
@@ -560,20 +560,20 @@ namespace Anatomia3D.Backend
             {
                 if (detail == null)
                 {
-                    Debug.LogWarning($"[FCMNotificationService] Classroom {classroomId} from a notification tap no longer exists - staying put.");
+                    //Debug.LogWarning($"[FCMNotificationService] Classroom {classroomId} from a notification tap no longer exists - staying put.");
                     return;
                 }
 
                 switch (tab)
                 {
                     case ClassroomTab.Quizzes:
-                        UIManager.Instance.ShowStudentClassroomDetailOnQuizzesTab(detail.ClassroomId, detail.Name, detail.Code);
+                        UIManager.Instance.ShowStudentClassroomDetailOnQuizzesTab(detail.ClassroomId, detail.DisplayName, detail.Code);
                         break;
                     case ClassroomTab.Materials:
-                        UIManager.Instance.ShowStudentClassroomDetailOnMaterialsTab(detail.ClassroomId, detail.Name, detail.Code);
+                        UIManager.Instance.ShowStudentClassroomDetailOnMaterialsTab(detail.ClassroomId, detail.DisplayName, detail.Code);
                         break;
                     default:
-                        UIManager.Instance.ShowStudentClassroomDetail(detail.ClassroomId, detail.Name, detail.Code);
+                        UIManager.Instance.ShowStudentClassroomDetail(detail.ClassroomId, detail.DisplayName, detail.Code);
                         break;
                 }
             });
@@ -594,7 +594,7 @@ namespace Anatomia3D.Backend
 
             if (student == null)
             {
-                Debug.LogWarning("[FCMNotificationService] Gave up waiting for session restore before navigating to a tapped notification.");
+                //Debug.LogWarning("[FCMNotificationService] Gave up waiting for session restore before navigating to a tapped notification.");
                 return;
             }
 
@@ -644,11 +644,11 @@ namespace Anatomia3D.Backend
                     notificationManager.Call("createNotificationChannel", reminderChannel);
                 }
 
-                Debug.Log("[FCMNotificationService] Android notification channels ready.");
+                //Debug.Log("[FCMNotificationService] Android notification channels ready.");
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogWarning($"[FCMNotificationService] Could not create Android notification channels: {e}");
+                //Debug.LogWarning($"[FCMNotificationService] Could not create Android notification channels: {e}");
             }
 #endif
         }
@@ -668,11 +668,11 @@ namespace Anatomia3D.Backend
                     Permission.RequestUserPermission(postNotifications);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Older Android versions/AndroidManifest targetSdk below 33 won't recognize
                 // this permission string - safe to ignore, notifications work without it there.
-                Debug.Log($"[FCMNotificationService] Notification permission request skipped: {e.Message}");
+                //Debug.Log($"[FCMNotificationService] Notification permission request skipped: {e.Message}");
             }
 #endif
         }

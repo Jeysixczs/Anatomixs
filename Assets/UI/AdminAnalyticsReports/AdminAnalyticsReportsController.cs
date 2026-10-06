@@ -235,7 +235,7 @@ namespace Anatomia3D.UI
 
         private void OnEnable()
         {
-            Debug.Log("[AdminAnalyticsReportsController] OnEnable called");
+            //Debug.Log("[AdminAnalyticsReportsController] OnEnable called");
 
             if (_document == null)
             {
@@ -258,7 +258,7 @@ namespace Anatomia3D.UI
 
             if (_root == null)
             {
-                Debug.LogError("[AdminAnalyticsReportsController] Root is null!");
+                //Debug.LogError("[AdminAnalyticsReportsController] Root is null!");
                 return;
             }
 
@@ -391,7 +391,7 @@ namespace Anatomia3D.UI
 
             if (_screenRoot == null)
             {
-                Debug.LogWarning("[AdminAnalyticsReportsController] screen-root not found, using root directly");
+                //Debug.LogWarning("[AdminAnalyticsReportsController] screen-root not found, using root directly");
                 _screenRoot = _root;
             }
 
@@ -427,7 +427,7 @@ namespace Anatomia3D.UI
 
             _quizExportPicker = _screenRoot.Q<DropdownField>("quiz-export-picker");
 
-            Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
+            //Debug.Log($"[AdminAnalyticsReportsController] Found tabs row: {_performanceTabButton != null && _studentsTabButton != null && _mistakesTabButton != null}");
         }
 
         private void WireCallbacks()
@@ -523,8 +523,8 @@ namespace Anatomia3D.UI
         {
             if (AdminClassroomService.Instance == null)
             {
-                Debug.LogWarning("[AdminAnalyticsReportsController] AdminClassroomService.Instance is null - " +
-                    "leaving placeholder data in place.");
+                //Debug.LogWarning("[AdminAnalyticsReportsController] AdminClassroomService.Instance is null - " +
+                    //"leaving placeholder data in place.");
                 return;
             }
 
@@ -535,7 +535,7 @@ namespace Anatomia3D.UI
 
                 if (_classrooms.Count == 0)
                 {
-                    Debug.Log("[AdminAnalyticsReportsController] No classrooms yet - showing placeholder data.");
+                    //Debug.Log("[AdminAnalyticsReportsController] No classrooms yet - showing placeholder data.");
                     return;
                 }
 
@@ -566,11 +566,11 @@ namespace Anatomia3D.UI
                 filtersRow.Insert(0, _classroomPicker);
             }
 
-            _classroomPicker.choices = _classrooms.Select(c => c.Name).ToList();
+            _classroomPicker.choices = _classrooms.Select(c => c.DisplayName).ToList();
 
             if (_classrooms.Count > 0)
             {
-                _classroomPicker.SetValueWithoutNotify(_classrooms[0].Name);
+                _classroomPicker.SetValueWithoutNotify(_classrooms[0].DisplayName);
             }
         }
 
@@ -983,7 +983,7 @@ namespace Anatomia3D.UI
 
             if (_currentClassroomStudents == null || _currentClassroomStudents.Count == 0)
             {
-                Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
+                //Debug.Log("[AdminAnalyticsReportsController] No students loaded for this classroom yet.");
             }
 
             AdminStudentStatsModal.Show(_screenRoot, _selectedClassroomId, _currentClassroomStudents, _classroomQuizzes);
@@ -1219,13 +1219,13 @@ namespace Anatomia3D.UI
 
         private void OnBackClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminAnalyticsReportsController] Navigating back to admin dashboard");
+            //Debug.Log("[AdminAnalyticsReportsController] Navigating back to admin dashboard");
             UIManager.Instance.ShowAdminDashboard();
         }
 
         private void OnExportPdfClicked(ClickEvent evt)
         {
-            Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
+            //Debug.Log("[AdminAnalyticsReportsController] Export to PDF tapped.");
             PrepareAndExport(AdminReportExportService.ExportPdf, "PDF");
         }
 
@@ -1248,7 +1248,7 @@ namespace Anatomia3D.UI
                 {
                    
                     _exportPdfButton?.SetEnabled(true);
-                    Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
+                    //Debug.LogWarning($"[AdminAnalyticsReportsController] {reportLabel} export failed - see the logged error above.");
                     return;
                 }
 
@@ -1278,10 +1278,10 @@ namespace Anatomia3D.UI
               
                 _exportPdfButton?.SetEnabled(true);
 
-                if (success)
-                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} report exported successfully.");
-                else
-                    Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} export was cancelled or failed.");
+                //if (success)
+                    //Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} report exported successfully.");
+                //else
+                    //Debug.Log($"[AdminAnalyticsReportsController] {reportLabel} export was cancelled or failed.");
 
                 // The hand-off is done either way (the OS now has its own copy on
                 // success; on cancel/failure there's nothing left to retry from this
@@ -1302,7 +1302,7 @@ namespace Anatomia3D.UI
             if (!string.IsNullOrEmpty(_selectedClassroomId))
             {
                 var match = _classrooms.FirstOrDefault(c => c.ClassroomId == _selectedClassroomId);
-                classroomName = match?.Name;
+                classroomName = match?.DisplayName;
             }
 
             string quizScoreTitle = null;

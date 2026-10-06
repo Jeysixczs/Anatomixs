@@ -130,6 +130,8 @@ namespace Anatomia3D.Backend
         {
             public string ClassroomId;
             public string Name;
+            /// <summary>Optional class section (e.g. "BSN 1-A"); empty for older classrooms.</summary>
+            public string Section;
             public string Code;
             public string TeacherName;
 
@@ -148,6 +150,9 @@ namespace Anatomia3D.Backend
             /// (see ClassroomDetailRecord.IsArchived below) but the hub should avoid the
             /// navigation entirely so the student never sees an empty flash before the block.</summary>
             public bool IsArchived;
+
+            /// <summary>Name + section as shown on every screen (see ClassroomNaming).</summary>
+            public string DisplayName => ClassroomNaming.Compose(Name, Section);
         }
 
         /// <summary>
@@ -174,6 +179,7 @@ namespace Anatomia3D.Backend
                             {
                                 ClassroomId = doc.Id,
                                 Name = doc.GetValue<string>("name"),
+                                Section = doc.ContainsField("section") ? doc.GetValue<string>("section") : "",
                                 Code = doc.GetValue<string>("code"),
                                 TeacherName = doc.GetValue<string>("teacherName"),
                                 TeacherId = doc.ContainsField("teacherId") ? doc.GetValue<string>("teacherId") : null,
@@ -212,6 +218,7 @@ namespace Anatomia3D.Backend
                         {
                             ClassroomId = doc.Id,
                             Name = doc.GetValue<string>("name"),
+                            Section = doc.ContainsField("section") ? doc.GetValue<string>("section") : "",
                             Code = doc.GetValue<string>("code"),
                             TeacherName = doc.GetValue<string>("teacherName"),
                             TeacherId = doc.ContainsField("teacherId") ? doc.GetValue<string>("teacherId") : null,
@@ -230,6 +237,7 @@ namespace Anatomia3D.Backend
         {
             public string ClassroomId;
             public string Name;
+            public string Section;
             public string Description;
             public string Code;
             public string TeacherId;
@@ -243,6 +251,9 @@ namespace Anatomia3D.Backend
             /// LoadClassroomContent()) rather than letting the student view/interact with the
             /// classroom.</summary>
             public bool IsArchived;
+
+            /// <summary>Name + section as shown on every screen (see ClassroomNaming).</summary>
+            public string DisplayName => ClassroomNaming.Compose(Name, Section);
         }
 
         /// <summary>Call when showing StudentClassroomDetailController - feeds the header
@@ -284,6 +295,7 @@ namespace Anatomia3D.Backend
             {
                 ClassroomId = doc.Id,
                 Name = doc.GetValue<string>("name"),
+                Section = doc.ContainsField("section") ? doc.GetValue<string>("section") : "",
                 Description = doc.ContainsField("description") ? doc.GetValue<string>("description") : "",
                 Code = doc.GetValue<string>("code"),
                 TeacherId = doc.GetValue<string>("teacherId"),
@@ -453,7 +465,7 @@ namespace Anatomia3D.Backend
                         foreach (var classroomDoc in classroomDocs)
                         {
                             string classroomId = classroomDoc.Id;
-                            string classroomName = classroomDoc.ContainsField("name") ? classroomDoc.GetValue<string>("name") : "Classroom";
+                            string classroomName = ClassroomNaming.FromDoc(classroomDoc);
 
                             Db.Collection("classrooms").Document(classroomId).Collection("announcements")
                                 .OrderByDescending("createdAt")
@@ -605,7 +617,7 @@ namespace Anatomia3D.Backend
                     {
                         string classroomId = doc.Id;
                         incomingIds.Add(classroomId);
-                        classroomNames[classroomId] = doc.ContainsField("name") ? doc.GetValue<string>("name") : "Classroom";
+                        classroomNames[classroomId] = ClassroomNaming.FromDoc(doc);
                         teacherNames[classroomId] = doc.ContainsField("teacherName") ? doc.GetValue<string>("teacherName") : "";
 
                         // Only start a new announcements listener for classrooms we're not
@@ -1152,9 +1164,9 @@ namespace Anatomia3D.Backend
                         // the Scores tab just shows "No quiz attempts yet" forever. Check the
                         // Firebase console (Firestore -> Indexes) or the exception logged
                         // below for a direct "create index" link.
-                        Debug.LogError($"[ClassroomService] FetchMyScores failed - likely a missing " +
-                            $"Firestore composite index (classroomId + studentId + completedAt). " +
-                            $"Exception: {task.Exception}");
+                        //Debug.LogError($"[ClassroomService] FetchMyScores failed - likely a missing " +
+                            //$"Firestore composite index (classroomId + studentId + completedAt). " +
+                            //$"Exception: {task.Exception}");
                     }
                     else if (!task.IsCanceled)
                     {
@@ -1312,7 +1324,7 @@ namespace Anatomia3D.Backend
                     foreach (var classroomDoc in classroomDocs)
                     {
                         string classroomId = classroomDoc.Id;
-                        string classroomName = classroomDoc.ContainsField("name") ? classroomDoc.GetValue<string>("name") : "Classroom";
+                        string classroomName = ClassroomNaming.FromDoc(classroomDoc);
 
                         Db.Collection("classrooms").Document(classroomId).Collection("members").Document(student.Uid)
                             .GetSnapshotAsync()
