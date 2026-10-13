@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="/Assets/Sprite/Anatomia-logo-removebg.png" width="240">
-
 </p>
 
 <p align="center">
@@ -14,6 +13,7 @@
   <img src="https://img.shields.io/badge/C%23-Programming_Language-239120?logo=csharp">
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android">
   <img src="https://img.shields.io/badge/Backend-Firebase-FFCA28?logo=firebase">
+  <img src="https://img.shields.io/github/downloads/Jeysixczs/Anatomixs/total?label=Total%20Downloads&logo=android&color=2ea043">
 </p>
 
 ---
